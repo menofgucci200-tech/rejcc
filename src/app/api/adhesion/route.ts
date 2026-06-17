@@ -24,12 +24,12 @@ export async function POST(req: Request) {
     "-" +
     Math.random().toString(36).toUpperCase().slice(2, 5);
 
-  // TODO Phase 2b — brancher l'API Laravel :
+  // TODO Phase 2b — brancher la nouvelle API Laravel :
   //  1. Enregistrer le membre (table `members`, statut "en attente de paiement").
-  //  2. Initier le paiement Mobile Money selon `data.paiement`
-  //     (MTN/Orange/Moov/Wave) — cf. EPCCI_BACKEND/paiements/mtn_ci_webhook.php.
+  //  2. Initier le paiement selon `data.paiement` (Wave / Orange Money / Djamo)
+  //     une fois les identifiants marchands disponibles.
   //  3. Envoyer l'e-mail de confirmation + instructions de règlement.
-  console.log("[adhesion]", reference, data.plan, data.email);
+  console.log("[adhesion]", reference, data.profil, data.paiement, data.email);
 
   return NextResponse.json({ ok: true, reference });
 }

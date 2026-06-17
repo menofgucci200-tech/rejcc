@@ -21,7 +21,7 @@ export default function AdhesionPage() {
             <span className="font-serif italic normal-case text-azure">membre</span>
           </>
         }
-        subtitle="Choisissez votre formule, renseignez votre profil et finalisez votre adhésion en quelques minutes."
+        subtitle="Renseignez votre profil, choisissez votre moyen de paiement et finalisez votre adhésion en quelques minutes."
       />
 
       <section className="bg-cloud py-16 sm:py-24">

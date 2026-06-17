@@ -96,13 +96,13 @@ export const steps: Step[] = [
   },
   {
     icon: ListChecks,
-    title: "Choisissez votre formule",
-    text: "Sélectionnez l'adhésion adaptée à votre profil : étudiant, porteur de projet ou entrepreneur.",
+    title: "Précisez votre profil",
+    text: "Étudiant, porteur de projet ou entrepreneur confirmé : dites-nous qui vous êtes.",
   },
   {
     icon: Smartphone,
     title: "Réglez votre cotisation",
-    text: "Payez en toute simplicité par Mobile Money ou carte, en quelques clics sécurisés.",
+    text: "Payez vos 10 000 FCFA en toute simplicité par Wave, Orange Money ou Djamo.",
   },
   {
     icon: PartyPopper,

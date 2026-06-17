@@ -3,8 +3,8 @@ import { z } from "zod";
 /** Schémas partagés entre le front (React Hook Form) et les routes API. */
 
 export const adhesionSchema = z.object({
-  plan: z.enum(["etudiant", "porteur", "entrepreneur"], {
-    error: "Choisissez une formule d'adhésion.",
+  profil: z.enum(["etudiant", "porteur", "entrepreneur"], {
+    error: "Sélectionnez votre profil.",
   }),
   prenom: z.string().min(2, { error: "Votre prénom est requis." }),
   nom: z.string().min(2, { error: "Votre nom est requis." }),
@@ -17,7 +17,7 @@ export const adhesionSchema = z.object({
   secteur: z.string().min(1, { error: "Sélectionnez votre domaine." }),
   organisation: z.string().max(120).optional().or(z.literal("")),
   message: z.string().max(800, { error: "Message trop long." }).optional().or(z.literal("")),
-  paiement: z.enum(["mtn", "orange", "moov", "wave", "carte"], {
+  paiement: z.enum(["wave", "orange", "djamo"], {
     error: "Choisissez un moyen de paiement.",
   }),
   consent: z.literal(true, {

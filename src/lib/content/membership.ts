@@ -1,73 +1,22 @@
 /**
- * Formules d'adhésion REJCC.
- * Tarifs PROVISOIRES (FCFA) — à confirmer par le réseau. `pricesProvisional`
- * permet d'afficher la mention « tarif indicatif » tant que ce n'est pas figé.
+ * Adhésion REJCC — tarif unique de 10 000 FCFA par membre.
  */
-export type PlanId = "etudiant" | "porteur" | "entrepreneur";
+export const adhesionFee = 10000;
+export const currency = "FCFA";
+export const adhesionPeriod = "an";
 
-export type Plan = {
-  id: PlanId;
-  name: string;
-  audience: string;
-  price: number;
-  period: string;
-  features: string[];
-  highlight?: boolean;
-};
-
-export const plans: Plan[] = [
-  {
-    id: "etudiant",
-    name: "Étudiant",
-    audience: "Étudiants & jeunes diplômés",
-    price: 5000,
-    period: "an",
-    features: [
-      "Accès à la communauté",
-      "Événements & ateliers",
-      "Newsletter & ressources",
-      "Mentorat de groupe",
-    ],
-  },
-  {
-    id: "porteur",
-    name: "Porteur de projet",
-    audience: "Entrepreneurs débutants & moyens",
-    price: 15000,
-    period: "an",
-    features: [
-      "Tous les avantages Étudiant",
-      "Mentorat personnalisé",
-      "Mise en relation ciblée",
-      "Visibilité dans l'annuaire",
-    ],
-    highlight: true,
-  },
-  {
-    id: "entrepreneur",
-    name: "Entrepreneur",
-    audience: "Entrepreneurs confirmés",
-    price: 30000,
-    period: "an",
-    features: [
-      "Tous les avantages Porteur",
-      "Accès partenaires & financements",
-      "Opportunités d'intervention",
-      "Accompagnement prioritaire",
-    ],
-  },
+export type ProfileId = "etudiant" | "porteur" | "entrepreneur";
+export const profiles: { id: ProfileId; label: string }[] = [
+  { id: "etudiant", label: "Étudiant & jeune diplômé" },
+  { id: "porteur", label: "Porteur de projet" },
+  { id: "entrepreneur", label: "Entrepreneur confirmé" },
 ];
 
-export const currency = "FCFA";
-export const pricesProvisional = true;
-
-export const paymentMethods = [
-  { id: "mtn", label: "MTN MoMo" },
-  { id: "orange", label: "Orange Money" },
-  { id: "moov", label: "Moov Money" },
+export type PaymentId = "wave" | "orange" | "djamo";
+export const paymentMethods: { id: PaymentId; label: string }[] = [
   { id: "wave", label: "Wave" },
-  { id: "carte", label: "Carte bancaire" },
-] as const;
+  { id: "orange", label: "Orange Money" },
+  { id: "djamo", label: "Djamo" },
+];
 
 export const formatPrice = (n: number) => n.toLocaleString("fr-FR");
-export const getPlan = (id: PlanId) => plans.find((p) => p.id === id);

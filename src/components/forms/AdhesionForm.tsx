@@ -7,21 +7,21 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Check, ArrowRight, ArrowLeft, ShieldCheck, PartyPopper, Loader2 } from "lucide-react";
 import { adhesionSchema, type AdhesionInput } from "@/lib/validation/schemas";
 import {
-  plans,
-  paymentMethods,
+  adhesionFee,
   currency,
-  pricesProvisional,
+  adhesionPeriod,
+  profiles,
+  paymentMethods,
   formatPrice,
-  getPlan,
 } from "@/lib/content/membership";
+import { paymentLogo } from "./PaymentLogos";
 import { sectors } from "@/lib/content/domains";
 import { TextField, SelectField, TextareaField } from "./fields";
 import { cn } from "@/lib/utils";
 
-const stepLabels = ["Formule", "Vos informations", "Paiement"];
+const stepLabels = ["Vos informations", "Paiement"];
 const stepFields: (keyof AdhesionInput)[][] = [
-  ["plan"],
-  ["prenom", "nom", "email", "telephone", "genre", "ville", "secteur"],
+  ["profil", "prenom", "nom", "email", "telephone", "genre", "ville", "secteur"],
   ["paiement", "consent"],
 ];
 
@@ -53,16 +53,14 @@ export function AdhesionForm() {
     },
   });
 
-  const selectedPlan = watch("plan");
   const selectedPayment = watch("paiement");
   const selectedGenre = watch("genre");
-  const plan = selectedPlan ? getPlan(selectedPlan) : undefined;
 
   async function next() {
     const ok = await trigger(stepFields[step]);
-    if (ok) setStep((s) => Math.min(s + 1, 2));
+    if (ok) setStep(1);
   }
-  const back = () => setStep((s) => Math.max(s - 1, 0));
+  const back = () => setStep(0);
 
   async function onSubmit(data: AdhesionInput) {
     setStatus("submitting");
@@ -108,33 +106,33 @@ export function AdhesionForm() {
       onSubmit={handleSubmit(onSubmit)}
       className="rounded-3xl border border-brand/10 bg-white p-6 shadow-[0_30px_80px_-50px_rgba(3,29,89,0.45)] sm:p-9"
     >
+      {/* Bandeau tarif */}
+      <div className="mb-7 flex items-center justify-between rounded-2xl bg-brand px-5 py-4 text-white">
+        <span className="text-sm font-medium text-white/80">Cotisation d&apos;adhésion</span>
+        <span className="font-display text-2xl">
+          {formatPrice(adhesionFee)}{" "}
+          <span className="text-sm font-medium text-white/70">
+            {currency}/{adhesionPeriod}
+          </span>
+        </span>
+      </div>
+
       {/* Stepper */}
-      <ol className="mb-8 flex items-center gap-2">
+      <ol className="mb-8 flex items-center gap-3">
         {stepLabels.map((label, i) => (
           <li key={label} className="flex flex-1 items-center gap-2">
             <span
               className={cn(
                 "inline-flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-bold transition-colors",
-                i < step
-                  ? "bg-accent text-white"
-                  : i === step
-                    ? "bg-brand text-white"
-                    : "bg-cloud text-ink/40",
+                i < step ? "bg-accent text-white" : i === step ? "bg-brand text-white" : "bg-cloud text-ink/40",
               )}
             >
               {i < step ? <Check className="size-4" /> : i + 1}
             </span>
-            <span
-              className={cn(
-                "hidden text-sm font-semibold sm:block",
-                i === step ? "text-brand" : "text-ink/50",
-              )}
-            >
+            <span className={cn("text-sm font-semibold", i === step ? "text-brand" : "text-ink/50")}>
               {label}
             </span>
-            {i < stepLabels.length - 1 && (
-              <span className="ml-1 hidden h-px flex-1 bg-brand/10 sm:block" />
-            )}
+            {i < stepLabels.length - 1 && <span className="ml-1 hidden h-px flex-1 bg-brand/10 sm:block" />}
           </li>
         ))}
       </ol>
@@ -147,75 +145,19 @@ export function AdhesionForm() {
           exit={{ opacity: 0, x: -16 }}
           transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
         >
-          {/* Step 1 — Formule */}
+          {/* Étape 1 — Informations */}
           {step === 0 && (
-            <div>
-              <h3 className="text-lg font-bold text-brand">Choisissez votre formule</h3>
-              <p className="mt-1 text-sm text-ink/60">
-                Sélectionnez l&apos;adhésion adaptée à votre profil.
-                {pricesProvisional && " Tarifs indicatifs, à confirmer."}
-              </p>
-              <div className="mt-5 grid gap-4 lg:grid-cols-3">
-                {plans.map((p) => {
-                  const active = selectedPlan === p.id;
-                  return (
-                    <button
-                      type="button"
-                      key={p.id}
-                      onClick={() => setValue("plan", p.id, { shouldValidate: true })}
-                      className={cn(
-                        "flex flex-col rounded-2xl border p-5 text-left transition-all",
-                        active
-                          ? "border-accent bg-accent/[0.03] ring-2 ring-accent/30"
-                          : "border-brand/12 hover:border-brand/30",
-                      )}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <span className="font-display text-xl uppercase tracking-tight text-brand">
-                          {p.name}
-                        </span>
-                        {p.highlight && (
-                          <span className="shrink-0 rounded-full bg-brand px-2.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-white">
-                            Populaire
-                          </span>
-                        )}
-                      </div>
-                      <span className="mt-0.5 text-xs text-ink/55">{p.audience}</span>
-                      <span className="mt-3 text-2xl font-bold text-brand">
-                        {formatPrice(p.price)}{" "}
-                        <span className="text-sm font-medium text-ink/60">
-                          {currency}/{p.period}
-                        </span>
-                      </span>
-                      <ul className="mt-4 space-y-1.5">
-                        {p.features.map((f) => (
-                          <li key={f} className="flex items-start gap-2 text-sm text-ink/70">
-                            <Check className="mt-0.5 size-4 shrink-0 text-accent" />
-                            {f}
-                          </li>
-                        ))}
-                      </ul>
-                      <span
-                        className={cn(
-                          "mt-4 inline-flex size-6 items-center justify-center self-end rounded-full border-2 transition-colors",
-                          active ? "border-accent bg-accent text-white" : "border-brand/20",
-                        )}
-                      >
-                        {active && <Check className="size-3.5" />}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-              {errors.plan && (
-                <p className="mt-3 text-sm font-medium text-accent">{errors.plan.message}</p>
-              )}
-            </div>
-          )}
-
-          {/* Step 2 — Informations */}
-          {step === 1 && (
             <div className="grid gap-4 sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <SelectField label="Votre profil" id="profil" error={errors.profil?.message} {...register("profil")}>
+                  <option value="">Sélectionnez votre profil…</option>
+                  {profiles.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.label}
+                    </option>
+                  ))}
+                </SelectField>
+              </div>
               <TextField label="Prénom" id="prenom" error={errors.prenom?.message} {...register("prenom")} />
               <TextField label="Nom" id="nom" error={errors.nom?.message} {...register("nom")} />
               <TextField label="E-mail" id="email" type="email" error={errors.email?.message} {...register("email")} />
@@ -246,9 +188,7 @@ export function AdhesionForm() {
                     </button>
                   ))}
                 </div>
-                {errors.genre && (
-                  <span className="text-xs font-medium text-accent">{errors.genre.message}</span>
-                )}
+                {errors.genre && <span className="text-xs font-medium text-accent">{errors.genre.message}</span>}
               </div>
               <TextField label="Ville" id="ville" placeholder="Abidjan" error={errors.ville?.message} {...register("ville")} />
               <SelectField label="Domaine d'activité" id="secteur" error={errors.secteur?.message} {...register("secteur")}>
@@ -280,74 +220,53 @@ export function AdhesionForm() {
             </div>
           )}
 
-          {/* Step 3 — Paiement */}
-          {step === 2 && (
+          {/* Étape 2 — Paiement */}
+          {step === 1 && (
             <div>
-              {plan && (
-                <div className="flex items-center justify-between rounded-2xl bg-cloud p-5">
-                  <div>
-                    <p className="text-sm text-ink/60">Formule sélectionnée</p>
-                    <p className="font-display text-xl uppercase tracking-tight text-brand">
-                      {plan.name}
-                    </p>
-                  </div>
-                  <p className="text-2xl font-bold text-brand">
-                    {formatPrice(plan.price)}{" "}
-                    <span className="text-sm font-medium text-ink/60">
-                      {currency}/{plan.period}
-                    </span>
-                  </p>
-                </div>
-              )}
-
-              <h3 className="mt-6 text-lg font-bold text-brand">Moyen de paiement</h3>
-              <div className="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
-                {paymentMethods.map((m) => (
-                  <button
-                    type="button"
-                    key={m.id}
-                    onClick={() => setValue("paiement", m.id, { shouldValidate: true })}
-                    className={cn(
-                      "rounded-xl border px-4 py-3.5 text-sm font-semibold transition-colors",
-                      selectedPayment === m.id
-                        ? "border-accent bg-accent/[0.04] text-brand"
-                        : "border-brand/15 text-ink/70 hover:border-brand/30",
-                    )}
-                  >
-                    {m.label}
-                  </button>
-                ))}
+              <h3 className="text-lg font-bold text-brand">Moyen de paiement</h3>
+              <p className="mt-1 text-sm text-ink/60">
+                Choisissez comment régler votre cotisation de {formatPrice(adhesionFee)} {currency}.
+              </p>
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                {paymentMethods.map((m) => {
+                  const Logo = paymentLogo[m.id];
+                  const active = selectedPayment === m.id;
+                  return (
+                    <button
+                      type="button"
+                      key={m.id}
+                      onClick={() => setValue("paiement", m.id, { shouldValidate: true })}
+                      className={cn(
+                        "flex items-center gap-3 rounded-2xl border px-4 py-4 text-left transition-colors",
+                        active
+                          ? "border-accent bg-accent/[0.04] ring-2 ring-accent/25"
+                          : "border-brand/15 hover:border-brand/30",
+                      )}
+                    >
+                      <Logo className="size-9 shrink-0" />
+                      <span className="text-sm font-semibold text-brand">{m.label}</span>
+                    </button>
+                  );
+                })}
               </div>
-              {errors.paiement && (
-                <p className="mt-2 text-sm font-medium text-accent">{errors.paiement.message}</p>
-              )}
+              {errors.paiement && <p className="mt-2 text-sm font-medium text-accent">{errors.paiement.message}</p>}
 
               <label className="mt-6 flex items-start gap-3 text-sm text-ink/75">
-                <input
-                  type="checkbox"
-                  {...register("consent")}
-                  className="mt-0.5 size-5 shrink-0 accent-[var(--color-accent)]"
-                />
+                <input type="checkbox" {...register("consent")} className="mt-0.5 size-5 shrink-0 accent-[var(--color-accent)]" />
                 <span>
-                  J&apos;accepte d&apos;adhérer au REJCC et de recevoir les communications
-                  liées à mon adhésion.
+                  J&apos;accepte d&apos;adhérer au REJCC et de recevoir les communications liées à mon
+                  adhésion.
                 </span>
               </label>
-              {errors.consent && (
-                <p className="mt-2 text-sm font-medium text-accent">
-                  {errors.consent.message}
-                </p>
-              )}
+              {errors.consent && <p className="mt-2 text-sm font-medium text-accent">{errors.consent.message}</p>}
 
               <p className="mt-6 flex items-center gap-2 rounded-xl bg-brand/5 px-4 py-3 text-xs text-ink/60">
                 <ShieldCheck className="size-4 shrink-0 text-brand" />
-                Paiement en cours d&apos;intégration : votre demande est enregistrée et
-                l&apos;équipe vous transmet les instructions de règlement.
+                Paiement en cours d&apos;intégration : votre demande est enregistrée et l&apos;équipe vous
+                transmet les instructions de règlement.
               </p>
 
-              {status === "error" && (
-                <p className="mt-3 text-sm font-medium text-accent">{serverError}</p>
-              )}
+              {status === "error" && <p className="mt-3 text-sm font-medium text-accent">{serverError}</p>}
             </div>
           )}
         </motion.div>
@@ -367,7 +286,7 @@ export function AdhesionForm() {
           <span />
         )}
 
-        {step < 2 ? (
+        {step < 1 ? (
           <button
             type="button"
             onClick={next}
