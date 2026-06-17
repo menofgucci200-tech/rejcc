@@ -106,14 +106,20 @@ export function EventsExplorer() {
             </div>
           </div>
 
-          <div className="mt-5 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-ink/40">
+          <div
+            className="mt-5 grid gap-1 text-center text-xs font-semibold text-ink/40"
+            style={{ gridTemplateColumns: "repeat(7, minmax(0, 1fr))" }}
+          >
             {WEEKDAYS.map((w, i) => (
               <span key={i} className="py-1">
                 {w}
               </span>
             ))}
           </div>
-          <div className="mt-1 grid grid-cols-7 gap-1">
+          <div
+            className="mt-1 grid gap-1"
+            style={{ gridTemplateColumns: "repeat(7, minmax(0, 1fr))" }}
+          >
             {cells.map((iso, i) => {
               if (!iso) return <span key={i} />;
               const has = eventDays.has(iso);
