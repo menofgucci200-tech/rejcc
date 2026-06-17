@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { contactSchema } from "@/lib/validation/schemas";
+import { forwardToBackend } from "@/lib/api/backend";
 
 export async function POST(req: Request) {
   let body: unknown;
@@ -17,8 +18,9 @@ export async function POST(req: Request) {
     );
   }
 
-  // TODO Phase 2b — enregistrer le message (API Laravel) et notifier l'équipe par e-mail.
-  console.log("[contact]", parsed.data.email, parsed.data.sujet);
+  const forwarded = await forwardToBackend("contact", parsed.data);
+  if (forwarded) return NextResponse.json(forwarded.json, { status: forwarded.status });
 
+  console.log("[contact]", parsed.data.email, parsed.data.sujet);
   return NextResponse.json({ ok: true });
 }

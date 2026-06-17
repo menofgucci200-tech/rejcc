@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { newsletterSchema } from "@/lib/validation/schemas";
+import { forwardToBackend } from "@/lib/api/backend";
 
 export async function POST(req: Request) {
   let body: unknown;
@@ -17,8 +18,9 @@ export async function POST(req: Request) {
     );
   }
 
-  // TODO Phase 2b — enregistrer l'inscription (API Laravel) / connecter un service d'e-mailing.
-  console.log("[newsletter]", parsed.data.email);
+  const forwarded = await forwardToBackend("newsletter", parsed.data);
+  if (forwarded) return NextResponse.json(forwarded.json, { status: forwarded.status });
 
+  console.log("[newsletter]", parsed.data.email);
   return NextResponse.json({ ok: true });
 }

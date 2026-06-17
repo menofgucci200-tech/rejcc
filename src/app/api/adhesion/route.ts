@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { adhesionSchema } from "@/lib/validation/schemas";
+import { forwardToBackend } from "@/lib/api/backend";
 
 export async function POST(req: Request) {
   let body: unknown;
@@ -18,6 +19,12 @@ export async function POST(req: Request) {
   }
 
   const data = parsed.data;
+
+  // Si l'API Laravel est configurée, on lui transmet (persistance + paiement).
+  const forwarded = await forwardToBackend("adhesion", data);
+  if (forwarded) return NextResponse.json(forwarded.json, { status: forwarded.status });
+
+  // Fallback autonome (backend non encore hébergé).
   const reference =
     "REJCC-" +
     Date.now().toString(36).toUpperCase().slice(-5) +

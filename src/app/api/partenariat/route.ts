@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { partenariatSchema } from "@/lib/validation/schemas";
+import { forwardToBackend } from "@/lib/api/backend";
 
 export async function POST(req: Request) {
   let body: unknown;
@@ -17,8 +18,9 @@ export async function POST(req: Request) {
     );
   }
 
-  // TODO Phase 2b — enregistrer la demande de partenariat (API Laravel) et notifier l'équipe.
-  console.log("[partenariat]", parsed.data.organisation, parsed.data.type);
+  const forwarded = await forwardToBackend("partenariat", parsed.data);
+  if (forwarded) return NextResponse.json(forwarded.json, { status: forwarded.status });
 
+  console.log("[partenariat]", parsed.data.organisation, parsed.data.type);
   return NextResponse.json({ ok: true });
 }
