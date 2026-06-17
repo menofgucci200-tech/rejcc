@@ -32,3 +32,6 @@ yarn-error.log*
 .vscode/*
 !.vscode/extensions.json
 .idea
+
+# documents sources de marque (conservés en local, hors dépôt public)
+/docs/brand-source/
