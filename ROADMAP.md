@@ -16,13 +16,20 @@ Backend retenu : **Laravel + MySQL** (API REST). Déploiement : à décider (arc
 - [x] SEO de base (metadata, OG, robots, sitemap), accessibilité (reduced-motion, focus, sémantique).
 - [x] Build de production validé (16 routes statiques).
 
-## 🔜 Phase 2 — Contenu dynamique & formulaires _(prochaine)_
+## 🟡 Phase 2 — Contenu dynamique & formulaires _(en cours)_
 
-- [ ] API **Laravel + MySQL** : modèles `members`, `events`, `articles`, `partners`, `messages`, `newsletter`.
-  - Réutiliser les patterns du backend voisin (`EPCCI_BACKEND`) : auth JWT (`config/helpers.php`), et **paiement MTN Mobile Money** (`paiements/mtn_ci_webhook.php`).
-- [ ] **Formulaire d'adhésion** complet (React Hook Form + Zod) → API → **paiement Mobile Money / carte** → validation + reçu + e-mail de confirmation.
-- [ ] **Formulaire de partenariat** et **formulaire de contact** connectés.
-- [ ] **Newsletter** opérationnelle.
+**Fait (front + contrat d'API, déployable sur Vercel) :**
+- [x] **Formulaire d'adhésion** multi-étapes (formule → infos → paiement → confirmation), React Hook Form + Zod.
+- [x] **Formulaire de contact** et **newsletter** fonctionnels.
+- [x] Schémas Zod partagés (`src/lib/validation/schemas.ts`) + **routes API** Next.js avec validation serveur (`/api/adhesion`, `/api/contact`, `/api/newsletter`).
+- [x] Formules d'adhésion (`src/lib/content/membership.ts`) — _tarifs provisoires à confirmer_.
+
+**Reste à faire (backend & intégrations) :**
+- [ ] API **Laravel + MySQL** : modèles `members`, `events`, `articles`, `partners`, `messages`, `newsletter` + persistance des soumissions (remplacer les `TODO` dans les routes API).
+  - Réutiliser les patterns du backend voisin (`EPCCI_BACKEND`) : auth JWT (`config/helpers.php`).
+- [ ] **Paiement Mobile Money réel** (MTN/Orange/Moov/Wave) + carte — cf. `EPCCI_BACKEND/paiements/mtn_ci_webhook.php`. Nécessite les identifiants marchands.
+- [ ] **E-mails** transactionnels (confirmation d'adhésion, accusé de contact).
+- [ ] **Formulaire de partenariat** connecté.
 - [ ] **Blog / Actualités** piloté par les données (catégories, recherche, pages article).
 - [ ] **Événements** : calendrier interactif, page détail, inscription en ligne, galerie.
 - [ ] Mini back-office de contenu (actualités, événements, partenaires).

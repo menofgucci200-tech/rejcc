@@ -1,19 +1,31 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight, Check, Loader2 } from "lucide-react";
 
 export function NewsletterForm() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  // Placeholder — à connecter au backend (newsletter) en phase ultérieure.
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!email) return;
-    setSent(true);
-    setEmail("");
-    setTimeout(() => setSent(false), 4000);
+    if (!email || loading) return;
+    setLoading(true);
+    try {
+      const res = await fetch("/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      if (res.ok) {
+        setSent(true);
+        setEmail("");
+        setTimeout(() => setSent(false), 5000);
+      }
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -30,10 +42,17 @@ export function NewsletterForm() {
         />
         <button
           type="submit"
+          disabled={loading}
           aria-label="S'inscrire à la newsletter"
-          className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-accent text-white transition-colors hover:bg-accent-600"
+          className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-accent text-white transition-colors hover:bg-accent-600 disabled:opacity-70"
         >
-          {sent ? <Check className="size-4" /> : <ArrowRight className="size-4" />}
+          {loading ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : sent ? (
+            <Check className="size-4" />
+          ) : (
+            <ArrowRight className="size-4" />
+          )}
         </button>
       </div>
       {sent && (

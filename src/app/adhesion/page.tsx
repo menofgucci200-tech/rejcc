@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { HowToJoin } from "@/components/sections/HowToJoin";
-import { ComingSoon } from "@/components/sections/ComingSoon";
+import { Container } from "@/components/ui/Container";
+import { AdhesionForm } from "@/components/forms/AdhesionForm";
 
 export const metadata: Metadata = {
   title: "Adhésion",
   description:
-    "Rejoignez le REJCC : adhésion 100 % en ligne, paiement par Mobile Money ou carte, accès immédiat à la communauté.",
+    "Rejoignez le REJCC : adhésion 100 % en ligne, choix de la formule, paiement Mobile Money ou carte, accès à la communauté.",
 };
 
 export default function AdhesionPage() {
@@ -21,18 +21,14 @@ export default function AdhesionPage() {
             <span className="font-serif italic normal-case text-azure">membre</span>
           </>
         }
-        subtitle="Intégrez une communauté de jeunes entrepreneurs catholiques et accédez à toutes ses ressources, partout en Côte d'Ivoire."
+        subtitle="Choisissez votre formule, renseignez votre profil et finalisez votre adhésion en quelques minutes."
       />
-      <HowToJoin />
-      <ComingSoon
-        intro="Le formulaire d'adhésion complet et le paiement sécurisé en ligne sont en cours d'intégration."
-        features={[
-          "Formulaire d'adhésion détaillé",
-          "Paiement Mobile Money & carte bancaire",
-          "Validation et reçu automatiques",
-          "Accès immédiat à l'espace membre",
-        ]}
-      />
+
+      <section className="bg-cloud py-16 sm:py-24">
+        <Container className="max-w-4xl">
+          <AdhesionForm />
+        </Container>
+      </section>
     </>
   );
 }

@@ -10,22 +10,25 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.4.0",
+    "clsx": "^2",
+    "framer-motion": "^11",
+    "lenis": "latest",
+    "lucide-react": "latest",
     "next": "^15",
     "react": "^19",
     "react-dom": "^19",
-    "framer-motion": "^11",
-    "lucide-react": "latest",
-    "lenis": "latest",
-    "clsx": "^2",
-    "tailwind-merge": "^2"
+    "react-hook-form": "^7.79.0",
+    "tailwind-merge": "^2",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@tailwindcss/postcss": "^4",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "postcss": "^8",
     "tailwindcss": "^4",
-    "@tailwindcss/postcss": "^4",
-    "postcss": "^8"
+    "typescript": "^5"
   }
 }
