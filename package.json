@@ -1,0 +1,31 @@
+{
+  "name": "rejcc",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Site & plateforme premium du REJCC — Réseau Entrepreneurial des Jeunes Catholiques de Côte d'Ivoire",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "next": "^15",
+    "react": "^19",
+    "react-dom": "^19",
+    "framer-motion": "^11",
+    "lucide-react": "latest",
+    "lenis": "latest",
+    "clsx": "^2",
+    "tailwind-merge": "^2"
+  },
+  "devDependencies": {
+    "typescript": "^5",
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "tailwindcss": "^4",
+    "@tailwindcss/postcss": "^4",
+    "postcss": "^8"
+  }
+}

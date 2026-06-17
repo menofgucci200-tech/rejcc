@@ -1,0 +1,232 @@
+@import "tailwindcss";
+
+/* ============================================================
+   REJCC — Design system (Tailwind v4)
+   Couleurs & typographie issues de la charte graphique officielle.
+   ============================================================ */
+@theme {
+  /* Brand palette */
+  --color-brand: #031d59; /* bleu — dominante */
+  --color-brand-700: #0a2c6e; /* step clair pour dégradés */
+  --color-brand-900: #021541; /* step sombre */
+  --color-azure: #4f6fbf; /* bleu clair — secondaire */
+  --color-accent: #ac0100; /* rouge — accent */
+  --color-accent-600: #c8160f; /* rouge clair (hover) */
+  --color-cloud: #f4f6f8; /* gris clair — neutre */
+  --color-cloud-200: #e7ebf1;
+  --color-ink: #333333; /* gris foncé — texte */
+
+  /* Typographic families (mappées sur next/font) */
+  --font-display: var(--ff-display); /* Anton  → ex-Impact */
+  --font-sans: var(--ff-sans); /* Manrope → ex-Avenir Next */
+  --font-serif: var(--ff-serif); /* Libre Caslon → ex-Big Caslon */
+
+  /* Radii */
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.75rem;
+  --radius-3xl: 2.25rem;
+
+  /* Easing & motion tokens */
+  --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Animations */
+  --animate-aurora: aurora 18s ease-in-out infinite;
+  --animate-float: float 7s ease-in-out infinite;
+  --animate-marquee: marquee 38s linear infinite;
+  --animate-shimmer: shimmer 2.4s linear infinite;
+}
+
+@keyframes aurora {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: translate3d(3%, -4%, 0) scale(1.08);
+    opacity: 1;
+  }
+}
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-14px);
+  }
+}
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+@keyframes shimmer {
+  from {
+    background-position: -200% 0;
+  }
+  to {
+    background-position: 200% 0;
+  }
+}
+
+/* ============================================================
+   Base
+   ============================================================ */
+:root {
+  --bg: #ffffff;
+  --fg: #333333;
+}
+
+* {
+  border-color: color-mix(in oklab, var(--color-brand) 12%, transparent);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-feature-settings: "ss01", "cv01";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+/* When Lenis smooth-scroll is active */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+::selection {
+  background: var(--color-accent);
+  color: #fff;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  text-wrap: balance;
+}
+
+/* Custom scrollbar (desktop) */
+@media (pointer: fine) {
+  ::-webkit-scrollbar {
+    width: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--color-cloud);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: color-mix(in oklab, var(--color-brand) 35%, #fff);
+    border-radius: 999px;
+    border: 2px solid var(--color-cloud);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-brand);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================
+   Utilities
+   ============================================================ */
+@utility glass {
+  background: color-mix(in oklab, #fff 70%, transparent);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border: 1px solid color-mix(in oklab, #fff 60%, transparent);
+}
+
+@utility glass-dark {
+  background: color-mix(in oklab, var(--color-brand-900) 45%, transparent);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  border: 1px solid color-mix(in oklab, #fff 12%, transparent);
+}
+
+/* Gradient text in brand colours */
+.text-gradient {
+  background: linear-gradient(
+    100deg,
+    var(--color-brand) 0%,
+    var(--color-azure) 55%,
+    var(--color-brand) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.shimmer-text {
+  background: linear-gradient(
+    100deg,
+    var(--color-brand) 0%,
+    var(--color-azure) 25%,
+    #fff 50%,
+    var(--color-azure) 75%,
+    var(--color-brand) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 6s linear infinite;
+}
+
+/* Subtle dotted/grid backdrops */
+.bg-grid {
+  background-image: linear-gradient(
+      color-mix(in oklab, var(--color-brand) 7%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in oklab, var(--color-brand) 7%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 56px 56px;
+}
+.bg-dots {
+  background-image: radial-gradient(
+    color-mix(in oklab, var(--color-brand) 14%, transparent) 1px,
+    transparent 1.4px
+  );
+  background-size: 22px 22px;
+}
+
+/* Container helper */
+.container-px {
+  padding-inline: clamp(1.25rem, 5vw, 4rem);
+}
