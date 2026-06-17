@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { News } from "@/components/sections/News";
-import { ComingSoon } from "@/components/sections/ComingSoon";
+import { Container } from "@/components/ui/Container";
+import { NewsExplorer } from "@/components/sections/NewsExplorer";
 
 export const metadata: Metadata = {
   title: "Actualités",
   description:
-    "Les dernières actualités du REJCC : réseau, mentorat, partenariats et réussites des membres.",
+    "Les dernières actualités du REJCC : réseau, mentorat, partenariats, événements et formations.",
 };
 
 export default function ActualitesPage() {
@@ -23,16 +23,11 @@ export default function ActualitesPage() {
         }
         subtitle="Suivez la vie du réseau, ses partenariats, ses événements et les réussites de ses membres."
       />
-      <News />
-      <ComingSoon
-        intro="Le blog complet, avec catégories et recherche, sera bientôt disponible ici."
-        features={[
-          "Blog moderne et complet",
-          "Filtres par catégories",
-          "Recherche d'articles",
-          "Abonnement à la newsletter",
-        ]}
-      />
+      <section className="bg-white py-16 sm:py-24">
+        <Container>
+          <NewsExplorer />
+        </Container>
+      </section>
     </>
   );
 }

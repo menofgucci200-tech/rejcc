@@ -24,14 +24,18 @@ Backend retenu : **Laravel + MySQL** (API REST). Déploiement : à décider (arc
 - [x] Schémas Zod partagés (`src/lib/validation/schemas.ts`) + **routes API** Next.js avec validation serveur (`/api/adhesion`, `/api/contact`, `/api/newsletter`).
 - [x] Formules d'adhésion (`src/lib/content/membership.ts`) — _tarifs provisoires à confirmer_.
 
+**Fait (suite — front data-driven) :**
+- [x] **Formulaire de partenariat** connecté (`/partenaires` + `/api/partenariat`) + vitrine partenaires.
+- [x] **Blog / Actualités** piloté par les données : explorateur avec **catégories + recherche** (`/actualites`) et **pages article** (`/actualites/[slug]`, SSG).
+- [x] **Événements** : **calendrier mensuel** navigable + filtres par type (`/evenements`) et **pages détail** (`/evenements/[slug]`, SSG).
+- [x] Sitemap enrichi (articles + événements).
+
 **Reste à faire (backend & intégrations) :**
 - [ ] API **Laravel + MySQL** : modèles `members`, `events`, `articles`, `partners`, `messages`, `newsletter` + persistance des soumissions (remplacer les `TODO` dans les routes API).
   - Réutiliser les patterns du backend voisin (`EPCCI_BACKEND`) : auth JWT (`config/helpers.php`).
 - [ ] **Paiement Mobile Money réel** (MTN/Orange/Moov/Wave) + carte — cf. `EPCCI_BACKEND/paiements/mtn_ci_webhook.php`. Nécessite les identifiants marchands.
-- [ ] **E-mails** transactionnels (confirmation d'adhésion, accusé de contact).
-- [ ] **Formulaire de partenariat** connecté.
-- [ ] **Blog / Actualités** piloté par les données (catégories, recherche, pages article).
-- [ ] **Événements** : calendrier interactif, page détail, inscription en ligne, galerie.
+- [ ] **E-mails** transactionnels (confirmation d'adhésion, accusé de contact/partenariat).
+- [ ] **Inscription en ligne** dédiée aux événements + galerie.
 - [ ] Mini back-office de contenu (actualités, événements, partenaires).
 
 ## 🔜 Phase 3 — Espace membre

@@ -25,10 +25,10 @@ export function News() {
         </div>
 
         <div className="mt-14 grid gap-6 lg:grid-cols-3">
-          {articles.map((a, i) => (
-            <Reveal key={a.title} delay={i * 0.1} className="h-full">
+          {articles.slice(0, 3).map((a, i) => (
+            <Reveal key={a.slug} delay={i * 0.1} className="h-full">
               <Link
-                href="/actualites"
+                href={`/actualites/${a.slug}`}
                 className="group flex h-full flex-col overflow-hidden rounded-3xl border border-brand/10 bg-white transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_30px_70px_-35px_rgba(3,29,89,0.4)]"
               >
                 {/* Média placeholder (à remplacer par une vraie photo) */}

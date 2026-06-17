@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { Events } from "@/components/sections/Events";
-import { ComingSoon } from "@/components/sections/ComingSoon";
+import { Container } from "@/components/ui/Container";
+import { EventsExplorer } from "@/components/sections/EventsExplorer";
 
 export const metadata: Metadata = {
   title: "Événements",
   description:
-    "L'agenda du REJCC : forums, ateliers, conférences, visites d'entreprises et galas.",
+    "Le calendrier du REJCC : forums, ateliers, conférences, visites d'entreprises et galas.",
 };
 
 export default function EvenementsPage() {
@@ -21,18 +21,13 @@ export default function EvenementsPage() {
             <span className="font-serif italic normal-case text-azure">événements</span>
           </>
         }
-        subtitle="Participez à la vie du réseau : rencontres, formations et célébrations tout au long de l'année."
+        subtitle="Parcourez le calendrier, filtrez par type et inscrivez-vous aux rendez-vous du réseau."
       />
-      <Events />
-      <ComingSoon
-        intro="Le calendrier interactif et l'inscription en ligne aux événements arrivent très prochainement."
-        features={[
-          "Calendrier interactif filtrable",
-          "Inscription en ligne sécurisée",
-          "Galerie photos & vidéos",
-          "Rappels et notifications",
-        ]}
-      />
+      <section className="bg-cloud py-16 sm:py-24">
+        <Container>
+          <EventsExplorer />
+        </Container>
+      </section>
     </>
   );
 }

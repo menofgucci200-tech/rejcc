@@ -41,3 +41,18 @@ export const newsletterSchema = z.object({
   email: z.email({ error: "Adresse e-mail invalide." }),
 });
 export type NewsletterInput = z.infer<typeof newsletterSchema>;
+
+export const partenariatSchema = z.object({
+  organisation: z.string().min(2, { error: "Le nom de l'organisation est requis." }),
+  contact: z.string().min(2, { error: "Le nom du contact est requis." }),
+  email: z.email({ error: "Adresse e-mail invalide." }),
+  telephone: z
+    .string()
+    .regex(/^[0-9]{10}$/, { error: "Numéro invalide (10 chiffres requis)." }),
+  type: z.string().min(2, { error: "Sélectionnez un type de partenariat." }),
+  message: z
+    .string()
+    .min(10, { error: "Votre message est trop court." })
+    .max(1500, { error: "Votre message est trop long." }),
+});
+export type PartenariatInput = z.infer<typeof partenariatSchema>;

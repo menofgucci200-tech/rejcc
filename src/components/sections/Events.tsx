@@ -24,10 +24,10 @@ export function Events() {
         </div>
 
         <div className="mt-14 grid gap-4 sm:grid-cols-2">
-          {events.map((e, i) => (
-            <Reveal key={e.title} delay={(i % 2) * 0.08}>
+          {events.slice(0, 4).map((e, i) => (
+            <Reveal key={e.slug} delay={(i % 2) * 0.08}>
               <Link
-                href="/evenements"
+                href={`/evenements/${e.slug}`}
                 className="group flex items-stretch gap-5 overflow-hidden rounded-3xl border border-brand/10 bg-white p-5 transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_28px_60px_-35px_rgba(3,29,89,0.4)]"
               >
                 <div className="flex w-20 shrink-0 flex-col items-center justify-center rounded-2xl bg-brand py-4 text-white">
