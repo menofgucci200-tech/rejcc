@@ -42,8 +42,17 @@ DB_PASSWORD=
 | POST | `/api/contact` | Message de contact → `contacts` |
 | POST | `/api/newsletter` | Inscription newsletter → `newsletter_subscribers` |
 | POST | `/api/partenariat` | Demande de partenariat → `partnership_requests` |
+| POST | `/api/auth/register` | Inscription membre → `users` + renvoie un token |
+| POST | `/api/auth/login` | Connexion → renvoie un token |
+| GET | `/api/auth/me` | Membre connecté (Bearer token) |
+| PUT | `/api/auth/profile` | Mise à jour du profil (Bearer) |
+| POST | `/api/auth/logout` | Déconnexion / révocation du token (Bearer) |
+| GET | `/api/members` | Annuaire des membres (Bearer) |
 
-Réponses JSON : `{ "ok": true, ... }` ou `{ "ok": false, "message": "..." }` (422).
+Réponses JSON : `{ "ok": true, ... }` ou `{ "ok": false, "message": "..." }` (422/401).
+
+**Authentification** : par **token** (table `api_tokens`, SHA-256). Après `register`/`login`,
+le client envoie le token reçu dans l'en-tête `Authorization: Bearer <token>` sur les routes protégées.
 
 ## Schéma de base
 - **members** : adhésions (profil, identité, secteur, paiement, `statut`, `reference`)
