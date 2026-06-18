@@ -11,6 +11,7 @@ import {
   MessageCircle,
   FolderClosed,
   CalendarDays,
+  Bell,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { Container } from "@/components/ui/Container";
@@ -24,10 +25,11 @@ const profilLabels: Record<string, string> = {
 
 const quickLinks = [
   { icon: Users, label: "Annuaire des membres", href: "/espace-membre/annuaire", ready: true },
+  { icon: MessageCircle, label: "Messagerie", href: "/espace-membre/messagerie", ready: true },
+  { icon: Bell, label: "Notifications", href: "/espace-membre/notifications", ready: true },
+  { icon: FolderClosed, label: "Documents & ressources", href: "/espace-membre/documents", ready: true },
   { icon: User, label: "Mon profil", href: "/espace-membre/profil", ready: true },
-  { icon: MessageCircle, label: "Messagerie", href: "#", ready: false },
   { icon: CalendarDays, label: "Mes événements", href: "#", ready: false },
-  { icon: FolderClosed, label: "Documents & ressources", href: "#", ready: false },
 ];
 
 export function MemberDashboard() {

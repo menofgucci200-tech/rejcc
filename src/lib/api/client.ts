@@ -69,3 +69,58 @@ export const authApi = {
   members: (token: string) =>
     request<{ ok: true; members: Member[] }>("/members", { token }),
 };
+
+export type Conversation = {
+  user_id: number;
+  prenom: string;
+  nom: string;
+  last: string;
+  at: string;
+  unread: number;
+};
+export type ChatMessage = {
+  id: number;
+  sender_id: number;
+  recipient_id: number;
+  body: string;
+  created_at: string;
+};
+export type Notice = {
+  id: number;
+  type: string;
+  title: string;
+  body?: string | null;
+  link?: string | null;
+  read_at?: string | null;
+  created_at: string;
+};
+export type DocItem = {
+  id: number;
+  title: string;
+  description?: string | null;
+  category: string;
+  url: string;
+  size?: string | null;
+};
+
+export const memberApi = {
+  conversations: (token: string) =>
+    request<{ ok: true; conversations: Conversation[] }>("/messages", { token }),
+  thread: (token: string, userId: number) =>
+    request<{ ok: true; me: number; partner: Member; messages: ChatMessage[] }>(
+      `/messages/${userId}`,
+      { token },
+    ),
+  sendMessage: (token: string, recipientId: number, body: string) =>
+    request<{ ok: true }>("/messages", {
+      method: "POST",
+      token,
+      body: JSON.stringify({ recipient_id: recipientId, body }),
+    }),
+  notifications: (token: string) =>
+    request<{ ok: true; unread: number; notifications: Notice[] }>("/notifications", { token }),
+  markAllNotificationsRead: (token: string) =>
+    request<{ ok: true }>("/notifications/read-all", { method: "POST", token }),
+  documents: (token: string) =>
+    request<{ ok: true; documents: DocItem[] }>("/documents", { token }),
+};

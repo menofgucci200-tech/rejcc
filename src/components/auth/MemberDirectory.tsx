@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Loader2, MapPin, Search } from "lucide-react";
+import { ArrowLeft, Loader2, MapPin, MessageCircle, Search } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { authApi, type Member } from "@/lib/api/client";
 import { Container } from "@/components/ui/Container";
@@ -99,6 +99,12 @@ export function MemberDirectory() {
                       {[m.ville, m.organisation].filter(Boolean).join(" · ")}
                     </p>
                   )}
+                  <Link
+                    href={`/espace-membre/messagerie?to=${m.id}`}
+                    className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full border border-brand/15 py-2.5 text-sm font-semibold text-brand transition-colors hover:bg-brand hover:text-white"
+                  >
+                    <MessageCircle className="size-4" /> Message
+                  </Link>
                 </article>
               ))}
             </div>
