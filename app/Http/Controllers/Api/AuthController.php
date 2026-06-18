@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\ApiToken;
+use App\Models\MemberNotification;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -60,6 +61,14 @@ class AuthController extends Controller
             'ville' => $d['ville'] ?? null,
             'secteur' => $d['secteur'] ?? null,
             'role' => 'member',
+        ]);
+
+        MemberNotification::create([
+            'user_id' => $user->id,
+            'type' => 'info',
+            'title' => 'Bienvenue au REJCC !',
+            'body' => 'Votre espace membre est prêt. Complétez votre profil pour bien démarrer.',
+            'link' => '/espace-membre/profil',
         ]);
 
         return response()->json([
