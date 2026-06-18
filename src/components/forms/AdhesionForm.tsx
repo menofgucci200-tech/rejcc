@@ -14,7 +14,7 @@ import {
   paymentMethods,
   formatPrice,
 } from "@/lib/content/membership";
-import { paymentLogo } from "./PaymentLogos";
+import { PaymentLogo } from "./PaymentLogos";
 import { sectors } from "@/lib/content/domains";
 import { TextField, SelectField, TextareaField } from "./fields";
 import { cn } from "@/lib/utils";
@@ -229,22 +229,21 @@ export function AdhesionForm() {
               </p>
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
                 {paymentMethods.map((m) => {
-                  const Logo = paymentLogo[m.id];
                   const active = selectedPayment === m.id;
                   return (
                     <button
                       type="button"
                       key={m.id}
                       onClick={() => setValue("paiement", m.id, { shouldValidate: true })}
+                      aria-label={m.label}
                       className={cn(
-                        "flex items-center gap-3 rounded-2xl border px-4 py-4 text-left transition-colors",
+                        "flex items-center justify-center rounded-2xl border px-4 py-5 transition-colors",
                         active
                           ? "border-accent bg-accent/[0.04] ring-2 ring-accent/25"
                           : "border-brand/15 hover:border-brand/30",
                       )}
                     >
-                      <Logo className="size-9 shrink-0" />
-                      <span className="text-sm font-semibold text-brand">{m.label}</span>
+                      <PaymentLogo id={m.id} />
                     </button>
                   );
                 })}
