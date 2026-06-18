@@ -7,6 +7,7 @@ import { Footer } from "@/components/layout/Footer";
 import { SmoothScroll } from "@/components/layout/SmoothScroll";
 import { ScrollProgress } from "@/components/layout/ScrollProgress";
 import { Loader } from "@/components/layout/Loader";
+import { AuthProvider } from "@/lib/auth/AuthContext";
 
 // Impact → Anton  ·  Avenir Next → Manrope  ·  Big Caslon → Libre Caslon Display
 const display = Anton({
@@ -80,12 +81,14 @@ export default function RootLayout({
       className={`${display.variable} ${sans.variable} ${serif.variable}`}
     >
       <body className="min-h-screen bg-white antialiased">
-        <Loader />
-        <ScrollProgress />
-        <SmoothScroll />
-        <Navbar />
-        <main>{children}</main>
-        <Footer />
+        <AuthProvider>
+          <Loader />
+          <ScrollProgress />
+          <SmoothScroll />
+          <Navbar />
+          <main>{children}</main>
+          <Footer />
+        </AuthProvider>
       </body>
     </html>
   );
