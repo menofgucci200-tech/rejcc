@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AdhesionController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ContactController;
@@ -41,4 +42,31 @@ Route::middleware('auth.token')->group(function () {
 
     // Documents & ressources
     Route::get('/documents', [DocumentController::class, 'index']);
+});
+
+// Administration — réservé aux admins
+Route::middleware(['auth.token', 'auth.admin'])->prefix('admin')->group(function () {
+    Route::get('/stats', [AdminController::class, 'stats']);
+
+    // Membres
+    Route::get('/members', [AdminController::class, 'members']);
+    Route::put('/members/{id}', [AdminController::class, 'updateMember']);
+    Route::delete('/members/{id}', [AdminController::class, 'deleteMember']);
+
+    // Adhésions
+    Route::get('/adhesions', [AdminController::class, 'adhesions']);
+    Route::put('/adhesions/{id}', [AdminController::class, 'updateAdhesion']);
+
+    // Contacts
+    Route::get('/contacts', [AdminController::class, 'contacts']);
+    Route::post('/contacts/{id}/traite', [AdminController::class, 'markContactTraite']);
+
+    // Documents
+    Route::get('/documents', [AdminController::class, 'documents']);
+    Route::post('/documents', [AdminController::class, 'createDocument']);
+    Route::put('/documents/{id}', [AdminController::class, 'updateDocument']);
+    Route::delete('/documents/{id}', [AdminController::class, 'deleteDocument']);
+
+    // Notifications broadcast
+    Route::post('/notifications/broadcast', [AdminController::class, 'broadcastNotification']);
 });
