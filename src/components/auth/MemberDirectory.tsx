@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Loader2, MapPin, MessageCircle, Search } from "lucide-react";
+import { Loader2, MapPin, MessageCircle, Search, Users } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { authApi, type Member } from "@/lib/api/client";
-import { Container } from "@/components/ui/Container";
+import { DarkPage } from "@/components/member/DarkPage";
 
 export function MemberDirectory() {
   const { token } = useAuth();
@@ -33,84 +33,153 @@ export function MemberDirectory() {
   );
 
   return (
-    <>
-      <header className="relative overflow-hidden bg-brand pb-12 pt-36 sm:pt-44">
-        <div className="pointer-events-none absolute inset-0 bg-grid opacity-[0.22] [mask-image:radial-gradient(ellipse_at_top,black,transparent_75%)]" />
-        <Container className="relative">
-          <Link
-            href="/espace-membre"
-            className="inline-flex items-center gap-2 text-sm text-white/60 transition-colors hover:text-white"
-          >
-            <ArrowLeft className="size-4" /> Tableau de bord
-          </Link>
-          <h1 className="mt-5 font-display text-[clamp(2rem,5vw,3.25rem)] uppercase leading-none tracking-tight text-white">
-            Annuaire des membres
-          </h1>
-          <p className="mt-3 text-white/70">
-            Retrouvez et contactez les membres du réseau.
-          </p>
-        </Container>
-      </header>
+    <DarkPage
+      title="Annuaire des membres"
+      subtitle="Retrouvez et contactez les membres du réseau."
+      icon={<Users size={20} />}
+    >
+      {/* Search */}
+      <div style={{ position: "relative", maxWidth: 420, marginBottom: 28 }}>
+        <Search
+          size={15}
+          style={{
+            position: "absolute",
+            left: 14,
+            top: "50%",
+            transform: "translateY(-50%)",
+            color: "rgba(244,246,248,0.38)",
+            pointerEvents: "none",
+          }}
+        />
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Rechercher (nom, domaine, ville)…"
+          style={{
+            width: "100%",
+            background: "rgba(255,255,255,0.05)",
+            border: "1px solid rgba(255,255,255,0.12)",
+            borderRadius: 12,
+            padding: "10px 16px 10px 40px",
+            fontSize: 13.5,
+            color: "#F4F6F8",
+            outline: "none",
+            fontFamily: "var(--ff-sans)",
+            boxSizing: "border-box",
+          }}
+        />
+      </div>
 
-      <section className="bg-cloud py-14 sm:py-20">
-        <Container>
-          <div className="relative mb-8 max-w-md">
-            <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-ink/40" />
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Rechercher (nom, domaine, ville)…"
-              className="w-full rounded-full border border-brand/15 bg-white py-2.5 pl-11 pr-4 text-sm text-brand placeholder:text-ink/40 outline-none transition focus:border-brand focus:ring-2 focus:ring-accent/20"
-            />
-          </div>
-
-          {loading ? (
-            <div className="flex justify-center py-16">
-              <Loader2 className="size-7 animate-spin text-brand" />
-            </div>
-          ) : error ? (
-            <p className="text-accent">{error}</p>
-          ) : filtered.length === 0 ? (
-            <p className="py-10 text-center text-ink/60">Aucun membre trouvé.</p>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {filtered.map((m) => (
-                <article
-                  key={m.id}
-                  className="rounded-3xl border border-brand/10 bg-white p-6"
+      {loading ? (
+        <div style={{ display: "flex", justifyContent: "center", padding: "64px 0" }}>
+          <Loader2 size={28} className="animate-spin" style={{ color: "rgba(244,246,248,0.45)" }} />
+        </div>
+      ) : error ? (
+        <p style={{ color: "#E84A43" }}>{error}</p>
+      ) : filtered.length === 0 ? (
+        <p style={{ textAlign: "center", padding: "40px 0", color: "rgba(244,246,248,0.45)", fontSize: 14 }}>
+          Aucun membre trouvé.
+        </p>
+      ) : (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+            gap: 16,
+          }}
+        >
+          {filtered.map((m) => (
+            <article
+              key={m.id}
+              style={{
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(255,255,255,0.09)",
+                borderRadius: 18,
+                padding: "20px 22px",
+                backdropFilter: "blur(16px)",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: 46,
+                    height: 46,
+                    borderRadius: "50%",
+                    background: "linear-gradient(135deg, #4F6FBF, #AC0100)",
+                    fontSize: 14,
+                    fontWeight: 700,
+                    color: "#fff",
+                    flexShrink: 0,
+                    letterSpacing: "0.04em",
+                  }}
                 >
-                  <div className="flex items-center gap-3.5">
-                    <span className="inline-flex size-12 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-bold text-white">
-                      {m.prenom?.[0]}
-                      {m.nom?.[0]}
-                    </span>
-                    <div className="min-w-0">
-                      <p className="truncate font-bold text-brand">
-                        {m.prenom} {m.nom}
-                      </p>
-                      {m.secteur && (
-                        <p className="truncate text-sm text-ink/60">{m.secteur}</p>
-                      )}
-                    </div>
-                  </div>
-                  {(m.ville || m.organisation) && (
-                    <p className="mt-4 flex items-center gap-1.5 text-xs text-ink/55">
-                      <MapPin className="size-3.5" />
-                      {[m.ville, m.organisation].filter(Boolean).join(" · ")}
+                  {m.prenom?.[0]}{m.nom?.[0]}
+                </span>
+                <div style={{ minWidth: 0 }}>
+                  <p
+                    style={{
+                      fontSize: 14,
+                      fontWeight: 700,
+                      color: "#F4F6F8",
+                      margin: 0,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {m.prenom} {m.nom}
+                  </p>
+                  {m.secteur && (
+                    <p style={{ fontSize: 12.5, color: "rgba(244,246,248,0.55)", margin: "3px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {m.secteur}
                     </p>
                   )}
-                  <Link
-                    href={`/espace-membre/messagerie?to=${m.id}`}
-                    className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full border border-brand/15 py-2.5 text-sm font-semibold text-brand transition-colors hover:bg-brand hover:text-white"
-                  >
-                    <MessageCircle className="size-4" /> Message
-                  </Link>
-                </article>
-              ))}
-            </div>
-          )}
-        </Container>
-      </section>
-    </>
+                </div>
+              </div>
+
+              {(m.ville || m.organisation) && (
+                <p
+                  style={{
+                    marginTop: 14,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 5,
+                    fontSize: 12,
+                    color: "rgba(244,246,248,0.40)",
+                  }}
+                >
+                  <MapPin size={12} /> {[m.ville, m.organisation].filter(Boolean).join(" · ")}
+                </p>
+              )}
+
+              <Link
+                href={`/espace-membre/messagerie?to=${m.id}`}
+                style={{
+                  marginTop: 16,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 7,
+                  padding: "9px 0",
+                  borderRadius: 10,
+                  background: "rgba(79,111,191,0.14)",
+                  border: "1px solid rgba(79,111,191,0.24)",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: "#9DB2EE",
+                  textDecoration: "none",
+                  transition: "all 0.18s",
+                }}
+              >
+                <MessageCircle size={13} /> Envoyer un message
+              </Link>
+            </article>
+          ))}
+        </div>
+      )}
+    </DarkPage>
   );
 }

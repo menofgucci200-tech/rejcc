@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { MemberGuard } from "@/components/auth/MemberGuard";
 import { MemberDirectory } from "@/components/auth/MemberDirectory";
 
 export const metadata: Metadata = {
@@ -8,9 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function AnnuairePage() {
-  return (
-    <MemberGuard>
-      <MemberDirectory />
-    </MemberGuard>
-  );
+  return <MemberDirectory />;
 }

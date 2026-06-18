@@ -1,29 +1,74 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { ArrowLeft, Check, Loader2 } from "lucide-react";
+import { Check, Loader2, User } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { authApi } from "@/lib/api/client";
 import { profiles } from "@/lib/content/membership";
-import { Container } from "@/components/ui/Container";
-import { TextField, TextareaField, SelectField } from "@/components/forms/fields";
+import { DarkPage } from "@/components/member/DarkPage";
+
+const SURF   = "rgba(255,255,255,0.05)";
+const SURF2  = "rgba(255,255,255,0.085)";
+const BORDER = "rgba(255,255,255,0.12)";
+const TEXT   = "#F4F6F8";
+const MUTED  = "rgba(244,246,248,0.60)";
+const DIM    = "rgba(244,246,248,0.38)";
+const RED    = "#AC0100";
+const RED2   = "#E84A43";
+const GREEN  = "#34D399";
+
+/* ── Dark form field ──────────────────────────── */
+function Field({
+  label,
+  id,
+  children,
+}: {
+  label: string;
+  id: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <label
+        htmlFor={id}
+        style={{ fontSize: 12.5, fontWeight: 600, color: MUTED, letterSpacing: "0.02em" }}
+      >
+        {label}
+      </label>
+      {children}
+    </div>
+  );
+}
+
+const inputStyle: React.CSSProperties = {
+  width: "100%",
+  background: SURF,
+  border: `1px solid ${BORDER}`,
+  borderRadius: 10,
+  padding: "10px 14px",
+  fontSize: 13.5,
+  color: TEXT,
+  outline: "none",
+  fontFamily: "var(--ff-sans)",
+  boxSizing: "border-box",
+  transition: "border-color 0.18s",
+};
 
 export function ProfileEditor() {
   const { user, token, setUser } = useAuth();
   const [form, setForm] = useState({
-    prenom: user?.prenom ?? "",
-    nom: user?.nom ?? "",
-    telephone: user?.telephone ?? "",
-    genre: user?.genre ?? "",
-    ville: user?.ville ?? "",
-    secteur: user?.secteur ?? "",
-    profil: user?.profil ?? "",
+    prenom:       user?.prenom       ?? "",
+    nom:          user?.nom          ?? "",
+    telephone:    user?.telephone    ?? "",
+    genre:        user?.genre        ?? "",
+    ville:        user?.ville        ?? "",
+    secteur:      user?.secteur      ?? "",
+    profil:       user?.profil       ?? "",
     organisation: user?.organisation ?? "",
-    bio: user?.bio ?? "",
+    bio:          user?.bio          ?? "",
   });
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
-  const [error, setError] = useState("");
+  const [error,  setError]  = useState("");
 
   const set =
     (k: string) =>
@@ -47,70 +92,158 @@ export function ProfileEditor() {
   }
 
   return (
-    <>
-      <header className="relative overflow-hidden bg-brand pb-12 pt-36 sm:pt-44">
-        <div className="pointer-events-none absolute inset-0 bg-grid opacity-[0.22] [mask-image:radial-gradient(ellipse_at_top,black,transparent_75%)]" />
-        <Container className="relative">
-          <Link
-            href="/espace-membre"
-            className="inline-flex items-center gap-2 text-sm text-white/60 transition-colors hover:text-white"
+    <DarkPage
+      title="Mon profil"
+      subtitle="Gérez vos informations personnelles et votre visibilité dans le réseau."
+      icon={<User size={20} />}
+    >
+      <div style={{ maxWidth: 680 }}>
+        {/* Avatar preview */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 18,
+            marginBottom: 32,
+            padding: "20px 24px",
+            background: SURF,
+            border: `1px solid ${BORDER}`,
+            borderRadius: 16,
+          }}
+        >
+          <div
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: "50%",
+              background: "linear-gradient(135deg, #4F6FBF, #AC0100)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 22,
+              fontWeight: 700,
+              color: "#fff",
+              flexShrink: 0,
+              letterSpacing: "0.04em",
+            }}
           >
-            <ArrowLeft className="size-4" /> Tableau de bord
-          </Link>
-          <h1 className="mt-5 font-display text-[clamp(2rem,5vw,3.25rem)] uppercase leading-none tracking-tight text-white">
-            Mon profil
-          </h1>
-        </Container>
-      </header>
+            {form.prenom?.[0]}{form.nom?.[0]}
+          </div>
+          <div>
+            <p style={{ fontSize: 16, fontWeight: 700, color: TEXT, margin: 0 }}>
+              {form.prenom || "Prénom"} {form.nom || "Nom"}
+            </p>
+            <p style={{ fontSize: 13, color: MUTED, margin: "4px 0 0" }}>{user?.email}</p>
+          </div>
+        </div>
 
-      <section className="bg-cloud py-14 sm:py-20">
-        <Container className="max-w-3xl">
-          <form
-            onSubmit={onSubmit}
-            className="grid gap-4 rounded-3xl border border-brand/10 bg-white p-6 sm:grid-cols-2 sm:p-9"
+        <form onSubmit={onSubmit}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 16,
+              background: SURF,
+              border: `1px solid ${BORDER}`,
+              borderRadius: 18,
+              padding: "28px 28px",
+            }}
+            className="grid-cols-1 sm:grid-cols-2"
           >
-            <TextField label="Prénom" id="p-prenom" value={form.prenom} onChange={set("prenom")} />
-            <TextField label="Nom" id="p-nom" value={form.nom} onChange={set("nom")} />
-            <TextField label="Téléphone" id="p-tel" inputMode="numeric" value={form.telephone} onChange={set("telephone")} />
-            <SelectField label="Genre" id="p-genre" value={form.genre ?? ""} onChange={set("genre")}>
-              <option value="">—</option>
-              <option value="Homme">Homme</option>
-              <option value="Femme">Femme</option>
-            </SelectField>
-            <TextField label="Ville" id="p-ville" value={form.ville ?? ""} onChange={set("ville")} />
-            <TextField label="Domaine d'activité" id="p-secteur" value={form.secteur ?? ""} onChange={set("secteur")} />
-            <SelectField label="Profil" id="p-profil" value={form.profil ?? ""} onChange={set("profil")}>
-              <option value="">—</option>
-              {profiles.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.label}
-                </option>
-              ))}
-            </SelectField>
-            <TextField label="Entreprise / projet" id="p-org" value={form.organisation ?? ""} onChange={set("organisation")} />
-            <div className="sm:col-span-2">
-              <TextareaField label="Bio" id="p-bio" value={form.bio ?? ""} onChange={set("bio")} />
+            <Field label="Prénom" id="p-prenom">
+              <input id="p-prenom" style={inputStyle} value={form.prenom} onChange={set("prenom")} />
+            </Field>
+            <Field label="Nom" id="p-nom">
+              <input id="p-nom" style={inputStyle} value={form.nom} onChange={set("nom")} />
+            </Field>
+            <Field label="Téléphone" id="p-tel">
+              <input id="p-tel" inputMode="numeric" style={inputStyle} value={form.telephone} onChange={set("telephone")} />
+            </Field>
+            <Field label="Genre" id="p-genre">
+              <select
+                id="p-genre"
+                style={{ ...inputStyle, appearance: "none" }}
+                value={form.genre}
+                onChange={set("genre")}
+              >
+                <option value="">—</option>
+                <option value="Homme">Homme</option>
+                <option value="Femme">Femme</option>
+              </select>
+            </Field>
+            <Field label="Ville" id="p-ville">
+              <input id="p-ville" style={inputStyle} value={form.ville} onChange={set("ville")} placeholder="Abidjan" />
+            </Field>
+            <Field label="Domaine d'activité" id="p-secteur">
+              <input id="p-secteur" style={inputStyle} value={form.secteur} onChange={set("secteur")} />
+            </Field>
+            <Field label="Profil" id="p-profil">
+              <select
+                id="p-profil"
+                style={{ ...inputStyle, appearance: "none" }}
+                value={form.profil}
+                onChange={set("profil")}
+              >
+                <option value="">—</option>
+                {profiles.map((p) => (
+                  <option key={p.id} value={p.id}>{p.label}</option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Entreprise / projet" id="p-org">
+              <input id="p-org" style={inputStyle} value={form.organisation} onChange={set("organisation")} />
+            </Field>
+
+            {/* Bio — full width */}
+            <div style={{ gridColumn: "1 / -1" }}>
+              <Field label="Bio" id="p-bio">
+                <textarea
+                  id="p-bio"
+                  style={{ ...inputStyle, minHeight: 110, resize: "vertical" }}
+                  value={form.bio}
+                  onChange={set("bio")}
+                  placeholder="Décrivez-vous en quelques mots…"
+                />
+              </Field>
             </div>
 
-            {error && <p className="text-sm font-medium text-accent sm:col-span-2">{error}</p>}
+            {error && (
+              <p style={{ gridColumn: "1 / -1", fontSize: 13, color: RED2, margin: 0 }}>{error}</p>
+            )}
 
-            <div className="flex items-center gap-4 sm:col-span-2">
+            {/* Submit */}
+            <div style={{ gridColumn: "1 / -1", display: "flex", alignItems: "center", gap: 12, paddingTop: 4 }}>
               <button
                 type="submit"
                 disabled={status === "saving"}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-accent px-7 py-3.5 font-semibold text-white transition-colors hover:bg-accent-600 disabled:opacity-70"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "11px 28px",
+                  borderRadius: 11,
+                  background: status === "saved" ? "rgba(52,211,153,0.18)" : RED,
+                  border: status === "saved" ? `1px solid rgba(52,211,153,0.35)` : "none",
+                  color: status === "saved" ? GREEN : "#fff",
+                  fontSize: 13.5,
+                  fontWeight: 700,
+                  cursor: status === "saving" ? "default" : "pointer",
+                  opacity: status === "saving" ? 0.7 : 1,
+                  transition: "all 0.2s",
+                  letterSpacing: "-0.01em",
+                }}
               >
                 {status === "saving" ? (
-                  <Loader2 className="size-4 animate-spin" />
+                  <Loader2 size={15} className="animate-spin" />
                 ) : status === "saved" ? (
-                  <Check className="size-4" />
+                  <Check size={15} />
                 ) : null}
-                {status === "saved" ? "Enregistré" : "Enregistrer"}
+                {status === "saved" ? "Enregistré !" : "Enregistrer les modifications"}
               </button>
             </div>
-          </form>
-        </Container>
-      </section>
-    </>
+          </div>
+        </form>
+      </div>
+    </DarkPage>
   );
 }

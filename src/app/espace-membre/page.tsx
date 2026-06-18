@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { MemberDashboard } from "@/components/auth/MemberDashboard";
+import { MemberDashboard } from "@/components/member/MemberDashboard";
 
 export const metadata: Metadata = {
   title: "Espace membre",

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { MemberGuard } from "@/components/auth/MemberGuard";
 import { ProfileEditor } from "@/components/auth/ProfileEditor";
 
 export const metadata: Metadata = {
@@ -8,9 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function ProfilPage() {
-  return (
-    <MemberGuard>
-      <ProfileEditor />
-    </MemberGuard>
-  );
+  return <ProfileEditor />;
 }

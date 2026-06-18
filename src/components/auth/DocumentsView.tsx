@@ -1,11 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { ArrowLeft, Download, FileText, Loader2 } from "lucide-react";
+import { Download, FileText, FolderOpen, Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { memberApi, type DocItem } from "@/lib/api/client";
-import { Container } from "@/components/ui/Container";
+import { DarkPage } from "@/components/member/DarkPage";
+
+const SURF   = "rgba(255,255,255,0.05)";
+const SURF2  = "rgba(255,255,255,0.085)";
+const BORDER = "rgba(255,255,255,0.09)";
+const TEXT   = "#F4F6F8";
+const MUTED  = "rgba(244,246,248,0.60)";
+const DIM    = "rgba(244,246,248,0.38)";
+const BLUE2  = "#9DB2EE";
+const RED2   = "#E84A43";
 
 export function DocumentsView() {
   const { token } = useAuth();
@@ -23,72 +31,110 @@ export function DocumentsView() {
   const categories = [...new Set(docs.map((d) => d.category))];
 
   return (
-    <>
-      <header className="relative overflow-hidden bg-brand pb-12 pt-36 sm:pt-44">
-        <div className="pointer-events-none absolute inset-0 bg-grid opacity-[0.22] [mask-image:radial-gradient(ellipse_at_top,black,transparent_75%)]" />
-        <Container className="relative">
-          <Link
-            href="/espace-membre"
-            className="inline-flex items-center gap-2 text-sm text-white/60 transition-colors hover:text-white"
-          >
-            <ArrowLeft className="size-4" /> Tableau de bord
-          </Link>
-          <h1 className="mt-5 font-display text-[clamp(2rem,5vw,3.25rem)] uppercase leading-none tracking-tight text-white">
-            Documents & ressources
-          </h1>
-        </Container>
-      </header>
-
-      <section className="bg-cloud py-12 sm:py-16">
-        <Container className="max-w-4xl">
-          {loading ? (
-            <div className="flex justify-center py-16">
-              <Loader2 className="size-7 animate-spin text-brand" />
+    <DarkPage
+      title="Documents & ressources"
+      subtitle="Guides, chartes et ressources mis à disposition par le réseau."
+      icon={<FolderOpen size={20} />}
+    >
+      {loading ? (
+        <div style={{ display: "flex", justifyContent: "center", padding: "64px 0" }}>
+          <Loader2 size={28} className="animate-spin" style={{ color: "rgba(244,246,248,0.45)" }} />
+        </div>
+      ) : docs.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "48px 0" }}>
+          <FolderOpen size={36} style={{ color: DIM, margin: "0 auto 14px" }} />
+          <p style={{ color: MUTED, fontSize: 14 }}>Aucun document disponible.</p>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 36, maxWidth: 820 }}>
+          {categories.map((cat) => (
+            <div key={cat}>
+              <p
+                style={{
+                  fontSize: 10.5,
+                  fontWeight: 700,
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
+                  color: DIM,
+                  marginBottom: 14,
+                }}
+              >
+                {cat}
+              </p>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12 }}>
+                {docs
+                  .filter((d) => d.category === cat)
+                  .map((d) => (
+                    <a
+                      key={d.id}
+                      href={d.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 14,
+                        background: SURF,
+                        border: `1px solid ${BORDER}`,
+                        borderRadius: 16,
+                        padding: "16px 18px",
+                        textDecoration: "none",
+                        transition: "transform 0.18s, box-shadow 0.18s",
+                        backdropFilter: "blur(16px)",
+                      }}
+                      onMouseEnter={(e) => {
+                        (e.currentTarget as HTMLAnchorElement).style.transform = "translateY(-2px)";
+                        (e.currentTarget as HTMLAnchorElement).style.boxShadow = "0 18px 40px -18px rgba(0,0,0,0.5)";
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.currentTarget as HTMLAnchorElement).style.transform = "translateY(0)";
+                        (e.currentTarget as HTMLAnchorElement).style.boxShadow = "none";
+                      }}
+                    >
+                      <span
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          width: 42,
+                          height: 42,
+                          borderRadius: 11,
+                          background: "rgba(232,74,67,0.13)",
+                          flexShrink: 0,
+                        }}
+                      >
+                        <FileText size={18} style={{ color: RED2 }} />
+                      </span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: 13.5, fontWeight: 600, color: TEXT, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {d.title}
+                        </p>
+                        {d.description && (
+                          <p style={{ fontSize: 12, color: MUTED, margin: "3px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {d.description}
+                          </p>
+                        )}
+                      </div>
+                      <span
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 5,
+                          fontSize: 12,
+                          fontWeight: 600,
+                          color: BLUE2,
+                          flexShrink: 0,
+                        }}
+                      >
+                        {d.size} <Download size={13} />
+                      </span>
+                    </a>
+                  ))}
+              </div>
             </div>
-          ) : docs.length === 0 ? (
-            <p className="py-16 text-center text-ink/55">Aucun document disponible.</p>
-          ) : (
-            <div className="flex flex-col gap-10">
-              {categories.map((cat) => (
-                <div key={cat}>
-                  <h2 className="mb-4 text-xs font-semibold uppercase tracking-[0.16em] text-ink/50">
-                    {cat}
-                  </h2>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {docs
-                      .filter((d) => d.category === cat)
-                      .map((d) => (
-                        <a
-                          key={d.id}
-                          href={d.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="group flex items-center gap-4 rounded-3xl border border-brand/10 bg-white p-5 transition-all hover:-translate-y-0.5 hover:shadow-[0_22px_45px_-30px_rgba(3,29,89,0.4)]"
-                        >
-                          <span className="inline-flex size-12 shrink-0 items-center justify-center rounded-2xl bg-brand/5 text-brand">
-                            <FileText className="size-5" />
-                          </span>
-                          <span className="min-w-0 flex-1">
-                            <span className="block font-semibold text-brand">{d.title}</span>
-                            {d.description && (
-                              <span className="block truncate text-sm text-ink/60">
-                                {d.description}
-                              </span>
-                            )}
-                          </span>
-                          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent">
-                            {d.size}
-                            <Download className="size-4" />
-                          </span>
-                        </a>
-                      ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </Container>
-      </section>
-    </>
+          ))}
+        </div>
+      )}
+    </DarkPage>
   );
 }
