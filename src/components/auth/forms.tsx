@@ -53,8 +53,8 @@ export function LoginForm() {
     setLoading(true);
     setError("");
     try {
-      await login(email, password);
-      router.push("/espace-membre");
+      const user = await login(email, password);
+      router.push(user.role === "admin" ? "/admin" : "/espace-membre");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur de connexion.");
     } finally {
