@@ -2,47 +2,48 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Send, Loader2, MessageCircle, Users } from "lucide-react";
+import { ArrowLeft, MessageCircle, Send, Loader2, Users } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
-import {
-  memberApi,
-  type Conversation,
-  type ChatMessage,
-} from "@/lib/api/client";
-import { Container } from "@/components/ui/Container";
-import { cn } from "@/lib/utils";
+import { memberApi, type Conversation, type ChatMessage } from "@/lib/api/client";
+import { DarkPage } from "@/components/member/DarkPage";
+
+const SURF   = "rgba(8,28,80,0.72)";
+const SURF2  = "rgba(12,38,100,0.80)";
+const BORDER = "rgba(255,255,255,0.09)";
+const TEXT   = "#F4F6F8";
+const MUTED  = "rgba(244,246,248,0.60)";
+const DIM    = "rgba(244,246,248,0.38)";
+const BLUE   = "#4F6FBF";
+const BLUE2  = "#9DB2EE";
+const RED    = "#AC0100";
+const RED2   = "#E84A43";
 
 function time(s: string) {
   return new Date(s).toLocaleString("fr-FR", {
-    day: "2-digit",
-    month: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
+    day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit",
   });
 }
 
 export function MessagingView() {
   const { token, user } = useAuth();
-  const [convos, setConvos] = useState<Conversation[]>([]);
+  const [convos, setConvos]     = useState<Conversation[]>([]);
   const [activeId, setActiveId] = useState<number | null>(null);
-  const [partner, setPartner] = useState<{ prenom: string; nom: string } | null>(null);
+  const [partner, setPartner]   = useState<{ prenom: string; nom: string } | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [body, setBody] = useState("");
+  const [body, setBody]         = useState("");
   const [loadingConvos, setLoadingConvos] = useState(true);
   const [loadingThread, setLoadingThread] = useState(false);
   const me = user?.id;
 
   function loadConvos() {
     if (!token) return;
-    memberApi
-      .conversations(token)
+    memberApi.conversations(token)
       .then((r) => setConvos(r.conversations))
       .finally(() => setLoadingConvos(false));
   }
 
   useEffect(loadConvos, [token]);
 
-  // Ouvre une conversation passée via ?to=<id> (depuis l'annuaire).
   useEffect(() => {
     if (!token) return;
     const to = new URLSearchParams(window.location.search).get("to");
@@ -73,166 +74,280 @@ export function MessagingView() {
     loadConvos();
   }
 
+  const cardStyle: React.CSSProperties = {
+    background: SURF,
+    border: `1px solid ${BORDER}`,
+    borderRadius: 18,
+    overflow: "hidden",
+  };
+
   return (
-    <>
-      <header className="relative overflow-hidden bg-brand pb-12 pt-36 sm:pt-44">
-        <div className="pointer-events-none absolute inset-0 bg-grid opacity-[0.22] [mask-image:radial-gradient(ellipse_at_top,black,transparent_75%)]" />
-        <Container className="relative">
-          <Link
-            href="/espace-membre"
-            className="inline-flex items-center gap-2 text-sm text-white/60 transition-colors hover:text-white"
-          >
-            <ArrowLeft className="size-4" /> Tableau de bord
-          </Link>
-          <h1 className="mt-5 font-display text-[clamp(2rem,5vw,3.25rem)] uppercase leading-none tracking-tight text-white">
-            Messagerie
-          </h1>
-        </Container>
-      </header>
-
-      <section className="bg-cloud py-12 sm:py-16">
-        <Container>
-          <div className="grid gap-4 lg:grid-cols-[330px_1fr]">
-            {/* Conversations */}
-            <aside
-              className={cn(
-                "rounded-3xl border border-brand/10 bg-white p-3",
-                activeId ? "hidden lg:block" : "block",
-              )}
-            >
-              {loadingConvos ? (
-                <div className="flex justify-center py-10">
-                  <Loader2 className="size-6 animate-spin text-brand" />
-                </div>
-              ) : convos.length === 0 ? (
-                <div className="px-3 py-8 text-center text-sm text-ink/55">
-                  <MessageCircle className="mx-auto mb-3 size-7 text-brand/30" />
-                  Aucune conversation. Démarrez-en une depuis l&apos;annuaire.
-                  <Link
-                    href="/espace-membre/annuaire"
-                    className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-brand px-4 py-2 text-xs font-semibold text-white"
+    <DarkPage
+      title="Messagerie"
+      subtitle="Échangez en privé avec les membres du réseau."
+      icon={<MessageCircle size={20} />}
+    >
+      <div
+        className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4"
+        style={{ height: "calc(100vh - 280px)", minHeight: 420 }}
+      >
+        {/* Conversations list */}
+        <aside
+          style={{
+            ...cardStyle,
+            display: activeId ? undefined : "block",
+          }}
+          className={activeId ? "hidden lg:block" : "block"}
+        >
+          {loadingConvos ? (
+            <div style={{ display: "flex", justifyContent: "center", padding: "48px 0" }}>
+              <Loader2 size={24} className="animate-spin" style={{ color: "rgba(244,246,248,0.45)" }} />
+            </div>
+          ) : convos.length === 0 ? (
+            <div style={{ padding: "40px 24px", textAlign: "center" }}>
+              <MessageCircle size={32} style={{ color: DIM, margin: "0 auto 12px" }} />
+              <p style={{ color: MUTED, fontSize: 13.5, marginBottom: 16 }}>
+                Aucune conversation. Démarrez-en une depuis l'annuaire.
+              </p>
+              <Link
+                href="/espace-membre/annuaire"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "8px 16px",
+                  borderRadius: 10,
+                  background: "rgba(79,111,191,0.14)",
+                  border: `1px solid rgba(79,111,191,0.24)`,
+                  color: BLUE2,
+                  fontSize: 12.5,
+                  fontWeight: 600,
+                  textDecoration: "none",
+                }}
+              >
+                <Users size={13} /> Voir l'annuaire
+              </Link>
+            </div>
+          ) : (
+            <ul style={{ listStyle: "none", margin: 0, padding: "8px 0" }}>
+              {convos.map((c) => (
+                <li key={c.user_id}>
+                  <button
+                    onClick={() => openThread(c.user_id)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 12,
+                      width: "100%",
+                      padding: "12px 16px",
+                      background: activeId === c.user_id ? SURF2 : "transparent",
+                      border: "none",
+                      cursor: "pointer",
+                      textAlign: "left",
+                      transition: "background 0.18s",
+                    }}
                   >
-                    <Users className="size-3.5" /> Voir l&apos;annuaire
-                  </Link>
-                </div>
-              ) : (
-                <ul className="flex flex-col">
-                  {convos.map((c) => (
-                    <li key={c.user_id}>
-                      <button
-                        onClick={() => openThread(c.user_id)}
-                        className={cn(
-                          "flex w-full items-center gap-3 rounded-2xl p-3 text-left transition-colors",
-                          activeId === c.user_id ? "bg-brand/5" : "hover:bg-cloud",
-                        )}
-                      >
-                        <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-brand text-xs font-bold text-white">
-                          {c.prenom?.[0]}
-                          {c.nom?.[0]}
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="flex items-center justify-between gap-2">
-                            <span className="truncate font-semibold text-brand">
-                              {c.prenom} {c.nom}
-                            </span>
-                            {c.unread > 0 && (
-                              <span className="inline-flex size-5 items-center justify-center rounded-full bg-accent text-[0.65rem] font-bold text-white">
-                                {c.unread}
-                              </span>
-                            )}
-                          </span>
-                          <span className="block truncate text-sm text-ink/55">{c.last}</span>
-                        </span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </aside>
-
-            {/* Fil */}
-            <section
-              className={cn(
-                "min-h-[460px] flex-col rounded-3xl border border-brand/10 bg-white",
-                activeId ? "flex" : "hidden lg:flex",
-              )}
-            >
-              {!activeId ? (
-                <div className="flex flex-1 items-center justify-center p-10 text-center text-ink/50">
-                  Sélectionnez une conversation pour afficher les messages.
-                </div>
-              ) : (
-                <>
-                  <div className="flex items-center gap-3 border-b border-brand/10 p-4">
-                    <button
-                      onClick={() => setActiveId(null)}
-                      className="lg:hidden"
-                      aria-label="Retour"
+                    <span
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: 42,
+                        height: 42,
+                        borderRadius: "50%",
+                        background: `linear-gradient(135deg, ${BLUE}, ${RED})`,
+                        fontSize: 13,
+                        fontWeight: 700,
+                        color: "#fff",
+                        flexShrink: 0,
+                        letterSpacing: "0.04em",
+                      }}
                     >
-                      <ArrowLeft className="size-5 text-brand" />
-                    </button>
-                    <span className="inline-flex size-10 items-center justify-center rounded-full bg-brand text-xs font-bold text-white">
-                      {partner?.prenom?.[0]}
-                      {partner?.nom?.[0]}
+                      {c.prenom?.[0]}{c.nom?.[0]}
                     </span>
-                    <p className="font-bold text-brand">
-                      {partner ? `${partner.prenom} ${partner.nom}` : ""}
-                    </p>
-                  </div>
-
-                  <div className="flex flex-1 flex-col gap-2.5 overflow-y-auto p-4">
-                    {loadingThread ? (
-                      <div className="flex flex-1 items-center justify-center">
-                        <Loader2 className="size-6 animate-spin text-brand" />
-                      </div>
-                    ) : (
-                      messages.map((m) => {
-                        const mine = m.sender_id === me;
-                        return (
-                          <div
-                            key={m.id}
-                            className={cn("flex flex-col", mine ? "items-end" : "items-start")}
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                        <span style={{ fontSize: 13.5, fontWeight: 600, color: TEXT, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {c.prenom} {c.nom}
+                        </span>
+                        {c.unread > 0 && (
+                          <span
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              minWidth: 20,
+                              height: 20,
+                              borderRadius: "50%",
+                              background: RED2,
+                              fontSize: 10.5,
+                              fontWeight: 700,
+                              color: "#fff",
+                              flexShrink: 0,
+                              padding: "0 4px",
+                            }}
                           >
-                            <div
-                              className={cn(
-                                "max-w-[80%] rounded-2xl px-4 py-2.5 text-sm",
-                                mine
-                                  ? "bg-brand text-white"
-                                  : "bg-cloud text-ink",
-                              )}
-                            >
-                              {m.body}
-                            </div>
-                            <span className="mt-1 px-1 text-[0.7rem] text-ink/40">
-                              {time(m.created_at)}
-                            </span>
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
+                            {c.unread}
+                          </span>
+                        )}
+                      </span>
+                      <span style={{ display: "block", fontSize: 12, color: MUTED, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginTop: 2 }}>
+                        {c.last}
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </aside>
 
-                  <form onSubmit={onSend} className="flex items-center gap-2 border-t border-brand/10 p-3">
-                    <input
-                      value={body}
-                      onChange={(e) => setBody(e.target.value)}
-                      placeholder="Votre message…"
-                      className="min-w-0 flex-1 rounded-full border border-brand/15 bg-white px-4 py-2.5 text-sm text-brand outline-none focus:border-brand focus:ring-2 focus:ring-accent/20"
-                    />
-                    <button
-                      type="submit"
-                      aria-label="Envoyer"
-                      className="inline-flex size-11 shrink-0 items-center justify-center rounded-full bg-accent text-white transition-colors hover:bg-accent-600"
-                    >
-                      <Send className="size-4" />
-                    </button>
-                  </form>
-                </>
-              )}
-            </section>
-          </div>
-        </Container>
-      </section>
-    </>
+        {/* Message thread */}
+        <section
+          style={{
+            ...cardStyle,
+            display: "flex",
+            flexDirection: "column",
+          }}
+          className={activeId ? "flex" : "hidden lg:flex"}
+        >
+          {!activeId ? (
+            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: 40, textAlign: "center", color: MUTED, fontSize: 14 }}>
+              Sélectionnez une conversation pour afficher les messages.
+            </div>
+          ) : (
+            <>
+              {/* Thread header */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  borderBottom: `1px solid ${BORDER}`,
+                  padding: "14px 18px",
+                  flexShrink: 0,
+                }}
+              >
+                <button
+                  onClick={() => setActiveId(null)}
+                  className="lg:hidden"
+                  style={{ background: "none", border: "none", color: MUTED, cursor: "pointer", padding: 4 }}
+                  aria-label="Retour"
+                >
+                  <ArrowLeft size={18} />
+                </button>
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: 38,
+                    height: 38,
+                    borderRadius: "50%",
+                    background: `linear-gradient(135deg, ${BLUE}, ${RED})`,
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: "#fff",
+                    flexShrink: 0,
+                  }}
+                >
+                  {partner?.prenom?.[0]}{partner?.nom?.[0]}
+                </span>
+                <p style={{ fontSize: 14, fontWeight: 700, color: TEXT, margin: 0 }}>
+                  {partner ? `${partner.prenom} ${partner.nom}` : ""}
+                </p>
+              </div>
+
+              {/* Messages */}
+              <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 10, padding: "16px 18px" }}>
+                {loadingThread ? (
+                  <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <Loader2 size={24} className="animate-spin" style={{ color: "rgba(244,246,248,0.45)" }} />
+                  </div>
+                ) : (
+                  messages.map((m) => {
+                    const mine = m.sender_id === me;
+                    return (
+                      <div key={m.id} style={{ display: "flex", flexDirection: "column", alignItems: mine ? "flex-end" : "flex-start" }}>
+                        <div
+                          style={{
+                            maxWidth: "78%",
+                            borderRadius: 14,
+                            padding: "10px 14px",
+                            fontSize: 13.5,
+                            lineHeight: 1.5,
+                            background: mine ? `linear-gradient(135deg, ${BLUE}, #031D59)` : SURF2,
+                            color: mine ? "#fff" : TEXT,
+                            border: mine ? "none" : `1px solid ${BORDER}`,
+                          }}
+                        >
+                          {m.body}
+                        </div>
+                        <span style={{ marginTop: 4, padding: "0 4px", fontSize: 11, color: DIM }}>
+                          {time(m.created_at)}
+                        </span>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Send form */}
+              <form
+                onSubmit={onSend}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  borderTop: `1px solid ${BORDER}`,
+                  padding: "12px 14px",
+                  flexShrink: 0,
+                }}
+              >
+                <input
+                  value={body}
+                  onChange={(e) => setBody(e.target.value)}
+                  placeholder="Votre message…"
+                  style={{
+                    flex: 1,
+                    background: SURF2,
+                    border: `1px solid ${BORDER}`,
+                    borderRadius: 10,
+                    padding: "10px 16px",
+                    fontSize: 13.5,
+                    color: TEXT,
+                    outline: "none",
+                    fontFamily: "var(--ff-sans)",
+                    minWidth: 0,
+                  }}
+                />
+                <button
+                  type="submit"
+                  aria-label="Envoyer"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: 42,
+                    height: 42,
+                    borderRadius: 11,
+                    background: RED,
+                    border: "none",
+                    color: "#fff",
+                    cursor: "pointer",
+                    flexShrink: 0,
+                    transition: "background 0.18s",
+                  }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "#E84A43"; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = RED; }}
+                >
+                  <Send size={15} />
+                </button>
+              </form>
+            </>
+          )}
+        </section>
+      </div>
+    </DarkPage>
   );
 }

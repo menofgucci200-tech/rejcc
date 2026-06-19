@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, ArrowRight, ArrowLeft, ShieldCheck, PartyPopper, Loader2 } from "lucide-react";
+import { Check, ArrowRight, ArrowLeft, ShieldCheck, PartyPopper, Loader2, LayoutDashboard } from "lucide-react";
+import { useAuth } from "@/lib/auth/AuthContext";
 import { adhesionSchema, type AdhesionInput } from "@/lib/validation/schemas";
 import {
   adhesionFee,
@@ -26,6 +28,7 @@ const stepFields: (keyof AdhesionInput)[][] = [
 ];
 
 export function AdhesionForm() {
+  const { user } = useAuth();
   const [step, setStep] = useState(0);
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [reference, setReference] = useState("");
@@ -82,6 +85,13 @@ export function AdhesionForm() {
   }
 
   if (status === "success") {
+    const dashboardHref = user?.role === "admin" ? "/admin" : user ? "/espace-membre" : "/inscription";
+    const dashboardLabel = user?.role === "admin"
+      ? "Accéder au back-office"
+      : user
+      ? "Accéder à mon espace membre"
+      : "Créer mon compte membre";
+
     return (
       <div className="rounded-3xl border border-brand/10 bg-white p-8 text-center sm:p-12">
         <div className="mx-auto inline-flex size-16 items-center justify-center rounded-full bg-accent/10 text-accent">
@@ -97,6 +107,15 @@ export function AdhesionForm() {
         <p className="mt-6 inline-block rounded-full bg-cloud px-5 py-2 text-sm text-ink/70">
           Référence : <span className="font-semibold text-brand">{reference}</span>
         </p>
+        <div className="mt-8">
+          <Link
+            href={dashboardHref}
+            className="inline-flex items-center gap-2 rounded-full bg-brand px-7 py-3.5 font-semibold text-white transition-colors hover:bg-brand/90"
+          >
+            <LayoutDashboard className="size-4" />
+            {dashboardLabel}
+          </Link>
+        </div>
       </div>
     );
   }

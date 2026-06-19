@@ -16,8 +16,8 @@ type AuthState = {
   token: string | null;
   loading: boolean;
   configured: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (data: Record<string, unknown>) => Promise<void>;
+  login: (email: string, password: string) => Promise<Member>;
+  register: (data: Record<string, unknown>) => Promise<Member>;
   logout: () => Promise<void>;
   setUser: (u: Member) => void;
 };
@@ -53,12 +53,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(res.user);
   }
 
-  async function login(email: string, password: string) {
-    persist(await authApi.login({ email, password }));
+  async function login(email: string, password: string): Promise<Member> {
+    const res = await authApi.login({ email, password });
+    persist(res);
+    return res.user;
   }
 
-  async function register(data: Record<string, unknown>) {
-    persist(await authApi.register(data));
+  async function register(data: Record<string, unknown>): Promise<Member> {
+    const res = await authApi.register(data);
+    persist(res);
+    return res.user;
   }
 
   async function logout() {
