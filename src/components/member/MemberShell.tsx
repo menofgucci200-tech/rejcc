@@ -664,6 +664,7 @@ export function MemberShell({ children }: { children: React.ReactNode }) {
         <main
           style={{
             flex: 1,
+            minHeight: 0,
             overflowY: "auto",
             overflowX: "hidden",
             background: "#02163f",

@@ -3,9 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
-  Users, MessageCircle, Bell, FolderOpen, Calendar,
-  User, ArrowRight, Download, ExternalLink,
-  MapPin, Briefcase, TrendingUp, Globe,
+  Users, MessageCircle, FolderOpen, ArrowRight, Download, ExternalLink,
+  MapPin, TrendingUp, Globe,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { memberApi, authApi, type Conversation, type DocItem, type Member } from "@/lib/api/client";
@@ -183,59 +182,6 @@ function Ring({ pct }: { pct: number }) {
     </svg>
   );
 }
-
-/* ── Quick action card ────────────────────────── */
-const quickActions = [
-  {
-    icon: Users,
-    label: "Annuaire",
-    desc: "Retrouvez les membres du réseau",
-    href: "/espace-membre/annuaire",
-    color: BLUE,
-    bg: "rgba(79,111,191,0.14)",
-  },
-  {
-    icon: MessageCircle,
-    label: "Messagerie",
-    desc: "Échangez avec les membres",
-    href: "/espace-membre/messagerie",
-    color: GREEN,
-    bg: "rgba(52,211,153,0.12)",
-  },
-  {
-    icon: Bell,
-    label: "Notifications",
-    desc: "Vos dernières alertes",
-    href: "/espace-membre/notifications",
-    color: GOLD,
-    bg: "rgba(242,163,60,0.12)",
-  },
-  {
-    icon: FolderOpen,
-    label: "Documents",
-    desc: "Ressources & guides REJCC",
-    href: "/espace-membre/documents",
-    color: RED2,
-    bg: "rgba(232,74,67,0.12)",
-  },
-  {
-    icon: Calendar,
-    label: "Événements",
-    desc: "Prochaines activités",
-    href: "#",
-    color: "#A78BFA",
-    bg: "rgba(167,139,250,0.12)",
-    disabled: true,
-  },
-  {
-    icon: User,
-    label: "Mon profil",
-    desc: "Gérez vos informations",
-    href: "/espace-membre/profil",
-    color: MUTED,
-    bg: SURF2,
-  },
-];
 
 /* ── Upcoming events (static) ─────────────────── */
 const events = [
@@ -523,85 +469,6 @@ export function MemberDashboard() {
             </div>
           </Card>
         </div>
-      </Reveal>
-
-      {/* ── Accès rapides ───────────────────────── */}
-      <Reveal delay={120}>
-        <section style={{ marginBottom: 40 }}>
-          <SectionTitle title="Accès rapides" subtitle="Vos outils de réseau au quotidien" />
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-[14px]">
-            {quickActions.map((q) => {
-              const inner = (
-                <div
-                  style={{
-                    background: SURF,
-                    border: `1px solid ${BORDER}`,
-                    borderRadius: 16,
-                    padding: "20px 20px",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 12,
-                    opacity: q.disabled ? 0.45 : 1,
-                    transition: "transform 0.18s, box-shadow 0.18s",
-                    cursor: q.disabled ? "default" : "pointer",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!q.disabled) {
-                      (e.currentTarget as HTMLDivElement).style.transform = "translateY(-2px)";
-                      (e.currentTarget as HTMLDivElement).style.boxShadow = "0 18px 42px -18px rgba(0,0,0,0.45)";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)";
-                    (e.currentTarget as HTMLDivElement).style.boxShadow = "none";
-                  }}
-                >
-                  <span
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      width: 40,
-                      height: 40,
-                      borderRadius: 12,
-                      background: q.bg,
-                    }}
-                  >
-                    <q.icon size={18} style={{ color: q.color }} />
-                  </span>
-                  <div>
-                    <p style={{ fontSize: 14, fontWeight: 700, color: TEXT, margin: 0 }}>{q.label}</p>
-                    <p style={{ fontSize: 12, color: MUTED, margin: "3px 0 0", lineHeight: 1.4 }}>{q.desc}</p>
-                    {q.disabled && (
-                      <span
-                        style={{
-                          display: "inline-block",
-                          marginTop: 6,
-                          fontSize: 10,
-                          fontWeight: 600,
-                          color: DIM,
-                          background: SURF2,
-                          borderRadius: 20,
-                          padding: "2px 8px",
-                          letterSpacing: "0.04em",
-                        }}
-                      >
-                        Bientôt
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-              return q.disabled ? (
-                <div key={q.label}>{inner}</div>
-              ) : (
-                <Link key={q.label} href={q.href} style={{ textDecoration: "none" }}>
-                  {inner}
-                </Link>
-              );
-            })}
-          </div>
-        </section>
       </Reveal>
 
       {/* ── Membres + Événements ────────────────── */}
