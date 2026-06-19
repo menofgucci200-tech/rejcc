@@ -12,8 +12,8 @@ import { useAuth } from "@/lib/auth/AuthContext";
 
 /* ── Design tokens ────────────────────────────── */
 const BG       = "radial-gradient(165deg, #02163f 0%, #031D59 48%, #040f2e 100%)";
-const SURF     = "rgba(255,255,255,0.05)";
-const SURF2    = "rgba(255,255,255,0.085)";
+const SURF     = "rgba(8,28,80,0.72)";
+const SURF2    = "rgba(12,38,100,0.80)";
 const BORDER   = "1px solid rgba(255,255,255,0.09)";
 const BORDER2  = "1px solid rgba(255,255,255,0.16)";
 const TEXT     = "#F4F6F8";
@@ -514,9 +514,7 @@ export function MemberShell({ children }: { children: React.ReactNode }) {
             alignItems: "center",
             padding: "0 28px",
             gap: 14,
-            background: "rgba(255,255,255,0.03)",
-            backdropFilter: "blur(16px) saturate(150%)",
-            WebkitBackdropFilter: "blur(16px) saturate(150%)",
+            background: "rgba(2,18,55,1)",
             borderBottom: BORDER,
             flexShrink: 0,
           }}
@@ -668,6 +666,7 @@ export function MemberShell({ children }: { children: React.ReactNode }) {
             flex: 1,
             overflowY: "auto",
             overflowX: "hidden",
+            background: "#02163f",
           }}
         >
           {children}

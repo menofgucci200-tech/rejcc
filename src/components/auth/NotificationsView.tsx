@@ -7,8 +7,8 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { memberApi, type Notice } from "@/lib/api/client";
 import { DarkPage } from "@/components/member/DarkPage";
 
-const SURF   = "rgba(255,255,255,0.05)";
-const SURF2  = "rgba(255,255,255,0.085)";
+const SURF   = "rgba(8,28,80,0.72)";
+const SURF2  = "rgba(12,38,100,0.80)";
 const BORDER = "rgba(255,255,255,0.09)";
 const TEXT   = "#F4F6F8";
 const MUTED  = "rgba(244,246,248,0.60)";
@@ -67,7 +67,6 @@ export function NotificationsView() {
                   border: `1px solid ${BORDER}`,
                   borderRadius: 16,
                   padding: "16px 18px",
-                  backdropFilter: "blur(16px)",
                 }}
               >
                 <span

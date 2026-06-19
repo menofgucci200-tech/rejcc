@@ -6,7 +6,7 @@ import { ArrowLeft } from "lucide-react";
 const TEXT  = "#F4F6F8";
 const MUTED = "rgba(244,246,248,0.60)";
 const DIM   = "rgba(244,246,248,0.38)";
-const SURF  = "rgba(255,255,255,0.05)";
+const SURF  = "rgba(8,28,80,0.72)";
 const BORDER = "rgba(255,255,255,0.09)";
 
 /** Wrapper de mise en page pour les sous-pages de l'espace membre (annuaire, messagerie, etc.) */

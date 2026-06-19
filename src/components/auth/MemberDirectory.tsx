@@ -92,11 +92,10 @@ export function MemberDirectory() {
             <article
               key={m.id}
               style={{
-                background: "rgba(255,255,255,0.05)",
+                background: "rgba(8,28,80,0.72)",
                 border: "1px solid rgba(255,255,255,0.09)",
                 borderRadius: 18,
                 padding: "20px 22px",
-                backdropFilter: "blur(16px)",
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 14 }}>

@@ -11,8 +11,8 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { memberApi, authApi, type Conversation, type DocItem, type Member } from "@/lib/api/client";
 
 /* ── Design tokens ────────────────────────────── */
-const SURF    = "rgba(255,255,255,0.05)";
-const SURF2   = "rgba(255,255,255,0.09)";
+const SURF    = "rgba(8,28,80,0.72)";
+const SURF2   = "rgba(12,38,100,0.80)";
 const BORDER  = "rgba(255,255,255,0.09)";
 const TEXT    = "#F4F6F8";
 const MUTED   = "rgba(244,246,248,0.62)";
@@ -39,8 +39,6 @@ function Card({
         background: SURF,
         border: `1px solid ${BORDER}`,
         borderRadius: 20,
-        backdropFilter: "blur(16px) saturate(150%)",
-        WebkitBackdropFilter: "blur(16px) saturate(150%)",
         overflow: "hidden",
         ...style,
       }}
