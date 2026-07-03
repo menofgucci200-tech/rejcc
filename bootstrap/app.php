@@ -17,6 +17,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'auth.admin'   => \App\Http\Middleware\RequireAdmin::class,
             'admin.web'    => \App\Http\Middleware\RequireAdminWeb::class,
         ]);
+
+        // Derriere le proxy HTTPS de l'hebergeur (Render, etc.), sans quoi
+        // Laravel genere des URLs/redirections en http:// et casse la session.
+        $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
