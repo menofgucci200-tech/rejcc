@@ -5,7 +5,9 @@ use App\Http\Controllers\Api\AdhesionController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\DocumentController;
+use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\MessageController;
+use App\Http\Controllers\Api\OpportunityController;
 use App\Http\Controllers\Api\NewsletterController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PartenariatController;
@@ -42,6 +44,14 @@ Route::middleware('auth.token')->group(function () {
 
     // Documents & ressources
     Route::get('/documents', [DocumentController::class, 'index']);
+
+    // Événements
+    Route::get('/events', [EventController::class, 'index']);
+    Route::post('/events/{id}/register', [EventController::class, 'register']);
+
+    // Opportunités & annonces
+    Route::get('/opportunities', [OpportunityController::class, 'index']);
+    Route::post('/opportunities', [OpportunityController::class, 'store']);
 });
 
 // Administration — réservé aux admins

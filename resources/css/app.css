@@ -1,11 +1,303 @@
-@import 'tailwindcss';
+/* build: rejcc-css-v1 */
+@import "tailwindcss";
+@import "./fonts.css";
+@plugin "@tailwindcss/forms";
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
-@source '../**/*.blade.php';
-@source '../**/*.js';
-
+/* ============================================================
+   REJCC — Design system (Tailwind v4)
+   Couleurs & typographie issues de la charte graphique officielle.
+   ============================================================ */
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+  /* Brand palette */
+  --color-brand: #031d59; /* bleu — dominante */
+  --color-brand-700: #0a2c6e; /* step clair pour dégradés */
+  --color-brand-900: #021541; /* step sombre */
+  --color-azure: #4f6fbf; /* bleu clair — secondaire */
+  --color-accent: #ac0100; /* rouge — accent */
+  --color-accent-600: #c8160f; /* rouge clair (hover) */
+  --color-cloud: #f4f6f8; /* gris clair — neutre */
+  --color-cloud-200: #e7ebf1;
+  --color-ink: #333333; /* gris foncé — texte */
+
+  /* Typographic families */
+  --font-display: var(--ff-display); /* Anton  → ex-Impact */
+  --font-sans: var(--ff-sans); /* Manrope → ex-Avenir Next */
+  --font-serif: var(--ff-serif); /* Libre Caslon → ex-Big Caslon */
+
+  /* Radii */
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.75rem;
+  --radius-3xl: 2.25rem;
+
+  /* Easing & motion tokens */
+  --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Animations */
+  --animate-aurora: aurora 18s ease-in-out infinite;
+  --animate-float: float 7s ease-in-out infinite;
+  --animate-marquee: marquee 38s linear infinite;
+  --animate-shimmer: shimmer 2.4s linear infinite;
+}
+
+@keyframes aurora {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: translate3d(3%, -4%, 0) scale(1.08);
+    opacity: 1;
+  }
+}
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-14px);
+  }
+}
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+@keyframes shimmer {
+  from {
+    background-position: -200% 0;
+  }
+  to {
+    background-position: 200% 0;
+  }
+}
+
+/* ============================================================
+   Base
+   ============================================================ */
+:root {
+  --bg: #ffffff;
+  --fg: #333333;
+}
+
+* {
+  border-color: color-mix(in oklab, var(--color-brand) 12%, transparent);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-feature-settings: "ss01", "cv01";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+/* When Lenis smooth-scroll is active */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+::selection {
+  background: var(--color-accent);
+  color: #fff;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  text-wrap: balance;
+}
+
+/* Custom scrollbar (desktop) */
+@media (pointer: fine) {
+  ::-webkit-scrollbar {
+    width: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--color-cloud);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: color-mix(in oklab, var(--color-brand) 35%, #fff);
+    border-radius: 999px;
+    border: 2px solid var(--color-cloud);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-brand);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================
+   Utilities
+   ============================================================ */
+@utility glass {
+  background: color-mix(in oklab, #fff 70%, transparent);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border: 1px solid color-mix(in oklab, #fff 60%, transparent);
+}
+
+@utility glass-dark {
+  background: color-mix(in oklab, var(--color-brand-900) 45%, transparent);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  border: 1px solid color-mix(in oklab, #fff 12%, transparent);
+}
+
+/* Gradient text in brand colours */
+.text-gradient {
+  background: linear-gradient(
+    100deg,
+    var(--color-brand) 0%,
+    var(--color-azure) 55%,
+    var(--color-brand) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.shimmer-text {
+  background: linear-gradient(
+    100deg,
+    var(--color-brand) 0%,
+    var(--color-azure) 25%,
+    #fff 50%,
+    var(--color-azure) 75%,
+    var(--color-brand) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 6s linear infinite;
+}
+
+/* Subtle dotted/grid backdrops */
+.bg-grid {
+  background-image: linear-gradient(
+      color-mix(in oklab, var(--color-brand) 7%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in oklab, var(--color-brand) 7%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 56px 56px;
+}
+.bg-dots {
+  background-image: radial-gradient(
+    color-mix(in oklab, var(--color-brand) 14%, transparent) 1px,
+    transparent 1.4px
+  );
+  background-size: 22px 22px;
+}
+
+/* Container helper */
+.container-px {
+  padding-inline: clamp(1.25rem, 5vw, 4rem);
+}
+
+/* ============================================================
+   Reveal on scroll (remplace les animations Framer Motion)
+   ============================================================ */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity var(--reveal-duration, 0.7s) var(--ease-smooth),
+    transform var(--reveal-duration, 0.7s) var(--ease-smooth);
+  transition-delay: var(--reveal-delay, 0s);
+}
+[data-reveal][data-reveal-direction="down"] {
+  transform: translateY(-28px);
+}
+[data-reveal][data-reveal-direction="left"] {
+  transform: translateX(28px);
+}
+[data-reveal][data-reveal-direction="right"] {
+  transform: translateX(-28px);
+}
+[data-reveal][data-reveal-direction="none"] {
+  transform: none;
+}
+[data-reveal].is-visible {
+  opacity: 1;
+  transform: translate(0, 0);
+}
+
+/* Fullscreen loader fade-out */
+#page-loader {
+  opacity: 1;
+}
+#page-loader.opacity-0 {
+  opacity: 0;
+}
+
+/* ============================================================
+   Espace membre — thèmes dark/light (glassmorphism)
+   Portés depuis MemberShell.tsx. Scopés à .ms-shell pour ne pas
+   fuiter sur le reste du site.
+   ============================================================ */
+.ms-shell[data-ms-theme="dark"] {
+  --ms-shell-bg: radial-gradient(165deg, #02163f 0%, #031d59 48%, #040f2e 100%);
+  --ms-main-bg: #02163f;
+  --ms-header-bg: rgba(2, 18, 55, 1);
+  --ms-sidebar-bg: rgba(255, 255, 255, 0.028);
+  --ms-surf: rgba(8, 28, 80, 0.72);
+  --ms-surf2: rgba(12, 38, 100, 0.8);
+  --ms-bc: rgba(255, 255, 255, 0.09);
+  --ms-bc2: rgba(255, 255, 255, 0.16);
+  --ms-text: #f4f6f8;
+  --ms-muted: rgba(244, 246, 248, 0.6);
+  --ms-dim: rgba(244, 246, 248, 0.38);
+}
+
+.ms-shell[data-ms-theme="light"] {
+  --ms-shell-bg: linear-gradient(165deg, #edf2fb 0%, #f0f4fc 48%, #e8eef8 100%);
+  --ms-main-bg: #f5f7fc;
+  --ms-header-bg: rgba(248, 250, 255, 0.98);
+  --ms-sidebar-bg: rgba(3, 29, 89, 0.04);
+  --ms-surf: rgba(255, 255, 255, 0.92);
+  --ms-surf2: rgba(229, 237, 255, 0.95);
+  --ms-bc: rgba(3, 29, 89, 0.1);
+  --ms-bc2: rgba(3, 29, 89, 0.18);
+  --ms-text: #031d59;
+  --ms-muted: rgba(3, 29, 89, 0.55);
+  --ms-dim: rgba(3, 29, 89, 0.32);
 }
