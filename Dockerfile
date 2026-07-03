@@ -22,6 +22,15 @@ WORKDIR /app
 COPY . .
 COPY --from=assets /app/public/build ./public/build
 
+# Laravel a besoin de ces dossiers (memes vides) pour ecrire son cache
+# au moment du composer install (package:discover).
+RUN mkdir -p bootstrap/cache \
+        storage/framework/cache/data \
+        storage/framework/sessions \
+        storage/framework/views \
+        storage/logs \
+    && chmod -R 775 bootstrap/cache storage
+
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 EXPOSE 10000
