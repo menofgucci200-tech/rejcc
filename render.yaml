@@ -35,3 +35,7 @@ services:
         value: database
       - key: LOG_CHANNEL
         value: stderr
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false

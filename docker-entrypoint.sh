@@ -8,5 +8,6 @@ sed -ri "s/<VirtualHost \*:80>/<VirtualHost *:${PORT}>/" /etc/apache2/sites-avai
 
 php artisan storage:link || true
 php artisan migrate --force
+php artisan app:seed-if-empty
 
 exec apache2-foreground
