@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\MembershipStep;
 use App\Models\Sector;
 use App\Models\User;
 use Illuminate\Console\Command;
@@ -19,6 +20,13 @@ class SeedIfEmpty extends Command
         if (Sector::count() === 0) {
             $this->call('db:seed', ['--force' => true]);
         }
+
+        // Correction ponctuelle : l'etape "cotisation" a ete retiree du parcours d'adhesion
+        // (remplace par un formulaire externe), mais les bases deja seedees gardent l'ancien texte.
+        MembershipStep::where('title', 'Réglez votre cotisation')->update([
+            'title' => 'Soumettez votre formulaire',
+            'text' => "Remplissez notre formulaire d'inscription en ligne, ça ne prend que quelques minutes.",
+        ]);
 
         $adminEmail = env('ADMIN_EMAIL', 'admin@rejcc.ci');
 

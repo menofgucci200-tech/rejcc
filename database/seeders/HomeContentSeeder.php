@@ -48,7 +48,7 @@ class HomeContentSeeder extends Seeder
         $steps = [
             ['icon' => 'user-plus', 'title' => 'Créez votre profil', 'text' => 'Renseignez votre activité, votre secteur et vos ambitions en quelques minutes.'],
             ['icon' => 'list-checks', 'title' => 'Précisez votre profil', 'text' => 'Étudiant, porteur de projet ou entrepreneur confirmé : dites-nous qui vous êtes.'],
-            ['icon' => 'smartphone', 'title' => 'Réglez votre cotisation', 'text' => 'Payez vos 10 000 FCFA en toute simplicité par Wave, Orange Money ou Djamo.'],
+            ['icon' => 'smartphone', 'title' => 'Soumettez votre formulaire', 'text' => "Remplissez notre formulaire d'inscription en ligne, ça ne prend que quelques minutes."],
             ['icon' => 'party-popper', 'title' => 'Rejoignez la communauté', 'text' => "Accédez à votre espace membre, à l'annuaire, aux événements et aux ressources."],
         ];
         foreach ($steps as $i => $s) {
