@@ -50,6 +50,8 @@ Route::middleware('auth.token')->group(function () {
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
+    Route::put('/auth/password', [AuthController::class, 'updatePassword']);
+    Route::put('/auth/preferences', [AuthController::class, 'updatePreferences']);
     Route::get('/members', [AuthController::class, 'directory']);
 
     // Messagerie

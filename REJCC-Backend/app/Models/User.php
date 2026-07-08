@@ -28,12 +28,16 @@ class User extends Authenticatable
         'password',
         'genre',
         'ville',
+        'date_naissance',
+        'paroisse',
         'secteur',
         'profil',
         'organisation',
         'bio',
+        'preferences',
         'photo',
         'role',
+        'reference',
     ];
 
     public function tokens(): HasMany
@@ -61,6 +65,19 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'date_naissance' => 'date',
+            'preferences' => 'array',
+        ];
+    }
+
+    public function defaultPreferences(): array
+    {
+        return [
+            'notifications_email' => true,
+            'rappels_quotidiens' => true,
+            'visibilite_profil' => true,
+            'newsletter' => true,
+            'telechargement_hors_ligne' => false,
         ];
     }
 }

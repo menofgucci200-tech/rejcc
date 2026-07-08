@@ -10,6 +10,7 @@ use App\Livewire\Admin\Documents as AdminDocuments;
 use App\Livewire\Admin\Members as AdminMembers;
 use App\Livewire\Admin\MembershipApplications as AdminMembershipApplications;
 use App\Livewire\Admin\Notifications as AdminNotifications;
+use App\Livewire\Member\ComingSoon as MemberComingSoon;
 use App\Livewire\Member\Dashboard as MemberDashboard;
 use App\Livewire\Member\Directory as MemberDirectory;
 use App\Livewire\Member\Documents as MemberDocuments;
@@ -52,6 +53,10 @@ Route::middleware('api.auth')->prefix('espace-membre')->name('espace-membre.')->
     Route::get('/notifications', MemberNotifications::class)->name('notifications');
     Route::get('/documents', MemberDocuments::class)->name('documents');
     Route::get('/profil', MemberProfileEditor::class)->name('profile');
+
+    Route::get('/{page}', MemberComingSoon::class)
+        ->whereIn('page', ['formations', 'catalogue', 'parcours', 'mentorat', 'communaute', 'evenements', 'projets', 'incubateur', 'emplois', 'ressources', 'certificats'])
+        ->name('coming-soon');
 });
 
 Route::middleware(['api.auth', 'admin.web'])->prefix('admin')->name('admin.')->group(function () {

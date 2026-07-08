@@ -26,10 +26,21 @@ class AuthController extends Controller
 
     private function payload(User $u): array
     {
-        return $u->only([
-            'id', 'prenom', 'nom', 'email', 'telephone', 'genre',
-            'ville', 'secteur', 'profil', 'organisation', 'bio', 'photo', 'role',
-        ]);
+        if (! $u->reference) {
+            $u->reference = 'REJCC-'.now()->format('Y').'-'.str_pad((string) $u->id, 4, '0', STR_PAD_LEFT);
+            $u->save();
+        }
+
+        return [
+            ...$u->only([
+                'id', 'prenom', 'nom', 'email', 'telephone', 'genre',
+                'ville', 'paroisse', 'secteur', 'profil',
+                'organisation', 'bio', 'photo', 'role', 'reference',
+            ]),
+            'date_naissance' => $u->date_naissance?->toDateString(),
+            'preferences' => $u->preferences ?? $u->defaultPreferences(),
+            'date_adhesion' => $u->created_at?->toDateString(),
+        ];
     }
 
     public function register(Request $request)
@@ -121,6 +132,8 @@ class AuthController extends Controller
             'telephone' => ['sometimes', 'regex:/^[0-9]{10}$/'],
             'genre' => 'nullable|in:Homme,Femme',
             'ville' => 'nullable|string|max:80',
+            'date_naissance' => 'nullable|date',
+            'paroisse' => 'nullable|string|max:150',
             'secteur' => 'nullable|string|max:100',
             'profil' => 'nullable|in:etudiant,porteur,entrepreneur',
             'organisation' => 'nullable|string|max:120',
@@ -138,6 +151,46 @@ class AuthController extends Controller
         $user->save();
 
         return response()->json(['ok' => true, 'user' => $this->payload($user)]);
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $user = $request->user();
+        $validator = Validator::make($request->all(), [
+            'current_password' => 'required|string',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['ok' => false, 'message' => $validator->errors()->first()], 422);
+        }
+
+        if (! Hash::check($request->current_password, $user->password)) {
+            return response()->json(['ok' => false, 'message' => 'Mot de passe actuel incorrect.'], 422);
+        }
+
+        $user->password = $request->password;
+        $user->save();
+
+        return response()->json(['ok' => true]);
+    }
+
+    public function updatePreferences(Request $request)
+    {
+        $user = $request->user();
+        $validator = Validator::make($request->all(), [
+            'preferences' => 'required|array',
+            'preferences.*' => 'boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['ok' => false, 'message' => $validator->errors()->first()], 422);
+        }
+
+        $user->preferences = array_merge($user->preferences ?? $user->defaultPreferences(), $request->preferences);
+        $user->save();
+
+        return response()->json(['ok' => true, 'preferences' => $user->preferences]);
     }
 
     public function directory(Request $request)
