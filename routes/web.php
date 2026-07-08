@@ -8,6 +8,7 @@ use App\Livewire\Admin\Contacts as AdminContacts;
 use App\Livewire\Admin\Dashboard as AdminDashboard;
 use App\Livewire\Admin\Documents as AdminDocuments;
 use App\Livewire\Admin\Members as AdminMembers;
+use App\Livewire\Admin\MembershipApplications as AdminMembershipApplications;
 use App\Livewire\Admin\Notifications as AdminNotifications;
 use App\Livewire\Member\Dashboard as MemberDashboard;
 use App\Livewire\Member\Directory as MemberDirectory;
@@ -55,6 +56,7 @@ Route::middleware(['auth', 'admin.web'])->prefix('admin')->name('admin.')->group
     Route::get('/', AdminDashboard::class)->name('dashboard');
     Route::get('/membres', AdminMembers::class)->name('members');
     Route::get('/adhesions', AdminAdhesions::class)->name('adhesions');
+    Route::get('/candidatures', AdminMembershipApplications::class)->name('candidatures');
     Route::get('/contacts', AdminContacts::class)->name('contacts');
     Route::get('/documents', AdminDocuments::class)->name('documents');
     Route::get('/notifications', AdminNotifications::class)->name('notifications');

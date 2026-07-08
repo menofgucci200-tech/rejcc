@@ -16,6 +16,7 @@
                 ['icon' => 'layout-dashboard', 'label' => 'Tableau de bord', 'route' => 'admin.dashboard'],
                 ['icon' => 'users', 'label' => 'Membres', 'route' => 'admin.members'],
                 ['icon' => 'file-text', 'label' => 'Adhésions', 'route' => 'admin.adhesions'],
+                ['icon' => 'list-checks', 'label' => 'Candidatures', 'route' => 'admin.candidatures'],
                 ['icon' => 'message-circle', 'label' => 'Contacts', 'route' => 'admin.contacts'],
                 ['icon' => 'folder-open', 'label' => 'Documents', 'route' => 'admin.documents'],
                 ['icon' => 'bell', 'label' => 'Notifications', 'route' => 'admin.notifications'],
