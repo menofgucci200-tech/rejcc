@@ -41,14 +41,14 @@
             <div class="flex items-center gap-2">
                 <a href="{{ route('mon-espace') }}"
                     :class="(scrolled || {{ $isHome ? 'false' : 'true' }} || open) ? 'border-brand/25 text-brand hover:bg-brand hover:text-white' : 'border-white/40 text-white hover:bg-white hover:text-brand'"
-                    class="hidden items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-semibold transition-colors sm:inline-flex">
+                    class="inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-semibold transition-colors">
                     <x-ui.icon name="user" class="size-4" />
                     Mon espace
                 </a>
 
                 <x-ui.button :href="url($cta['href'])" size="sm" :with-arrow="true"
                     x-bind:class="(scrolled || {{ $isHome ? 'false' : 'true' }} || open) ? '' : '!bg-white !text-brand hover:!bg-cloud'"
-                    class="hidden sm:inline-flex">
+                    class="!hidden lg:!inline-flex">
                     {{ $cta['label'] }}
                 </x-ui.button>
 
