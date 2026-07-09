@@ -48,6 +48,8 @@
                         @php
                             $rows = [
                                 'Sexe' => $c->sexe, "Tranche d'âge" => $c->tranche_age, 'Contact' => $c->whatsapp.' · '.$c->email,
+                                'Diocèse / Paroisse' => trim(($c->diocese ?? '').' — '.($c->paroisse ?? ''), ' —'),
+                                'Ville' => $c->ville ?? null,
                                 'Statut actuel' => implode(', ', $c->statut_actuel ?? []), "Niveau d'études" => $c->niveau_etudes,
                                 "Domaines de formation" => $c->domaines_formation, 'Compétences' => implode(', ', $c->competences ?? []),
                                 'A une activité ?' => $c->a_activite, "Secteur d'activité" => $c->nom_activite,

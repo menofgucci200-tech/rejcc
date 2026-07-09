@@ -17,9 +17,14 @@ class AdhesionApplicationOptions
         ];
     }
 
-    public static function connotationsReligieuses(): array
+    public static function dioceses(): array
     {
-        return ['Catholique', 'Évangélique', 'Musulman', 'Autre'];
+        return [
+            "Archidiocèse d'Abidjan", "Diocèse d'Agboville", 'Diocèse de Grand-Bassam', 'Diocèse de Yopougon',
+            'Archidiocèse de Bouaké', "Diocèse d'Abengourou", 'Diocèse de Bondoukou', 'Diocèse de Yamoussoukro',
+            'Archidiocèse de Gagnoa', 'Diocèse de Daloa', 'Diocèse de Man', "Diocèse de San Pedro-en-Côte d'Ivoire",
+            'Archidiocèse de Korhogo', 'Diocèse de Katiola', "Diocèse d'Odienné", 'Autre',
+        ];
     }
 
     public static function paroisses(): array

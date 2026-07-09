@@ -13,6 +13,7 @@ class MembershipApplication extends Model
         'tranche_age',
         'whatsapp',
         'email',
+        'diocese',
         'ville',
         'password',
         'connotation_religieuse',

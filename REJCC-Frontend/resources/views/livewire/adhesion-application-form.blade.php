@@ -1,284 +1,317 @@
-@php
-    $sectionTitles = [
-        'general' => 'Informations générales',
-        'paroisse' => 'Votre paroisse',
-        'profil' => 'Profil',
-        'competences' => 'Compétences',
-        'entrepreneuriat' => 'Entrepreneuriat',
-        'activite_actuelle' => 'Compréhension de votre activité',
-        'activite_future' => 'Compréhension de votre future activité',
-        'attentes' => 'Attentes et profil',
-    ];
-    $isLastStep = $step === 'attentes';
-@endphp
-
-<div>
 @if ($status === 'success')
-    <div class="flex flex-col items-center justify-center rounded-3xl border border-brand/10 bg-cloud p-10 text-center">
-        <span class="inline-flex size-14 items-center justify-center rounded-full bg-accent/10 text-accent">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="size-7"><path d="M20 6 9 17l-5-5"/></svg>
+    <div class="flex min-h-screen flex-col items-center justify-center px-5 py-10 text-center">
+        <span class="mb-5 flex size-[76px] items-center justify-center rounded-full text-white shadow-[0_10px_26px_rgba(34,168,90,.3)]" style="background: linear-gradient(135deg, #22A85A, #1C8A49)">
+            <x-ui.icon name="check" class="size-9" />
         </span>
-        <h3 class="mt-5 text-xl font-bold text-brand">Candidature envoyée !</h3>
-        <p class="mt-2 max-w-md text-sm text-ink/70">Merci d'avoir rempli votre formulaire d'adhésion. Notre équipe va l'étudier ; votre espace membre sera créé dès que votre candidature sera validée.</p>
-        <a href="{{ route('adhesion.status') }}" wire:navigate class="mt-6 inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-accent-600">
-            Suivre l'état de ma candidature
-        </a>
+        <h1 class="mb-2.5 text-2xl font-extrabold text-brand">Merci pour votre demande !</h1>
+        <p class="mb-2 max-w-[380px] text-sm leading-relaxed text-[#5B677A]">Votre adhésion au REJCC a bien été enregistrée. Notre équipe vous contactera prochainement sur WhatsApp ou par e-mail.</p>
+        <p class="mb-7 max-w-[380px] font-serif text-[13.5px] italic text-[#5B677A]">« Tout ce que vous faites, faites-le de bon cœur, comme pour le Seigneur. » — Colossiens 3:23</p>
+        <div class="flex flex-wrap justify-center gap-2.5">
+            <a href="{{ route('home') }}" wire:navigate class="rounded-[10px] bg-brand px-[22px] py-3 text-[13.5px] font-bold text-white hover:bg-brand/90">Retour à l'accueil</a>
+            <a href="{{ route('adhesion.status') }}" wire:navigate class="rounded-[10px] border border-[#C9D3E6] bg-white px-[22px] py-3 text-[13.5px] font-bold text-brand hover:bg-cloud">Suivre l'état de ma candidature</a>
+        </div>
     </div>
 @else
-    <div class="rounded-3xl border border-brand/10 bg-white p-6 sm:p-8">
-        @if ($step === 'general')
-            <p class="mb-6 text-sm leading-relaxed text-ink/70">
-                Bienvenue dans le formulaire d'adhésion au Réseau Entrepreneurial des Jeunes Catholiques de Côte d'Ivoire (REJCC).
-                Ce formulaire nous permettra de mieux vous connaître, d'identifier vos compétences, vos projets et vos attentes afin de construire une communauté dynamique d'entrepreneurs, de professionnels et de jeunes porteurs de projets unis par les valeurs chrétiennes.
-                Ensemble, développons nos talents, créons des opportunités et contribuons au développement de notre Église et de notre pays.
-            </p>
-        @endif
-
-        <p class="mb-6 text-xs font-semibold uppercase tracking-[0.16em] text-brand/50">{{ $sectionTitles[$step] ?? '' }}</p>
-
-        <form wire:submit="{{ $isLastStep ? 'submit' : 'next' }}" class="flex flex-col gap-6">
-
-            @if ($step === 'general')
-                <div class="flex flex-col gap-1.5">
-                    <label for="ma-nom" class="text-sm font-semibold text-brand">Nom et prénoms</label>
-                    <input wire:model="nom_prenoms" id="ma-nom" type="text" class="w-full rounded-xl border bg-white px-4 py-3 text-brand placeholder:text-ink/40 outline-none transition focus:ring-2 {{ $errors->has('nom_prenoms') ? 'border-accent focus:border-accent focus:ring-accent/25' : 'border-brand/15 focus:border-brand focus:ring-accent/20' }}" />
-                    @error('nom_prenoms') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
-                </div>
-
-                <div>
-                    <p class="mb-2 text-sm font-semibold text-brand">Sexe</p>
-                    <div class="flex flex-wrap gap-2">
-                        @foreach ($sexes as $option)
-                            <x-ui.chip wire:click="select('sexe', {{ \Illuminate\Support\Js::from($option) }})" :active="$sexe === $option">{{ $option }}</x-ui.chip>
-                        @endforeach
+    <div class="flex min-h-screen flex-col">
+        <div class="sticky top-0 z-40 bg-brand px-6 py-4 text-white">
+            <div class="mb-3.5 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="flex size-8 shrink-0 items-center justify-center rounded-[9px] bg-white">
+                        <img src="{{ asset('brand/rejcc-monogram-color.png') }}" alt="REJCC" class="size-[22px] object-contain">
                     </div>
-                    @error('sexe') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
-                </div>
-
-                <div>
-                    <p class="mb-2 text-sm font-semibold text-brand">Dans quelle tranche d'âge vous situez-vous ?</p>
-                    <div class="flex flex-wrap gap-2">
-                        @foreach ($tranchesAge as $option)
-                            <x-ui.chip wire:click="select('tranche_age', {{ \Illuminate\Support\Js::from($option) }})" :active="$tranche_age === $option">{{ $option }}</x-ui.chip>
-                        @endforeach
+                    <div>
+                        <p class="text-sm font-extrabold tracking-[0.03em]">Formulaire d'adhésion</p>
+                        <p class="text-[10.5px] tracking-[0.04em] text-[#8FA3D9]">RÉSEAU ENTREPRENEURIAL DES JEUNES CATHOLIQUES</p>
                     </div>
-                    @error('tranche_age') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
                 </div>
+                <a href="{{ route('home') }}" wire:navigate aria-label="Fermer" class="flex size-8 shrink-0 items-center justify-center rounded-[9px] border border-white/25 text-white">
+                    <x-ui.icon name="x" class="size-[15px]" />
+                </a>
+            </div>
+            <div class="mb-2 flex items-center justify-between">
+                <span class="text-[11.5px] font-bold text-[#C4D0EC]">Étape {{ $step + 1 }} sur 8</span>
+                <span class="text-[11.5px] font-bold text-white">{{ $stepTitles[$step] }}</span>
+            </div>
+            <div class="h-1.5 overflow-hidden rounded bg-white/[.18]">
+                <div class="h-full rounded transition-all duration-300" style="width: {{ round(($step + 1) / 8 * 100) }}%; background: linear-gradient(90deg, #AC0100, #D95B5A)"></div>
+            </div>
+        </div>
 
-                <div class="grid gap-4 sm:grid-cols-2">
-                    <div class="flex flex-col gap-1.5">
-                        <label for="ma-whatsapp" class="text-sm font-semibold text-brand">Numéro Whatsapp</label>
-                        <input wire:model="whatsapp" id="ma-whatsapp" type="tel" class="w-full rounded-xl border bg-white px-4 py-3 text-brand placeholder:text-ink/40 outline-none transition focus:ring-2 {{ $errors->has('whatsapp') ? 'border-accent focus:border-accent focus:ring-accent/25' : 'border-brand/15 focus:border-brand focus:ring-accent/20' }}" />
+        <main class="mx-auto w-full max-w-[560px] flex-1 px-4 py-5 pb-[110px]">
+            <div class="rounded-[18px] border border-brand/10 bg-white p-6 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+
+                @if ($step === 0)
+                    <p class="mb-1 text-[15px] font-extrabold text-brand">Informations générales</p>
+                    <p class="mb-4.5 text-[12.5px] leading-relaxed text-[#5B677A]">Bienvenue dans le formulaire d'adhésion au REJCC. Parlons d'abord de vous.</p>
+
+                    <div class="mb-4 flex flex-col gap-1.5">
+                        <label for="ma-nom" class="text-[13px] font-bold text-brand">Nom et prénoms *</label>
+                        <input wire:model="nom_prenoms" id="ma-nom" type="text" placeholder="Votre nom complet" class="rounded-[9px] border border-brand/15 px-3.5 py-2.5 text-sm text-ink outline-none focus:border-azure" />
+                        @error('nom_prenoms') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div class="mb-4">
+                        <p class="mb-2 text-[13px] font-bold text-brand">Sexe *</p>
+                        <div class="flex gap-2">
+                            @foreach ($sexes as $option)
+                                <x-ui.chip wire:click="select('sexe', {{ \Illuminate\Support\Js::from($option) }})" :active="$sexe === $option" class="flex-1 justify-center">{{ $option }}</x-ui.chip>
+                            @endforeach
+                        </div>
+                        @error('sexe') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div class="mb-4 flex flex-col gap-1.5">
+                        <label for="ma-age" class="text-[13px] font-bold text-brand">Tranche d'âge *</label>
+                        <select wire:model="tranche_age" id="ma-age" class="rounded-[9px] border border-brand/15 bg-white px-3.5 py-2.5 text-sm text-ink outline-none focus:border-azure">
+                            <option value="">Sélectionnez…</option>
+                            @foreach ($tranchesAge as $option)
+                                <option value="{{ $option }}">{{ $option }}</option>
+                            @endforeach
+                        </select>
+                        @error('tranche_age') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div class="mb-4 flex flex-col gap-1.5">
+                        <label for="ma-whatsapp" class="text-[13px] font-bold text-brand">Numéro WhatsApp *</label>
+                        <input wire:model="whatsapp" id="ma-whatsapp" type="tel" placeholder="+225 07 00 00 00 00" class="rounded-[9px] border border-brand/15 px-3.5 py-2.5 text-sm text-ink outline-none focus:border-azure" />
                         @error('whatsapp') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
                     </div>
-                    <div class="flex flex-col gap-1.5">
-                        <label for="ma-email" class="text-sm font-semibold text-brand">Adresse e-mail</label>
-                        <input wire:model="email" id="ma-email" type="email" class="w-full rounded-xl border bg-white px-4 py-3 text-brand placeholder:text-ink/40 outline-none transition focus:ring-2 {{ $errors->has('email') ? 'border-accent focus:border-accent focus:ring-accent/25' : 'border-brand/15 focus:border-brand focus:ring-accent/20' }}" />
+
+                    <div class="mb-4 flex flex-col gap-1.5">
+                        <label for="ma-email" class="text-[13px] font-bold text-brand">Adresse e-mail *</label>
+                        <input wire:model="email" id="ma-email" type="email" placeholder="vous@exemple.com" class="rounded-[9px] border border-brand/15 px-3.5 py-2.5 text-sm text-ink outline-none focus:border-azure" />
                         @error('email') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
                     </div>
-                </div>
 
-                <div class="flex flex-col gap-1.5">
-                    <label for="ma-ville" class="text-sm font-semibold text-brand">Ville</label>
-                    <input wire:model="ville" id="ma-ville" type="text" placeholder="Abidjan" class="w-full rounded-xl border bg-white px-4 py-3 text-brand placeholder:text-ink/40 outline-none transition focus:ring-2 {{ $errors->has('ville') ? 'border-accent focus:border-accent focus:ring-accent/25' : 'border-brand/15 focus:border-brand focus:ring-accent/20' }}" />
-                    @error('ville') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
-                </div>
+                    <div class="mb-4 flex flex-col gap-1.5">
+                        <label for="ma-ville" class="text-[13px] font-bold text-brand">Ville *</label>
+                        <input wire:model="ville" id="ma-ville" type="text" placeholder="Abidjan" class="rounded-[9px] border border-brand/15 px-3.5 py-2.5 text-sm text-ink outline-none focus:border-azure" />
+                        @error('ville') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
+                    </div>
 
-                <div class="grid gap-4 sm:grid-cols-2">
-                    <div class="flex flex-col gap-1.5">
-                        <label for="ma-password" class="text-sm font-semibold text-brand">Mot de passe (8 caractères min.)</label>
-                        <input wire:model="password" id="ma-password" type="password" autocomplete="new-password" class="w-full rounded-xl border bg-white px-4 py-3 text-brand placeholder:text-ink/40 outline-none transition focus:ring-2 {{ $errors->has('password') ? 'border-accent focus:border-accent focus:ring-accent/25' : 'border-brand/15 focus:border-brand focus:ring-accent/20' }}" />
+                    <div class="mb-1.5 flex flex-col gap-1.5">
+                        <label for="ma-password" class="text-[13px] font-bold text-brand">Mot de passe (8 caractères min.) *</label>
+                        <input wire:model="password" id="ma-password" type="password" autocomplete="new-password" class="rounded-[9px] border border-brand/15 px-3.5 py-2.5 text-sm text-ink outline-none focus:border-azure" />
                         @error('password') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
                     </div>
-                    <div class="flex flex-col gap-1.5">
-                        <label for="ma-password-confirmation" class="text-sm font-semibold text-brand">Confirmer le mot de passe</label>
-                        <input wire:model="password_confirmation" id="ma-password-confirmation" type="password" autocomplete="new-password" class="w-full rounded-xl border border-brand/15 bg-white px-4 py-3 text-brand placeholder:text-ink/40 outline-none transition focus:border-brand focus:ring-2 focus:ring-accent/20" />
+                    <div class="mb-1.5 flex flex-col gap-1.5">
+                        <label for="ma-password-confirmation" class="text-[13px] font-bold text-brand">Confirmer le mot de passe *</label>
+                        <input wire:model="password_confirmation" id="ma-password-confirmation" type="password" autocomplete="new-password" class="rounded-[9px] border border-brand/15 px-3.5 py-2.5 text-sm text-ink outline-none focus:border-azure" />
                     </div>
-                </div>
-                <p class="-mt-2 text-xs text-ink/50">Ce mot de passe vous servira à vous connecter à votre espace membre une fois votre candidature acceptée.</p>
-
-                <div>
-                    <p class="mb-2 text-sm font-semibold text-brand">Connotation religieuse</p>
-                    <div class="flex flex-wrap gap-2">
-                        @foreach ($connotationsReligieuses as $option)
-                            <x-ui.chip wire:click="select('connotation_religieuse', {{ \Illuminate\Support\Js::from($option) }})" :active="$connotation_religieuse === $option">{{ $option }}</x-ui.chip>
-                        @endforeach
-                    </div>
-                    @error('connotation_religieuse') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
-                </div>
-            @endif
-
-            @if ($step === 'paroisse')
-                <div class="flex flex-col gap-1.5">
-                    <label for="ma-paroisse" class="text-sm font-semibold text-brand">Quel est votre paroisse ?</label>
-                    <select wire:model="paroisse" id="ma-paroisse" class="w-full rounded-xl border bg-white px-4 py-3 text-brand outline-none transition focus:ring-2 {{ $errors->has('paroisse') ? 'border-accent focus:border-accent focus:ring-accent/25' : 'border-brand/15 focus:border-brand focus:ring-accent/20' }}">
-                        <option value="">Sélectionnez votre paroisse</option>
-                        @foreach ($paroisses as $option)
-                            <option value="{{ $option }}">{{ $option }}</option>
-                        @endforeach
-                    </select>
-                    @error('paroisse') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
-                </div>
-            @endif
-
-            @if ($step === 'profil')
-                <div>
-                    <p class="mb-2 text-sm font-semibold text-brand">Quel est votre statut actuel ? <span class="font-normal text-ink/50">(plusieurs choix possibles)</span></p>
-                    <div class="flex flex-wrap gap-2">
-                        @foreach ($statutsActuels as $option)
-                            <x-ui.chip wire:click="toggle('statut_actuel', {{ \Illuminate\Support\Js::from($option) }})" :active="in_array($option, $statut_actuel, true)">{{ $option }}</x-ui.chip>
-                        @endforeach
-                    </div>
-                    @error('statut_actuel') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
-                </div>
-
-                <div>
-                    <p class="mb-2 text-sm font-semibold text-brand">Quel est votre plus haut niveau d'études ?</p>
-                    <div class="flex flex-wrap gap-2">
-                        @foreach ($niveauxEtudes as $option)
-                            <x-ui.chip wire:click="select('niveau_etudes', {{ \Illuminate\Support\Js::from($option) }})" :active="$niveau_etudes === $option">{{ $option }}</x-ui.chip>
-                        @endforeach
-                    </div>
-                    @error('niveau_etudes') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
-                </div>
-
-                <div class="flex flex-col gap-1.5">
-                    <label for="ma-domaines-formation" class="text-sm font-semibold text-brand">Domaines de formations ou spécialités</label>
-                    <input wire:model="domaines_formation" id="ma-domaines-formation" type="text" class="w-full rounded-xl border bg-white px-4 py-3 text-brand placeholder:text-ink/40 outline-none transition focus:ring-2 {{ $errors->has('domaines_formation') ? 'border-accent focus:border-accent focus:ring-accent/25' : 'border-brand/15 focus:border-brand focus:ring-accent/20' }}" />
-                    @error('domaines_formation') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
-                </div>
-            @endif
-
-            @if ($step === 'competences')
-                <div>
-                    <p class="mb-2 text-sm font-semibold text-brand">Dans quels domaines avez-vous des compétences ? <span class="font-normal text-ink/50">(plusieurs choix possibles)</span></p>
-                    <div class="flex flex-wrap gap-2">
-                        @foreach ($competencesOptions as $option)
-                            <x-ui.chip wire:click="toggle('competences', {{ \Illuminate\Support\Js::from($option) }})" :active="in_array($option, $competences, true)">{{ $option }}</x-ui.chip>
-                        @endforeach
-                    </div>
-                    @error('competences') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
-                </div>
-
-                <div class="flex flex-col gap-1.5">
-                    <label for="ma-description-competences" class="text-sm font-semibold text-brand">Décrivez brièvement vos compétences ou vos différentes activités <span class="font-normal text-ink/50">(facultatif)</span></label>
-                    <textarea wire:model="description_competences" id="ma-description-competences" class="min-h-28 w-full resize-y rounded-xl border bg-white px-4 py-3 text-brand placeholder:text-ink/40 outline-none transition focus:ring-2 {{ $errors->has('description_competences') ? 'border-accent focus:border-accent focus:ring-accent/25' : 'border-brand/15 focus:border-brand focus:ring-accent/20' }}"></textarea>
-                    @error('description_competences') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
-                </div>
-            @endif
-
-            @if ($step === 'entrepreneuriat')
-                <div>
-                    <p class="mb-2 text-sm font-semibold text-brand">Avez-vous actuellement une ou des activités génératrices de revenus ou une entreprise ?</p>
-                    <div class="flex flex-wrap gap-2">
-                        @foreach (['Oui', 'Non'] as $option)
-                            <x-ui.chip wire:click="select('a_activite', {{ \Illuminate\Support\Js::from($option) }})" :active="$a_activite === $option">{{ $option }}</x-ui.chip>
-                        @endforeach
-                    </div>
-                    @error('a_activite') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
-                </div>
-            @endif
-
-            @if ($step === 'activite_actuelle')
-                <div class="flex flex-col gap-1.5">
-                    <label for="ma-nom-activite" class="text-sm font-semibold text-brand">Nom de vos activités ou entreprises <span class="font-normal text-ink/50">(facultatif)</span></label>
-                    <input wire:model="nom_activite" id="ma-nom-activite" type="text" class="w-full rounded-xl border border-brand/15 bg-white px-4 py-3 text-brand placeholder:text-ink/40 outline-none transition focus:border-brand focus:ring-2 focus:ring-accent/20" />
-                </div>
-
-                <div>
-                    <p class="mb-2 text-sm font-semibold text-brand">Le ou les secteurs d'activités <span class="font-normal text-ink/50">(plusieurs choix possibles)</span></p>
-                    <div class="flex flex-wrap gap-2">
-                        @foreach ($secteursActivite as $option)
-                            <x-ui.chip wire:click="toggle('secteurs_activite', {{ \Illuminate\Support\Js::from($option) }})" :active="in_array($option, $secteurs_activite, true)">{{ $option }}</x-ui.chip>
-                        @endforeach
-                    </div>
-                    @error('secteurs_activite') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
-                </div>
-
-                <div>
-                    <p class="mb-2 text-sm font-semibold text-brand">Depuis combien d'années exercez-vous ?</p>
-                    <div class="flex flex-wrap gap-2">
-                        @foreach ($anciennetes as $option)
-                            <x-ui.chip wire:click="select('anciennete', {{ \Illuminate\Support\Js::from($option) }})" :active="$anciennete === $option">{{ $option }}</x-ui.chip>
-                        @endforeach
-                    </div>
-                    @error('anciennete') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
-                </div>
-            @endif
-
-            @if ($step === 'activite_future')
-                <div>
-                    <p class="mb-2 text-sm font-semibold text-brand">Dans quels domaines souhaitez-vous créer une activité dans le futur ? <span class="font-normal text-ink/50">(plusieurs choix possibles)</span></p>
-                    <div class="flex flex-wrap gap-2">
-                        @foreach ($secteursActivite as $option)
-                            <x-ui.chip wire:click="toggle('domaines_futurs', {{ \Illuminate\Support\Js::from($option) }})" :active="in_array($option, $domaines_futurs, true)">{{ $option }}</x-ui.chip>
-                        @endforeach
-                    </div>
-                    @error('domaines_futurs') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
-                </div>
-            @endif
-
-            @if ($step === 'attentes')
-                <div>
-                    <p class="mb-2 text-sm font-semibold text-brand">Qu'attendez-vous principalement du réseau ? <span class="font-normal text-ink/50">(plusieurs choix possibles)</span></p>
-                    <div class="flex flex-wrap gap-2">
-                        @foreach ($attentesOptions as $option)
-                            <x-ui.chip wire:click="toggle('attentes', {{ \Illuminate\Support\Js::from($option) }})" :active="in_array($option, $attentes, true)">{{ $option }}</x-ui.chip>
-                        @endforeach
-                    </div>
-                    @error('attentes') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
-                </div>
-
-                <div>
-                    <p class="mb-2 text-sm font-semibold text-brand">Quelles formations vous intéressent le plus ? <span class="font-normal text-ink/50">(plusieurs choix possibles)</span></p>
-                    <div class="flex flex-wrap gap-2">
-                        @foreach ($formationsInteretOptions as $option)
-                            <x-ui.chip wire:click="toggle('formations_interet', {{ \Illuminate\Support\Js::from($option) }})" :active="in_array($option, $formations_interet, true)">{{ $option }}</x-ui.chip>
-                        @endforeach
-                    </div>
-                    @error('formations_interet') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
-                </div>
-
-                <div>
-                    <p class="mb-2 text-sm font-semibold text-brand">Quel est aujourd'hui votre principal défi ?</p>
-                    <div class="flex flex-col gap-2">
-                        @foreach ($defis as $option)
-                            <button type="button" wire:click="select('defi_principal', {{ \Illuminate\Support\Js::from($option) }})" class="w-full rounded-xl border px-4 py-3 text-left text-sm font-medium transition-colors {{ $defi_principal === $option ? 'border-brand bg-brand text-white' : 'border-brand/15 bg-white text-brand hover:border-brand/40' }}">
-                                {{ $option }}
-                            </button>
-                        @endforeach
-                    </div>
-                    @error('defi_principal') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
-                </div>
-
-                <div>
-                    <p class="mb-2 text-sm font-semibold text-brand">Quel est votre revenu mensuel actuel approximatif ?</p>
-                    <div class="flex flex-col gap-2">
-                        @foreach ($revenus as $option)
-                            <button type="button" wire:click="select('revenu_mensuel', {{ \Illuminate\Support\Js::from($option) }})" class="w-full rounded-xl border px-4 py-3 text-left text-sm font-medium transition-colors {{ $revenu_mensuel === $option ? 'border-brand bg-brand text-white' : 'border-brand/15 bg-white text-brand hover:border-brand/40' }}">
-                                {{ $option }}
-                            </button>
-                        @endforeach
-                    </div>
-                    @error('revenu_mensuel') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
-                </div>
-            @endif
-
-            <div class="mt-2 flex items-center justify-between gap-4">
-                @if ($history !== [])
-                    <button type="button" wire:click="back" class="inline-flex items-center gap-2 rounded-full border border-brand/15 px-6 py-3 font-semibold text-brand transition-colors hover:bg-brand/5">
-                        Précédent
-                    </button>
-                @else
-                    <span></span>
+                    <p class="text-xs text-[#9AA6B8]">Ce mot de passe vous servira à vous connecter à votre espace membre une fois votre candidature acceptée.</p>
                 @endif
 
-                <button type="submit" wire:loading.attr="disabled" class="inline-flex items-center justify-center gap-2 rounded-full bg-accent px-7 py-3.5 font-semibold text-white transition-colors hover:bg-accent-600 disabled:opacity-70">
-                    <span wire:loading.remove>{{ $isLastStep ? 'Envoyer ma candidature' : 'Suivant' }}</span>
-                    <span wire:loading>Envoi…</span>
-                </button>
+                @if ($step === 1)
+                    <p class="mb-1 text-[15px] font-extrabold text-brand">Diocèse &amp; paroisse</p>
+                    <p class="mb-4.5 text-[12.5px] leading-relaxed text-[#5B677A]">Aidez-nous à situer votre communauté paroissiale.</p>
+
+                    <div class="mb-4 flex flex-col gap-1.5">
+                        <label for="ma-diocese" class="text-[13px] font-bold text-brand">À quel diocèse appartient votre paroisse ? *</label>
+                        <select wire:model="diocese" id="ma-diocese" class="rounded-[9px] border border-brand/15 bg-white px-3.5 py-2.5 text-sm text-ink outline-none focus:border-azure">
+                            <option value="">Sélectionnez…</option>
+                            @foreach ($dioceses as $option)
+                                <option value="{{ $option }}">{{ $option }}</option>
+                            @endforeach
+                        </select>
+                        @error('diocese') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div class="flex flex-col gap-1.5">
+                        <label for="ma-paroisse" class="text-[13px] font-bold text-brand">Quelle est votre paroisse ? *</label>
+                        <select wire:model="paroisse" id="ma-paroisse" class="rounded-[9px] border border-brand/15 bg-white px-3.5 py-2.5 text-sm text-ink outline-none focus:border-azure">
+                            <option value="">Sélectionnez…</option>
+                            @foreach ($paroisses as $option)
+                                <option value="{{ $option }}">{{ $option }}</option>
+                            @endforeach
+                        </select>
+                        @error('paroisse') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
+                    </div>
+                @endif
+
+                @if ($step === 2)
+                    <p class="mb-1 text-[15px] font-extrabold text-brand">Profil</p>
+                    <p class="mb-4.5 text-[12.5px] leading-relaxed text-[#5B677A]">Quelques informations sur votre situation actuelle.</p>
+
+                    <div class="mb-5">
+                        <p class="mb-2.5 text-[13px] font-bold text-brand">Quel est votre statut actuel ? * <span class="font-medium text-[#9AA6B8]">(plusieurs choix possibles)</span></p>
+                        <div class="flex flex-wrap gap-2">
+                            @foreach ($statutsActuels as $option)
+                                <x-ui.chip wire:click="toggle('statut_actuel', {{ \Illuminate\Support\Js::from($option) }})" :active="in_array($option, $statut_actuel, true)">{{ $option }}</x-ui.chip>
+                            @endforeach
+                        </div>
+                        @error('statut_actuel') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div class="flex flex-col gap-1.5">
+                        <label for="ma-etudes" class="text-[13px] font-bold text-brand">Quel est votre plus haut niveau d'études ? *</label>
+                        <select wire:model="niveau_etudes" id="ma-etudes" class="rounded-[9px] border border-brand/15 bg-white px-3.5 py-2.5 text-sm text-ink outline-none focus:border-azure">
+                            <option value="">Sélectionnez…</option>
+                            @foreach ($niveauxEtudes as $option)
+                                <option value="{{ $option }}">{{ $option }}</option>
+                            @endforeach
+                        </select>
+                        @error('niveau_etudes') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
+                    </div>
+                @endif
+
+                @if ($step === 3)
+                    <p class="mb-1 text-[15px] font-extrabold text-brand">Compétences</p>
+                    <p class="mb-4.5 text-[12.5px] leading-relaxed text-[#5B677A]">Parlez-nous de votre formation et de votre savoir-faire.</p>
+
+                    <div class="mb-4.5 flex flex-col gap-1.5">
+                        <label for="ma-domaines-formation" class="text-[13px] font-bold text-brand">Domaines de formation ou spécialités *</label>
+                        <input wire:model="domaines_formation" id="ma-domaines-formation" type="text" placeholder="Ex. Gestion des entreprises" class="rounded-[9px] border border-brand/15 px-3.5 py-2.5 text-sm text-ink outline-none focus:border-azure" />
+                        @error('domaines_formation') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div class="mb-4.5">
+                        <p class="mb-2.5 text-[13px] font-bold text-brand">Dans quels domaines avez-vous des compétences ? * <span class="font-medium text-[#9AA6B8]">(plusieurs choix possibles)</span></p>
+                        <div class="flex flex-wrap gap-2">
+                            @foreach ($competencesOptions as $option)
+                                <x-ui.chip wire:click="toggle('competences', {{ \Illuminate\Support\Js::from($option) }})" :active="in_array($option, $competences, true)">{{ $option }}</x-ui.chip>
+                            @endforeach
+                        </div>
+                        @error('competences') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div class="flex flex-col gap-1.5">
+                        <label for="ma-competences-desc" class="text-[13px] font-bold text-brand">Décrivez brièvement vos compétences ou activités <span class="font-medium text-[#9AA6B8]">(facultatif)</span></label>
+                        <textarea wire:model="description_competences" id="ma-competences-desc" rows="3" placeholder="Quelques lignes sur ce que vous savez faire…" class="resize-y rounded-[9px] border border-brand/15 px-3.5 py-2.5 text-sm text-ink outline-none focus:border-azure"></textarea>
+                        @error('description_competences') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
+                    </div>
+                @endif
+
+                @if ($step === 4)
+                    <p class="mb-1 text-[15px] font-extrabold text-brand">Entrepreneuriat</p>
+                    <p class="mb-4.5 text-[12.5px] leading-relaxed text-[#5B677A]">Avez-vous déjà une activité en cours ?</p>
+
+                    <div class="mb-5">
+                        <p class="mb-2.5 text-[13px] font-bold text-brand">Avez-vous actuellement une ou des activités génératrices de revenus ou une entreprise ? *</p>
+                        <div class="flex gap-2">
+                            @foreach (['Oui', 'Non'] as $option)
+                                <x-ui.chip wire:click="select('a_activite', {{ \Illuminate\Support\Js::from($option) }})" :active="$a_activite === $option" class="flex-1 justify-center">{{ $option }}</x-ui.chip>
+                            @endforeach
+                        </div>
+                        @error('a_activite') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
+                    </div>
+
+                    @if ($a_activite === 'Oui')
+                        <div class="mb-4.5 flex flex-col gap-1.5">
+                            <label for="ma-nom-activite" class="text-[13px] font-bold text-brand">Nom de vos activités ou entreprises <span class="font-medium text-[#9AA6B8]">(facultatif)</span></label>
+                            <input wire:model="nom_activite" id="ma-nom-activite" type="text" placeholder="Ex. Boutique solidaire" class="rounded-[9px] border border-brand/15 px-3.5 py-2.5 text-sm text-ink outline-none focus:border-azure" />
+                        </div>
+
+                        <div class="mb-4.5">
+                            <p class="mb-2.5 text-[13px] font-bold text-brand">Le ou les secteurs d'activités * <span class="font-medium text-[#9AA6B8]">(plusieurs choix possibles)</span></p>
+                            <div class="flex flex-wrap gap-2">
+                                @foreach ($secteursActivite as $option)
+                                    <x-ui.chip wire:click="toggle('secteurs_activite', {{ \Illuminate\Support\Js::from($option) }})" :active="in_array($option, $secteurs_activite, true)">{{ $option }}</x-ui.chip>
+                                @endforeach
+                            </div>
+                            @error('secteurs_activite') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="flex flex-col gap-1.5">
+                            <label for="ma-anciennete" class="text-[13px] font-bold text-brand">Depuis combien d'années exercez-vous ? *</label>
+                            <select wire:model="anciennete" id="ma-anciennete" class="rounded-[9px] border border-brand/15 bg-white px-3.5 py-2.5 text-sm text-ink outline-none focus:border-azure">
+                                <option value="">Sélectionnez…</option>
+                                @foreach ($anciennetes as $option)
+                                    <option value="{{ $option }}">{{ $option }}</option>
+                                @endforeach
+                            </select>
+                            @error('anciennete') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
+                        </div>
+                    @endif
+                @endif
+
+                @if ($step === 5)
+                    <p class="mb-1 text-[15px] font-extrabold text-brand">Projet futur</p>
+                    <p class="mb-4.5 text-[12.5px] leading-relaxed text-[#5B677A]">Même sans activité aujourd'hui, quels secteurs vous intéressent ?</p>
+
+                    <div>
+                        <p class="mb-2.5 text-[13px] font-bold text-brand">Dans quels domaines souhaitez-vous créer une activité dans le futur ? @if ($a_activite === 'Non') * @endif <span class="font-medium text-[#9AA6B8]">(plusieurs choix possibles)</span></p>
+                        <div class="flex flex-wrap gap-2">
+                            @foreach ($secteursActivite as $option)
+                                <x-ui.chip wire:click="toggle('domaines_futurs', {{ \Illuminate\Support\Js::from($option) }})" :active="in_array($option, $domaines_futurs, true)">{{ $option }}</x-ui.chip>
+                            @endforeach
+                        </div>
+                        @error('domaines_futurs') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
+                    </div>
+                @endif
+
+                @if ($step === 6)
+                    <p class="mb-1 text-[15px] font-extrabold text-brand">Attentes</p>
+                    <p class="mb-4.5 text-[12.5px] leading-relaxed text-[#5B677A]">Dernière ligne droite : parlons de vos attentes et de vos besoins.</p>
+
+                    <div class="mb-4.5">
+                        <p class="mb-2.5 text-[13px] font-bold text-brand">Qu'attendez-vous principalement du réseau ? * <span class="font-medium text-[#9AA6B8]">(plusieurs choix possibles)</span></p>
+                        <div class="flex flex-wrap gap-2">
+                            @foreach ($attentesOptions as $option)
+                                <x-ui.chip wire:click="toggle('attentes', {{ \Illuminate\Support\Js::from($option) }})" :active="in_array($option, $attentes, true)">{{ $option }}</x-ui.chip>
+                            @endforeach
+                        </div>
+                        @error('attentes') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div class="mb-4.5">
+                        <p class="mb-2.5 text-[13px] font-bold text-brand">Quelles formations vous intéressent le plus ? * <span class="font-medium text-[#9AA6B8]">(plusieurs choix possibles)</span></p>
+                        <div class="flex flex-wrap gap-2">
+                            @foreach ($formationsInteretOptions as $option)
+                                <x-ui.chip wire:click="toggle('formations_interet', {{ \Illuminate\Support\Js::from($option) }})" :active="in_array($option, $formations_interet, true)">{{ $option }}</x-ui.chip>
+                            @endforeach
+                        </div>
+                        @error('formations_interet') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div class="mb-4.5">
+                        <p class="mb-2.5 text-[13px] font-bold text-brand">Quel est aujourd'hui votre principal défi ? *</p>
+                        <div class="flex flex-col gap-2">
+                            @foreach ($defis as $option)
+                                <button type="button" wire:click="select('defi_principal', {{ \Illuminate\Support\Js::from($option) }})" class="rounded-[10px] border px-3.5 py-2.5 text-left text-[13px] font-semibold {{ $defi_principal === $option ? 'border-brand bg-brand text-white' : 'border-brand/15 bg-white text-[#5B677A]' }}">
+                                    {{ $option }}
+                                </button>
+                            @endforeach
+                        </div>
+                        @error('defi_principal') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div class="flex flex-col gap-1.5">
+                        <label for="ma-revenu" class="text-[13px] font-bold text-brand">Quel est votre revenu mensuel actuel approximatif ? *</label>
+                        <select wire:model="revenu_mensuel" id="ma-revenu" class="rounded-[9px] border border-brand/15 bg-white px-3.5 py-2.5 text-sm text-ink outline-none focus:border-azure">
+                            <option value="">Sélectionnez…</option>
+                            @foreach ($revenus as $option)
+                                <option value="{{ $option }}">{{ $option }}</option>
+                            @endforeach
+                        </select>
+                        @error('revenu_mensuel') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
+                    </div>
+                @endif
+
+                @if ($step === 7)
+                    <p class="mb-1 text-[15px] font-extrabold text-brand">Récapitulatif</p>
+                    <p class="mb-4.5 text-[12.5px] leading-relaxed text-[#5B677A]">Vérifiez vos informations avant l'envoi.</p>
+
+                    <div class="flex flex-col gap-3">
+                        @foreach ($recap as $r)
+                            <div class="border-t border-[#EDF0F5] pt-2.5 first:border-t-0 first:pt-0">
+                                <p class="text-[11.5px] font-bold uppercase tracking-[0.04em] text-[#9AA6B8]">{{ $r['label'] }}</p>
+                                <p class="mt-0.5 text-[13.5px] leading-relaxed text-ink">{{ $r['value'] }}</p>
+                            </div>
+                        @endforeach
+                    </div>
+                    @error('email') <p class="mt-4 text-xs font-medium text-accent">{{ $message }}</p> @enderror
+                    @error('revenu_mensuel') <p class="mt-4 text-xs font-medium text-accent">{{ $message }}</p> @enderror
+                @endif
+
             </div>
-        </form>
+        </main>
+
+        <div class="fixed inset-x-0 bottom-0 z-40 flex gap-2.5 border-t border-brand/10 bg-white px-4 py-3" style="padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px))">
+            <button type="button" wire:click="back" @disabled($step === 0) class="flex-1 rounded-[10px] border border-[#C9D3E6] bg-white py-3 text-sm font-bold text-brand disabled:opacity-40">Précédent</button>
+            <button type="button" wire:click="next" wire:loading.attr="disabled" class="flex-[1.4] rounded-[10px] bg-accent py-3 text-sm font-bold text-white hover:bg-accent-600 disabled:opacity-70">
+                <span wire:loading.remove>{{ $step === 7 ? 'Envoyer ma demande' : 'Suivant' }}</span>
+                <span wire:loading>Envoi…</span>
+            </button>
+        </div>
     </div>
 @endif
-</div>

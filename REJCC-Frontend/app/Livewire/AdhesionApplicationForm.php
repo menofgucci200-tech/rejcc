@@ -4,16 +4,21 @@ namespace App\Livewire;
 
 use App\Support\Api;
 use App\Support\Content\AdhesionApplicationOptions;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 
+#[Layout('layouts.wizard')]
 class AdhesionApplicationForm extends Component
 {
     public string $status = 'idle';
 
-    public string $step = 'general';
+    public int $step = 0;
 
     /** @var string[] */
-    public array $history = [];
+    public array $stepTitles = [
+        'Informations générales', 'Diocèse & paroisse', 'Profil', 'Compétences',
+        'Entrepreneuriat', 'Projet futur', 'Attentes', 'Récapitulatif',
+    ];
 
     // Informations générales
     public string $nom_prenoms = '';
@@ -32,7 +37,8 @@ class AdhesionApplicationForm extends Component
 
     public string $password_confirmation = '';
 
-    public string $connotation_religieuse = '';
+    // Diocèse & paroisse
+    public string $diocese = '';
 
     public string $paroisse = '';
 
@@ -41,9 +47,9 @@ class AdhesionApplicationForm extends Component
 
     public string $niveau_etudes = '';
 
+    // Compétences
     public string $domaines_formation = '';
 
-    // Compétences
     public array $competences = [];
 
     public string $description_competences = '';
@@ -57,6 +63,7 @@ class AdhesionApplicationForm extends Component
 
     public string $anciennete = '';
 
+    // Projet futur
     public array $domaines_futurs = [];
 
     // Attentes et profil
@@ -84,34 +91,34 @@ class AdhesionApplicationForm extends Component
 
     public function next(): void
     {
-        $this->validate($this->rulesFor($this->step));
+        if ($this->step === 7) {
+            $this->submit();
 
-        $this->history[] = $this->step;
-        $this->step = $this->nextStep();
+            return;
+        }
+
+        $this->validate($this->rulesFor($this->step));
+        $this->step = min(7, $this->step + 1);
     }
 
     public function back(): void
     {
-        if ($this->history !== []) {
-            $this->step = array_pop($this->history);
-        }
+        $this->step = max(0, $this->step - 1);
     }
 
-    public function submit(): void
+    protected function submit(): void
     {
-        $this->validate($this->rulesFor('attentes'));
-
         $result = Api::post('/membership-applications', [
             'nom_prenoms' => $this->nom_prenoms,
             'sexe' => $this->sexe,
             'tranche_age' => $this->tranche_age,
             'whatsapp' => $this->whatsapp,
             'email' => $this->email,
+            'diocese' => $this->diocese,
             'ville' => $this->ville,
             'password' => $this->password,
             'password_confirmation' => $this->password_confirmation,
-            'connotation_religieuse' => $this->connotation_religieuse,
-            'paroisse' => $this->connotation_religieuse === 'Catholique' ? $this->paroisse : null,
+            'paroisse' => $this->paroisse,
             'statut_actuel' => $this->statut_actuel,
             'niveau_etudes' => $this->niveau_etudes,
             'domaines_formation' => $this->domaines_formation,
@@ -132,7 +139,7 @@ class AdhesionApplicationForm extends Component
             $message = $result['message'] ?? 'Une erreur est survenue, réessayez.';
 
             if (str_contains($message, 'e-mail') || str_contains($message, 'mot de passe')) {
-                $this->step = 'general';
+                $this->step = 0;
                 $this->addError('email', $message);
             } else {
                 $this->addError('revenu_mensuel', $message);
@@ -144,10 +151,15 @@ class AdhesionApplicationForm extends Component
         $this->status = 'success';
     }
 
-    protected function rulesFor(string $step): array
+    public function restart(): void
+    {
+        $this->reset();
+    }
+
+    protected function rulesFor(int $step): array
     {
         return match ($step) {
-            'general' => [
+            0 => [
                 'nom_prenoms' => 'required|string|min:2|max:150',
                 'sexe' => 'required|in:Homme,Femme',
                 'tranche_age' => 'required|string',
@@ -155,32 +167,29 @@ class AdhesionApplicationForm extends Component
                 'email' => 'required|email|max:150',
                 'ville' => 'required|string|max:80',
                 'password' => 'required|string|min:8|confirmed',
-                'connotation_religieuse' => 'required|string',
             ],
-            'paroisse' => [
+            1 => [
+                'diocese' => 'required|string',
                 'paroisse' => 'required|string',
             ],
-            'profil' => [
+            2 => [
                 'statut_actuel' => 'required|array|min:1',
                 'niveau_etudes' => 'required|string',
-                'domaines_formation' => 'required|string|max:200',
             ],
-            'competences' => [
+            3 => [
+                'domaines_formation' => 'required|string|max:200',
                 'competences' => 'required|array|min:1',
                 'description_competences' => 'nullable|string|max:1000',
             ],
-            'entrepreneuriat' => [
-                'a_activite' => 'required|in:Oui,Non',
-            ],
-            'activite_actuelle' => [
-                'nom_activite' => 'nullable|string|max:150',
-                'secteurs_activite' => 'required|array|min:1',
-                'anciennete' => 'required|string',
-            ],
-            'activite_future' => [
-                'domaines_futurs' => 'required|array|min:1',
-            ],
-            'attentes' => [
+            4 => array_merge(
+                ['a_activite' => 'required|in:Oui,Non'],
+                $this->a_activite === 'Oui' ? [
+                    'secteurs_activite' => 'required|array|min:1',
+                    'anciennete' => 'required|string',
+                ] : []
+            ),
+            5 => $this->a_activite === 'Non' ? ['domaines_futurs' => 'required|array|min:1'] : [],
+            6 => [
                 'attentes' => 'required|array|min:1',
                 'formations_interet' => 'required|array|min:1',
                 'defi_principal' => 'required|string',
@@ -190,25 +199,24 @@ class AdhesionApplicationForm extends Component
         };
     }
 
-    protected function nextStep(): string
-    {
-        return match ($this->step) {
-            'general' => $this->connotation_religieuse === 'Catholique' ? 'paroisse' : 'profil',
-            'paroisse' => 'profil',
-            'profil' => 'competences',
-            'competences' => 'entrepreneuriat',
-            'entrepreneuriat' => $this->a_activite === 'Oui' ? 'activite_actuelle' : 'activite_future',
-            'activite_actuelle', 'activite_future' => 'attentes',
-            default => 'attentes',
-        };
-    }
-
     public function render()
     {
+        $recap = [
+            ['label' => 'Nom et prénoms', 'value' => $this->nom_prenoms ?: '—'],
+            ['label' => 'Contact', 'value' => collect([$this->whatsapp, $this->email])->filter()->join(' · ') ?: '—'],
+            ['label' => 'Ville', 'value' => $this->ville ?: '—'],
+            ['label' => 'Diocèse / Paroisse', 'value' => collect([$this->diocese, $this->paroisse])->filter()->join(' — ') ?: '—'],
+            ['label' => 'Statut', 'value' => implode(', ', $this->statut_actuel) ?: '—'],
+            ['label' => 'Compétences', 'value' => implode(', ', $this->competences) ?: '—'],
+            ['label' => 'Activité actuelle', 'value' => $this->a_activite ?: '—'],
+            ['label' => 'Attentes principales', 'value' => implode(', ', $this->attentes) ?: '—'],
+            ['label' => 'Principal défi', 'value' => $this->defi_principal ?: '—'],
+        ];
+
         return view('livewire.adhesion-application-form', [
             'sexes' => AdhesionApplicationOptions::sexes(),
             'tranchesAge' => AdhesionApplicationOptions::tranchesAge(),
-            'connotationsReligieuses' => AdhesionApplicationOptions::connotationsReligieuses(),
+            'dioceses' => AdhesionApplicationOptions::dioceses(),
             'paroisses' => AdhesionApplicationOptions::paroisses(),
             'statutsActuels' => AdhesionApplicationOptions::statutsActuels(),
             'niveauxEtudes' => AdhesionApplicationOptions::niveauxEtudes(),
@@ -219,6 +227,7 @@ class AdhesionApplicationForm extends Component
             'formationsInteretOptions' => AdhesionApplicationOptions::formationsInteret(),
             'defis' => AdhesionApplicationOptions::defis(),
             'revenus' => AdhesionApplicationOptions::revenus(),
+            'recap' => $recap,
         ]);
     }
 }
