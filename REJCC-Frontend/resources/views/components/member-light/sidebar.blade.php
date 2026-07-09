@@ -1,29 +1,25 @@
 @php
     $navItems = [
         ['label' => 'Accueil', 'icon' => 'nav-home', 'route' => 'espace-membre.dashboard'],
-        ['label' => 'Mes formations', 'icon' => 'graduation-cap', 'page' => 'formations'],
-        ['label' => 'Catalogue', 'icon' => 'nav-compass', 'page' => 'catalogue'],
-        ['label' => 'Mes parcours', 'icon' => 'nav-route', 'page' => 'parcours'],
-        ['label' => 'Mentorat', 'icon' => 'nav-mentor', 'page' => 'mentorat'],
+        ['label' => 'Mes formations', 'icon' => 'graduation-cap', 'route' => 'espace-membre.formations'],
+        ['label' => 'Catalogue', 'icon' => 'nav-compass', 'route' => 'espace-membre.catalogue'],
+        ['label' => 'Mes parcours', 'icon' => 'nav-route', 'route' => 'espace-membre.parcours'],
+        ['label' => 'Mentorat', 'icon' => 'nav-mentor', 'route' => 'espace-membre.mentorat'],
         ['label' => 'Annuaire', 'icon' => 'users', 'route' => 'espace-membre.directory'],
         ['label' => 'Messagerie', 'icon' => 'message-circle', 'route' => 'espace-membre.messaging'],
-        ['label' => 'Communauté', 'icon' => 'network', 'page' => 'communaute'],
-        ['label' => 'Événements', 'icon' => 'calendar-days', 'page' => 'evenements'],
-        ['label' => 'Projets', 'icon' => 'nav-projects', 'page' => 'projets'],
-        ['label' => 'Incubateur', 'icon' => 'nav-incubator', 'page' => 'incubateur'],
-        ['label' => 'Opportunités', 'icon' => 'nav-briefcase', 'page' => 'emplois'],
-        ['label' => 'Ressources', 'icon' => 'nav-library', 'page' => 'ressources'],
+        ['label' => 'Communauté', 'icon' => 'network', 'route' => 'espace-membre.communaute'],
+        ['label' => 'Événements', 'icon' => 'calendar-days', 'route' => 'espace-membre.evenements'],
+        ['label' => 'Projets', 'icon' => 'nav-projects', 'route' => 'espace-membre.projets'],
+        ['label' => 'Incubateur', 'icon' => 'nav-incubator', 'route' => 'espace-membre.incubateur'],
+        ['label' => 'Opportunités', 'icon' => 'nav-briefcase', 'route' => 'espace-membre.emplois'],
+        ['label' => 'Ressources', 'icon' => 'nav-library', 'route' => 'espace-membre.ressources'],
         ['label' => 'Documents', 'icon' => 'folder-open', 'route' => 'espace-membre.documents'],
-        ['label' => 'Certificats', 'icon' => 'award', 'page' => 'certificats'],
+        ['label' => 'Certificats', 'icon' => 'award', 'route' => 'espace-membre.certificats'],
     ];
 
-    $isActive = function (array $item) {
-        return isset($item['route'])
-            ? request()->routeIs($item['route'].'*')
-            : request()->routeIs('espace-membre.coming-soon') && request()->route('page') === $item['page'];
-    };
+    $isActive = fn (array $item) => request()->routeIs($item['route'].'*');
 
-    $itemHref = fn (array $item) => isset($item['route']) ? route($item['route']) : route('espace-membre.coming-soon', ['page' => $item['page']]);
+    $itemHref = fn (array $item) => route($item['route']);
 @endphp
 
 <aside {{ $attributes->merge(['class' => 'flex h-full w-[236px] shrink-0 flex-col bg-brand text-white']) }}>

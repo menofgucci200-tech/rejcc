@@ -10,13 +10,23 @@ use App\Livewire\Admin\Documents as AdminDocuments;
 use App\Livewire\Admin\Members as AdminMembers;
 use App\Livewire\Admin\MembershipApplications as AdminMembershipApplications;
 use App\Livewire\Admin\Notifications as AdminNotifications;
-use App\Livewire\Member\ComingSoon as MemberComingSoon;
+use App\Livewire\Member\Catalogue as MemberCatalogue;
+use App\Livewire\Member\Certificats as MemberCertificats;
+use App\Livewire\Member\Communaute as MemberCommunaute;
 use App\Livewire\Member\Dashboard as MemberDashboard;
 use App\Livewire\Member\Directory as MemberDirectory;
 use App\Livewire\Member\Documents as MemberDocuments;
+use App\Livewire\Member\Emplois as MemberEmplois;
+use App\Livewire\Member\Evenements as MemberEvenements;
+use App\Livewire\Member\Formations as MemberFormations;
+use App\Livewire\Member\Incubateur as MemberIncubateur;
+use App\Livewire\Member\Mentorat as MemberMentorat;
 use App\Livewire\Member\Messaging as MemberMessaging;
 use App\Livewire\Member\Notifications as MemberNotifications;
+use App\Livewire\Member\Parcours as MemberParcours;
 use App\Livewire\Member\ProfileEditor as MemberProfileEditor;
+use App\Livewire\Member\Projets as MemberProjets;
+use App\Livewire\Member\Ressources as MemberRessources;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'pages.home')->name('home');
@@ -64,9 +74,17 @@ Route::middleware('api.auth')->prefix('espace-membre')->name('espace-membre.')->
     Route::get('/documents', MemberDocuments::class)->name('documents');
     Route::get('/profil', MemberProfileEditor::class)->name('profile');
 
-    Route::get('/{page}', MemberComingSoon::class)
-        ->whereIn('page', ['formations', 'catalogue', 'parcours', 'mentorat', 'communaute', 'evenements', 'projets', 'incubateur', 'emplois', 'ressources', 'certificats'])
-        ->name('coming-soon');
+    Route::get('/formations', MemberFormations::class)->name('formations');
+    Route::get('/catalogue', MemberCatalogue::class)->name('catalogue');
+    Route::get('/parcours', MemberParcours::class)->name('parcours');
+    Route::get('/mentorat', MemberMentorat::class)->name('mentorat');
+    Route::get('/communaute', MemberCommunaute::class)->name('communaute');
+    Route::get('/evenements', MemberEvenements::class)->name('evenements');
+    Route::get('/projets', MemberProjets::class)->name('projets');
+    Route::get('/incubateur', MemberIncubateur::class)->name('incubateur');
+    Route::get('/emplois', MemberEmplois::class)->name('emplois');
+    Route::get('/ressources', MemberRessources::class)->name('ressources');
+    Route::get('/certificats', MemberCertificats::class)->name('certificats');
 });
 
 Route::middleware(['api.auth', 'admin.web'])->prefix('admin')->name('admin.')->group(function () {
