@@ -5,11 +5,7 @@
     $unread = \App\Support\Api::get('/notifications', [], \App\Support\Api::token())['unread'] ?? 0;
 @endphp
 
-<header class="sticky top-0 z-50 flex h-16 items-center gap-4 border-b border-brand/10 border-t-[3px] border-t-accent bg-white/85 px-7 backdrop-blur-lg">
-    <button type="button" @click="mobileOpen = true" class="flex size-9 shrink-0 items-center justify-center rounded-lg border border-brand/10 text-brand lg:hidden">
-        <x-ui.icon name="menu" class="size-[17px]" />
-    </button>
-
+<header class="sticky top-0 z-50 flex h-16 items-center gap-4 border-b border-brand/10 border-t-[3px] border-t-accent bg-white/85 px-4 backdrop-blur-lg lg:px-7">
     <p class="truncate text-base font-extrabold text-brand">{{ $title }}</p>
 
     <div class="flex-1"></div>

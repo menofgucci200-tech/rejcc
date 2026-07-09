@@ -33,12 +33,14 @@
                  wire:navigate, ce qui bloquait le defilement si on laissait la page
                  defiler au niveau du document. -->
             <div class="flex min-w-0 flex-1 flex-col overflow-y-auto" data-lenis-prevent>
-                <main class="flex-1">
+                <main class="flex-1 pb-20 lg:pb-0">
                     {{ $slot }}
                 </main>
 
                 <x-member-light.footer />
             </div>
+
+            <x-member-light.mobile-nav />
         </div>
 
         @livewireScripts
