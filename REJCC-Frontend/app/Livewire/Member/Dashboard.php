@@ -11,6 +11,22 @@ use Livewire\Component;
 #[Layout('layouts.member-light')]
 class Dashboard extends Component
 {
+    public array $defisEtat = [true, true, false];
+
+    public function toggleDefi(int $index): void
+    {
+        $this->defisEtat[$index] = ! $this->defisEtat[$index];
+    }
+
+    protected function defisData(): array
+    {
+        return [
+            ['label' => 'Terminer un module de formation', 'xp' => 50],
+            ['label' => 'Participer à un atelier', 'xp' => 80],
+            ['label' => 'Publier un projet dans la communauté', 'xp' => 120],
+        ];
+    }
+
     protected function profileCompletion(object $user): int
     {
         $fields = [$user->prenom, $user->nom, $user->email, $user->telephone, $user->ville, $user->secteur, $user->profil, $user->bio ?? null];
@@ -42,15 +58,30 @@ class Dashboard extends Component
             });
         $upcomingEvents = $allEvents->filter(fn ($e) => $e->starts_at->isFuture())->sortBy('starts_at')->take(4)->values();
 
-        $sectorsCount = count(Api::get('/sectors')['sectors'] ?? []);
-        $villesCount = $allMembers->pluck('ville')->filter()->unique()->count();
+        $defis = array_map(function ($d, $i) {
+            $fait = $this->defisEtat[$i];
+            $d['fait'] = $fait;
+            $d['index'] = $i;
 
-        $networkStats = [
-            ['icon' => 'users', 'value' => $allMembers->count() + 1, 'suffix' => '+', 'label' => 'Membres actifs', 'color' => '#9DB2EE'],
-            ['icon' => 'globe', 'value' => $sectorsCount, 'suffix' => '', 'label' => 'Secteurs représentés', 'color' => '#34D399'],
-            ['icon' => 'map-pin', 'value' => $villesCount, 'suffix' => '', 'label' => 'Villes couvertes', 'color' => '#F2A33C'],
-            ['icon' => 'calendar', 'value' => $allEvents->count(), 'suffix' => '+', 'label' => 'Événements organisés', 'color' => '#A78BFA'],
+            return $d;
+        }, $this->defisData(), array_keys($this->defisData()));
+
+        $activites = [
+            ['texte' => 'Module « Étude de marché » terminé — Parcours Entrepreneuriat', 'quand' => 'Il y a 2 heures', 'dot' => '#22A85A'],
+            ['texte' => 'Nouveau commentaire de Awa Diabaté sur votre business plan', 'quand' => 'Hier · 18 h 40', 'dot' => '#4F6FBF'],
+            ['texte' => 'Certificat « Gestion financière de base » obtenu 🎉', 'quand' => 'Il y a 3 jours', 'dot' => '#AC0100'],
+            ['texte' => 'Inscription confirmée : Café des entrepreneurs du 18 juillet', 'quand' => 'Il y a 5 jours', 'dot' => '#031D59'],
         ];
+
+        if ($unreadMessages > 0) {
+            array_unshift($activites, [
+                'texte' => $unreadMessages > 1
+                    ? "Vous avez {$unreadMessages} nouveaux messages non lus"
+                    : 'Vous avez 1 nouveau message non lu',
+                'quand' => 'À l\'instant',
+                'dot' => '#4F6FBF',
+            ]);
+        }
 
         return view('livewire.member.dashboard', [
             'completion' => $this->profileCompletion($user),
@@ -58,7 +89,9 @@ class Dashboard extends Component
             'docs' => $docs,
             'members' => $members,
             'upcomingEvents' => $upcomingEvents,
-            'networkStats' => $networkStats,
+            'defis' => $defis,
+            'defisFaits' => collect($defis)->where('fait', true)->count(),
+            'activites' => $activites,
         ]);
     }
 }

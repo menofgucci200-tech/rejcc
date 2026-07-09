@@ -11,75 +11,154 @@
                 <h1 class="mb-2 text-[28px] font-extrabold tracking-tight text-brand">Bonjour {{ $user->prenom }} 👋</h1>
                 <p class="max-w-lg font-serif text-[15px] italic text-[#5B677A]">« Tout ce que vous faites, faites-le de bon cœur, comme pour le Seigneur. » — Colossiens 3:23</p>
             </div>
+            <a href="{{ route('espace-membre.formations') }}" wire:navigate class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-[22px] py-3 text-sm font-bold text-white shadow-[0_6px_16px_rgba(172,1,0,.25)] hover:bg-accent-600 sm:w-fit">
+                Reprendre ma formation
+                <x-ui.icon name="arrow-right" class="size-4" />
+            </a>
         </section>
 
-        <section class="mb-6 grid grid-cols-2 gap-3.5 sm:grid-cols-4">
-            @foreach ($networkStats as $s)
-                <div class="rounded-[18px] border border-brand/10 bg-white px-5 py-4 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
-                    <span class="mb-2.5 flex size-[34px] items-center justify-center rounded-[10px]" style="background: color-mix(in srgb, {{ $s['color'] }} 16%, transparent)">
-                        <x-ui.icon :name="$s['icon']" class="size-4" style="color: {{ $s['color'] }}" />
-                    </span>
-                    <p class="text-[26px] font-extrabold leading-none text-brand"><x-ui.counter :value="$s['value']" :suffix="$s['suffix']" /></p>
-                    <p class="mt-1 text-[11.5px] text-[#5B677A]">{{ $s['label'] }}</p>
+        <section class="relative mb-6 grid grid-cols-1 gap-8 overflow-hidden rounded-[20px] px-8 py-7 text-white shadow-[0_12px_32px_rgba(3,29,89,.22)] lg:grid-cols-[1.2fr_1fr]" style="background: linear-gradient(120deg,#031D59 0%,#0B2E7A 60%,#1A3D8F 100%)">
+            <div class="relative">
+                <p class="mb-2.5 text-xs font-semibold tracking-[0.12em] text-[#8FA3D9]">PROGRESSION GÉNÉRALE</p>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-[52px] font-extrabold leading-none tracking-tight"><x-ui.counter :value="72" /></span>
+                    <span class="text-2xl font-bold text-[#8FA3D9]">%</span>
                 </div>
-            @endforeach
+                <div class="mt-4 h-2.5 max-w-[420px] overflow-hidden rounded-md bg-white/15">
+                    <div class="h-full rounded-md" style="width: 72%; background: linear-gradient(90deg,#4F6FBF,#8FB0FF)"></div>
+                </div>
+                <p class="mt-3.5 text-[13px] text-[#C4D0EC]">Encore 2 modules pour terminer <strong class="text-white">Leadership chrétien — Niveau 2</strong>.</p>
+            </div>
+            <div class="grid grid-cols-3 gap-3 max-[480px]:grid-cols-1">
+                @foreach ([
+                    ['icon' => 'graduation-cap', 'value' => 5, 'label' => 'Formations terminées'],
+                    ['icon' => 'award', 'value' => 3, 'label' => 'Certificats obtenus'],
+                    ['icon' => 'clock', 'value' => 48, 'label' => "Heures d'apprentissage", 'suffix' => 'h'],
+                ] as $stat)
+                    <div class="rounded-[14px] border border-white/10 bg-white/[.08] px-3.5 py-4">
+                        <x-ui.icon :name="$stat['icon']" class="size-5 text-[#8FB0FF]" />
+                        <p class="mt-2 text-[26px] font-extrabold leading-none"><x-ui.counter :value="$stat['value']" :suffix="$stat['suffix'] ?? ''" /></p>
+                        <p class="mt-1 text-xs text-[#C4D0EC]">{{ $stat['label'] }}</p>
+                    </div>
+                @endforeach
+            </div>
         </section>
 
-        <section class="mb-6 grid grid-cols-1 gap-5 lg:grid-cols-[1.1fr_1fr]">
-            <div class="rounded-[20px] border border-brand/10 bg-white px-7 py-6 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
-                <div class="flex items-start gap-6">
-                    @php $circ = 2 * M_PI * 48; $dash = ($completion / 100) * $circ; @endphp
-                    <div class="relative shrink-0">
-                        <svg width="110" height="110" viewBox="0 0 120 120" style="transform: rotate(-90deg)">
-                            <circle cx="60" cy="60" r="48" fill="none" stroke="#E6EAF0" stroke-width="9" />
-                            <circle cx="60" cy="60" r="48" fill="none" stroke="url(#ringGrad)" stroke-width="9" stroke-linecap="round" stroke-dasharray="{{ $dash }} {{ $circ - $dash }}" />
-                            <defs><linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#4F6FBF" /><stop offset="100%" stop-color="#AC0100" /></linearGradient></defs>
-                        </svg>
-                        <div class="absolute inset-0 flex flex-col items-center justify-center">
-                            <p class="text-xl font-extrabold leading-none text-brand">{{ $completion }}%</p>
-                            <p class="mt-1 text-[9px] tracking-wide text-[#9AA6B8]">PROFIL</p>
+        <div class="mb-8 grid grid-cols-1 items-start gap-6 lg:grid-cols-[1.85fr_1fr]">
+            <div class="flex min-w-0 flex-col gap-6">
+                <section>
+                    <h2 class="mb-1 text-[17px] font-bold text-brand">Continuer ma formation</h2>
+                    <div class="mb-4 h-[3px] w-9 rounded bg-accent"></div>
+                    <div class="grid grid-cols-1 overflow-hidden rounded-[18px] border border-brand/10 bg-white shadow-[0_2px_8px_rgba(3,29,89,.05)] transition-shadow hover:shadow-[0_14px_34px_rgba(3,29,89,.14)] lg:grid-cols-[260px_1fr]">
+                        <div class="flex min-h-[150px] items-center justify-center" style="background: repeating-linear-gradient(45deg,#0B2E7A 0 22px,#123A8C 22px 44px)">
+                            <x-ui.icon name="graduation-cap" class="size-10 text-white/70" />
                         </div>
-                    </div>
-                    <div class="min-w-0 flex-1">
-                        <h3 class="mb-1.5 font-serif text-lg italic text-brand">Votre réseau REJCC</h3>
-                        <p class="mb-4 text-[13px] leading-relaxed text-[#5B677A]">Complétez votre profil pour maximiser vos opportunités de networking.</p>
-                        <div class="grid grid-cols-2 gap-2.5">
-                            @foreach ([
-                                ['label' => 'Profil complété', 'val' => $completion.'%', 'color' => '#4F6FBF'],
-                                ['label' => 'Messages', 'val' => $unreadMessages > 0 ? $unreadMessages.' non lus' : 'À jour', 'color' => $unreadMessages > 0 ? '#F5A623' : '#22A85A'],
-                                ['label' => 'Documents', 'val' => (string) $docs->count(), 'color' => '#AC0100'],
-                                ['label' => 'Membres réseau', 'val' => $networkStats[0]['value'].'+', 'color' => '#22A85A'],
-                            ] as $stat)
-                                <div class="rounded-xl border border-brand/10 bg-cloud px-3.5 py-2.5">
-                                    <p class="text-base font-bold" style="color: {{ $stat['color'] }}">{{ $stat['val'] }}</p>
-                                    <p class="mt-0.5 text-[11px] text-[#9AA6B8]">{{ $stat['label'] }}</p>
+                        <div class="flex flex-col gap-2.5 p-6">
+                            <div class="flex gap-2">
+                                <span class="rounded-full bg-[#E8EDF8] px-2.5 py-1 text-[11px] font-bold text-brand">Leadership chrétien</span>
+                                <span class="rounded-full bg-[#F9E9E9] px-2.5 py-1 text-[11px] font-bold text-accent">Niveau 2</span>
+                            </div>
+                            <h3 class="text-[19px] font-bold text-brand">Diriger avec intégrité : servir avant de gouverner</h3>
+                            <p class="text-[13px] text-[#5B677A]">Module 6 sur 8 · Animé par P. Emmanuel Koffi</p>
+                            <div class="mt-auto flex items-center gap-3">
+                                <div class="h-2 flex-1 overflow-hidden rounded-md bg-[#EDF0F5]">
+                                    <div class="h-full rounded-md" style="width: 75%; background: linear-gradient(90deg,#031D59,#4F6FBF)"></div>
                                 </div>
-                            @endforeach
+                                <span class="text-[13px] font-bold text-brand">75 %</span>
+                                <a href="{{ route('espace-membre.formations') }}" wire:navigate class="rounded-[10px] bg-brand px-5 py-2.5 text-[13px] font-bold text-white hover:bg-accent">Continuer</a>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </section>
+
+                <section>
+                    <h2 class="mb-1 text-[17px] font-bold text-brand">Recommandé pour vous</h2>
+                    <div class="mb-4 h-[3px] w-9 rounded bg-accent"></div>
+                    <div class="relative overflow-hidden rounded-[18px] bg-brand p-5 text-white">
+                        <div class="mb-3 flex items-center gap-2 text-[11px] font-bold tracking-[0.1em] text-[#8FA3D9]">
+                            <x-ui.icon name="sparkles" class="size-3.5 text-[#8FB0FF]" />
+                            SUGGESTIONS PERSONNALISÉES
+                        </div>
+                        <div class="flex flex-col gap-2.5">
+                            <a href="{{ route('espace-membre.catalogue') }}" wire:navigate class="block rounded-xl border border-white/10 bg-white/[.08] px-3.5 py-3 hover:bg-white/[.16]">
+                                <p class="text-[13px] font-bold">Formation · Pitch d'investisseurs</p>
+                                <p class="mt-0.5 text-[11.5px] text-[#C4D0EC]">Basé sur votre parcours Entrepreneuriat</p>
+                            </a>
+                            <a href="{{ route('espace-membre.mentorat') }}" wire:navigate class="block rounded-xl border border-white/10 bg-white/[.08] px-3.5 py-3 hover:bg-white/[.16]">
+                                <p class="text-[13px] font-bold">Mentor · Awa Diabaté, levée de fonds</p>
+                                <p class="mt-0.5 text-[11.5px] text-[#C4D0EC]">Disponible cette semaine</p>
+                            </a>
+                            <a href="{{ route('espace-membre.evenements') }}" wire:navigate class="block rounded-xl border border-white/10 bg-white/[.08] px-3.5 py-3 hover:bg-white/[.16]">
+                                <p class="text-[13px] font-bold">Événement · Masterclass Finance</p>
+                                <p class="mt-0.5 text-[11.5px] text-[#C4D0EC]">Mardi 21 juillet · en ligne</p>
+                            </a>
+                        </div>
+                    </div>
+                </section>
             </div>
 
-            <div class="flex flex-col rounded-[20px] px-7 py-6 text-white shadow-[0_12px_32px_rgba(3,29,89,.22)]" style="background: linear-gradient(120deg,#031D59 0%,#0B2E7A 60%,#1A3D8F 100%)">
-                @if ($upcomingEvents->isEmpty())
-                    <p class="text-sm text-[#C4D0EC]">Aucun événement à venir pour le moment.</p>
-                @else
-                    @php $next = $upcomingEvents->first(); @endphp
-                    <span class="mb-3.5 inline-flex w-fit items-center gap-1.5 rounded-full border border-[#AC0100]/40 bg-[#AC0100]/25 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.04em] text-white">
-                        <span class="size-1.5 rounded-full bg-white"></span> Prochain événement
-                    </span>
-                    <h3 class="mb-2 font-serif text-xl italic leading-tight">{{ $next->title }}</h3>
-                    <p class="mb-1.5 text-[13px] text-[#C4D0EC]">📍 {{ $next->location }} · {{ $next->starts_at->locale('fr')->translatedFormat('d F Y') }}</p>
-                    <p class="flex-1 text-[13px] leading-relaxed text-[#C4D0EC]">{{ $next->excerpt ?? $next->description }}</p>
-                    <div class="mt-4 flex gap-2.5">
-                        <a href="{{ url('/evenements/'.$next->slug) }}" class="flex-1 rounded-[10px] bg-white px-4 py-2.5 text-center text-[13px] font-bold text-brand">En savoir plus</a>
-                        <span class="flex items-center justify-center rounded-[10px] border border-white/20 bg-white/10 px-3.5 py-2.5">
-                            <x-ui.icon name="external-link" class="size-3.5" />
-                        </span>
+            <div class="flex min-w-0 flex-col gap-6">
+                <section>
+                    <h2 class="mb-1 text-[17px] font-bold text-brand">Parole &amp; prière du jour</h2>
+                    <div class="mb-4 h-[3px] w-9 rounded bg-accent"></div>
+                    <div class="flex gap-3.5 rounded-[14px] border border-l-[3px] border-brand/10 border-l-accent bg-white p-5 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                        <x-ui.icon name="book-open" class="mt-0.5 size-[22px] shrink-0 text-accent" />
+                        <div>
+                            <p class="font-serif text-[13.5px] italic leading-relaxed text-ink">« Confie à l'Éternel tes œuvres, et tes projets réussiront. » — Proverbes 16:3</p>
+                            <p class="mt-2.5 text-xs leading-relaxed text-[#5B677A]">Intention du jour : prions pour les membres qui présentent un projet à un investisseur cette semaine.</p>
+                        </div>
                     </div>
-                @endif
+                </section>
+
+                <section>
+                    <h2 class="mb-1 text-[17px] font-bold text-brand">Défis de la semaine</h2>
+                    <div class="mb-4 h-[3px] w-9 rounded bg-accent"></div>
+                    <div class="rounded-[18px] border border-brand/10 p-5 shadow-[0_2px_8px_rgba(3,29,89,.05)]" style="background: linear-gradient(150deg,#fff,#F0F3FA)">
+                        @foreach ($defis as $d)
+                            <div wire:click="toggleDefi({{ $d['index'] }})" class="flex cursor-pointer items-center gap-3 py-2.5">
+                                <span class="flex size-[22px] shrink-0 items-center justify-center rounded-[7px] border-2 {{ $d['fait'] ? 'border-[#22A85A] bg-[#22A85A]' : 'border-[#C9D3E6] bg-white' }}">
+                                    @if ($d['fait'])
+                                        <x-ui.icon name="check" class="size-3 text-white" />
+                                    @endif
+                                </span>
+                                <span class="flex-1 text-[13.5px] {{ $d['fait'] ? 'text-[#9AA6B8] line-through' : 'text-ink' }}">{{ $d['label'] }}</span>
+                                <span class="text-[11.5px] font-bold text-azure">+{{ $d['xp'] }} XP</span>
+                            </div>
+                        @endforeach
+                        <div class="mt-3 flex items-center gap-3 border-t border-dashed border-[#C9D3E6] pt-3.5">
+                            <span class="flex size-[38px] shrink-0 items-center justify-center rounded-full" style="background: linear-gradient(135deg,#AC0100,#D95B5A)">
+                                <x-ui.icon name="award" class="size-[18px] text-white" />
+                            </span>
+                            <div>
+                                <p class="text-[13px] font-bold text-brand">Badge « Bâtisseur »</p>
+                                <p class="text-xs text-[#5B677A]">{{ $defisFaits }} / 3 défis complétés cette semaine</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section>
+                    <h2 class="mb-1 text-[17px] font-bold text-brand">Activité récente</h2>
+                    <div class="mb-4 h-[3px] w-9 rounded bg-accent"></div>
+                    <div class="rounded-[18px] border border-brand/10 bg-white p-5 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                        @foreach ($activites as $i => $a)
+                            <div class="flex gap-3 {{ $i < count($activites) - 1 ? 'pb-4' : '' }}">
+                                <div class="flex flex-col items-center">
+                                    <span class="mt-1 size-2.5 shrink-0 rounded-full" style="background: {{ $a['dot'] }}"></span>
+                                    @if ($i < count($activites) - 1)
+                                        <span class="mt-1 w-0.5 flex-1 bg-[#EDF0F5]"></span>
+                                    @endif
+                                </div>
+                                <div>
+                                    <p class="text-[13px] leading-snug text-ink">{{ $a['texte'] }}</p>
+                                    <p class="mt-0.5 text-[11.5px] text-[#9AA6B8]">{{ $a['quand'] }}</p>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </section>
             </div>
-        </section>
+        </div>
 
         <section class="mb-8 grid grid-cols-1 gap-5 lg:grid-cols-2">
             <div>
