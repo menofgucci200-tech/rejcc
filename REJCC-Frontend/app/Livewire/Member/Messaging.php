@@ -6,7 +6,7 @@ use App\Support\Api;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
-#[Layout('layouts.member')]
+#[Layout('layouts.member-light')]
 class Messaging extends Component
 {
     public ?int $activeId = null;

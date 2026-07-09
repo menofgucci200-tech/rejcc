@@ -6,12 +6,14 @@
         ['label' => 'Mes parcours', 'icon' => 'nav-route', 'page' => 'parcours'],
         ['label' => 'Mentorat', 'icon' => 'nav-mentor', 'page' => 'mentorat'],
         ['label' => 'Annuaire', 'icon' => 'users', 'route' => 'espace-membre.directory'],
-        ['label' => 'Communauté', 'icon' => 'message-circle', 'page' => 'communaute'],
+        ['label' => 'Messagerie', 'icon' => 'message-circle', 'route' => 'espace-membre.messaging'],
+        ['label' => 'Communauté', 'icon' => 'network', 'page' => 'communaute'],
         ['label' => 'Événements', 'icon' => 'calendar-days', 'page' => 'evenements'],
         ['label' => 'Projets', 'icon' => 'nav-projects', 'page' => 'projets'],
         ['label' => 'Incubateur', 'icon' => 'nav-incubator', 'page' => 'incubateur'],
         ['label' => 'Opportunités', 'icon' => 'nav-briefcase', 'page' => 'emplois'],
         ['label' => 'Ressources', 'icon' => 'nav-library', 'page' => 'ressources'],
+        ['label' => 'Documents', 'icon' => 'folder-open', 'route' => 'espace-membre.documents'],
         ['label' => 'Certificats', 'icon' => 'award', 'page' => 'certificats'],
     ];
 

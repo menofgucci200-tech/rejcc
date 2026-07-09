@@ -8,7 +8,7 @@ use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
-#[Layout('layouts.member')]
+#[Layout('layouts.member-light')]
 class Dashboard extends Component
 {
     protected function profileCompletion(object $user): int

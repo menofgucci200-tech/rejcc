@@ -269,35 +269,3 @@ h4 {
   opacity: 0;
 }
 
-/* ============================================================
-   Espace membre — thèmes dark/light (glassmorphism)
-   Portés depuis MemberShell.tsx. Scopés à .ms-shell pour ne pas
-   fuiter sur le reste du site.
-   ============================================================ */
-.ms-shell[data-ms-theme="dark"] {
-  --ms-shell-bg: radial-gradient(165deg, #02163f 0%, #031d59 48%, #040f2e 100%);
-  --ms-main-bg: #02163f;
-  --ms-header-bg: rgba(2, 18, 55, 1);
-  --ms-sidebar-bg: rgba(255, 255, 255, 0.028);
-  --ms-surf: rgba(8, 28, 80, 0.72);
-  --ms-surf2: rgba(12, 38, 100, 0.8);
-  --ms-bc: rgba(255, 255, 255, 0.09);
-  --ms-bc2: rgba(255, 255, 255, 0.16);
-  --ms-text: #f4f6f8;
-  --ms-muted: rgba(244, 246, 248, 0.6);
-  --ms-dim: rgba(244, 246, 248, 0.38);
-}
-
-.ms-shell[data-ms-theme="light"] {
-  --ms-shell-bg: linear-gradient(165deg, #edf2fb 0%, #f0f4fc 48%, #e8eef8 100%);
-  --ms-main-bg: #f5f7fc;
-  --ms-header-bg: rgba(248, 250, 255, 0.98);
-  --ms-sidebar-bg: rgba(3, 29, 89, 0.04);
-  --ms-surf: rgba(255, 255, 255, 0.92);
-  --ms-surf2: rgba(229, 237, 255, 0.95);
-  --ms-bc: rgba(3, 29, 89, 0.1);
-  --ms-bc2: rgba(3, 29, 89, 0.18);
-  --ms-text: #031d59;
-  --ms-muted: rgba(3, 29, 89, 0.55);
-  --ms-dim: rgba(3, 29, 89, 0.32);
-}
