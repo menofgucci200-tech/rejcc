@@ -4,11 +4,62 @@
             <h1 class="text-2xl font-bold text-brand">Membres</h1>
             <p class="text-sm text-ink/60">{{ $members->count() }} compte{{ $members->count() > 1 ? 's' : '' }}</p>
         </div>
-        <div class="relative max-w-xs flex-1">
-            <x-ui.icon name="search" class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink/40" />
-            <input wire:model.live.debounce.300ms="query" type="text" placeholder="Rechercher…" class="w-full rounded-full border border-brand/15 bg-white py-2 pl-10 pr-4 text-sm outline-none focus:border-brand" />
+        <div class="flex items-center gap-3">
+            <div class="relative max-w-xs flex-1">
+                <x-ui.icon name="search" class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-ink/40" />
+                <input wire:model.live.debounce.300ms="query" type="text" placeholder="Rechercher…" class="w-full rounded-full border border-brand/15 bg-white py-2 pl-10 pr-4 text-sm outline-none focus:border-brand" />
+            </div>
+            <button wire:click="openCreate" class="inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-brand/90">
+                <x-ui.icon name="plus" class="size-4" /> Ajouter
+            </button>
         </div>
     </div>
+
+    @if ($showForm)
+        <div class="mb-6 rounded-2xl border border-brand/15 bg-white p-6">
+            <div class="mb-4 flex items-center justify-between">
+                <p class="font-semibold text-brand">Nouveau compte</p>
+                <button wire:click="closeForm"><x-ui.icon name="x" class="size-4 text-ink/50" /></button>
+            </div>
+            <div class="grid gap-3 sm:grid-cols-2">
+                <div>
+                    <label class="mb-1 block text-xs font-semibold text-brand">Prénom</label>
+                    <input wire:model="prenom" type="text" class="w-full rounded-xl border border-brand/15 px-3 py-2 text-sm outline-none focus:border-brand" />
+                    @error('prenom') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                </div>
+                <div>
+                    <label class="mb-1 block text-xs font-semibold text-brand">Nom</label>
+                    <input wire:model="nom" type="text" class="w-full rounded-xl border border-brand/15 px-3 py-2 text-sm outline-none focus:border-brand" />
+                    @error('nom') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                </div>
+                <div>
+                    <label class="mb-1 block text-xs font-semibold text-brand">E-mail</label>
+                    <input wire:model="email" type="email" class="w-full rounded-xl border border-brand/15 px-3 py-2 text-sm outline-none focus:border-brand" />
+                    @error('email') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                </div>
+                <div>
+                    <label class="mb-1 block text-xs font-semibold text-brand">Téléphone</label>
+                    <input wire:model="telephone" type="text" inputmode="numeric" placeholder="0700000000" class="w-full rounded-xl border border-brand/15 px-3 py-2 text-sm outline-none focus:border-brand" />
+                    @error('telephone') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                </div>
+                <div>
+                    <label class="mb-1 block text-xs font-semibold text-brand">Mot de passe (8 caractères min.)</label>
+                    <input wire:model="password" type="password" class="w-full rounded-xl border border-brand/15 px-3 py-2 text-sm outline-none focus:border-brand" />
+                    @error('password') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                </div>
+                <div>
+                    <label class="mb-1 block text-xs font-semibold text-brand">Rôle</label>
+                    <select wire:model="role" class="w-full rounded-xl border border-brand/15 px-3 py-2 text-sm outline-none focus:border-brand">
+                        <option value="member">Membre</option>
+                        <option value="admin">Administrateur</option>
+                    </select>
+                </div>
+            </div>
+            <button wire:click="save" wire:loading.attr="disabled" class="mt-4 inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2 text-sm font-semibold text-white transition hover:bg-accent-600 disabled:opacity-60">
+                <x-ui.icon name="check" class="size-3.5" /> Créer le compte
+            </button>
+        </div>
+    @endif
 
     <div class="overflow-x-auto rounded-2xl border border-brand/10 bg-white">
         <table class="w-full text-sm">

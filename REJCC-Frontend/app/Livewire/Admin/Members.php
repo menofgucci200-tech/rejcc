@@ -13,6 +13,59 @@ class Members extends Component
 {
     public string $query = '';
 
+    public bool $showForm = false;
+
+    public string $prenom = '';
+
+    public string $nom = '';
+
+    public string $email = '';
+
+    public string $telephone = '';
+
+    public string $password = '';
+
+    public string $role = 'member';
+
+    protected function rules(): array
+    {
+        return [
+            'prenom' => 'required|string|min:2|max:80',
+            'nom' => 'required|string|min:2|max:80',
+            'email' => 'required|email|max:150',
+            'telephone' => ['required', 'regex:/^[0-9]{10}$/'],
+            'password' => 'required|string|min:8',
+            'role' => 'required|in:member,admin',
+        ];
+    }
+
+    public function openCreate(): void
+    {
+        $this->reset(['prenom', 'nom', 'email', 'telephone', 'password', 'role']);
+        $this->resetValidation();
+        $this->showForm = true;
+    }
+
+    public function closeForm(): void
+    {
+        $this->showForm = false;
+    }
+
+    public function save(): void
+    {
+        $data = $this->validate();
+
+        $result = Api::post('/admin/members', $data, Api::token());
+
+        if (! ($result['ok'] ?? false)) {
+            $this->addError('email', $result['message'] ?? 'Une erreur est survenue.');
+
+            return;
+        }
+
+        $this->closeForm();
+    }
+
     public function toggleRole(int $id): void
     {
         $members = Api::get('/admin/members', [], Api::token())['members'] ?? [];

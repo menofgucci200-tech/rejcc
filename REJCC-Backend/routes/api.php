@@ -82,6 +82,7 @@ Route::middleware(['auth.token', 'auth.admin'])->prefix('admin')->group(function
 
     // Membres
     Route::get('/members', [AdminController::class, 'members']);
+    Route::post('/members', [AdminController::class, 'createMember']);
     Route::put('/members/{id}', [AdminController::class, 'updateMember']);
     Route::delete('/members/{id}', [AdminController::class, 'deleteMember']);
 

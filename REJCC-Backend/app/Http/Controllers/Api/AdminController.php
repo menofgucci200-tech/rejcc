@@ -53,6 +53,36 @@ class AdminController extends Controller
         return response()->json(['ok' => true, 'members' => $members]);
     }
 
+    public function createMember(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'prenom' => 'required|string|min:2|max:80',
+            'nom' => 'required|string|min:2|max:80',
+            'email' => 'required|email|max:150|unique:users,email',
+            'telephone' => ['required', 'regex:/^[0-9]{10}$/'],
+            'password' => 'required|string|min:8',
+            'role' => 'required|in:member,admin',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['ok' => false, 'message' => $validator->errors()->first()], 422);
+        }
+
+        $d = $validator->validated();
+
+        $user = User::create([
+            'name' => $d['prenom'].' '.$d['nom'],
+            'prenom' => $d['prenom'],
+            'nom' => $d['nom'],
+            'email' => $d['email'],
+            'telephone' => $d['telephone'],
+            'password' => $d['password'],
+            'role' => $d['role'],
+        ]);
+
+        return response()->json(['ok' => true, 'member' => $user->only(['id', 'prenom', 'nom', 'email', 'role'])]);
+    }
+
     public function updateMember(Request $request, $id)
     {
         $user = User::findOrFail($id);
