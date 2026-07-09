@@ -58,14 +58,6 @@ Route::get('/suivre-ma-candidature', \App\Livewire\AdhesionStatusCheck::class)->
 Route::redirect('/inscription', '/adhesion');
 Route::view('/contact', 'pages.contact');
 
-Route::view('dashboard', 'dashboard')
-    ->middleware(['auth', 'verified'])
-    ->name('dashboard');
-
-Route::view('profile', 'profile')
-    ->middleware(['auth'])
-    ->name('profile');
-
 Route::post('/logout', LogoutController::class)->middleware('api.auth')->name('logout');
 
 Route::get('/mon-espace', function () {
