@@ -105,6 +105,10 @@ class AuthController extends Controller
             return response()->json(['ok' => false, 'message' => 'Identifiant ou mot de passe incorrect.'], 401);
         }
 
+        if (! $user->is_active) {
+            return response()->json(['ok' => false, 'message' => 'Ce compte a été suspendu. Contactez un administrateur.'], 403);
+        }
+
         return response()->json([
             'ok' => true,
             'token' => $this->issueToken($user),

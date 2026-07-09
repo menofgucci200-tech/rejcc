@@ -3,10 +3,11 @@
 namespace App\Livewire\Admin;
 
 use App\Support\Api;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
-#[Layout('layouts.admin')]
+#[Layout('layouts.admin-light')]
 class Notifications extends Component
 {
     public string $type = 'info';
@@ -42,6 +43,13 @@ class Notifications extends Component
 
     public function render()
     {
-        return view('livewire.admin.notifications');
+        $historique = Collection::make(Api::get('/admin/notifications/history', [], Api::token())['historique'] ?? [])
+            ->map(function ($h) {
+                $h['created_at'] = \Carbon\Carbon::parse($h['created_at']);
+
+                return (object) $h;
+            });
+
+        return view('livewire.admin.notifications', ['historique' => $historique]);
     }
 }

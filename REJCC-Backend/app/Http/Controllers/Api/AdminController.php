@@ -7,6 +7,9 @@ use App\Models\Contact;
 use App\Models\Document;
 use App\Models\Member;
 use App\Models\MemberNotification;
+use App\Models\MembershipApplication;
+use App\Models\NewsletterSubscriber;
+use App\Models\PartnershipRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -26,6 +29,10 @@ class AdminController extends Controller
                 'contacts'   => Contact::count(),
                 'documents'  => Document::count(),
                 'non_traites'=> Contact::where('traite', false)->count(),
+                'candidatures_attente' => MembershipApplication::where('statut', 'en_attente')->count(),
+                'adhesions_attente' => Member::where('statut', 'en_attente')->count(),
+                'newsletter' => NewsletterSubscriber::count(),
+                'partenariats_attente' => PartnershipRequest::where('statut', 'nouveau')->count(),
             ],
         ]);
     }
@@ -47,7 +54,7 @@ class AdminController extends Controller
 
         $members = $query->get([
             'id', 'prenom', 'nom', 'email', 'telephone',
-            'ville', 'profil', 'secteur', 'role', 'created_at',
+            'ville', 'profil', 'secteur', 'role', 'is_active', 'created_at',
         ]);
 
         return response()->json(['ok' => true, 'members' => $members]);
@@ -89,6 +96,7 @@ class AdminController extends Controller
 
         $validator = Validator::make($request->all(), [
             'role' => 'sometimes|in:member,admin',
+            'is_active' => 'sometimes|boolean',
         ]);
 
         if ($validator->fails()) {
@@ -98,7 +106,7 @@ class AdminController extends Controller
         $user->fill($validator->validated())->save();
 
         return response()->json(['ok' => true, 'member' => $user->only([
-            'id', 'prenom', 'nom', 'email', 'role',
+            'id', 'prenom', 'nom', 'email', 'role', 'is_active',
         ])]);
     }
 
@@ -232,5 +240,43 @@ class AdminController extends Controller
         }
 
         return response()->json(['ok' => true, 'sent_to' => count($members)]);
+    }
+
+    public function broadcastHistory()
+    {
+        $historique = MemberNotification::selectRaw('title, type, MIN(created_at) as created_at, COUNT(*) as destinataires')
+            ->groupBy('title', 'type', 'body', 'link')
+            ->orderByDesc('created_at')
+            ->limit(20)
+            ->get();
+
+        return response()->json(['ok' => true, 'historique' => $historique]);
+    }
+
+    // ── Newsletter ────────────────────────────────────────────────────────────
+
+    public function newsletterSubscribers()
+    {
+        return response()->json(['ok' => true, 'subscribers' => NewsletterSubscriber::orderBy('created_at', 'desc')->get()]);
+    }
+
+    // ── Partenariats ──────────────────────────────────────────────────────────
+
+    public function partnershipRequests()
+    {
+        return response()->json(['ok' => true, 'requests' => PartnershipRequest::orderBy('created_at', 'desc')->get()]);
+    }
+
+    public function updatePartnershipRequest(Request $request, $id)
+    {
+        $partnership = PartnershipRequest::findOrFail($id);
+        $validator = Validator::make($request->all(), [
+            'statut' => 'required|in:nouveau,accepte,refuse',
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['ok' => false, 'message' => $validator->errors()->first()], 422);
+        }
+        $partnership->fill($validator->validated())->save();
+        return response()->json(['ok' => true]);
     }
 }

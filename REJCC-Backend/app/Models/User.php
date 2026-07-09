@@ -38,6 +38,7 @@ class User extends Authenticatable
         'photo',
         'role',
         'reference',
+        'is_active',
     ];
 
     public function tokens(): HasMany
@@ -67,6 +68,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'date_naissance' => 'date',
             'preferences' => 'array',
+            'is_active' => 'boolean',
         ];
     }
 

@@ -1,64 +1,99 @@
 @php
-    $badges = [
-        'en_attente' => ['label' => 'En attente', 'cls' => 'bg-amber-100 text-amber-700', 'icon' => 'clock'],
-        'valide' => ['label' => 'Validé', 'cls' => 'bg-emerald-100 text-emerald-700', 'icon' => 'check-circle'],
-        'rejete' => ['label' => 'Rejeté', 'cls' => 'bg-red-100 text-red-700', 'icon' => 'x-circle'],
-    ];
-    $payLabels = ['wave' => 'Wave', 'orange' => 'Orange Money', 'djamo' => 'Djamo'];
+    $candBadge = fn ($s) => match ($s ?? 'en_attente') {
+        'accepte' => ['#22A85A', '#EAF6EE', 'Acceptée'],
+        'refuse' => ['#AC0100', '#F9E9E9', 'Refusée'],
+        default => ['#F5A623', '#FCF1DD', 'En attente'],
+    };
+    $demBadge = fn ($s) => match ($s ?? 'en_attente') {
+        'valide' => ['#22A85A', '#EAF6EE', 'Validé'],
+        'rejete' => ['#AC0100', '#F9E9E9', 'Rejeté'],
+        default => ['#F5A623', '#FCF1DD', 'En attente'],
+    };
 @endphp
-
 <div>
-    <div class="mb-6">
-        <h1 class="text-2xl font-bold text-brand">Demandes d'adhésion</h1>
-        <p class="text-sm text-ink/60">{{ $adhesions->count() }} demande{{ $adhesions->count() > 1 ? 's' : '' }}</p>
-    </div>
+    <x-admin-light.topbar title="Adhésions & candidatures" />
 
-    <div class="overflow-x-auto rounded-2xl border border-brand/10 bg-white">
-        <table class="w-full text-sm">
-            <thead class="border-b border-brand/10 bg-cloud/60">
-                <tr>
-                    @foreach (['Réf.', 'Demandeur', 'Profil', 'Paiement', 'Statut', 'Date', 'Actions'] as $h)
-                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-ink/50">{{ $h }}</th>
-                    @endforeach
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-brand/5">
-                @foreach ($adhesions as $a)
-                    @php $badge = $badges[$a->statut] ?? $badges['en_attente']; @endphp
-                    <tr class="hover:bg-cloud/50">
-                        <td class="px-4 py-3 font-mono text-xs text-ink/60">{{ $a->reference }}</td>
-                        <td class="px-4 py-3">
-                            <p class="font-semibold text-brand">{{ $a->prenom }} {{ $a->nom }}</p>
-                            <p class="text-xs text-ink/50">{{ $a->email }}</p>
-                        </td>
-                        <td class="px-4 py-3 text-ink/60">{{ $a->profil ?? '—' }}</td>
-                        <td class="px-4 py-3 text-ink/60">{{ $payLabels[$a->paiement] ?? $a->paiement }}</td>
-                        <td class="px-4 py-3">
-                            <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold {{ $badge['cls'] }}">
-                                <x-ui.icon :name="$badge['icon']" class="size-3" /> {{ $badge['label'] }}
-                            </span>
-                        </td>
-                        <td class="px-4 py-3 text-ink/50">{{ $a->created_at->format('d/m/Y') }}</td>
-                        <td class="px-4 py-3">
-                            <div class="flex items-center gap-1.5">
-                                @if ($a->statut !== 'valide')
-                                    <button wire:click="updateStatut({{ $a->id }}, 'valide')" class="rounded-lg px-2.5 py-1 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50">
-                                        Valider
-                                    </button>
-                                @endif
-                                @if ($a->statut !== 'rejete')
-                                    <button wire:click="updateStatut({{ $a->id }}, 'rejete')" class="rounded-lg px-2.5 py-1 text-xs font-semibold text-red-600 transition hover:bg-red-50">
-                                        Rejeter
-                                    </button>
-                                @endif
+    <div class="mx-auto max-w-[1280px] px-8 py-8">
+        <section class="mb-8">
+            <div class="mb-4 flex flex-wrap items-end justify-between gap-4">
+                <div>
+                    <h2 class="mb-1 text-[17px] font-bold text-brand">Candidatures (formulaire enrichi)</h2>
+                    <div class="h-[3px] w-9 rounded bg-accent"></div>
+                </div>
+                <span class="text-xs text-[#5B677A]">21 questions par candidature · réponses consultables en détail</span>
+            </div>
+            <div class="rounded-[18px] border border-brand/10 bg-white px-5 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                @forelse ($candidatures as $c)
+                    @php $b = $candBadge($c->statut ?? null); @endphp
+                    <div class="flex flex-wrap items-center gap-4 border-t border-[#EDF0F5] py-4 first:border-t-0">
+                        <span class="flex size-11 shrink-0 items-center justify-center rounded-xl text-sm font-bold text-white" style="background: linear-gradient(135deg, #031D59, #4F6FBF)">
+                            {{ collect(explode(' ', $c->nom_prenoms))->map(fn ($w) => mb_substr($w, 0, 1))->take(2)->implode('') }}
+                        </span>
+                        <div class="min-w-[180px] flex-1">
+                            <p class="text-[13.5px] font-bold text-brand">{{ $c->nom_prenoms }}</p>
+                            <p class="mt-0.5 text-xs text-[#5B677A]">{{ $c->ville }} · soumise le {{ $c->created_at->format('d/m/Y') }}</p>
+                        </div>
+                        <button wire:click="toggleDetail({{ $c->id }})" class="shrink-0 rounded-lg border border-azure/25 px-3.5 py-1.5 text-xs font-semibold text-azure hover:bg-azure/10">
+                            {{ $expanded === $c->id ? 'Masquer le détail' : 'Voir le détail' }}
+                        </button>
+                        <span class="w-24 shrink-0 rounded-full px-2.5 py-1 text-center text-[11px] font-bold" style="color: {{ $b[0] }}; background: {{ $b[1] }}">{{ $b[2] }}</span>
+                        @if (($c->statut ?? 'en_attente') === 'en_attente')
+                            <div class="flex shrink-0 gap-2">
+                                <button wire:click="accept({{ $c->id }})" class="rounded-lg bg-[#22A85A] px-3.5 py-1.5 text-xs font-bold text-white hover:bg-[#1C8F4C]">Accepter</button>
+                                <button wire:click="reject({{ $c->id }})" wire:confirm="Refuser cette candidature ?" class="rounded-lg border border-[#F0C9C9] px-3.5 py-1.5 text-xs font-bold text-accent hover:bg-[#F9E9E9]">Refuser</button>
                             </div>
-                        </td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
-        @if ($adhesions->isEmpty())
-            <p class="py-12 text-center text-sm text-ink/50">Aucune demande.</p>
-        @endif
+                        @endif
+                    </div>
+                    @if ($expanded === $c->id)
+                        @php
+                            $rows = [
+                                'Sexe' => $c->sexe, "Tranche d'âge" => $c->tranche_age, 'Contact' => $c->whatsapp.' · '.$c->email,
+                                'Statut actuel' => implode(', ', $c->statut_actuel ?? []), "Niveau d'études" => $c->niveau_etudes,
+                                "Domaines de formation" => $c->domaines_formation, 'Compétences' => implode(', ', $c->competences ?? []),
+                                'A une activité ?' => $c->a_activite, "Secteur d'activité" => $c->nom_activite,
+                                'Attentes' => implode(', ', $c->attentes ?? []), 'Défi principal' => $c->defi_principal,
+                                'Revenu mensuel' => $c->revenu_mensuel,
+                            ];
+                        @endphp
+                        <div class="mb-3.5 grid grid-cols-1 gap-x-6 gap-y-2.5 rounded-xl bg-[#F8FAFC] p-4 sm:grid-cols-2">
+                            @foreach ($rows as $label => $value)
+                                @if (! empty($value))
+                                    <div>
+                                        <p class="text-[11px] font-bold text-[#5B677A]">{{ $label }}</p>
+                                        <p class="mt-0.5 text-[12.5px] text-ink">{{ $value }}</p>
+                                    </div>
+                                @endif
+                            @endforeach
+                        </div>
+                    @endif
+                @empty
+                    <p class="py-10 text-center text-sm text-[#5B677A]">Aucune candidature pour le moment.</p>
+                @endforelse
+            </div>
+        </section>
+
+        <section>
+            <h2 class="mb-1 text-[17px] font-bold text-brand">Demandes d'adhésion (ancien formulaire)</h2>
+            <div class="mb-4 h-[3px] w-9 rounded bg-accent"></div>
+            <div class="rounded-[18px] border border-brand/10 bg-white px-5 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                @forelse ($demandes as $d)
+                    @php $b = $demBadge($d->statut ?? null); @endphp
+                    <div class="flex flex-wrap items-center gap-4 border-t border-[#EDF0F5] py-3.5 first:border-t-0">
+                        <div class="min-w-[180px] flex-1">
+                            <p class="text-[13.5px] font-bold text-brand">{{ $d->prenom }} {{ $d->nom }}</p>
+                            <p class="text-xs text-[#5B677A]">{{ $d->email }} · soumise le {{ $d->created_at->format('d/m/Y') }}</p>
+                        </div>
+                        <span class="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold" style="color: {{ $b[0] }}; background: {{ $b[1] }}">{{ $b[2] }}</span>
+                        <select onchange="event.stopPropagation()" wire:change="updateStatut({{ $d->id }}, $event.target.value)" class="shrink-0 rounded-lg border border-brand/10 px-2.5 py-1.5 text-xs text-ink outline-none">
+                            <option value="en_attente" @selected(($d->statut ?? 'en_attente') === 'en_attente')>En attente</option>
+                            <option value="valide" @selected(($d->statut ?? '') === 'valide')>Validé</option>
+                            <option value="rejete" @selected(($d->statut ?? '') === 'rejete')>Rejeté</option>
+                        </select>
+                    </div>
+                @empty
+                    <p class="py-10 text-center text-sm text-[#5B677A]">Aucune demande.</p>
+                @endforelse
+            </div>
+        </section>
     </div>
 </div>

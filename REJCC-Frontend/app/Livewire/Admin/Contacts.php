@@ -8,7 +8,7 @@ use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
-#[Layout('layouts.admin')]
+#[Layout('layouts.admin-light')]
 class Contacts extends Component
 {
     public ?int $expanded = null;

@@ -108,4 +108,12 @@ Route::middleware(['auth.token', 'auth.admin'])->prefix('admin')->group(function
 
     // Notifications broadcast
     Route::post('/notifications/broadcast', [AdminController::class, 'broadcastNotification']);
+    Route::get('/notifications/history', [AdminController::class, 'broadcastHistory']);
+
+    // Newsletter
+    Route::get('/newsletter', [AdminController::class, 'newsletterSubscribers']);
+
+    // Partenariats
+    Route::get('/partenariats', [AdminController::class, 'partnershipRequests']);
+    Route::put('/partenariats/{id}', [AdminController::class, 'updatePartnershipRequest']);
 });

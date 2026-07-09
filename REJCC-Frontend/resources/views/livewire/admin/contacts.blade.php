@@ -1,45 +1,44 @@
-@php $all = $pending->concat($done); @endphp
-
 <div>
-    <div class="mb-6">
-        <h1 class="text-2xl font-bold text-brand">Messages de contact</h1>
-        <p class="text-sm text-ink/60">{{ $pending->count() }} non traité{{ $pending->count() > 1 ? 's' : '' }} · {{ $done->count() }} traité{{ $done->count() > 1 ? 's' : '' }}</p>
-    </div>
+    <x-admin-light.topbar title="Contacts" />
 
-    <div class="flex flex-col gap-3">
-        @foreach ($all as $c)
-            <div class="rounded-2xl border bg-white transition-all {{ $c->traite ? 'border-brand/8 opacity-70' : 'border-brand/15' }}">
-                <button wire:click="toggle({{ $c->id }})" class="flex w-full items-start gap-4 px-5 py-4 text-left">
-                    <span class="mt-0.5 inline-flex size-9 shrink-0 items-center justify-center rounded-xl {{ $c->traite ? 'bg-emerald-100 text-emerald-600' : 'bg-brand/10 text-brand' }}">
-                        <x-ui.icon name="message-circle" class="size-4" />
-                    </span>
-                    <div class="min-w-0 flex-1">
-                        <div class="flex items-center gap-3">
-                            <p class="truncate font-semibold text-brand">{{ $c->nom }}</p>
-                            <span class="text-xs text-ink/40">{{ $c->created_at->format('d/m/Y') }}</span>
-                            @if (! $c->traite)
-                                <span class="rounded-full bg-accent/15 px-2 py-0.5 text-[0.65rem] font-bold text-accent">NOUVEAU</span>
-                            @endif
+    <div class="mx-auto max-w-[1280px] px-8 py-8">
+        <section class="mb-8">
+            <h2 class="mb-1 text-[17px] font-bold text-brand">Messages non traités</h2>
+            <div class="mb-4 h-[3px] w-9 rounded bg-accent"></div>
+            <div class="rounded-[18px] border border-brand/10 bg-white px-5 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                @forelse ($pending as $m)
+                    <div class="border-t border-[#EDF0F5] py-3.5 first:border-t-0">
+                        <div class="flex flex-wrap items-center gap-3.5">
+                            <div class="min-w-[180px] flex-1">
+                                <p class="text-[13.5px] font-bold text-brand">{{ $m->nom }}</p>
+                                <p class="text-xs text-[#5B677A]">{{ $m->email }} · {{ $m->sujet }} · {{ $m->created_at->diffForHumans() }}</p>
+                            </div>
+                            <button wire:click="toggle({{ $m->id }})" class="shrink-0 rounded-lg border border-[#C9D6F0] px-3.5 py-1.5 text-xs font-bold text-azure hover:bg-[#E8EDF8]">{{ $expanded === $m->id ? 'Masquer' : 'Lire' }}</button>
+                            <button wire:click="markTraite({{ $m->id }})" class="shrink-0 rounded-lg bg-[#22A85A] px-3.5 py-1.5 text-xs font-bold text-white hover:bg-[#1C8F4C]">Marquer traité</button>
                         </div>
-                        <p class="truncate text-sm text-ink/60">{{ $c->sujet }}</p>
-                    </div>
-                </button>
-
-                @if ($expanded === $c->id)
-                    <div class="border-t border-brand/8 px-5 pb-4 pt-3">
-                        <p class="mb-1 text-xs text-ink/50">E-mail : <span class="text-brand">{{ $c->email }}</span></p>
-                        <p class="whitespace-pre-wrap text-sm text-ink/80">{{ $c->message }}</p>
-                        @if (! $c->traite)
-                            <button wire:click="markTraite({{ $c->id }})" class="mt-4 inline-flex items-center gap-2 rounded-full bg-emerald-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700">
-                                <x-ui.icon name="check-circle" class="size-3.5" /> Marquer comme traité
-                            </button>
+                        @if ($expanded === $m->id)
+                            <div class="mt-2.5 rounded-xl bg-[#F8FAFC] p-4 text-[12.5px] leading-relaxed text-ink">{{ $m->message }}</div>
                         @endif
                     </div>
-                @endif
+                @empty
+                    <p class="py-10 text-center text-sm text-[#5B677A]">Aucun message en attente.</p>
+                @endforelse
             </div>
-        @endforeach
-        @if ($all->isEmpty())
-            <p class="py-12 text-center text-sm text-ink/50">Aucun message.</p>
-        @endif
+        </section>
+
+        <section>
+            <h2 class="mb-1 text-[17px] font-bold text-brand">Messages traités</h2>
+            <div class="mb-4 h-[3px] w-9 rounded bg-accent"></div>
+            <div class="rounded-[18px] border border-brand/10 bg-white px-5 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                @forelse ($done as $m)
+                    <div class="flex items-center gap-3.5 border-t border-[#EDF0F5] py-3.5 first:border-t-0">
+                        <p class="min-w-0 flex-1 truncate text-[13px] font-semibold text-[#5B677A]">{{ $m->nom }} — {{ $m->sujet }}</p>
+                        <span class="shrink-0 rounded-full bg-[#EAF6EE] px-2.5 py-1 text-[11px] font-bold text-[#22A85A]">Traité</span>
+                    </div>
+                @empty
+                    <p class="py-10 text-center text-sm text-[#5B677A]">Aucun message traité.</p>
+                @endforelse
+            </div>
+        </section>
     </div>
 </div>

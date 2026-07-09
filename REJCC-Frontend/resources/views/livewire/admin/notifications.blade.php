@@ -1,44 +1,60 @@
-<div class="max-w-2xl">
-    <div class="mb-6">
-        <h1 class="text-2xl font-bold text-brand">Envoyer une notification</h1>
-        <p class="text-sm text-ink/60">Diffusez un message à tous les membres en un clic.</p>
-    </div>
+@php
+    $typeLabels = ['info' => 'Information', 'message' => 'Message', 'alert' => 'Urgent'];
+@endphp
+<div>
+    <x-admin-light.topbar title="Notifications" />
 
-    <form wire:submit="send" class="rounded-2xl border border-brand/10 bg-white p-6">
-        <div class="flex flex-col gap-4">
-            <div>
-                <label class="mb-1 block text-sm font-semibold text-brand">Type</label>
-                <select wire:model="type" class="w-full rounded-xl border border-brand/15 px-3 py-2 text-sm outline-none focus:border-brand">
-                    <option value="info">ℹ️ Information</option>
-                    <option value="alert">⚠️ Alerte</option>
-                    <option value="message">💬 Message</option>
-                </select>
-            </div>
-            <div>
-                <label class="mb-1 block text-sm font-semibold text-brand">Titre <span class="text-accent">*</span></label>
-                <input wire:model="title" type="text" placeholder="Ex : Événement de networking — Juin 2026" class="w-full rounded-xl border border-brand/15 px-3 py-2 text-sm outline-none focus:border-brand" />
-                @error('title') <span class="text-xs text-accent">{{ $message }}</span> @enderror
-            </div>
-            <div>
-                <label class="mb-1 block text-sm font-semibold text-brand">Corps du message</label>
-                <textarea wire:model="body" rows="3" placeholder="Détails supplémentaires…" class="w-full resize-none rounded-xl border border-brand/15 px-3 py-2 text-sm outline-none focus:border-brand"></textarea>
-            </div>
-            <div>
-                <label class="mb-1 block text-sm font-semibold text-brand">Lien (optionnel)</label>
-                <input wire:model="link" type="text" placeholder="/espace-membre/evenements" class="w-full rounded-xl border border-brand/15 px-3 py-2 text-sm outline-none focus:border-brand" />
-            </div>
+    <div class="mx-auto max-w-[1280px] px-8 py-8">
+        <div class="grid gap-6 lg:grid-cols-[1fr_1.2fr]">
+            <section>
+                <h2 class="mb-1 text-[17px] font-bold text-brand">Diffuser une notification</h2>
+                <div class="mb-4 h-[3px] w-9 rounded bg-accent"></div>
+                <form wire:submit="send" class="flex flex-col gap-3 rounded-[18px] border border-brand/10 bg-white p-[22px] shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                    <div>
+                        <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Titre</label>
+                        <input wire:model="title" type="text" placeholder="Ex : Nouvel atelier disponible" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
+                        @error('title') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Message</label>
+                        <textarea wire:model="body" rows="3" placeholder="Contenu du message envoyé à tous les membres…" class="w-full resize-y rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure"></textarea>
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Lien (optionnel)</label>
+                        <input wire:model="link" type="text" placeholder="/espace-membre/evenements" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Type</label>
+                        <select wire:model="type" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure">
+                            <option value="info">Information</option>
+                            <option value="message">Message</option>
+                            <option value="alert">Urgent</option>
+                        </select>
+                    </div>
+                    <button type="submit" wire:loading.attr="disabled" class="rounded-[9px] bg-accent py-2.5 text-sm font-bold text-white hover:bg-accent-600 disabled:opacity-60">
+                        <span wire:loading.remove>Envoyer à tous les membres</span>
+                        <span wire:loading>Envoi…</span>
+                    </button>
+                    @if ($sentTo !== null)
+                        <p class="text-xs font-semibold text-[#22A85A]">Notification envoyée à {{ $sentTo }} membre{{ $sentTo > 1 ? 's' : '' }}.</p>
+                    @endif
+                </form>
+            </section>
+
+            <section>
+                <h2 class="mb-1 text-[17px] font-bold text-brand">Historique des diffusions</h2>
+                <div class="mb-4 h-[3px] w-9 rounded bg-accent"></div>
+                <div class="rounded-[18px] border border-brand/10 bg-white px-5 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                    @forelse ($historique as $h)
+                        <div class="border-t border-[#EDF0F5] py-3.5 first:border-t-0">
+                            <p class="text-[13px] font-bold text-brand">{{ $h->title }}</p>
+                            <p class="mt-0.5 text-[11.5px] text-[#9AA6B8]">{{ $typeLabels[$h->type] ?? $h->type }} · envoyée {{ $h->created_at->diffForHumans() }} · {{ $h->destinataires }} destinataires</p>
+                        </div>
+                    @empty
+                        <p class="py-10 text-center text-sm text-[#5B677A]">Aucune diffusion pour le moment.</p>
+                    @endforelse
+                </div>
+            </section>
         </div>
-
-        @if ($sentTo !== null)
-            <div class="mt-4 flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
-                <x-ui.icon name="bell" class="size-4" /> Notification envoyée à {{ $sentTo }} membre{{ $sentTo > 1 ? 's' : '' }}.
-            </div>
-        @endif
-
-        <button type="submit" wire:loading.attr="disabled" class="mt-5 inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 font-semibold text-white transition hover:bg-accent-600 disabled:opacity-60">
-            <span wire:loading.remove>Diffuser à tous les membres</span>
-            <span wire:loading>Envoi…</span>
-            <x-ui.icon name="send" class="size-4" />
-        </button>
-    </form>
+    </div>
 </div>
