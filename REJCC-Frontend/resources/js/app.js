@@ -103,3 +103,10 @@ function boot() {
 
 document.addEventListener('DOMContentLoaded', boot);
 document.addEventListener('livewire:navigated', boot);
+
+document.addEventListener('livewire:navigating', () => {
+    document.documentElement.classList.add('is-navigating');
+});
+document.addEventListener('livewire:navigated', () => {
+    document.documentElement.classList.remove('is-navigating');
+});

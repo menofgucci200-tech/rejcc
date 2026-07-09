@@ -101,6 +101,19 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   overflow-x: hidden;
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+
+/* Transition douce entre les pages lors d'une navigation wire:navigate. */
+html.is-navigating body {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body {
+    transition: none;
+  }
 }
 
 /* When Lenis smooth-scroll is active */
