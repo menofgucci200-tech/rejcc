@@ -39,6 +39,13 @@
             </ul>
 
             <div class="flex items-center gap-2">
+                <a href="{{ route('mon-espace') }}"
+                    :class="(scrolled || {{ $isHome ? 'false' : 'true' }} || open) ? 'border-brand/25 text-brand hover:bg-brand hover:text-white' : 'border-white/40 text-white hover:bg-white hover:text-brand'"
+                    class="hidden items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-semibold transition-colors sm:inline-flex">
+                    <x-ui.icon name="user" class="size-4" />
+                    Mon espace
+                </a>
+
                 <x-ui.button :href="url($cta['href'])" size="sm" :with-arrow="true"
                     x-bind:class="(scrolled || {{ $isHome ? 'false' : 'true' }} || open) ? '' : '!bg-white !text-brand hover:!bg-cloud'"
                     class="hidden sm:inline-flex">
@@ -76,7 +83,10 @@
                     {{ $item['label'] }}
                 </a>
             @endforeach
-            <div class="mt-8">
+            <div class="mt-8 flex flex-col gap-3">
+                <x-ui.button :href="route('mon-espace')" variant="outline" size="lg" class="w-full !border-white/40 !text-white hover:!bg-white hover:!text-brand">
+                    <x-ui.icon name="user" class="size-4" /> Mon espace
+                </x-ui.button>
                 <x-ui.button :href="url($cta['href'])" variant="white" size="lg" :with-arrow="true" class="w-full">
                     {{ $cta['label'] }}
                 </x-ui.button>

@@ -46,6 +46,16 @@ Route::view('profile', 'profile')
 
 Route::post('/logout', LogoutController::class)->middleware('api.auth')->name('logout');
 
+Route::get('/mon-espace', function () {
+    $user = session('api_user');
+
+    if (! $user) {
+        return redirect()->route('login');
+    }
+
+    return redirect(($user['role'] ?? null) === 'admin' ? '/admin' : '/espace-membre');
+})->name('mon-espace');
+
 Route::middleware('api.auth')->prefix('espace-membre')->name('espace-membre.')->group(function () {
     Route::get('/', MemberDashboard::class)->name('dashboard');
     Route::get('/annuaire', MemberDirectory::class)->name('directory');
