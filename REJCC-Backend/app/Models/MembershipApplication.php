@@ -8,7 +8,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class MembershipApplication extends Model
 {
     protected $fillable = [
-        'nom_prenoms',
+        'prenom',
+        'nom',
         'sexe',
         'tranche_age',
         'whatsapp',

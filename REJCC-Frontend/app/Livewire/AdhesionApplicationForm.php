@@ -21,7 +21,9 @@ class AdhesionApplicationForm extends Component
     ];
 
     // Informations générales
-    public string $nom_prenoms = '';
+    public string $prenom = '';
+
+    public string $nom = '';
 
     public string $sexe = '';
 
@@ -109,7 +111,8 @@ class AdhesionApplicationForm extends Component
     protected function submit(): void
     {
         $result = Api::post('/membership-applications', [
-            'nom_prenoms' => $this->nom_prenoms,
+            'prenom' => $this->prenom,
+            'nom' => $this->nom,
             'sexe' => $this->sexe,
             'tranche_age' => $this->tranche_age,
             'whatsapp' => $this->whatsapp,
@@ -160,7 +163,8 @@ class AdhesionApplicationForm extends Component
     {
         return match ($step) {
             0 => [
-                'nom_prenoms' => 'required|string|min:2|max:150',
+                'prenom' => 'required|string|min:2|max:80',
+                'nom' => 'required|string|min:2|max:80',
                 'sexe' => 'required|in:Homme,Femme',
                 'tranche_age' => 'required|string',
                 'whatsapp' => ['required', 'string', 'min:8', 'max:20'],
@@ -202,7 +206,7 @@ class AdhesionApplicationForm extends Component
     public function render()
     {
         $recap = [
-            ['label' => 'Nom et prénoms', 'value' => $this->nom_prenoms ?: '—'],
+            ['label' => 'Nom et prénoms', 'value' => trim($this->prenom.' '.$this->nom) ?: '—'],
             ['label' => 'Contact', 'value' => collect([$this->whatsapp, $this->email])->filter()->join(' · ') ?: '—'],
             ['label' => 'Ville', 'value' => $this->ville ?: '—'],
             ['label' => 'Diocèse / Paroisse', 'value' => collect([$this->diocese, $this->paroisse])->filter()->join(' — ') ?: '—'],

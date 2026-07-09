@@ -27,10 +27,10 @@
                     @php $b = $candBadge($c->statut ?? null); @endphp
                     <div class="flex flex-wrap items-center gap-4 border-t border-[#EDF0F5] py-4 first:border-t-0">
                         <span class="flex size-11 shrink-0 items-center justify-center rounded-xl text-sm font-bold text-white" style="background: linear-gradient(135deg, #031D59, #4F6FBF)">
-                            {{ collect(explode(' ', $c->nom_prenoms))->map(fn ($w) => mb_substr($w, 0, 1))->take(2)->implode('') }}
+                            {{ mb_substr($c->prenom, 0, 1) }}{{ mb_substr($c->nom, 0, 1) }}
                         </span>
                         <div class="min-w-[180px] flex-1">
-                            <p class="text-[13.5px] font-bold text-brand">{{ $c->nom_prenoms }}</p>
+                            <p class="text-[13.5px] font-bold text-brand">{{ $c->prenom }} {{ $c->nom }}</p>
                             <p class="mt-0.5 text-xs text-[#5B677A]">{{ $c->ville }} · soumise le {{ $c->created_at->format('d/m/Y') }}</p>
                         </div>
                         <button wire:click="toggleDetail({{ $c->id }})" class="shrink-0 rounded-lg border border-azure/25 px-3.5 py-1.5 text-xs font-semibold text-azure hover:bg-azure/10">

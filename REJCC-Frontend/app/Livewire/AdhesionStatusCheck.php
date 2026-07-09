@@ -25,7 +25,7 @@ class AdhesionStatusCheck extends Component
 
         $this->checked = true;
         $this->statut = ($result['ok'] ?? false) ? $result['statut'] : null;
-        $this->nomPrenoms = $result['nom_prenoms'] ?? null;
+        $this->nomPrenoms = trim(($result['prenom'] ?? '').' '.($result['nom'] ?? '')) ?: null;
 
         if (! ($result['ok'] ?? false)) {
             $this->addError('email', $result['message'] ?? 'Aucune candidature trouvée pour cette adresse e-mail.');

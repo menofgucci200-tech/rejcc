@@ -44,10 +44,17 @@
                     <p class="mb-1 text-[15px] font-extrabold text-brand">Informations générales</p>
                     <p class="mb-4.5 text-[12.5px] leading-relaxed text-[#5B677A]">Bienvenue dans le formulaire d'adhésion au REJCC. Parlons d'abord de vous.</p>
 
-                    <div class="mb-4 flex flex-col gap-1.5">
-                        <label for="ma-nom" class="text-[13px] font-bold text-brand">Nom et prénoms *</label>
-                        <input wire:model="nom_prenoms" id="ma-nom" type="text" placeholder="Votre nom complet" class="rounded-[9px] border border-brand/15 px-3.5 py-2.5 text-sm text-ink outline-none focus:border-azure" />
-                        @error('nom_prenoms') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
+                    <div class="mb-4 grid grid-cols-2 gap-3">
+                        <div class="flex flex-col gap-1.5">
+                            <label for="ma-prenom" class="text-[13px] font-bold text-brand">Prénom *</label>
+                            <input wire:model="prenom" id="ma-prenom" type="text" placeholder="Votre prénom" class="rounded-[9px] border border-brand/15 px-3.5 py-2.5 text-sm text-ink outline-none focus:border-azure" />
+                            @error('prenom') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
+                        </div>
+                        <div class="flex flex-col gap-1.5">
+                            <label for="ma-nom" class="text-[13px] font-bold text-brand">Nom *</label>
+                            <input wire:model="nom" id="ma-nom" type="text" placeholder="Votre nom" class="rounded-[9px] border border-brand/15 px-3.5 py-2.5 text-sm text-ink outline-none focus:border-azure" />
+                            @error('nom') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
+                        </div>
                     </div>
 
                     <div class="mb-4">

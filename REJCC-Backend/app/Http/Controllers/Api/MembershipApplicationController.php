@@ -15,7 +15,8 @@ class MembershipApplicationController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'nom_prenoms' => 'required|string|min:2|max:150',
+            'prenom' => 'required|string|min:2|max:80',
+            'nom' => 'required|string|min:2|max:80',
             'sexe' => 'required|in:Homme,Femme',
             'tranche_age' => 'required|string',
             'whatsapp' => 'required|string|min:8|max:20',
@@ -55,7 +56,8 @@ class MembershipApplicationController extends Controller
         }
 
         $application = MembershipApplication::create([
-            'nom_prenoms' => $validated['nom_prenoms'],
+            'prenom' => $validated['prenom'],
+            'nom' => $validated['nom'],
             'sexe' => $validated['sexe'],
             'tranche_age' => $validated['tranche_age'],
             'whatsapp' => $validated['whatsapp'],
@@ -92,7 +94,8 @@ class MembershipApplicationController extends Controller
 
         if ($q) {
             $query->where(function ($qb) use ($q) {
-                $qb->where('nom_prenoms', 'like', "%{$q}%")
+                $qb->where('prenom', 'like', "%{$q}%")
+                   ->orWhere('nom', 'like', "%{$q}%")
                    ->orWhere('email', 'like', "%{$q}%");
             });
         }
@@ -117,12 +120,10 @@ class MembershipApplicationController extends Controller
             return response()->json(['ok' => false, 'message' => 'Un compte existe déjà avec cette adresse e-mail.'], 422);
         }
 
-        [$prenom, $nom] = $this->splitName($application->nom_prenoms);
-
         $user = User::create([
-            'name' => $application->nom_prenoms,
-            'prenom' => $prenom,
-            'nom' => $nom,
+            'name' => trim($application->prenom.' '.$application->nom),
+            'prenom' => $application->prenom,
+            'nom' => $application->nom,
             'email' => $application->email,
             'telephone' => $application->whatsapp,
             'password' => \Illuminate\Support\Str::random(32),
@@ -185,16 +186,10 @@ class MembershipApplicationController extends Controller
         return response()->json([
             'ok' => true,
             'statut' => $application->statut,
-            'nom_prenoms' => $application->nom_prenoms,
+            'prenom' => $application->prenom,
+            'nom' => $application->nom,
             'created_at' => $application->created_at,
         ]);
-    }
-
-    private function splitName(string $fullName): array
-    {
-        $parts = preg_split('/\s+/', trim($fullName), 2);
-
-        return [$parts[0] ?? $fullName, $parts[1] ?? ''];
     }
 
     private function deriveProfil(MembershipApplication $application): string
