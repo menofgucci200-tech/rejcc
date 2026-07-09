@@ -10,9 +10,9 @@
         @livewireStyles
     </head>
     <body class="bg-cloud font-sans text-ink antialiased">
-        <div x-data="{ mobileOpen: false }" class="flex min-h-screen">
+        <div x-data="{ mobileOpen: false }" class="flex h-screen overflow-hidden">
             <!-- Sidebar (desktop) -->
-            <div class="fixed inset-y-0 left-0 z-40 hidden lg:block">
+            <div class="hidden lg:block lg:shrink-0">
                 <x-member-light.sidebar />
             </div>
 
@@ -27,7 +27,12 @@
                 </button>
             </div>
 
-            <div class="flex min-w-0 flex-1 flex-col lg:pl-[236px]">
+            <!-- Cette colonne defile en interne (overflow-y-auto), independamment du
+                 scroll de la fenetre — Lenis (smooth-scroll global du site) intercepte
+                 le scroll de window et ne recalcule pas ses mesures apres un
+                 wire:navigate, ce qui bloquait le defilement si on laissait la page
+                 defiler au niveau du document. -->
+            <div class="flex min-w-0 flex-1 flex-col overflow-y-auto" data-lenis-prevent>
                 <main class="flex-1">
                     {{ $slot }}
                 </main>
