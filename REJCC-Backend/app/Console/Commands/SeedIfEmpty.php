@@ -21,6 +21,12 @@ class SeedIfEmpty extends Command
             $this->call('db:seed', ['--force' => true]);
         }
 
+        // Les bases déjà seedées avant l'ajout du module Formations reçoivent
+        // le catalogue initial (FormationSeeder est idempotent).
+        if (\App\Models\Formation::count() === 0) {
+            $this->call('db:seed', ['--class' => \Database\Seeders\FormationSeeder::class, '--force' => true]);
+        }
+
         // Correction ponctuelle : l'etape "cotisation" a ete retiree du parcours d'adhesion
         // (remplace par un formulaire externe), mais les bases deja seedees gardent l'ancien texte.
         MembershipStep::where('title', 'Réglez votre cotisation')->update([

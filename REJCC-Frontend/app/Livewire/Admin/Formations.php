@@ -2,42 +2,149 @@
 
 namespace App\Livewire\Admin;
 
+use App\Support\Api;
+use App\Support\CategoryPalette;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
 #[Layout('layouts.admin-light')]
 class Formations extends Component
 {
-    public array $publiees = [true, true, true, true, false, true, true, true];
+    public bool $showForm = false;
 
-    public function togglePublication(int $index): void
-    {
-        $this->publiees[$index] = ! $this->publiees[$index];
-    }
+    public ?int $editingId = null;
 
-    protected function data(): array
+    public string $title = '';
+
+    public string $category = '';
+
+    public string $description = '';
+
+    public string $duration = '';
+
+    public string $level = '';
+
+    public int $modulesCount = 1;
+
+    public bool $isFree = true;
+
+    public bool $isCertifying = false;
+
+    protected function rules(): array
     {
         return [
-            ['titre' => "Fondamentaux de l'entrepreneuriat", 'categorie' => 'Entrepreneuriat', 'duree' => '6 h', 'inscrits' => 412, 'visuel' => 'repeating-linear-gradient(45deg,#DCE4F5 0 12px,#C9D6F0 12px 24px)'],
-            ['titre' => 'Diriger avec intégrité', 'categorie' => 'Leadership chrétien', 'duree' => '9 h', 'inscrits' => 356, 'visuel' => 'repeating-linear-gradient(-45deg,#F5DCDC 0 12px,#F0C9C9 12px 24px)'],
-            ['titre' => 'Lire un bilan comptable', 'categorie' => 'Finance', 'duree' => '5 h', 'inscrits' => 298, 'visuel' => 'repeating-linear-gradient(90deg,#DCEEF5 0 12px,#C9E2F0 12px 24px)'],
-            ['titre' => 'Marketing digital : les bases', 'categorie' => 'Marketing', 'duree' => '6 h', 'inscrits' => 241, 'visuel' => 'repeating-linear-gradient(45deg,#DDF5DC 0 12px,#CBF0C9 12px 24px)'],
-            ['titre' => 'Créer son premier site web', 'categorie' => 'Développement Web', 'duree' => '20 h', 'inscrits' => 187, 'visuel' => 'repeating-linear-gradient(-45deg,#DCE4F5 0 12px,#C9D6F0 12px 24px)'],
-            ['titre' => "Introduction à l'IA générative", 'categorie' => 'Intelligence Artificielle', 'duree' => '8 h', 'inscrits' => 96, 'visuel' => 'repeating-linear-gradient(90deg,#F5DCDC 0 12px,#F0C9C9 12px 24px)'],
-            ['titre' => 'Parler en public avec assurance', 'categorie' => 'Communication', 'duree' => '4 h', 'inscrits' => 154, 'visuel' => 'repeating-linear-gradient(45deg,#DCEEF5 0 12px,#C9E2F0 12px 24px)'],
-            ['titre' => 'Piloter un projet de A à Z', 'categorie' => 'Gestion de projet', 'duree' => '10 h', 'inscrits' => 120, 'visuel' => 'repeating-linear-gradient(-45deg,#DDF5DC 0 12px,#CBF0C9 12px 24px)'],
+            'title' => 'required|string|min:2|max:200',
+            'category' => 'required|string|min:2|max:100',
+            'description' => 'nullable|string|max:2000',
+            'duration' => 'nullable|string|max:50',
+            'level' => 'nullable|string|max:50',
+            'modulesCount' => 'required|integer|min:1|max:50',
+            'isFree' => 'boolean',
+            'isCertifying' => 'boolean',
         ];
+    }
+
+    protected function formations(): Collection
+    {
+        return Collection::make(Api::get('/admin/formations', [], Api::token())['formations'] ?? []);
+    }
+
+    public function openCreate(): void
+    {
+        $this->reset(['editingId', 'title', 'category', 'description', 'duration', 'level']);
+        $this->modulesCount = 1;
+        $this->isFree = true;
+        $this->isCertifying = false;
+        $this->resetValidation();
+        $this->showForm = true;
+    }
+
+    public function openEdit(int $id): void
+    {
+        $f = $this->formations()->firstWhere('id', $id);
+        if (! $f) {
+            return;
+        }
+
+        $this->editingId = $f['id'];
+        $this->title = $f['title'];
+        $this->category = $f['category'];
+        $this->description = $f['description'] ?? '';
+        $this->duration = $f['duration'] ?? '';
+        $this->level = $f['level'] ?? '';
+        $this->modulesCount = (int) $f['modules_count'];
+        $this->isFree = (bool) $f['is_free'];
+        $this->isCertifying = (bool) $f['is_certifying'];
+        $this->resetValidation();
+        $this->showForm = true;
+    }
+
+    public function closeForm(): void
+    {
+        $this->showForm = false;
+        $this->editingId = null;
+    }
+
+    public function save(): void
+    {
+        $this->validate();
+
+        $data = [
+            'title' => $this->title,
+            'category' => $this->category,
+            'description' => $this->description ?: null,
+            'duration' => $this->duration ?: null,
+            'level' => $this->level ?: null,
+            'modules_count' => $this->modulesCount,
+            'is_free' => $this->isFree,
+            'is_certifying' => $this->isCertifying,
+        ];
+        $token = Api::token();
+
+        if ($this->editingId) {
+            Api::put("/admin/formations/{$this->editingId}", $data, $token);
+        } else {
+            Api::post('/admin/formations', $data, $token);
+        }
+
+        $this->closeForm();
+    }
+
+    public function togglePublication(int $id): void
+    {
+        $f = $this->formations()->firstWhere('id', $id);
+        if (! $f) {
+            return;
+        }
+
+        Api::put("/admin/formations/{$id}", [
+            'title' => $f['title'],
+            'category' => $f['category'],
+            'is_published' => ! $f['is_published'],
+        ], Api::token());
+    }
+
+    public function delete(int $id): void
+    {
+        Api::delete("/admin/formations/{$id}", Api::token());
     }
 
     public function render()
     {
-        $formations = array_map(function ($f, $i) {
-            $publiee = $this->publiees[$i];
-            $f['index'] = $i;
-            $f['publiee'] = $publiee;
+        $formations = $this->formations()->map(function (array $f) {
+            $palette = CategoryPalette::for($f['category']);
 
-            return $f;
-        }, $this->data(), array_keys($this->data()));
+            return [
+                'id' => $f['id'],
+                'titre' => $f['title'],
+                'categorie' => $f['category'],
+                'duree' => $f['duration'] ?? '—',
+                'inscrits' => (int) ($f['enrollments_count'] ?? 0),
+                'publiee' => (bool) $f['is_published'],
+                'visuel' => "linear-gradient(135deg, {$palette['from']}, {$palette['to']})",
+            ];
+        });
 
         return view('livewire.admin.formations', ['formations' => $formations]);
     }

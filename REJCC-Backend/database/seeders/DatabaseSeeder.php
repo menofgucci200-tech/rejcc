@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             NewsArticleSeeder::class,
             EventSeeder::class,
             OpportunitySeeder::class,
+            FormationSeeder::class,
         ]);
     }
 }

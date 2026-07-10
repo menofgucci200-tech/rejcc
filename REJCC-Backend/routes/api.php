@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\DocumentController;
 use App\Http\Controllers\Api\EventController;
+use App\Http\Controllers\Api\FormationController;
 use App\Http\Controllers\Api\HomeContentController;
 use App\Http\Controllers\Api\MembershipApplicationController;
 use App\Http\Controllers\Api\MessageController;
@@ -75,6 +76,11 @@ Route::middleware('auth.token')->group(function () {
     Route::get('/events', [EventController::class, 'index']);
     Route::post('/events/{id}/register', [EventController::class, 'register']);
 
+    // Formations
+    Route::get('/formations', [FormationController::class, 'catalogue']);
+    Route::get('/my-formations', [FormationController::class, 'mine']);
+    Route::post('/formations/{id}/enroll', [FormationController::class, 'enroll']);
+
     // Opportunités & annonces
     Route::get('/opportunities', [OpportunityController::class, 'index']);
     Route::post('/opportunities', [OpportunityController::class, 'store']);
@@ -103,6 +109,12 @@ Route::middleware(['auth.token', 'auth.admin'])->prefix('admin')->group(function
     // Contacts
     Route::get('/contacts', [AdminController::class, 'contacts']);
     Route::post('/contacts/{id}/traite', [AdminController::class, 'markContactTraite']);
+
+    // Formations
+    Route::get('/formations', [FormationController::class, 'index']);
+    Route::post('/formations', [FormationController::class, 'store']);
+    Route::put('/formations/{id}', [FormationController::class, 'update']);
+    Route::delete('/formations/{id}', [FormationController::class, 'destroy']);
 
     // Documents
     Route::get('/documents', [AdminController::class, 'documents']);

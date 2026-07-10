@@ -36,7 +36,13 @@
                         </div>
                         <div class="flex items-center justify-between">
                             <span class="text-xs font-bold {{ $c['gratuit'] ? 'text-[#22A85A]' : 'text-brand' }}">{{ $c['gratuit'] ? 'Gratuit' : 'Sur adhésion' }}</span>
-                            <button class="rounded-full bg-brand px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-brand/90">S'inscrire</button>
+                            @if ($c['inscrit'])
+                                <span class="inline-flex items-center gap-1.5 rounded-full bg-[#22A85A]/10 px-3.5 py-1.5 text-xs font-semibold text-[#22A85A]">
+                                    <x-ui.icon name="check" class="size-3.5" /> Inscrit
+                                </span>
+                            @else
+                                <button wire:click="inscrire({{ $c['id'] }})" wire:loading.attr="disabled" class="rounded-full bg-brand px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-brand/90 disabled:opacity-60">S'inscrire</button>
+                            @endif
                         </div>
                     </div>
                 </article>

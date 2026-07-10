@@ -2,6 +2,8 @@
 
 namespace App\Livewire\Member;
 
+use App\Support\Api;
+use App\Support\CategoryPalette;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -16,23 +18,31 @@ class Catalogue extends Component
         $this->filtre = $filtre;
     }
 
-    protected function cours(): array
+    public function inscrire(int $id): void
     {
-        return [
-            ['titre' => 'Leadership chrétien — Niveau 3', 'tag' => 'Leadership', 'tagColor' => '#4F6FBF', 'duree' => '6 semaines', 'niveau' => 'Avancé', 'from' => '#031D59', 'to' => '#4F6FBF', 'gratuit' => false, 'certifiante' => true],
-            ['titre' => 'Initiation à la comptabilité', 'tag' => 'Finance', 'tagColor' => '#AC0100', 'duree' => '4 semaines', 'niveau' => 'Débutant', 'from' => '#AC0100', 'to' => '#F58B8B', 'gratuit' => true, 'certifiante' => false],
-            ['titre' => 'Prise de parole en public', 'tag' => 'Communication', 'tagColor' => '#22A85A', 'duree' => '3 semaines', 'niveau' => 'Débutant', 'from' => '#22A85A', 'to' => '#7FE0A6', 'gratuit' => true, 'certifiante' => true],
-            ['titre' => 'Rédiger un business plan', 'tag' => 'Entrepreneuriat', 'tagColor' => '#F5A623', 'duree' => '5 semaines', 'niveau' => 'Intermédiaire', 'from' => '#F5A623', 'to' => '#F7C873', 'gratuit' => false, 'certifiante' => true],
-            ['titre' => 'Éthique chrétienne au travail', 'tag' => 'Spiritualité', 'tagColor' => '#4F6FBF', 'duree' => '2 semaines', 'niveau' => 'Tous niveaux', 'from' => '#4F6FBF', 'to' => '#8FA3D9', 'gratuit' => true, 'certifiante' => false],
-            ['titre' => 'Marketing digital pour PME', 'tag' => 'Marketing', 'tagColor' => '#AC0100', 'duree' => '4 semaines', 'niveau' => 'Intermédiaire', 'from' => '#031D59', 'to' => '#AC0100', 'gratuit' => false, 'certifiante' => true],
-            ['titre' => 'Gestion du temps et priorités', 'tag' => 'Productivité', 'tagColor' => '#22A85A', 'duree' => '2 semaines', 'niveau' => 'Débutant', 'from' => '#22A85A', 'to' => '#4F6FBF', 'gratuit' => true, 'certifiante' => false],
-            ['titre' => 'Lever des fonds pour son projet', 'tag' => 'Entrepreneuriat', 'tagColor' => '#F5A623', 'duree' => '6 semaines', 'niveau' => 'Avancé', 'from' => '#F5A623', 'to' => '#AC0100', 'gratuit' => false, 'certifiante' => true],
-        ];
+        Api::post("/formations/{$id}/enroll", [], Api::token());
     }
 
     public function render()
     {
-        $cours = Collection::make($this->cours())
+        $cours = Collection::make(Api::get('/formations', [], Api::token())['formations'] ?? [])
+            ->map(function (array $f) {
+                $palette = CategoryPalette::for($f['category']);
+
+                return [
+                    'id' => $f['id'],
+                    'titre' => $f['title'],
+                    'tag' => $f['category'],
+                    'tagColor' => $palette['tag'],
+                    'duree' => $f['duration'] ?? '—',
+                    'niveau' => $f['level'] ?? 'Tous niveaux',
+                    'from' => $palette['from'],
+                    'to' => $palette['to'],
+                    'gratuit' => (bool) $f['is_free'],
+                    'certifiante' => (bool) $f['is_certifying'],
+                    'inscrit' => (bool) $f['enrolled'],
+                ];
+            })
             ->when($this->filtre === 'gratuit', fn ($c) => $c->where('gratuit', true))
             ->when($this->filtre === 'certifiante', fn ($c) => $c->where('certifiante', true))
             ->values();
