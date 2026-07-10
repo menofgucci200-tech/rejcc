@@ -33,17 +33,21 @@ Route::get('/news/{slug}', [NewsArticleController::class, 'show']);
 Route::get('/public-events', [EventController::class, 'publicIndex']);
 Route::get('/public-events/{slug}', [EventController::class, 'publicShow']);
 
-// Formulaires publics
-Route::post('/adhesion', [AdhesionController::class, 'store']);
-Route::post('/membership-applications', [MembershipApplicationController::class, 'store']);
-Route::post('/membership-applications/status', [MembershipApplicationController::class, 'status']);
-Route::post('/contact', [ContactController::class, 'store']);
-Route::post('/newsletter', [NewsletterController::class, 'store']);
-Route::post('/partenariat', [PartenariatController::class, 'store']);
+// Formulaires publics (throttle anti-spam, par IP)
+Route::middleware('throttle:10,1')->group(function () {
+    Route::post('/adhesion', [AdhesionController::class, 'store']);
+    Route::post('/membership-applications', [MembershipApplicationController::class, 'store']);
+    Route::post('/membership-applications/status', [MembershipApplicationController::class, 'status']);
+    Route::post('/contact', [ContactController::class, 'store']);
+    Route::post('/newsletter', [NewsletterController::class, 'store']);
+    Route::post('/partenariat', [PartenariatController::class, 'store']);
+});
 
-// Authentification — espace membre
-Route::post('/auth/register', [AuthController::class, 'register']);
-Route::post('/auth/login', [AuthController::class, 'login']);
+// Authentification — espace membre (throttle anti-brute-force, par IP)
+Route::middleware('throttle:5,1')->group(function () {
+    Route::post('/auth/register', [AuthController::class, 'register']);
+    Route::post('/auth/login', [AuthController::class, 'login']);
+});
 
 Route::middleware('auth.token')->group(function () {
     // Compte
