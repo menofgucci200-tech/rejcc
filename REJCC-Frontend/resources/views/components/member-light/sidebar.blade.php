@@ -1,3 +1,5 @@
+@props(['withClose' => false])
+
 @php
     $navItems = [
         ['label' => 'Accueil', 'icon' => 'nav-home', 'route' => 'espace-membre.dashboard'],
@@ -27,10 +29,15 @@
         <div class="flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-white">
             <img src="{{ asset('brand/rejcc-monogram-color.png') }}" alt="REJCC" class="size-[26px] object-contain">
         </div>
-        <div>
+        <div class="min-w-0 flex-1">
             <p class="text-[15px] font-extrabold tracking-[0.04em]">REJCC</p>
             <p class="text-[10px] tracking-[0.06em] text-[#8FA3D9]">ESPACE MEMBRE</p>
         </div>
+        @if ($withClose)
+            <button type="button" @click="mobileOpen = false" aria-label="Fermer le menu" class="flex size-[34px] shrink-0 items-center justify-center rounded-[9px] border border-white/20 text-white">
+                <x-ui.icon name="x" class="size-4" />
+            </button>
+        @endif
     </div>
 
     <nav class="flex flex-1 flex-col gap-0.5 overflow-y-auto p-3">

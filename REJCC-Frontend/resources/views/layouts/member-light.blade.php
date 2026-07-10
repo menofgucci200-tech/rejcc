@@ -16,15 +16,22 @@
                 <x-member-light.sidebar />
             </div>
 
-            <!-- Sidebar (mobile overlay) -->
-            <div x-show="mobileOpen" style="display: none;" class="fixed inset-0 z-[60] flex lg:hidden">
-                <div class="absolute inset-0 bg-black/50" @click="mobileOpen = false"></div>
-                <div class="relative z-10 h-full">
-                    <x-member-light.sidebar />
+            <!-- Sidebar (mobile overlay) : tiroir depuis la droite, au-dessus de la
+                 barre d'onglets du bas (z-70) pour que « Paramètres » reste visible. -->
+            <div x-show="mobileOpen" style="display: none;" class="fixed inset-0 z-[80] lg:hidden">
+                <div x-show="mobileOpen" x-transition.opacity class="absolute inset-0 bg-brand/45" @click="mobileOpen = false"></div>
+                <div
+                    x-show="mobileOpen"
+                    x-transition:enter="transition-transform duration-300 ease-out"
+                    x-transition:enter-start="translate-x-full"
+                    x-transition:enter-end="translate-x-0"
+                    x-transition:leave="transition-transform duration-200 ease-in"
+                    x-transition:leave-start="translate-x-0"
+                    x-transition:leave-end="translate-x-full"
+                    class="absolute inset-y-0 right-0 z-10 w-[82%] max-w-[320px] shadow-[-8px_0_30px_rgba(3,29,89,.3)]"
+                >
+                    <x-member-light.sidebar class="!w-full" :with-close="true" />
                 </div>
-                <button @click="mobileOpen = false" class="absolute right-4 top-4 flex size-9 items-center justify-center rounded-lg bg-white/10 text-white">
-                    <x-ui.icon name="x" class="size-4" />
-                </button>
             </div>
 
             <!-- Cette colonne defile en interne (overflow-y-auto), independamment du
