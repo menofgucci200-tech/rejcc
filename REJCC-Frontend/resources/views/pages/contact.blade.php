@@ -8,7 +8,7 @@
     $socials = \App\Support\Content\SiteConfig::socials();
 @endphp
 
-<x-site-layout title="Contact">
+<x-site-layout title="Contact" description="Contactez le REJCC — Réseau Entrepreneurial des Jeunes Catholiques de Côte d'Ivoire : questions, adhésions, partenariats.">
     <x-page-header eyebrow="Parlons-en" crumb="Contact" subtitle="Une question, un projet, une envie de collaborer ? L'équipe du REJCC vous répond.">
         Nous <span class="font-serif italic normal-case text-azure">contacter</span>
     </x-page-header>

@@ -3,7 +3,7 @@
     $total = $sectors->sum(fn ($s) => count($s->items));
 @endphp
 
-<x-site-layout title="Domaines d'activité">
+<x-site-layout title="Domaines d'activité" description="Agriculture, numérique, commerce, artisanat, finance… les secteurs d'activité accompagnés par le REJCC en Côte d'Ivoire.">
     <x-page-header :eyebrow="$total.' domaines · 9 pôles'" crumb="Domaines" subtitle="Le réseau rassemble des entrepreneurs de tous les secteurs. Trouvez le vôtre et connectez-vous aux bonnes personnes.">
         Domaines d'<span class="font-serif italic normal-case text-azure">activité</span>
     </x-page-header>

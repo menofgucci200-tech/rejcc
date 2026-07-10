@@ -1,4 +1,4 @@
-<x-site-layout :title="$article->title">
+<x-site-layout :title="$article->title" :description="$article->excerpt" type="article">
     <x-page-header :eyebrow="$article->category" crumb="Actualités" :subtitle="$article->excerpt">
         {{ $article->title }}
     </x-page-header>

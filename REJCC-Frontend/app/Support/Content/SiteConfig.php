@@ -15,12 +15,12 @@ class SiteConfig
             'mission' => "Connecter les jeunes entrepreneurs et porteurs de projets catholiques pour favoriser la co-création, le partage de ressources et le développement de solutions technologiques et commerciales durables.",
             'vision' => "Devenir le premier incubateur de talents et d'entreprises au service de l'Église et de la société en Côte d'Ivoire, en bâtissant une communauté solidaire, innovante et économiquement autonome.",
             'about' => "Le REJCC est une communauté de jeunes entrepreneurs et porteurs de projets catholiques unis par la volonté de collaborer, d'innover et de bâtir des solutions durables au service du développement.",
-            'url' => 'https://www.rejcc.ci',
+            'url' => 'https://rejcc.site',
             'contact' => [
                 'city' => 'Abidjan',
                 'country' => "Côte d'Ivoire",
                 'address' => "Abidjan, Côte d'Ivoire",
-                'email' => 'contact@rejcc.ci',
+                'email' => 'contact@rejcc.site',
                 'phone' => '+225 00 00 00 00',
             ],
         ];

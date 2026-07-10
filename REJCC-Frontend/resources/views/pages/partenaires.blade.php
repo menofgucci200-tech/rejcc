@@ -3,7 +3,7 @@
     $benefits = \App\Support\Content\PartnersContent::partnershipBenefits();
 @endphp
 
-<x-site-layout title="Partenaires">
+<x-site-layout title="Partenaires" description="Les partenaires qui soutiennent le REJCC et l'entrepreneuriat des jeunes catholiques en Côte d'Ivoire. Devenez partenaire du réseau.">
     <x-page-header eyebrow="Ensemble, plus loin" crumb="Partenaires" subtitle="Entreprises, institutions et organisations qui soutiennent l'entrepreneuriat des jeunes catholiques de Côte d'Ivoire.">
         Nos <span class="font-serif italic normal-case text-azure">partenaires</span>
     </x-page-header>

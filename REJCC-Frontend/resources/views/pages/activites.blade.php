@@ -1,6 +1,6 @@
 @php $activities = collect(\App\Support\Api::get('/activities')['activities'] ?? [])->map(fn ($a) => (object) $a); @endphp
 
-<x-site-layout title="Nos activités">
+<x-site-layout title="Nos activités" description="Formations en entrepreneuriat, mentorat, réseautage et incubation de projets : les activités du REJCC pour les jeunes entrepreneurs catholiques en Côte d'Ivoire.">
     <x-page-header eyebrow="Ce que nous faisons" crumb="Activités" subtitle="Un programme riche pour apprendre, entreprendre et grandir ensemble, tout au long de l'année.">
         Nos <span class="font-serif italic normal-case text-azure">activités</span>
     </x-page-header>

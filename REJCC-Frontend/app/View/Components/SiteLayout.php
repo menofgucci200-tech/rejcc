@@ -9,6 +9,9 @@ class SiteLayout extends Component
 {
     public function __construct(
         public ?string $title = null,
+        public ?string $description = null,
+        public ?string $image = null,
+        public string $type = 'website',
     ) {
     }
 

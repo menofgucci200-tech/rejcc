@@ -1,6 +1,6 @@
 @php $cta = \App\Support\Content\SiteConfig::ctaPrimary(); @endphp
 
-<x-site-layout :title="$event->title">
+<x-site-layout :title="$event->title" :description="$event->excerpt">
     <x-page-header :eyebrow="$event->category" crumb="Événements" :subtitle="$event->excerpt">
         {{ $event->title }}
     </x-page-header>

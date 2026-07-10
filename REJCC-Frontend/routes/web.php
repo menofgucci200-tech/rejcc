@@ -42,6 +42,7 @@ use App\Livewire\Member\Ressources as MemberRessources;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'pages.home')->name('home');
+Route::get('/sitemap.xml', \App\Http\Controllers\SitemapController::class);
 Route::view('/a-propos', 'pages.a-propos');
 Route::view('/activites', 'pages.activites');
 Route::view('/domaines', 'pages.domaines');

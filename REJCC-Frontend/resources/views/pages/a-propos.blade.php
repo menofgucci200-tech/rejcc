@@ -10,7 +10,7 @@
     ];
 @endphp
 
-<x-site-layout title="À propos">
+<x-site-layout title="À propos" description="Découvrez le REJCC : mission, vision et valeurs du réseau de référence des jeunes entrepreneurs catholiques de Côte d'Ivoire — foi, innovation et entrepreneuriat.">
     <x-page-header eyebrow="Le réseau" crumb="À propos" :subtitle="$site['about']">
         À propos du <span class="font-serif italic normal-case text-azure">REJCC</span>
     </x-page-header>

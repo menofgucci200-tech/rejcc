@@ -1,4 +1,4 @@
-<x-site-layout title="Événements">
+<x-site-layout title="Événements" description="Ateliers, conférences, retraites et rencontres de réseautage : l'agenda des événements du REJCC en Côte d'Ivoire.">
     <x-page-header eyebrow="Agenda" crumb="Événements" subtitle="Parcourez le calendrier, filtrez par type et inscrivez-vous aux rendez-vous du réseau.">
         Nos <span class="font-serif italic normal-case text-azure">événements</span>
     </x-page-header>

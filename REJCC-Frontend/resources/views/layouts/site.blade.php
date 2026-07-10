@@ -5,7 +5,44 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ ($title ?? null) ? $title.' · '.\App\Support\Content\SiteConfig::get()['name'] : \App\Support\Content\SiteConfig::get()['name'].' — '.\App\Support\Content\SiteConfig::get()['fullName'] }}</title>
+        @php
+            $site = \App\Support\Content\SiteConfig::get();
+            $seoTitle = ($title ?? null) ? $title.' · '.$site['name'] : $site['name'].' — '.$site['fullName'];
+            $seoDescription = $description ?? "Le REJCC accompagne les jeunes entrepreneurs catholiques de Côte d'Ivoire : formations en entrepreneuriat, mentorat, réseautage, incubateur de projets et opportunités professionnelles à Abidjan et dans tous les diocèses.";
+            $seoImage = $image ?? asset('brand/rejcc-logo-color.png');
+        @endphp
+
+        <title>{{ $seoTitle }}</title>
+        <meta name="description" content="{{ $seoDescription }}">
+        <link rel="canonical" href="{{ url()->current() }}">
+
+        <meta property="og:site_name" content="{{ $site['name'] }}">
+        <meta property="og:locale" content="fr_FR">
+        <meta property="og:type" content="{{ $type ?? 'website' }}">
+        <meta property="og:title" content="{{ $seoTitle }}">
+        <meta property="og:description" content="{{ $seoDescription }}">
+        <meta property="og:url" content="{{ url()->current() }}">
+        <meta property="og:image" content="{{ $seoImage }}">
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:title" content="{{ $seoTitle }}">
+        <meta name="twitter:description" content="{{ $seoDescription }}">
+        <meta name="twitter:image" content="{{ $seoImage }}">
+
+        <script type="application/ld+json">{!! json_encode([
+            '@context' => 'https://schema.org',
+            '@type' => 'Organization',
+            'name' => $site['name'],
+            'legalName' => $site['fullName'],
+            'description' => $site['positioning'],
+            'url' => url('/'),
+            'logo' => asset('brand/rejcc-logo-color.png'),
+            'email' => $site['contact']['email'],
+            'address' => [
+                '@type' => 'PostalAddress',
+                'addressLocality' => $site['contact']['city'],
+                'addressCountry' => 'CI',
+            ],
+        ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @livewireStyles

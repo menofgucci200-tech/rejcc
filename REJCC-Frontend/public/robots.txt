@@ -1,2 +1,8 @@
 User-agent: *
-Disallow:
+Disallow: /admin
+Disallow: /espace-membre
+Disallow: /mon-espace
+Disallow: /connexion
+Disallow: /livewire
+
+Sitemap: https://rejcc.site/sitemap.xml
