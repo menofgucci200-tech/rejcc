@@ -122,9 +122,11 @@ return [
     |
     | Destinataire des notifications internes (messages de contact, etc.).
     | Lue via config() et non env() pour rester compatible avec config:cache.
+    | MAIL_ADMIN_EMAIL est distincte d'ADMIN_EMAIL (compte admin du seeder),
+    | avec repli sur cette dernière si absente.
     |
     */
 
-    'admin_email' => env('ADMIN_EMAIL'),
+    'admin_email' => env('MAIL_ADMIN_EMAIL', env('ADMIN_EMAIL')),
 
 ];
