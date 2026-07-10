@@ -3,9 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Mail\CandidatureAcceptee;
+use App\Mail\CandidatureRecue;
+use App\Mail\CandidatureRefusee;
 use App\Models\MemberNotification;
 use App\Models\MembershipApplication;
 use App\Models\User;
+use App\Support\Mailer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -84,6 +88,8 @@ class MembershipApplicationController extends Controller
             'statut' => 'en_attente',
         ]);
 
+        Mailer::send($application->email, new CandidatureRecue($application));
+
         return response()->json(['ok' => true, 'id' => $application->id]);
     }
 
@@ -149,6 +155,8 @@ class MembershipApplicationController extends Controller
             'link' => '/espace-membre/profil',
         ]);
 
+        Mailer::send($application->email, new CandidatureAcceptee($application));
+
         return response()->json(['ok' => true, 'user_id' => $user->id]);
     }
 
@@ -161,6 +169,8 @@ class MembershipApplicationController extends Controller
         }
 
         $application->update(['statut' => 'refuse']);
+
+        Mailer::send($application->email, new CandidatureRefusee($application));
 
         return response()->json(['ok' => true]);
     }

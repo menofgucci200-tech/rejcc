@@ -115,4 +115,16 @@ return [
         'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Adresse de l'équipe REJCC
+    |--------------------------------------------------------------------------
+    |
+    | Destinataire des notifications internes (messages de contact, etc.).
+    | Lue via config() et non env() pour rester compatible avec config:cache.
+    |
+    */
+
+    'admin_email' => env('ADMIN_EMAIL'),
+
 ];

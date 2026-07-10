@@ -21,8 +21,8 @@
                     <div class="h-2 rounded-full bg-white" style="width: {{ $enCours['pct'] }}%"></div>
                 </div>
                 <p class="mb-4 text-xs font-semibold text-white/80">{{ $enCours['pct'] }}% complété</p>
-                <button class="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-xs font-bold text-brand">
-                    Reprendre <x-ui.icon name="arrow-right" class="size-3.5" />
+                <button wire:click="validerModule({{ $enCours['id'] }})" wire:loading.attr="disabled" class="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-xs font-bold text-brand disabled:opacity-60">
+                    Valider le module en cours <x-ui.icon name="arrow-right" class="size-3.5" />
                 </button>
             </div>
         @endif
@@ -54,7 +54,7 @@
                             <x-ui.icon name="check" class="size-3.5" /> Terminée
                         </span>
                     @else
-                        <button class="shrink-0 rounded-full border border-azure/25 bg-azure/10 px-3.5 py-1.5 text-xs font-semibold text-azure">Continuer</button>
+                        <button wire:click="validerModule({{ $c['id'] }})" wire:loading.attr="disabled" class="shrink-0 rounded-full border border-azure/25 bg-azure/10 px-3.5 py-1.5 text-xs font-semibold text-azure disabled:opacity-60">Valider le module</button>
                     @endif
                 </article>
             @endforeach

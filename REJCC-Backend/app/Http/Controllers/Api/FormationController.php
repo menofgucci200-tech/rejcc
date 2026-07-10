@@ -73,6 +73,35 @@ class FormationController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    /** Valide le module en cours : avance la progression d'un module. */
+    public function completeModule(Request $request, int $id)
+    {
+        $enrollment = FormationEnrollment::with('formation')
+            ->where('formation_id', $id)
+            ->where('user_id', $request->user()->id)
+            ->first();
+
+        if (! $enrollment || ! $enrollment->formation) {
+            return response()->json(['ok' => false, 'message' => 'Inscription introuvable.'], 404);
+        }
+
+        if ($enrollment->completed_at === null) {
+            $modules = max(1, (int) $enrollment->formation->modules_count);
+            $fait = min($modules, (int) round($enrollment->progress * $modules / 100) + 1);
+
+            $enrollment->update([
+                'progress' => (int) round($fait * 100 / $modules),
+                'completed_at' => $fait >= $modules ? now() : null,
+            ]);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'progress' => $enrollment->progress,
+            'completed' => $enrollment->completed_at !== null,
+        ]);
+    }
+
     // ------------------------------------------------------------------
     // Administration
     // ------------------------------------------------------------------

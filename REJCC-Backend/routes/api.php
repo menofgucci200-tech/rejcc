@@ -80,6 +80,7 @@ Route::middleware('auth.token')->group(function () {
     Route::get('/formations', [FormationController::class, 'catalogue']);
     Route::get('/my-formations', [FormationController::class, 'mine']);
     Route::post('/formations/{id}/enroll', [FormationController::class, 'enroll']);
+    Route::post('/formations/{id}/complete-module', [FormationController::class, 'completeModule']);
 
     // Opportunités & annonces
     Route::get('/opportunities', [OpportunityController::class, 'index']);

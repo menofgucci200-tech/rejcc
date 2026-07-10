@@ -21,8 +21,11 @@ class PublicEndpointsTest extends TestCase
         }
     }
 
-    public function test_contact_enregistre_un_message_valide(): void
+    public function test_contact_enregistre_un_message_valide_et_notifie_l_equipe(): void
     {
+        \Illuminate\Support\Facades\Mail::fake();
+        config(['mail.admin_email' => 'equipe@rejcc.org']);
+
         $this->postJson('/api/contact', [
             'nom' => 'Jean Kouassi',
             'email' => 'jean@example.com',
@@ -31,6 +34,10 @@ class PublicEndpointsTest extends TestCase
         ])->assertOk()->assertJsonPath('ok', true);
 
         $this->assertDatabaseHas('contacts', ['email' => 'jean@example.com']);
+        \Illuminate\Support\Facades\Mail::assertSent(
+            \App\Mail\NouveauMessageContact::class,
+            fn ($mail) => $mail->hasTo('equipe@rejcc.org'),
+        );
     }
 
     public function test_contact_refuse_un_message_incomplet(): void

@@ -19,6 +19,11 @@ class Formations extends Component
         $this->filtre = $filtre;
     }
 
+    public function validerModule(int $id): void
+    {
+        Api::post("/formations/{$id}/complete-module", [], Api::token());
+    }
+
     protected function cours(): Collection
     {
         return Collection::make(Api::get('/my-formations', [], Api::token())['formations'] ?? [])
@@ -30,6 +35,7 @@ class Formations extends Component
                 $moduleCourant = min($modules, max(1, (int) ceil($pct / 100 * $modules)));
 
                 return [
+                    'id' => $f['id'],
                     'titre' => $f['title'],
                     'categorie' => $f['category'],
                     'pct' => $pct,

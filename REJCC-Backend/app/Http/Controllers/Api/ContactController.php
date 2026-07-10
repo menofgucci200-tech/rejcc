@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Mail\NouveauMessageContact;
 use App\Models\Contact;
+use App\Support\Mailer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -22,9 +24,9 @@ class ContactController extends Controller
             return response()->json(['ok' => false, 'message' => $validator->errors()->first()], 422);
         }
 
-        Contact::create($validator->validated());
+        $contact = Contact::create($validator->validated());
 
-        // TODO: notifier l'équipe par e-mail.
+        Mailer::send(config('mail.admin_email'), new NouveauMessageContact($contact));
 
         return response()->json(['ok' => true]);
     }

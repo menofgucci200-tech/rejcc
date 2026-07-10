@@ -87,6 +87,39 @@ class FormationTest extends TestCase
         $this->assertFalse($response->json('formations.0.completed'));
     }
 
+    public function test_valider_un_module_fait_avancer_la_progression(): void
+    {
+        $formation = $this->formation(['modules_count' => 4]);
+        $user = User::factory()->create();
+        FormationEnrollment::create([
+            'formation_id' => $formation->id,
+            'user_id' => $user->id,
+        ]);
+        $token = $this->tokenFor($user);
+
+        $this->withToken($token)->postJson("/api/formations/{$formation->id}/complete-module")
+            ->assertOk()->assertJsonPath('progress', 25)->assertJsonPath('completed', false);
+
+        // Valider les 3 modules restants termine la formation.
+        for ($i = 0; $i < 3; $i++) {
+            $response = $this->withToken($token)->postJson("/api/formations/{$formation->id}/complete-module");
+        }
+        $response->assertJsonPath('progress', 100)->assertJsonPath('completed', true);
+
+        // Un clic de plus ne dépasse pas 100 %.
+        $this->withToken($token)->postJson("/api/formations/{$formation->id}/complete-module")
+            ->assertJsonPath('progress', 100);
+    }
+
+    public function test_valider_un_module_exige_d_etre_inscrit(): void
+    {
+        $formation = $this->formation();
+        $token = $this->tokenFor(User::factory()->create());
+
+        $this->withToken($token)->postJson("/api/formations/{$formation->id}/complete-module")
+            ->assertStatus(404);
+    }
+
     public function test_un_admin_gere_le_cycle_de_vie_d_une_formation(): void
     {
         $token = $this->tokenFor(User::factory()->create(['role' => 'admin']));
