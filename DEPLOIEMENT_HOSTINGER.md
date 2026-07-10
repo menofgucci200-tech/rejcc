@@ -2,20 +2,37 @@
 
 Ce guide explique comment mettre en ligne les deux services de l'application
 (`REJCC-Backend` et `REJCC-Frontend`) sur un hébergement **Business** Hostinger
-(mutualisé/cloud, sans accès root ni Docker — contrairement à Render).
+(mutualisé/cloud, sans accès root ni Docker — contrairement à Render), avec le
+nom de domaine **rejcc.site**.
 
 ## Vue d'ensemble
 
 Le pack Business inclut 50 « sites web », ce qui permet d'héberger les deux
 services comme deux sites distincts sur le même compte :
 
-| Service | Adresse suggérée | Contenu |
+| Service | Adresse | Contenu |
 |---|---|---|
-| REJCC-Frontend | `rejcc.org` (domaine principal) | Le site public + espace membre + admin |
-| REJCC-Backend | `api.rejcc.org` (sous-domaine) | L'API pure, jamais visitée directement |
+| REJCC-Frontend | `rejcc.site` (domaine principal) | Le site public + espace membre + admin |
+| REJCC-Backend | `api.rejcc.site` (sous-domaine) | L'API pure, jamais visitée directement |
 
 Chaque service reste un site Hostinger séparé, avec son propre déploiement Git,
 son propre `.env` et sa propre base de données MySQL.
+
+## Étape 0 — Connecter le nom de domaine à Hostinger
+
+Si `rejcc.site` a été acheté **ailleurs que chez Hostinger** (ou même chez
+Hostinger mais pas encore associé à l'hébergement), il faut d'abord le relier :
+
+1. Dans `hPanel → Domaines → Ajouter un domaine`, ajouter `rejcc.site` à
+   l'abonnement Business.
+2. Si le domaine est enregistré chez un autre registrar : mettre à jour les
+   **serveurs de noms (nameservers)** chez ce registrar pour pointer vers ceux
+   de Hostinger (indiqués dans `hPanel → Domaines → rejcc.site → Serveurs de
+   noms`, généralement `ns1.dns-parking.com` / `ns2.dns-parking.com` ou
+   équivalent — Hostinger affiche les valeurs exactes à utiliser).
+3. La propagation DNS peut prendre de quelques minutes à 24-48h. Pas la peine
+   d'avancer sur les étapes suivantes tant que `rejcc.site` ne résout pas déjà
+   vers l'IP Hostinger (`ping rejcc.site` ou un site comme whatsmydns.net).
 
 ## Prérequis à vérifier dans hPanel
 
@@ -29,8 +46,8 @@ son propre `.env` et sa propre base de données MySQL.
 
 ## Étape 1 — Créer les deux sites
 
-1. Domaine principal `rejcc.org` → pointer vers le dossier du frontend.
-2. Sous-domaine `api.rejcc.org` (`hPanel → Domaines → Sous-domaines`) →
+1. Domaine principal `rejcc.site` → pointer vers le dossier du frontend.
+2. Sous-domaine `api.rejcc.site` (`hPanel → Domaines → Sous-domaines`) →
    pointer vers le dossier du backend.
 
 ## Étape 2 — Déployer le code (Git)
@@ -49,10 +66,10 @@ Si l'option Git de hPanel ne permet pas de cloner en dehors de
 `public_html`, cloner directement via SSH à la place :
 
 ```bash
-cd ~/domains/rejcc.org
+cd ~/domains/rejcc.site
 git clone https://github.com/menofgucci200-tech/rejcc.git repo-frontend
 
-cd ~/domains/api.rejcc.org
+cd ~/domains/api.rejcc.site
 git clone https://github.com/menofgucci200-tech/rejcc.git repo-backend
 ```
 
@@ -62,13 +79,13 @@ Laravel doit servir son dossier `public/`, pas la racine du projet. Depuis le
 terminal SSH de chaque site :
 
 ```bash
-# Site frontend (rejcc.org)
-cd ~/domains/rejcc.org
+# Site frontend (rejcc.site)
+cd ~/domains/rejcc.site
 rm -rf public_html
 ln -s repo-frontend/REJCC-Frontend/public public_html
 
-# Site backend (api.rejcc.org)
-cd ~/domains/api.rejcc.org
+# Site backend (api.rejcc.site)
+cd ~/domains/api.rejcc.site
 rm -rf public_html
 ln -s repo-backend/REJCC-Backend/public public_html
 ```
@@ -83,7 +100,7 @@ ln -s repo-backend/REJCC-Backend/public public_html
 Pour **chaque** site (adapter les chemins) :
 
 ```bash
-cd ~/domains/rejcc.org/repo-frontend/REJCC-Frontend
+cd ~/domains/rejcc.site/repo-frontend/REJCC-Frontend
 composer install --no-dev --optimize-autoloader
 cp .env.example .env   # puis éditer les valeurs ci-dessous
 php artisan key:generate
@@ -95,7 +112,7 @@ php artisan key:generate
 APP_NAME="REJCC API"
 APP_ENV=production
 APP_DEBUG=false
-APP_URL=https://api.rejcc.org
+APP_URL=https://api.rejcc.site
 APP_LOCALE=fr
 
 DB_CONNECTION=mysql
@@ -114,19 +131,27 @@ ADMIN_EMAIL=<email_admin_initial>
 ADMIN_PASSWORD=<mot_de_passe_temporaire>
 ```
 
+`DB_DATABASE` / `DB_USERNAME` / `DB_PASSWORD` : valeurs données par Hostinger
+au moment de créer la base dans `hPanel → Bases de données` — jamais des
+valeurs à réutiliser d'ailleurs.
+
+`ADMIN_EMAIL` / `ADMIN_PASSWORD` : à choisir soi-même, c'est le tout premier
+compte admin qui sera créé automatiquement (voir Étape 5). Une fois connecté,
+il est possible d'en créer d'autres depuis Admin → Membres.
+
 ### `.env` du frontend (`REJCC-Frontend`)
 
 ```env
 APP_NAME=REJCC
 APP_ENV=production
 APP_DEBUG=false
-APP_URL=https://rejcc.org
+APP_URL=https://rejcc.site
 APP_LOCALE=fr
 
 SESSION_DRIVER=database
 CACHE_STORE=database
 
-BACKEND_API_URL=https://api.rejcc.org/api
+BACKEND_API_URL=https://api.rejcc.site/api
 ```
 
 `BACKEND_API_URL` est la variable la plus importante : c'est elle qui permet
@@ -137,14 +162,14 @@ Ne pas oublier le `/api` à la fin.
 
 ```bash
 # Backend
-cd ~/domains/api.rejcc.org/repo-backend/REJCC-Backend
+cd ~/domains/api.rejcc.site/repo-backend/REJCC-Backend
 php artisan migrate --force
 php artisan app:seed-if-empty   # crée le premier compte admin (ADMIN_EMAIL/ADMIN_PASSWORD du .env)
 php artisan config:cache
 php artisan route:cache
 
 # Frontend
-cd ~/domains/rejcc.org/repo-frontend/REJCC-Frontend
+cd ~/domains/rejcc.site/repo-frontend/REJCC-Frontend
 php artisan migrate --force
 php artisan config:cache
 php artisan route:cache
@@ -152,8 +177,9 @@ npm install && npm run build   # si Node.js est disponible en SSH
 ```
 
 Si Node.js n'est pas disponible côté serveur, générer `public/build/` en
-local (`npm run build`) et le committer/uploader manuellement, car c'est le
-seul artefact que Hostinger ne peut pas construire lui-même.
+local (`npm run build`) et l'uploader manuellement (FTP/gestionnaire de
+fichiers hPanel) dans `repo-frontend/REJCC-Frontend/public/build/`, car
+c'est le seul artefact que Hostinger ne peut pas construire lui-même.
 
 ## Étape 6 — Permissions
 
@@ -161,12 +187,20 @@ seul artefact que Hostinger ne peut pas construire lui-même.
 chmod -R 775 storage bootstrap/cache
 ```
 
+À faire pour les deux sites (backend et frontend).
+
 ## Étape 7 — Vérification
 
-- `https://api.rejcc.org/api/auth/login` (en POST) doit répondre en JSON.
-- `https://rejcc.org/connexion` doit afficher la page de connexion et
-  réussir à contacter l'API.
-- Vérifier `https://rejcc.org/admin` après connexion avec un compte admin.
+- `https://api.rejcc.site/api/auth/login` (en POST) doit répondre en JSON
+  (une erreur de validation `{"ok":false,...}` est normale sans identifiants
+  — c'est le signe que l'API répond bien).
+- `https://rejcc.site/connexion` doit afficher la page de connexion et
+  réussir à contacter l'API (se connecter avec `ADMIN_EMAIL`/`ADMIN_PASSWORD`
+  du `.env` backend).
+- Après connexion, vérifier `https://rejcc.site/admin`.
+- Vérifier que les certificats SSL (HTTPS) sont bien actifs sur les deux
+  sites (`hPanel → [site] → Sécurité → SSL` — Hostinger fournit un certificat
+  Let's Encrypt gratuit, à activer si ce n'est pas déjà automatique).
 
 ## Mises à jour futures
 
