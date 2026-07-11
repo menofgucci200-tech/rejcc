@@ -19,7 +19,7 @@
         <div class="mt-14 grid gap-4 sm:grid-cols-2">
             @foreach ($events as $i => $e)
                 <x-ui.reveal :delay="($i % 2) * 0.08">
-                    <a href="/evenements/{{ $e->slug }}" class="group flex items-stretch gap-5 overflow-hidden rounded-3xl border border-brand/10 bg-white p-5 transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_28px_60px_-35px_rgba(3,29,89,0.4)]">
+                    <a href="/evenements/{{ $e->slug }}" wire:navigate.hover class="group flex items-stretch gap-5 overflow-hidden rounded-3xl border border-brand/10 bg-white p-5 transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_28px_60px_-35px_rgba(3,29,89,0.4)]">
                         <div class="flex w-20 shrink-0 flex-col items-center justify-center rounded-2xl bg-brand py-4 text-white">
                             <span class="font-display text-3xl leading-none">{{ $e->starts_at->format('d') }}</span>
                             <span class="mt-1 text-xs uppercase tracking-wider text-white/70">{{ $e->starts_at->locale('fr')->translatedFormat('M') }}</span>

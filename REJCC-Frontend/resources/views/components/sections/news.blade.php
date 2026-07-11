@@ -18,7 +18,7 @@
         <div class="mt-14 grid gap-6 lg:grid-cols-3">
             @foreach ($articles as $i => $a)
                 <x-ui.reveal :delay="$i * 0.1" class="h-full">
-                    <a href="/actualites/{{ $a->slug }}" class="group flex h-full flex-col overflow-hidden rounded-3xl border border-brand/10 bg-white transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_30px_70px_-35px_rgba(3,29,89,0.4)]">
+                    <a href="/actualites/{{ $a->slug }}" wire:navigate.hover class="group flex h-full flex-col overflow-hidden rounded-3xl border border-brand/10 bg-white transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_30px_70px_-35px_rgba(3,29,89,0.4)]">
                         <div class="relative aspect-[16/10] overflow-hidden bg-brand">
                             <div class="absolute inset-0 bg-grid opacity-20"></div>
                             <div class="absolute inset-0 bg-linear-to-br from-brand via-brand to-brand-900"></div>

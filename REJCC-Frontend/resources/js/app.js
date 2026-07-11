@@ -3,6 +3,7 @@ import Lenis from 'lenis';
 
 function initLenis() {
     const lenis = new Lenis({ duration: 1.1, smoothWheel: true });
+    window.__lenis = lenis;
     document.documentElement.classList.add('lenis');
 
     function raf(time) {
@@ -13,16 +14,20 @@ function initLenis() {
 }
 
 function initScrollProgress() {
-    const bar = document.getElementById('scroll-progress-bar');
-    if (!bar) return;
-
     const update = () => {
+        const bar = document.getElementById('scroll-progress-bar');
+        if (!bar) return;
         const docHeight = document.documentElement.scrollHeight - window.innerHeight;
         const pct = docHeight > 0 ? (window.scrollY / docHeight) * 100 : 0;
         bar.style.width = pct + '%';
     };
 
-    window.addEventListener('scroll', update, { passive: true });
+    // Un seul listener global : le body est remplacé à chaque wire:navigate,
+    // on recherche donc la barre à chaque scroll plutôt que de ré-attacher.
+    if (!window.__scrollProgressBound) {
+        window.addEventListener('scroll', update, { passive: true });
+        window.__scrollProgressBound = true;
+    }
     update();
 }
 
@@ -82,6 +87,10 @@ function initCounters() {
 }
 
 function dismissLoader() {
+    // `app-loaded` sur <html> (qui survit aux wire:navigate) : le splash ne
+    // s'affiche qu'au tout premier chargement, jamais entre les pages.
+    document.documentElement.classList.add('app-loaded');
+
     const loader = document.getElementById('page-loader');
     if (!loader) return;
     loader.classList.add('opacity-0', 'pointer-events-none');
@@ -109,4 +118,7 @@ document.addEventListener('livewire:navigating', () => {
 });
 document.addEventListener('livewire:navigated', () => {
     document.documentElement.classList.remove('is-navigating');
+    // Lenis mesure la hauteur du document : on la recalcule après le
+    // remplacement du body pour que le défilement reste fonctionnel.
+    if (window.__lenis?.resize) window.__lenis.resize();
 });

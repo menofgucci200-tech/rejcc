@@ -104,10 +104,23 @@ body {
   transition: opacity 220ms ease, transform 220ms ease;
 }
 
-/* Transition douce entre les pages lors d'une navigation wire:navigate. */
+/* Transition douce entre les pages lors d'une navigation wire:navigate.
+   Opacité seule : un transform sur <body> casserait le position:fixed
+   de la navbar et de la barre d'onglets mobile pendant la transition. */
 html.is-navigating body {
   opacity: 0;
-  transform: translateY(8px);
+}
+
+/* Entrée de page : le <body> étant remplacé à chaque wire:navigate,
+   l'animation rejoue naturellement à chaque navigation. */
+main {
+  animation: page-enter 0.45s var(--ease-smooth);
+}
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -280,5 +293,12 @@ h4 {
 }
 #page-loader.opacity-0 {
   opacity: 0;
+}
+
+/* Le splash ne concerne que le tout premier chargement : une fois l'app
+   démarrée (classe posée sur <html>, qui survit aux wire:navigate), les
+   loaders présents dans les body suivants sont masqués immédiatement. */
+html.app-loaded #page-loader {
+  display: none;
 }
 

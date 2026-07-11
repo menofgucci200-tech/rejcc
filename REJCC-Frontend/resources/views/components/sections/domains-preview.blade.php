@@ -18,7 +18,7 @@
         <div class="mt-16 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             @foreach ($sectors as $i => $s)
                 <x-ui.reveal :delay="($i % 3) * 0.07">
-                    <a href="/domaines" class="group relative block h-full overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] p-7 transition-all duration-500 hover:border-white/25 hover:bg-white/[0.08]">
+                    <a href="/domaines" wire:navigate class="group relative block h-full overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] p-7 transition-all duration-500 hover:border-white/25 hover:bg-white/[0.08]">
                         <div class="flex items-start justify-between">
                             <span class="inline-flex size-13 items-center justify-center rounded-2xl bg-white/10 text-white transition-all duration-500 group-hover:bg-accent">
                                 <x-ui.icon :name="$s->icon" class="size-6" />

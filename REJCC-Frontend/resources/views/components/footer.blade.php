@@ -33,7 +33,7 @@
                 <h3 class="text-xs font-semibold uppercase tracking-[0.18em] text-white/50">Navigation</h3>
                 <ul class="mt-5 space-y-3">
                     @foreach ($nav as $item)
-                        <li><a href="{{ url($item['href']) }}" class="text-sm text-white/70 transition-colors hover:text-white">{{ $item['label'] }}</a></li>
+                        <li><a href="{{ url($item['href']) }}" wire:navigate class="text-sm text-white/70 transition-colors hover:text-white">{{ $item['label'] }}</a></li>
                     @endforeach
                 </ul>
             </div>
@@ -42,7 +42,7 @@
                 <h3 class="text-xs font-semibold uppercase tracking-[0.18em] text-white/50">Explorer</h3>
                 <ul class="mt-5 space-y-3">
                     @foreach ($exploreLinks as $item)
-                        <li><a href="{{ url($item['href']) }}" class="text-sm text-white/70 transition-colors hover:text-white">{{ $item['label'] }}</a></li>
+                        <li><a href="{{ url($item['href']) }}" wire:navigate class="text-sm text-white/70 transition-colors hover:text-white">{{ $item['label'] }}</a></li>
                     @endforeach
                 </ul>
                 <ul class="mt-7 space-y-3 text-sm text-white/70">
@@ -74,8 +74,8 @@
                 <span class="font-serif italic text-white/75">{{ $site['slogan'] }}</span>
             </p>
             <div class="flex items-center gap-6">
-                <a href="{{ url('/contact') }}" class="transition-colors hover:text-white">Mentions légales</a>
-                <a href="{{ url('/contact') }}" class="transition-colors hover:text-white">Confidentialité</a>
+                <a href="{{ url('/contact') }}" wire:navigate class="transition-colors hover:text-white">Mentions légales</a>
+                <a href="{{ url('/contact') }}" wire:navigate class="transition-colors hover:text-white">Confidentialité</a>
             </div>
         </div>
     </div>

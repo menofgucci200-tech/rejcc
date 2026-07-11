@@ -13,7 +13,7 @@
         class="fixed inset-x-0 top-0 z-[80] transition-all duration-500"
     >
         <nav class="mx-auto flex w-full max-w-7xl items-center justify-between container-px">
-            <a href="{{ url('/') }}" aria-label="REJCC — Accueil" class="relative z-10 flex items-center">
+            <a href="{{ url('/') }}" wire:navigate aria-label="REJCC — Accueil" class="relative z-10 flex items-center">
                 <template x-if="scrolled || {{ $isHome ? 'false' : 'true' }} || open">
                     <x-ui.logo-mark kind="lockup-color" class="h-9 sm:h-10" />
                 </template>
@@ -27,6 +27,7 @@
                     @php $active = $item['href'] === '/' ? request()->is('/') : request()->is(ltrim($item['href'], '/').'*'); @endphp
                     <li>
                         <a href="{{ url($item['href']) }}"
+                           wire:navigate.hover
                            :class="(scrolled || {{ $isHome ? 'false' : 'true' }} || open) ? '{{ $active ? 'text-brand' : 'text-ink/70 hover:text-brand' }}' : '{{ $active ? 'text-white' : 'text-white/80 hover:text-white' }}'"
                            class="relative rounded-full px-3.5 py-2 text-sm font-semibold transition-colors">
                             {{ $item['label'] }}
@@ -39,14 +40,14 @@
             </ul>
 
             <div class="flex items-center gap-2">
-                <a href="{{ route('mon-espace') }}"
+                <a href="{{ route('mon-espace') }}" wire:navigate
                     :class="(scrolled || {{ $isHome ? 'false' : 'true' }} || open) ? 'border-brand/25 text-brand hover:bg-brand hover:text-white' : 'border-white/40 text-white hover:bg-white hover:text-brand'"
                     class="inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-semibold transition-colors">
                     <x-ui.icon name="user" class="size-4" />
                     Mon espace
                 </a>
 
-                <x-ui.button :href="url($cta['href'])" size="sm" :with-arrow="true"
+                <x-ui.button :href="url($cta['href'])" wire:navigate size="sm" :with-arrow="true"
                     x-bind:class="(scrolled || {{ $isHome ? 'false' : 'true' }} || open) ? '' : '!bg-white !text-brand hover:!bg-cloud'"
                     class="!hidden lg:!inline-flex">
                     {{ $cta['label'] }}
@@ -79,15 +80,15 @@
     >
         <div class="mt-24 flex flex-1 flex-col gap-1 container-px">
             @foreach ($nav as $item)
-                <a href="{{ url($item['href']) }}" @click="open = false" class="block border-b border-white/10 py-4 font-display text-3xl uppercase tracking-tight text-white">
+                <a href="{{ url($item['href']) }}" wire:navigate @click="open = false" class="block border-b border-white/10 py-4 font-display text-3xl uppercase tracking-tight text-white">
                     {{ $item['label'] }}
                 </a>
             @endforeach
             <div class="mt-8 flex flex-col gap-3">
-                <x-ui.button :href="route('mon-espace')" variant="outline" size="lg" class="w-full !border-white/40 !text-white hover:!bg-white hover:!text-brand">
+                <x-ui.button :href="route('mon-espace')" wire:navigate variant="outline" size="lg" class="w-full !border-white/40 !text-white hover:!bg-white hover:!text-brand">
                     <x-ui.icon name="user" class="size-4" /> Mon espace
                 </x-ui.button>
-                <x-ui.button :href="url($cta['href'])" variant="white" size="lg" :with-arrow="true" class="w-full">
+                <x-ui.button :href="url($cta['href'])" wire:navigate variant="white" size="lg" :with-arrow="true" class="w-full">
                     {{ $cta['label'] }}
                 </x-ui.button>
             </div>
