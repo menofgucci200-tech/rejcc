@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             EventSeeder::class,
             OpportunitySeeder::class,
             FormationSeeder::class,
+            ResourceSeeder::class,
         ]);
     }
 }

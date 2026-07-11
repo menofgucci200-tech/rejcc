@@ -2,23 +2,32 @@
 
 namespace App\Livewire\Member;
 
+use App\Support\Api;
+use App\Support\CategoryPalette;
+use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
 #[Layout('layouts.member-light')]
 class Certificats extends Component
 {
-    protected function certificats(): array
-    {
-        return [
-            ['titre' => 'Fondamentaux de l\'entrepreneuriat', 'date' => '12 mai 2026', 'from' => '#4F6FBF', 'to' => '#8FA3D9'],
-            ['titre' => 'Éthique chrétienne au travail', 'date' => '3 mars 2026', 'from' => '#F5A623', 'to' => '#F7C873'],
-            ['titre' => 'Finances personnelles', 'date' => '20 janvier 2026', 'from' => '#22A85A', 'to' => '#7FE0A6'],
-        ];
-    }
-
     public function render()
     {
-        return view('livewire.member.certificats', ['certificats' => $this->certificats()]);
+        $certificats = Collection::make(Api::get('/my-certificates', [], Api::token())['certificates'] ?? [])
+            ->map(function (array $c) {
+                $palette = CategoryPalette::for($c['category'] ?? $c['title']);
+
+                return [
+                    'titre' => $c['title'],
+                    'reference' => $c['reference'],
+                    'date' => Carbon::parse($c['issued_at'])->translatedFormat('j F Y'),
+                    'from' => $palette['from'],
+                    'to' => $palette['to'],
+                ];
+            })
+            ->all();
+
+        return view('livewire.member.certificats', ['certificats' => $certificats]);
     }
 }

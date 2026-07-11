@@ -27,6 +27,10 @@ class SeedIfEmpty extends Command
             $this->call('db:seed', ['--class' => \Database\Seeders\FormationSeeder::class, '--force' => true]);
         }
 
+        if (\App\Models\Resource::count() === 0) {
+            $this->call('db:seed', ['--class' => \Database\Seeders\ResourceSeeder::class, '--force' => true]);
+        }
+
         // Correction ponctuelle : l'etape "cotisation" a ete retiree du parcours d'adhesion
         // (remplace par un formulaire externe), mais les bases deja seedees gardent l'ancien texte.
         MembershipStep::where('title', 'Réglez votre cotisation')->update([

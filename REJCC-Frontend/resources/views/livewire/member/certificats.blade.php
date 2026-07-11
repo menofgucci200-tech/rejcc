@@ -18,10 +18,9 @@
                         </div>
                         <div class="p-4">
                             <p class="mb-1 text-[13.5px] font-bold leading-snug text-brand">{{ $c['titre'] }}</p>
-                            <p class="mb-4 text-xs text-[#9AA6B8]">Obtenu le {{ $c['date'] }}</p>
-                            <button class="flex w-full items-center justify-center gap-1.5 rounded-[9px] border border-azure/25 bg-azure/10 py-2 text-[12.5px] font-semibold text-azure">
-                                <x-ui.icon name="download" class="size-3.5" /> Télécharger
-                            </button>
+                            <p class="text-xs text-[#9AA6B8]">Obtenu le {{ $c['date'] }}</p>
+                            <p class="mb-4 mt-0.5 text-[10.5px] font-semibold tracking-wide text-[#9AA6B8]">{{ $c['reference'] }}</p>
+                            <p class="rounded-[9px] bg-cloud px-3 py-2 text-center text-[11px] text-[#5B677A]">Présentez cette référence pour toute vérification</p>
                         </div>
                     </article>
                 @endforeach

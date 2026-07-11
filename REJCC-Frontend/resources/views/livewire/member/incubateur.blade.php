@@ -8,7 +8,7 @@
                 <div class="h-[3px] w-9 rounded bg-accent"></div>
                 <p class="mt-3 max-w-xl text-[13px] text-[#5B677A]">Un accompagnement complet — mentorat, financement et mise en réseau — pour faire grandir votre projet.</p>
             </div>
-            <button class="rounded-full bg-brand px-4 py-2 text-xs font-semibold text-white hover:bg-brand/90">Soumettre un projet</button>
+            <a href="{{ route('espace-membre.projets') }}" wire:navigate class="rounded-full bg-brand px-4 py-2 text-xs font-semibold text-white hover:bg-brand/90">Soumettre un projet</a>
         </div>
 
         <div class="grid gap-4" style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr))">
@@ -42,5 +42,8 @@
                 </article>
             @endforeach
         </div>
+        @if (empty($projets))
+            <p class="rounded-[16px] border border-brand/10 bg-white py-10 text-center text-sm text-[#5B677A]">Aucun projet incubé pour le moment. Proposez le vôtre depuis la page Projets !</p>
+        @endif
     </div>
 </div>

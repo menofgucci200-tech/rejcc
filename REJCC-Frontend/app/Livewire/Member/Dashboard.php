@@ -11,22 +11,6 @@ use Livewire\Component;
 #[Layout('layouts.member-light')]
 class Dashboard extends Component
 {
-    public array $defisEtat = [true, true, false];
-
-    public function toggleDefi(int $index): void
-    {
-        $this->defisEtat[$index] = ! $this->defisEtat[$index];
-    }
-
-    protected function defisData(): array
-    {
-        return [
-            ['label' => 'Terminer un module de formation', 'xp' => 50],
-            ['label' => 'Participer à un atelier', 'xp' => 80],
-            ['label' => 'Publier un projet dans la communauté', 'xp' => 120],
-        ];
-    }
-
     protected function profileCompletion(object $user): int
     {
         $fields = [$user->prenom, $user->nom, $user->email, $user->telephone, $user->ville, $user->secteur, $user->profil, $user->bio ?? null];
@@ -35,43 +19,73 @@ class Dashboard extends Component
         return (int) round(($filled / count($fields)) * 100);
     }
 
+    /**
+     * Défis calculés depuis les vraies actions du membre — plus de cases à
+     * cocher factices : chaque défi se valide tout seul quand l'action est faite.
+     */
+    protected function defis(Collection $formations, Collection $events, int $completion): array
+    {
+        return [
+            [
+                'label' => 'S\'inscrire à une formation du catalogue',
+                'xp' => 50,
+                'fait' => $formations->isNotEmpty(),
+            ],
+            [
+                'label' => 'Faire avancer une formation (valider un module)',
+                'xp' => 80,
+                'fait' => $formations->contains(fn (array $f) => $f['completed'] || $f['progress'] > 0),
+            ],
+            [
+                'label' => 'S\'inscrire à un événement du réseau',
+                'xp' => 80,
+                'fait' => $events->contains(fn (array $e) => ! empty($e['registered'])),
+            ],
+            [
+                'label' => 'Compléter son profil à 100 %',
+                'xp' => 120,
+                'fait' => $completion >= 100,
+            ],
+        ];
+    }
+
     public function render()
     {
         $token = Api::token();
         $user = Api::user();
+        $completion = $this->profileCompletion($user);
 
         $conversations = Collection::make(Api::get('/messages', [], $token)['conversations'] ?? []);
         $unreadMessages = $conversations->sum('unread');
 
-        $allDocs = Collection::make(Api::get('/documents', [], $token)['documents'] ?? []);
-        $docs = $allDocs->take(4)->map(fn ($d) => (object) $d);
+        $docs = Collection::make(Api::get('/documents', [], $token)['documents'] ?? [])
+            ->take(4)->map(fn ($d) => (object) $d);
 
-        $allMembers = Collection::make(Api::get('/members', [], $token)['members'] ?? [])
-            ->reject(fn ($m) => $m['id'] === $user->id);
-        $members = $allMembers->take(4)->map(fn ($m) => (object) $m);
+        $members = Collection::make(Api::get('/members', [], $token)['members'] ?? [])
+            ->reject(fn ($m) => $m['id'] === $user->id)
+            ->take(4)->map(fn ($m) => (object) $m);
 
-        $allEvents = Collection::make(Api::get('/events', [], $token)['events'] ?? [])
+        $events = Collection::make(Api::get('/events', [], $token)['events'] ?? []);
+        $upcomingEvents = $events
             ->map(function ($e) {
                 $e['starts_at'] = Carbon::parse($e['starts_at']);
 
                 return (object) $e;
-            });
-        $upcomingEvents = $allEvents->filter(fn ($e) => $e->starts_at->isFuture())->sortBy('starts_at')->take(4)->values();
+            })
+            ->filter(fn ($e) => $e->starts_at->isFuture())
+            ->sortBy('starts_at')->take(4)->values();
 
-        $defis = array_map(function ($d, $i) {
-            $fait = $this->defisEtat[$i];
-            $d['fait'] = $fait;
-            $d['index'] = $i;
+        $formations = Collection::make(Api::get('/my-formations', [], $token)['formations'] ?? []);
 
-            return $d;
-        }, $this->defisData(), array_keys($this->defisData()));
+        $defis = $this->defis($formations, $events, $completion);
 
-        $activites = [
-            ['texte' => 'Module « Étude de marché » terminé — Parcours Entrepreneuriat', 'quand' => 'Il y a 2 heures', 'dot' => '#22A85A'],
-            ['texte' => 'Nouveau commentaire de Awa Diabaté sur votre business plan', 'quand' => 'Hier · 18 h 40', 'dot' => '#4F6FBF'],
-            ['texte' => 'Certificat « Gestion financière de base » obtenu 🎉', 'quand' => 'Il y a 3 jours', 'dot' => '#AC0100'],
-            ['texte' => 'Inscription confirmée : Café des entrepreneurs du 18 juillet', 'quand' => 'Il y a 5 jours', 'dot' => '#031D59'],
-        ];
+        $activites = Collection::make(Api::get('/my-activity', [], $token)['activity'] ?? [])
+            ->map(fn (array $a) => [
+                'texte' => $a['text'],
+                'quand' => ucfirst(Carbon::parse($a['at'])->diffForHumans()),
+                'dot' => $a['color'],
+            ])
+            ->all();
 
         if ($unreadMessages > 0) {
             array_unshift($activites, [
@@ -83,8 +97,16 @@ class Dashboard extends Component
             ]);
         }
 
+        if ($activites === []) {
+            $activites[] = [
+                'texte' => 'Bienvenue ! Inscrivez-vous à une formation ou un événement pour démarrer votre parcours.',
+                'quand' => 'Pour commencer',
+                'dot' => '#4F6FBF',
+            ];
+        }
+
         return view('livewire.member.dashboard', [
-            'completion' => $this->profileCompletion($user),
+            'completion' => $completion,
             'unreadMessages' => $unreadMessages,
             'docs' => $docs,
             'members' => $members,

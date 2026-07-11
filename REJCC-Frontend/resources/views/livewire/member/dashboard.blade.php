@@ -111,11 +111,11 @@
                 </section>
 
                 <section>
-                    <h2 class="mb-1 text-[17px] font-bold text-brand">Défis de la semaine</h2>
+                    <h2 class="mb-1 text-[17px] font-bold text-brand">Mes défis</h2>
                     <div class="mb-4 h-[3px] w-9 rounded bg-accent"></div>
                     <div class="rounded-[18px] border border-brand/10 p-5 shadow-[0_2px_8px_rgba(3,29,89,.05)]" style="background: linear-gradient(150deg,#fff,#F0F3FA)">
                         @foreach ($defis as $d)
-                            <div wire:click="toggleDefi({{ $d['index'] }})" class="flex cursor-pointer items-center gap-3 py-2.5">
+                            <div class="flex items-center gap-3 py-2.5">
                                 <span class="flex size-[22px] shrink-0 items-center justify-center rounded-[7px] border-2 {{ $d['fait'] ? 'border-[#22A85A] bg-[#22A85A]' : 'border-[#C9D3E6] bg-white' }}">
                                     @if ($d['fait'])
                                         <x-ui.icon name="check" class="size-3 text-white" />
@@ -131,7 +131,7 @@
                             </span>
                             <div>
                                 <p class="text-[13px] font-bold text-brand">Badge « Bâtisseur »</p>
-                                <p class="text-xs text-[#5B677A]">{{ $defisFaits }} / 3 défis complétés cette semaine</p>
+                                <p class="text-xs text-[#5B677A]">{{ $defisFaits }} / {{ count($defis) }} défis complétés — {{ collect($defis)->where('fait', true)->sum('xp') }} XP gagnés</p>
                             </div>
                         </div>
                     </div>

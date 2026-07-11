@@ -2,37 +2,64 @@
 
 namespace App\Livewire\Member;
 
+use App\Support\Api;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
 #[Layout('layouts.member-light')]
 class Ressources extends Component
 {
-    protected function categories(): array
+    /** Habillage visuel par type de ressource. */
+    public const TYPES = [
+        'Ebook' => ['icon' => 'book-open', 'color' => '#4F6FBF'],
+        'Modèle' => ['icon' => 'file-text', 'color' => '#AC0100'],
+        'Vidéo' => ['icon' => 'video', 'color' => '#22A85A'],
+        'Audio' => ['icon' => 'headphones', 'color' => '#F5A623'],
+        'Document' => ['icon' => 'folder-open', 'color' => '#4F6FBF'],
+    ];
+
+    public string $filtre = 'tous';
+
+    public function setFiltre(string $filtre): void
     {
-        return [
-            ['titre' => 'Ebooks', 'icon' => 'book-open', 'color' => '#4F6FBF', 'nombre' => 18],
-            ['titre' => 'Modèles de business plan', 'icon' => 'file-text', 'color' => '#AC0100', 'nombre' => 6],
-            ['titre' => 'Vidéos de formation', 'icon' => 'video', 'color' => '#22A85A', 'nombre' => 24],
-            ['titre' => 'Podcasts', 'icon' => 'headphones', 'color' => '#F5A623', 'nombre' => 12],
-            ['titre' => 'Documents pratiques', 'icon' => 'folder-open', 'color' => '#4F6FBF', 'nombre' => 30],
-        ];
+        $this->filtre = $filtre;
     }
 
-    protected function temoignages(): array
+    /** Comptabilise le téléchargement (le lien s'ouvre côté navigateur). */
+    public function compter(int $id): void
     {
-        return [
-            ['nom' => 'Diane Ateba', 'role' => 'Fondatrice, Boutique Fraternité', 'citation' => 'Les ressources de l\'incubateur m\'ont permis de structurer mon business plan en quelques semaines.'],
-            ['nom' => 'Éric Mvondo', 'role' => 'Développeur, AgriTech Cameroun', 'citation' => 'Le mentorat REJCC a changé ma façon de diriger une équipe technique.'],
-            ['nom' => 'Grace Nkolo', 'role' => 'Entrepreneure sociale', 'citation' => 'Grâce au parcours entrepreneuriat social, j\'ai pu lever mes premiers fonds.'],
-        ];
+        Api::post("/resources/{$id}/download", [], Api::token());
     }
 
     public function render()
     {
+        $toutes = Collection::make(Api::get('/resources', [], Api::token())['resources'] ?? [])
+            ->map(function (array $r) {
+                $style = self::TYPES[$r['type']] ?? self::TYPES['Document'];
+
+                return [
+                    'id' => $r['id'],
+                    'titre' => $r['title'],
+                    'type' => $r['type'],
+                    'description' => $r['description'],
+                    'url' => $r['url'],
+                    'taille' => $r['size'],
+                    'telechargements' => (int) $r['downloads'],
+                    'icon' => $style['icon'],
+                    'color' => $style['color'],
+                ];
+            });
+
+        $categories = $toutes->groupBy('type')->map->count();
+
+        $ressources = $toutes
+            ->when($this->filtre !== 'tous', fn ($c) => $c->where('type', $this->filtre))
+            ->values();
+
         return view('livewire.member.ressources', [
-            'categories' => $this->categories(),
-            'temoignages' => $this->temoignages(),
+            'ressources' => $ressources,
+            'categories' => $categories,
         ]);
     }
 }

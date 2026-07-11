@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\ActivityController;
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AdhesionController;
+use App\Http\Controllers\Api\ActivityFeedController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\DocumentController;
@@ -82,6 +83,21 @@ Route::middleware('auth.token')->group(function () {
     Route::post('/formations/{id}/enroll', [FormationController::class, 'enroll']);
     Route::post('/formations/{id}/complete-module', [FormationController::class, 'completeModule']);
 
+    // Fil d'activité du tableau de bord
+    Route::get('/my-activity', [ActivityFeedController::class, 'mine']);
+
+    // Ressources
+    Route::get('/resources', [\App\Http\Controllers\Api\ResourceController::class, 'index']);
+    Route::post('/resources/{id}/download', [\App\Http\Controllers\Api\ResourceController::class, 'download']);
+
+    // Certificats (émis automatiquement pour les formations certifiantes terminées)
+    Route::get('/my-certificates', [\App\Http\Controllers\Api\CertificateController::class, 'mine']);
+
+    // Projets & incubateur
+    Route::get('/projects', [\App\Http\Controllers\Api\ProjectController::class, 'index']);
+    Route::post('/projects', [\App\Http\Controllers\Api\ProjectController::class, 'store']);
+    Route::get('/incubator', [\App\Http\Controllers\Api\ProjectController::class, 'incubator']);
+
     // Opportunités & annonces
     Route::get('/opportunities', [OpportunityController::class, 'index']);
     Route::post('/opportunities', [OpportunityController::class, 'store']);
@@ -133,6 +149,20 @@ Route::middleware(['auth.token', 'auth.admin'])->prefix('admin')->group(function
     Route::get('/opportunities', [OpportunityController::class, 'index']);
     Route::put('/opportunities/{id}', [OpportunityController::class, 'adminUpdate']);
     Route::delete('/opportunities/{id}', [OpportunityController::class, 'adminDestroy']);
+
+    // Ressources
+    Route::get('/resources', [\App\Http\Controllers\Api\ResourceController::class, 'adminIndex']);
+    Route::post('/resources', [\App\Http\Controllers\Api\ResourceController::class, 'store']);
+    Route::put('/resources/{id}', [\App\Http\Controllers\Api\ResourceController::class, 'update']);
+    Route::delete('/resources/{id}', [\App\Http\Controllers\Api\ResourceController::class, 'destroy']);
+
+    // Certificats (registre)
+    Route::get('/certificates', [\App\Http\Controllers\Api\CertificateController::class, 'adminIndex']);
+
+    // Projets (validation, incubateur, suivi financement/jalons)
+    Route::get('/projects', [\App\Http\Controllers\Api\ProjectController::class, 'adminIndex']);
+    Route::put('/projects/{id}', [\App\Http\Controllers\Api\ProjectController::class, 'adminUpdate']);
+    Route::delete('/projects/{id}', [\App\Http\Controllers\Api\ProjectController::class, 'adminDestroy']);
 
     // Documents
     Route::get('/documents', [AdminController::class, 'documents']);
