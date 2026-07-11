@@ -61,18 +61,20 @@
         </div>
 
         <section class="mb-8">
-            <h2 class="mb-1 text-[17px] font-bold text-brand">Répartition des membres par parcours</h2>
+            <h2 class="mb-1 text-[17px] font-bold text-brand">Inscriptions par formation</h2>
             <div class="mb-4 h-[3px] w-9 rounded bg-accent"></div>
             <div class="rounded-[18px] border border-brand/10 bg-white p-[22px] shadow-[0_2px_8px_rgba(3,29,89,.05)]">
-                @foreach ($parcoursRepartition as $p)
+                @forelse ($parcoursRepartition as $p)
                     <div class="flex items-center gap-3.5 py-2">
                         <span class="w-[170px] shrink-0 text-[12.5px] text-ink">{{ $p['nom'] }}</span>
                         <div class="h-2.5 flex-1 overflow-hidden rounded-full bg-[#EDF0F5]">
                             <div class="h-full rounded-full" style="width: {{ $p['pct'] }}%; background: {{ $p['color'] }}"></div>
                         </div>
-                        <span class="w-[70px] shrink-0 text-right text-xs font-bold text-brand">{{ $p['membres'] }} membres</span>
+                        <span class="w-[70px] shrink-0 text-right text-xs font-bold text-brand">{{ $p['membres'] }} inscrit{{ $p['membres'] > 1 ? 's' : '' }}</span>
                     </div>
-                @endforeach
+                @empty
+                    <p class="py-6 text-center text-sm text-[#5B677A]">Les inscriptions aux formations apparaîtront ici.</p>
+                @endforelse
             </div>
         </section>
     </div>

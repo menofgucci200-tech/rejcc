@@ -9,6 +9,7 @@
         ->values();
 @endphp
 
+@if ($events->isNotEmpty())
 <section class="bg-cloud py-24 sm:py-32">
     <x-ui.container>
         <div class="flex flex-col items-start justify-between gap-8 md:flex-row md:items-end">
@@ -40,3 +41,4 @@
         </div>
     </x-ui.container>
 </section>
+@endif

@@ -2,90 +2,147 @@
     <x-admin-light.topbar title="Contenu du site" />
 
     <div class="mx-auto max-w-[1280px] px-8 py-8">
-        <div class="mb-5 flex flex-wrap gap-2">
-            @foreach ([['secteurs', 'Secteurs & activités'], ['temoignages', 'Témoignages'], ['partenaires', 'Partenaires'], ['accueil', "Page d'accueil"], ['adhesion', "Étapes d'adhésion"]] as [$key, $label])
-                <button wire:click="setOnglet('{{ $key }}')" class="rounded-full border px-4 py-2 text-[12.5px] font-bold {{ $onglet === $key ? 'border-brand bg-brand text-white' : 'border-brand/10 bg-white text-[#5B677A]' }}">{{ $label }}</button>
-            @endforeach
+        <div class="mb-5">
+            <h2 class="mb-1 text-[17px] font-bold text-brand">Contenu éditorial de la vitrine</h2>
+            <div class="h-[3px] w-9 rounded bg-accent"></div>
+            <p class="mt-2 text-xs text-[#9AA6B8]">Tout ce que vous modifiez ici est publié immédiatement sur le site public.</p>
         </div>
 
-        @if ($onglet === 'secteurs')
-            <div class="mb-4 rounded-[18px] border border-brand/10 bg-white px-5 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
-                @foreach ($secteurs as $s)
-                    <div class="flex items-center gap-3.5 border-t border-[#EDF0F5] py-3.5 first:border-t-0">
-                        <span class="flex-1 text-[13.5px] font-bold text-brand">{{ $s['nom'] }}</span>
-                        <span class="text-xs text-[#5B677A]">{{ $s['activites'] }} activités liées</span>
-                        <button class="rounded-lg border border-[#C9D3E6] px-3 py-1.5 text-xs font-bold text-brand hover:bg-cloud">Modifier</button>
-                    </div>
-                @endforeach
-            </div>
-            <button class="rounded-[10px] bg-accent px-4 py-2 text-xs font-bold text-white hover:bg-accent-600">+ Ajouter un secteur</button>
-        @elseif ($onglet === 'temoignages')
-            <div class="mb-4 rounded-[18px] border border-brand/10 bg-white px-5 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
-                @foreach ($temoignages as $t)
-                    <div class="flex flex-wrap items-center gap-3.5 border-t border-[#EDF0F5] py-3.5 first:border-t-0">
-                        <div class="min-w-[200px] flex-1">
-                            <p class="text-[13.5px] font-bold text-brand">{{ $t['nom'] }}</p>
-                            <p class="mt-0.5 text-xs italic text-[#5B677A]">« {{ $t['citation'] }} »</p>
-                        </div>
-                        <span class="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold" style="color: {{ $t['visible'] ? '#22A85A' : '#9AA6B8' }}; background: {{ $t['visible'] ? '#EAF6EE' : '#EEF1F5' }}">{{ $t['visible'] ? 'Visible' : 'Masqué' }}</span>
-                        <button wire:click="toggleTemoignage({{ $t['index'] }})" class="shrink-0 rounded-lg border border-[#C9D3E6] px-3 py-1.5 text-xs font-bold text-brand hover:bg-cloud">{{ $t['visible'] ? 'Masquer' : 'Afficher' }}</button>
-                    </div>
-                @endforeach
-            </div>
-            <button class="rounded-[10px] bg-accent px-4 py-2 text-xs font-bold text-white hover:bg-accent-600">+ Ajouter un témoignage</button>
-        @elseif ($onglet === 'partenaires')
-            <div class="mb-4 rounded-[18px] border border-brand/10 bg-white px-5 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
-                @foreach ($partenaires as $p)
-                    <div class="flex items-center gap-3.5 border-t border-[#EDF0F5] py-3.5 first:border-t-0">
-                        <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#E8EDF8] text-xs font-extrabold text-brand">{{ $p['initiales'] }}</span>
-                        <div class="min-w-0 flex-1">
-                            <p class="text-[13.5px] font-bold text-brand">{{ $p['nom'] }}</p>
-                            <p class="text-xs text-[#5B677A]">{{ $p['citation'] }}</p>
-                        </div>
-                        <button class="shrink-0 rounded-lg border border-[#C9D3E6] px-3 py-1.5 text-xs font-bold text-brand hover:bg-cloud">Modifier</button>
-                    </div>
-                @endforeach
-            </div>
-            <button class="rounded-[10px] bg-accent px-4 py-2 text-xs font-bold text-white hover:bg-accent-600">+ Ajouter un partenaire</button>
-        @elseif ($onglet === 'accueil')
-            <div class="flex max-w-xl flex-col gap-3.5 rounded-[18px] border border-brand/10 bg-white p-6 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
-                <div>
-                    <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Accroche principale</label>
-                    <input type="text" value="Entreprendre avec foi, exceller ensemble" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
+        <div class="mb-5 flex flex-wrap gap-2">
+            @foreach ($onglets as $key => $label)
+                <button wire:click="setOnglet('{{ $key }}')" class="rounded-full border px-4 py-2 text-[12.5px] font-bold {{ $onglet === $key ? 'border-brand bg-brand text-white' : 'border-brand/10 bg-white text-[#5B677A]' }}">{{ $label }}</button>
+            @endforeach
+            <button wire:click="openCreate" class="ml-auto rounded-[10px] bg-accent px-4 py-2 text-xs font-bold text-white hover:bg-accent-600">+ Ajouter</button>
+        </div>
+
+        @if ($showForm)
+            <div class="mb-6 grid grid-cols-1 gap-3.5 rounded-[18px] border border-brand/10 bg-white p-[22px] shadow-[0_2px_8px_rgba(3,29,89,.05)] sm:grid-cols-2">
+                <div class="flex items-center justify-between sm:col-span-2">
+                    <p class="text-sm font-bold text-brand">{{ $editingId ? 'Modifier' : 'Ajouter' }} — {{ $onglets[$onglet] }}</p>
+                    <button wire:click="closeForm"><x-ui.icon name="x" class="size-4 text-[#5B677A]" /></button>
                 </div>
-                <div class="grid grid-cols-3 gap-3">
+
+                @if ($onglet === 'sectors')
                     <div>
-                        <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Membres actifs</label>
-                        <input type="text" value="1 284" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
+                        <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Titre du secteur</label>
+                        <input wire:model="title" type="text" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
+                        @error('title') <span class="text-xs text-accent">{{ $message }}</span> @enderror
                     </div>
                     <div>
-                        <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Formations</label>
-                        <input type="text" value="32" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
+                        <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Icône (ex : sprout, cpu, landmark)</label>
+                        <input wire:model="icon" type="text" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
+                        @error('icon') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Accroche</label>
+                        <input wire:model="blurb" type="text" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
+                        @error('blurb') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Filières — une par ligne</label>
+                        <textarea wire:model="items" rows="4" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure"></textarea>
+                        @error('items') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                    </div>
+                @elseif ($onglet === 'testimonials')
+                    <div>
+                        <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Nom du membre</label>
+                        <input wire:model="name" type="text" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
+                        @error('name') <span class="text-xs text-accent">{{ $message }}</span> @enderror
                     </div>
                     <div>
-                        <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Villes couvertes</label>
-                        <input type="text" value="8" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
+                        <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Rôle / activité (ex : Fondatrice, AgriPlus)</label>
+                        <input wire:model="role" type="text" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
+                        @error('role') <span class="text-xs text-accent">{{ $message }}</span> @enderror
                     </div>
-                </div>
-                <div>
-                    <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Valeurs mises en avant</label>
-                    <textarea rows="3" class="w-full resize-y rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure">Excellence, Foi, Solidarité, Innovation</textarea>
-                </div>
-                <button class="w-fit rounded-[9px] bg-brand px-5 py-2.5 text-sm font-bold text-white hover:bg-accent">Enregistrer</button>
-            </div>
-        @elseif ($onglet === 'adhesion')
-            <div class="rounded-[18px] border border-brand/10 bg-white px-5 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
-                @foreach ($etapes as $e)
-                    <div class="flex items-center gap-3.5 border-t border-[#EDF0F5] py-3.5 first:border-t-0">
-                        <span class="flex size-[26px] shrink-0 items-center justify-center rounded-full bg-[#E8EDF8] text-xs font-extrabold text-brand">{{ $e['numero'] }}</span>
-                        <div class="min-w-0 flex-1">
-                            <p class="text-[13.5px] font-bold text-brand">{{ $e['titre'] }}</p>
-                            <p class="text-xs text-[#5B677A]">{{ $e['description'] }}</p>
+                    <div class="sm:col-span-2">
+                        <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Témoignage</label>
+                        <textarea wire:model="quote" rows="3" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure"></textarea>
+                        @error('quote') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                    </div>
+                @elseif ($onglet === 'partners')
+                    <div>
+                        <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Nom du partenaire</label>
+                        <input wire:model="name" type="text" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
+                        @error('name') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Domaine (ex : Partenaire financier)</label>
+                        <input wire:model="sector" type="text" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
+                        @error('sector') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                    </div>
+                @elseif ($onglet === 'stats')
+                    <div>
+                        <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Libellé (ex : Membres actifs)</label>
+                        <input wire:model="label" type="text" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
+                        @error('label') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                    </div>
+                    <div class="grid grid-cols-2 gap-3.5">
+                        <div>
+                            <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Valeur</label>
+                            <input wire:model="value" type="number" min="0" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
+                            @error('value') <span class="text-xs text-accent">{{ $message }}</span> @enderror
                         </div>
-                        <button class="shrink-0 rounded-lg border border-[#C9D3E6] px-3 py-1.5 text-xs font-bold text-brand hover:bg-cloud">Modifier</button>
+                        <div>
+                            <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Suffixe (ex : +, %)</label>
+                            <input wire:model="suffix" type="text" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
+                        </div>
                     </div>
-                @endforeach
+                @elseif ($onglet === 'steps')
+                    <div>
+                        <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Titre de l'étape</label>
+                        <input wire:model="title" type="text" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
+                        @error('title') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Icône (ex : file-text, user-check)</label>
+                        <input wire:model="icon" type="text" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
+                        @error('icon') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Description</label>
+                        <textarea wire:model="text" rows="2" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure"></textarea>
+                        @error('text') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                    </div>
+                @endif
+
+                <button wire:click="save" wire:loading.attr="disabled" class="rounded-[9px] bg-brand px-5 py-2.5 text-sm font-bold text-white hover:bg-brand/90 disabled:opacity-60 sm:col-span-2 sm:w-fit">Publier</button>
             </div>
         @endif
+
+        <div class="rounded-[18px] border border-brand/10 bg-white px-5 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+            @forelse ($items as $item)
+                <div class="flex flex-wrap items-center gap-4 border-t border-[#EDF0F5] py-3.5 first:border-t-0">
+                    <div class="min-w-[220px] flex-1">
+                        @if ($onglet === 'sectors')
+                            <p class="text-[13.5px] font-bold text-brand">{{ $item['title'] }}</p>
+                            <p class="line-clamp-1 text-xs text-[#5B677A]">{{ $item['blurb'] }}</p>
+                            <p class="mt-0.5 text-[11px] text-[#9AA6B8]">{{ count($item['items'] ?? []) }} filière(s) · icône {{ $item['icon'] }}</p>
+                        @elseif ($onglet === 'testimonials')
+                            <p class="text-[13.5px] font-bold text-brand">{{ $item['name'] }} <span class="font-normal text-[#9AA6B8]">— {{ $item['role'] }}</span></p>
+                            <p class="line-clamp-2 text-xs italic text-[#5B677A]">« {{ $item['quote'] }} »</p>
+                        @elseif ($onglet === 'partners')
+                            <p class="text-[13.5px] font-bold text-brand">{{ $item['name'] }}</p>
+                            <p class="text-xs text-[#5B677A]">{{ $item['sector'] }}</p>
+                        @elseif ($onglet === 'stats')
+                            <p class="text-[13.5px] font-bold text-brand">{{ number_format($item['value'], 0, ',', ' ') }}{{ $item['suffix'] }}</p>
+                            <p class="text-xs text-[#5B677A]">{{ $item['label'] }}</p>
+                        @elseif ($onglet === 'steps')
+                            <p class="text-[13.5px] font-bold text-brand">{{ $item['title'] }}</p>
+                            <p class="line-clamp-1 text-xs text-[#5B677A]">{{ $item['text'] }}</p>
+                        @endif
+                    </div>
+                    <div class="flex shrink-0 items-center gap-1.5">
+                        <button wire:click="openEdit({{ $item['id'] }})" class="rounded-lg p-1.5 text-[#9AA6B8] hover:bg-brand/10 hover:text-brand">
+                            <x-ui.icon name="pencil" class="size-3.5" />
+                        </button>
+                        <button wire:click="delete({{ $item['id'] }})" wire:confirm="Supprimer cet élément du site ?" class="rounded-lg p-1.5 text-[#9AA6B8] hover:bg-accent/10 hover:text-accent">
+                            <x-ui.icon name="trash-2" class="size-3.5" />
+                        </button>
+                    </div>
+                </div>
+            @empty
+                <p class="py-12 text-center text-sm text-[#5B677A]">Aucun élément — cliquez sur « + Ajouter ».</p>
+            @endforelse
+        </div>
     </div>
 </div>

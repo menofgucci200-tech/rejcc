@@ -8,6 +8,7 @@
         ->values();
 @endphp
 
+@if ($articles->isNotEmpty())
 <section class="bg-white py-24 sm:py-32">
     <x-ui.container>
         <div class="flex flex-col items-start justify-between gap-8 md:flex-row md:items-end">
@@ -47,3 +48,4 @@
         </div>
     </x-ui.container>
 </section>
+@endif

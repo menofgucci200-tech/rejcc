@@ -1,4 +1,5 @@
 @php $testimonials = collect(\App\Support\Api::get('/testimonials')['testimonials'] ?? [])->map(fn ($t) => (object) $t); @endphp
+@if ($testimonials->isNotEmpty())
 
 <section class="bg-white py-24 sm:py-32">
     <x-ui.container>
@@ -27,3 +28,4 @@
         </div>
     </x-ui.container>
 </section>
+@endif

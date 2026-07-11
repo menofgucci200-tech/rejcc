@@ -21,6 +21,16 @@ class AdminController extends Controller
 
     public function stats()
     {
+        // Croissance : total cumulé de membres à la fin de chacun des 12 derniers mois.
+        $croissance = collect(range(11, 0))->map(function (int $offset) {
+            $fin = now()->subMonths($offset)->endOfMonth();
+
+            return [
+                'l' => ucfirst($fin->translatedFormat('M')),
+                'v' => User::where('role', 'member')->where('created_at', '<=', $fin)->count(),
+            ];
+        })->values();
+
         return response()->json([
             'ok' => true,
             'stats' => [
@@ -35,6 +45,12 @@ class AdminController extends Controller
                 'adhesions_attente' => Member::where('statut', 'en_attente')->count(),
                 'newsletter' => NewsletterSubscriber::count(),
                 'partenariats_attente' => PartnershipRequest::where('statut', 'nouveau')->count(),
+                'formations' => \App\Models\Formation::where('is_published', true)->count(),
+                'certificats' => FormationEnrollment::whereNotNull('completed_at')
+                    ->whereHas('formation', fn ($q) => $q->where('is_certifying', true))
+                    ->count(),
+                'fonds_incubateur' => (int) \App\Models\Project::where('in_incubator', true)->sum('funding_raised'),
+                'croissance' => $croissance,
             ],
         ]);
     }

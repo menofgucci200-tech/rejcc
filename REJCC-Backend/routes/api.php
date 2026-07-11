@@ -192,6 +192,13 @@ Route::middleware('auth.token')->prefix('admin')->group(function () {
     Route::get('/newsletter', [AdminController::class, 'newsletterSubscribers'])
         ->middleware('auth.admin:newsletter');
 
+    Route::middleware('auth.admin:contenu')->group(function () {
+        Route::get('/site-content/{type}', [\App\Http\Controllers\Api\SiteContentController::class, 'index']);
+        Route::post('/site-content/{type}', [\App\Http\Controllers\Api\SiteContentController::class, 'store']);
+        Route::put('/site-content/{type}/{id}', [\App\Http\Controllers\Api\SiteContentController::class, 'update']);
+        Route::delete('/site-content/{type}/{id}', [\App\Http\Controllers\Api\SiteContentController::class, 'destroy']);
+    });
+
     Route::middleware('auth.admin:partenariats')->group(function () {
         Route::get('/partenariats', [AdminController::class, 'partnershipRequests']);
         Route::put('/partenariats/{id}', [AdminController::class, 'updatePartnershipRequest']);

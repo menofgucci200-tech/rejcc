@@ -14,17 +14,13 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Uniquement le contenu institutionnel de la vitrine : le contenu
+        // éditorial (actualités, événements, formations, témoignages…) est
+        // publié par les administrateurs depuis le dashboard.
         $this->call([
             SectorSeeder::class,
             ActivitySeeder::class,
-            TestimonialSeeder::class,
-            PartnerSeeder::class,
             HomeContentSeeder::class,
-            NewsArticleSeeder::class,
-            EventSeeder::class,
-            OpportunitySeeder::class,
-            FormationSeeder::class,
-            ResourceSeeder::class,
         ]);
     }
 }
