@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Contact;
 use App\Models\Document;
+use App\Models\FormationEnrollment;
 use App\Models\Member;
 use App\Models\MemberNotification;
 use App\Models\MembershipApplication;
@@ -94,11 +95,60 @@ class AdminController extends Controller
         return response()->json(['ok' => true, 'member' => $user->only(['id', 'prenom', 'nom', 'email', 'role', 'permissions'])]);
     }
 
+    /** Dossier complet d'un membre : profil, candidature d'origine, formations. */
+    public function memberDetail($id)
+    {
+        $user = User::findOrFail($id);
+
+        if (! $user->reference) {
+            $user->reference = 'REJCC-'.now()->format('Y').'-'.str_pad((string) $user->id, 4, '0', STR_PAD_LEFT);
+            $user->save();
+        }
+
+        $application = MembershipApplication::where('email', $user->email)
+            ->orderByDesc('created_at')
+            ->first();
+
+        $formations = FormationEnrollment::with('formation')
+            ->where('user_id', $user->id)
+            ->get()
+            ->filter(fn (FormationEnrollment $e) => $e->formation)
+            ->values()
+            ->map(fn (FormationEnrollment $e) => [
+                'title' => $e->formation->title,
+                'progress' => $e->completed_at ? 100 : (int) $e->progress,
+                'completed' => $e->completed_at !== null,
+            ]);
+
+        return response()->json([
+            'ok' => true,
+            'member' => [
+                ...$user->only([
+                    'id', 'prenom', 'nom', 'email', 'telephone', 'genre', 'ville',
+                    'paroisse', 'secteur', 'profil', 'organisation', 'bio', 'photo',
+                    'role', 'permissions', 'reference', 'is_active',
+                ]),
+                'code' => str_pad((string) $user->id, 4, '0', STR_PAD_LEFT),
+                'date_naissance' => $user->date_naissance?->toDateString(),
+                'date_adhesion' => $user->created_at?->toDateString(),
+            ],
+            'application' => $application,
+            'formations' => $formations,
+        ]);
+    }
+
     public function updateMember(Request $request, $id)
     {
         $user = User::findOrFail($id);
 
         $validator = Validator::make($request->all(), [
+            'prenom' => 'sometimes|string|min:2|max:80',
+            'nom' => 'sometimes|string|min:2|max:80',
+            'email' => 'sometimes|email|max:150|unique:users,email,'.$user->id,
+            'telephone' => ['sometimes', 'nullable', 'regex:/^[0-9]{10}$/'],
+            'ville' => 'sometimes|nullable|string|max:80',
+            'secteur' => 'sometimes|nullable|string|max:100',
+            'profil' => 'sometimes|nullable|in:etudiant,porteur,entrepreneur',
             'role' => 'sometimes|in:member,mentor,admin',
             'permissions' => 'sometimes|nullable|array',
             'permissions.*' => 'string|max:40',
@@ -109,10 +159,22 @@ class AdminController extends Controller
             return response()->json(['ok' => false, 'message' => $validator->errors()->first()], 422);
         }
 
-        $user->fill($validator->validated())->save();
+        $data = $validator->validated();
+        $user->fill($data);
+
+        // Les permissions n'ont de sens que pour un administrateur.
+        if ($user->role !== 'admin') {
+            $user->permissions = null;
+        }
+
+        if (array_key_exists('prenom', $data) || array_key_exists('nom', $data)) {
+            $user->name = trim($user->prenom.' '.$user->nom) ?: $user->name;
+        }
+
+        $user->save();
 
         return response()->json(['ok' => true, 'member' => $user->only([
-            'id', 'prenom', 'nom', 'email', 'role', 'is_active',
+            'id', 'prenom', 'nom', 'email', 'role', 'permissions', 'is_active',
         ])]);
     }
 

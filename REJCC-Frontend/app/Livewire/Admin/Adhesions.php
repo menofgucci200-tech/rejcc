@@ -53,36 +53,15 @@ class Adhesions extends Component
         $this->cancelReject();
     }
 
-    public function updateStatut(int $id, string $statut): void
-    {
-        if (! in_array($statut, ['en_attente', 'valide', 'rejete'], true)) {
-            return;
-        }
-
-        Api::put("/admin/adhesions/{$id}", ['statut' => $statut], Api::token());
-    }
-
     public function render()
     {
-        $token = Api::token();
-
-        $candidatures = Collection::make(Api::get('/admin/membership-applications', [], $token)['applications'] ?? [])
+        $candidatures = Collection::make(Api::get('/admin/membership-applications', [], Api::token())['applications'] ?? [])
             ->map(function ($a) {
                 $a['created_at'] = Carbon::parse($a['created_at']);
 
                 return (object) $a;
             });
 
-        $demandes = Collection::make(Api::get('/admin/adhesions', [], $token)['adhesions'] ?? [])
-            ->map(function ($a) {
-                $a['created_at'] = Carbon::parse($a['created_at']);
-
-                return (object) $a;
-            });
-
-        return view('livewire.admin.adhesions', [
-            'candidatures' => $candidatures,
-            'demandes' => $demandes,
-        ]);
+        return view('livewire.admin.adhesions', ['candidatures' => $candidatures]);
     }
 }

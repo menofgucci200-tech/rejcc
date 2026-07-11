@@ -1,5 +1,9 @@
 import './bootstrap';
 import Lenis from 'lenis';
+import QRCode from 'qrcode';
+
+// Génération de QR codes côté client (cartes membres de l'admin).
+window.QRCode = QRCode;
 
 function initLenis() {
     const lenis = new Lenis({ duration: 1.1, smoothWheel: true });

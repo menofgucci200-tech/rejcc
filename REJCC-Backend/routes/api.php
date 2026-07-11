@@ -35,6 +35,10 @@ Route::get('/news/{slug}', [NewsArticleController::class, 'show']);
 Route::get('/public-events', [EventController::class, 'publicIndex']);
 Route::get('/public-events/{slug}', [EventController::class, 'publicShow']);
 
+// Carte membre publique (cible des QR codes), limitée contre l'énumération
+Route::get('/member-card/{code}', [\App\Http\Controllers\Api\MemberCardController::class, 'show'])
+    ->middleware('throttle:30,1');
+
 // Formulaires publics (throttle anti-spam, par IP)
 Route::middleware('throttle:10,1')->group(function () {
     Route::post('/adhesion', [AdhesionController::class, 'store']);
@@ -111,6 +115,7 @@ Route::middleware('auth.token')->prefix('admin')->group(function () {
     Route::middleware('auth.admin:membres')->group(function () {
         Route::get('/members', [AdminController::class, 'members']);
         Route::post('/members', [AdminController::class, 'createMember']);
+        Route::get('/members/{id}', [AdminController::class, 'memberDetail']);
         Route::put('/members/{id}', [AdminController::class, 'updateMember']);
         Route::delete('/members/{id}', [AdminController::class, 'deleteMember']);
     });

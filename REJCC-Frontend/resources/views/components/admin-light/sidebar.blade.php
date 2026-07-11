@@ -10,7 +10,7 @@
             'label' => 'Base de données',
             'icon' => 'folder-open',
             'items' => [
-                ['label' => 'Adhésions & candidatures', 'icon' => 'file-text', 'route' => 'admin.adhesions'],
+                ['label' => 'Adhésions', 'icon' => 'file-text', 'route' => 'admin.adhesions'],
                 ['label' => 'Membres', 'icon' => 'users', 'route' => 'admin.members'],
                 ['label' => 'Nouvelle inscription', 'icon' => 'user-plus', 'route' => 'admin.inscription'],
             ],
