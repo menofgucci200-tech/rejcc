@@ -18,14 +18,39 @@ class Adhesions extends Component
         $this->expanded = $this->expanded === $id ? null : $id;
     }
 
+    public ?int $rejectingId = null;
+
+    public string $motif = '';
+
     public function accept(int $id): void
     {
         Api::post("/admin/membership-applications/{$id}/accept", [], Api::token());
     }
 
-    public function reject(int $id): void
+    public function openReject(int $id): void
     {
-        Api::post("/admin/membership-applications/{$id}/reject", [], Api::token());
+        $this->rejectingId = $id;
+        $this->motif = '';
+        $this->resetValidation();
+    }
+
+    public function cancelReject(): void
+    {
+        $this->rejectingId = null;
+        $this->motif = '';
+    }
+
+    public function confirmReject(): void
+    {
+        $this->validate(['motif' => 'nullable|string|max:500']);
+
+        if ($this->rejectingId) {
+            Api::post("/admin/membership-applications/{$this->rejectingId}/reject", array_filter([
+                'motif' => trim($this->motif) ?: null,
+            ]), Api::token());
+        }
+
+        $this->cancelReject();
     }
 
     public function updateStatut(int $id, string $statut): void

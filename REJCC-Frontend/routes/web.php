@@ -95,6 +95,7 @@ Route::middleware('api.auth')->prefix('espace-membre')->name('espace-membre.')->
 Route::middleware(['api.auth', 'admin.web'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', AdminDashboard::class)->name('dashboard');
     Route::get('/membres', AdminMembers::class)->name('members');
+    Route::get('/inscription', \App\Livewire\Admin\Inscription::class)->name('inscription');
     Route::get('/adhesions', AdminAdhesions::class)->name('adhesions');
     Route::get('/mentors', AdminMentors::class)->name('mentors');
     Route::get('/formations', AdminFormations::class)->name('formations');

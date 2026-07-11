@@ -37,6 +37,7 @@ class User extends Authenticatable
         'preferences',
         'photo',
         'role',
+        'permissions',
         'reference',
         'is_active',
     ];
@@ -68,6 +69,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'date_naissance' => 'date',
             'preferences' => 'array',
+            'permissions' => 'array',
             'is_active' => 'boolean',
         ];
     }

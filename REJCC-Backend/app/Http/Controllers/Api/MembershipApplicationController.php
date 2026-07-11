@@ -160,7 +160,7 @@ class MembershipApplicationController extends Controller
         return response()->json(['ok' => true, 'user_id' => $user->id]);
     }
 
-    public function reject($id)
+    public function reject(Request $request, $id)
     {
         $application = MembershipApplication::findOrFail($id);
 
@@ -168,7 +168,18 @@ class MembershipApplicationController extends Controller
             return response()->json(['ok' => false, 'message' => 'Cette candidature a déjà été traitée.'], 422);
         }
 
-        $application->update(['statut' => 'refuse']);
+        $validator = Validator::make($request->all(), [
+            'motif' => 'nullable|string|max:500',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['ok' => false, 'message' => $validator->errors()->first()], 422);
+        }
+
+        $application->forceFill([
+            'statut' => 'refuse',
+            'reject_reason' => $validator->validated()['motif'] ?? null,
+        ])->save();
 
         Mailer::send($application->email, new CandidatureRefusee($application));
 

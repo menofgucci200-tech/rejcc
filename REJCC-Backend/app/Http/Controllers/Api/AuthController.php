@@ -35,7 +35,7 @@ class AuthController extends Controller
             ...$u->only([
                 'id', 'prenom', 'nom', 'email', 'telephone', 'genre',
                 'ville', 'paroisse', 'secteur', 'profil',
-                'organisation', 'bio', 'photo', 'role', 'reference',
+                'organisation', 'bio', 'photo', 'role', 'permissions', 'reference',
             ]),
             'date_naissance' => $u->date_naissance?->toDateString(),
             'preferences' => $u->preferences ?? $u->defaultPreferences(),

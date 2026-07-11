@@ -103,81 +103,92 @@ Route::middleware('auth.token')->group(function () {
     Route::post('/opportunities', [OpportunityController::class, 'store']);
 });
 
-// Administration — réservé aux admins
-Route::middleware(['auth.token', 'auth.admin'])->prefix('admin')->group(function () {
-    Route::get('/stats', [AdminController::class, 'stats']);
+// Administration. Chaque section porte son slug de permission : un admin dont
+// `permissions` est null accède à tout, sinon uniquement aux sections listées.
+Route::middleware('auth.token')->prefix('admin')->group(function () {
+    Route::get('/stats', [AdminController::class, 'stats'])->middleware('auth.admin');
 
-    // Membres
-    Route::get('/members', [AdminController::class, 'members']);
-    Route::post('/members', [AdminController::class, 'createMember']);
-    Route::put('/members/{id}', [AdminController::class, 'updateMember']);
-    Route::delete('/members/{id}', [AdminController::class, 'deleteMember']);
+    Route::middleware('auth.admin:membres')->group(function () {
+        Route::get('/members', [AdminController::class, 'members']);
+        Route::post('/members', [AdminController::class, 'createMember']);
+        Route::put('/members/{id}', [AdminController::class, 'updateMember']);
+        Route::delete('/members/{id}', [AdminController::class, 'deleteMember']);
+    });
 
-    // Adhésions
-    Route::get('/adhesions', [AdminController::class, 'adhesions']);
-    Route::put('/adhesions/{id}', [AdminController::class, 'updateAdhesion']);
+    Route::middleware('auth.admin:adhesions')->group(function () {
+        Route::get('/adhesions', [AdminController::class, 'adhesions']);
+        Route::put('/adhesions/{id}', [AdminController::class, 'updateAdhesion']);
+        Route::get('/membership-applications', [MembershipApplicationController::class, 'index']);
+        Route::get('/membership-applications/{id}', [MembershipApplicationController::class, 'show']);
+        Route::post('/membership-applications/{id}/accept', [MembershipApplicationController::class, 'accept']);
+        Route::post('/membership-applications/{id}/reject', [MembershipApplicationController::class, 'reject']);
+    });
 
-    // Candidatures d'adhésion (formulaire enrichi)
-    Route::get('/membership-applications', [MembershipApplicationController::class, 'index']);
-    Route::get('/membership-applications/{id}', [MembershipApplicationController::class, 'show']);
-    Route::post('/membership-applications/{id}/accept', [MembershipApplicationController::class, 'accept']);
-    Route::post('/membership-applications/{id}/reject', [MembershipApplicationController::class, 'reject']);
+    Route::middleware('auth.admin:contacts')->group(function () {
+        Route::get('/contacts', [AdminController::class, 'contacts']);
+        Route::post('/contacts/{id}/traite', [AdminController::class, 'markContactTraite']);
+    });
 
-    // Contacts
-    Route::get('/contacts', [AdminController::class, 'contacts']);
-    Route::post('/contacts/{id}/traite', [AdminController::class, 'markContactTraite']);
+    Route::middleware('auth.admin:formations')->group(function () {
+        Route::get('/formations', [FormationController::class, 'index']);
+        Route::post('/formations', [FormationController::class, 'store']);
+        Route::put('/formations/{id}', [FormationController::class, 'update']);
+        Route::delete('/formations/{id}', [FormationController::class, 'destroy']);
+    });
 
-    // Formations
-    Route::get('/formations', [FormationController::class, 'index']);
-    Route::post('/formations', [FormationController::class, 'store']);
-    Route::put('/formations/{id}', [FormationController::class, 'update']);
-    Route::delete('/formations/{id}', [FormationController::class, 'destroy']);
+    Route::middleware('auth.admin:evenements')->group(function () {
+        Route::get('/events', [EventController::class, 'adminIndex']);
+        Route::post('/events', [EventController::class, 'store']);
+        Route::put('/events/{id}', [EventController::class, 'update']);
+        Route::delete('/events/{id}', [EventController::class, 'destroy']);
+    });
 
-    // Événements
-    Route::get('/events', [EventController::class, 'adminIndex']);
-    Route::post('/events', [EventController::class, 'store']);
-    Route::put('/events/{id}', [EventController::class, 'update']);
-    Route::delete('/events/{id}', [EventController::class, 'destroy']);
+    Route::middleware('auth.admin:actualites')->group(function () {
+        Route::get('/news', [NewsArticleController::class, 'adminIndex']);
+        Route::post('/news', [NewsArticleController::class, 'store']);
+        Route::put('/news/{id}', [NewsArticleController::class, 'update']);
+        Route::delete('/news/{id}', [NewsArticleController::class, 'destroy']);
+    });
 
-    // Actualités
-    Route::get('/news', [NewsArticleController::class, 'adminIndex']);
-    Route::post('/news', [NewsArticleController::class, 'store']);
-    Route::put('/news/{id}', [NewsArticleController::class, 'update']);
-    Route::delete('/news/{id}', [NewsArticleController::class, 'destroy']);
+    Route::middleware('auth.admin:opportunites')->group(function () {
+        Route::get('/opportunities', [OpportunityController::class, 'index']);
+        Route::put('/opportunities/{id}', [OpportunityController::class, 'adminUpdate']);
+        Route::delete('/opportunities/{id}', [OpportunityController::class, 'adminDestroy']);
+    });
 
-    // Opportunités (modération)
-    Route::get('/opportunities', [OpportunityController::class, 'index']);
-    Route::put('/opportunities/{id}', [OpportunityController::class, 'adminUpdate']);
-    Route::delete('/opportunities/{id}', [OpportunityController::class, 'adminDestroy']);
+    Route::middleware('auth.admin:ressources')->group(function () {
+        Route::get('/resources', [\App\Http\Controllers\Api\ResourceController::class, 'adminIndex']);
+        Route::post('/resources', [\App\Http\Controllers\Api\ResourceController::class, 'store']);
+        Route::put('/resources/{id}', [\App\Http\Controllers\Api\ResourceController::class, 'update']);
+        Route::delete('/resources/{id}', [\App\Http\Controllers\Api\ResourceController::class, 'destroy']);
+    });
 
-    // Ressources
-    Route::get('/resources', [\App\Http\Controllers\Api\ResourceController::class, 'adminIndex']);
-    Route::post('/resources', [\App\Http\Controllers\Api\ResourceController::class, 'store']);
-    Route::put('/resources/{id}', [\App\Http\Controllers\Api\ResourceController::class, 'update']);
-    Route::delete('/resources/{id}', [\App\Http\Controllers\Api\ResourceController::class, 'destroy']);
+    Route::get('/certificates', [\App\Http\Controllers\Api\CertificateController::class, 'adminIndex'])
+        ->middleware('auth.admin:certificats');
 
-    // Certificats (registre)
-    Route::get('/certificates', [\App\Http\Controllers\Api\CertificateController::class, 'adminIndex']);
+    Route::middleware('auth.admin:projets')->group(function () {
+        Route::get('/projects', [\App\Http\Controllers\Api\ProjectController::class, 'adminIndex']);
+        Route::put('/projects/{id}', [\App\Http\Controllers\Api\ProjectController::class, 'adminUpdate']);
+        Route::delete('/projects/{id}', [\App\Http\Controllers\Api\ProjectController::class, 'adminDestroy']);
+    });
 
-    // Projets (validation, incubateur, suivi financement/jalons)
-    Route::get('/projects', [\App\Http\Controllers\Api\ProjectController::class, 'adminIndex']);
-    Route::put('/projects/{id}', [\App\Http\Controllers\Api\ProjectController::class, 'adminUpdate']);
-    Route::delete('/projects/{id}', [\App\Http\Controllers\Api\ProjectController::class, 'adminDestroy']);
+    Route::middleware('auth.admin:documents')->group(function () {
+        Route::get('/documents', [AdminController::class, 'documents']);
+        Route::post('/documents', [AdminController::class, 'createDocument']);
+        Route::put('/documents/{id}', [AdminController::class, 'updateDocument']);
+        Route::delete('/documents/{id}', [AdminController::class, 'deleteDocument']);
+    });
 
-    // Documents
-    Route::get('/documents', [AdminController::class, 'documents']);
-    Route::post('/documents', [AdminController::class, 'createDocument']);
-    Route::put('/documents/{id}', [AdminController::class, 'updateDocument']);
-    Route::delete('/documents/{id}', [AdminController::class, 'deleteDocument']);
+    Route::middleware('auth.admin:notifications')->group(function () {
+        Route::post('/notifications/broadcast', [AdminController::class, 'broadcastNotification']);
+        Route::get('/notifications/history', [AdminController::class, 'broadcastHistory']);
+    });
 
-    // Notifications broadcast
-    Route::post('/notifications/broadcast', [AdminController::class, 'broadcastNotification']);
-    Route::get('/notifications/history', [AdminController::class, 'broadcastHistory']);
+    Route::get('/newsletter', [AdminController::class, 'newsletterSubscribers'])
+        ->middleware('auth.admin:newsletter');
 
-    // Newsletter
-    Route::get('/newsletter', [AdminController::class, 'newsletterSubscribers']);
-
-    // Partenariats
-    Route::get('/partenariats', [AdminController::class, 'partnershipRequests']);
-    Route::put('/partenariats/{id}', [AdminController::class, 'updatePartnershipRequest']);
+    Route::middleware('auth.admin:partenariats')->group(function () {
+        Route::get('/partenariats', [AdminController::class, 'partnershipRequests']);
+        Route::put('/partenariats/{id}', [AdminController::class, 'updatePartnershipRequest']);
+    });
 });

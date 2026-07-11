@@ -25,6 +25,7 @@ class AdminController extends Controller
             'stats' => [
                 'membres'    => User::where('role', 'member')->count(),
                 'admins'     => User::where('role', 'admin')->count(),
+                'mentors'    => User::where('role', 'mentor')->count(),
                 'adhesions'  => Member::count(),
                 'contacts'   => Contact::count(),
                 'documents'  => Document::count(),
@@ -54,7 +55,7 @@ class AdminController extends Controller
 
         $members = $query->get([
             'id', 'prenom', 'nom', 'email', 'telephone',
-            'ville', 'profil', 'secteur', 'role', 'is_active', 'created_at',
+            'ville', 'profil', 'secteur', 'role', 'permissions', 'is_active', 'created_at',
         ]);
 
         return response()->json(['ok' => true, 'members' => $members]);
@@ -68,7 +69,9 @@ class AdminController extends Controller
             'email' => 'required|email|max:150|unique:users,email',
             'telephone' => ['required', 'regex:/^[0-9]{10}$/'],
             'password' => 'required|string|min:8',
-            'role' => 'required|in:member,admin',
+            'role' => 'required|in:member,mentor,admin',
+            'permissions' => 'nullable|array', // null = accès complet (admins uniquement)
+            'permissions.*' => 'string|max:40',
         ]);
 
         if ($validator->fails()) {
@@ -85,9 +88,10 @@ class AdminController extends Controller
             'telephone' => $d['telephone'],
             'password' => $d['password'],
             'role' => $d['role'],
+            'permissions' => $d['role'] === 'admin' ? ($d['permissions'] ?? null) : null,
         ]);
 
-        return response()->json(['ok' => true, 'member' => $user->only(['id', 'prenom', 'nom', 'email', 'role'])]);
+        return response()->json(['ok' => true, 'member' => $user->only(['id', 'prenom', 'nom', 'email', 'role', 'permissions'])]);
     }
 
     public function updateMember(Request $request, $id)
@@ -95,7 +99,9 @@ class AdminController extends Controller
         $user = User::findOrFail($id);
 
         $validator = Validator::make($request->all(), [
-            'role' => 'sometimes|in:member,admin',
+            'role' => 'sometimes|in:member,mentor,admin',
+            'permissions' => 'sometimes|nullable|array',
+            'permissions.*' => 'string|max:40',
             'is_active' => 'sometimes|boolean',
         ]);
 
