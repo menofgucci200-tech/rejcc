@@ -26,17 +26,16 @@ class AuthController extends Controller
 
     private function payload(User $u): array
     {
-        if (! $u->reference) {
-            $u->reference = 'REJCC-'.now()->format('Y').'-'.str_pad((string) $u->id, 4, '0', STR_PAD_LEFT);
-            $u->save();
-        }
-
         return [
             ...$u->only([
                 'id', 'prenom', 'nom', 'email', 'telephone', 'genre',
                 'ville', 'paroisse', 'secteur', 'profil',
-                'organisation', 'bio', 'photo', 'role', 'permissions', 'reference',
+                'organisation', 'bio', 'photo', 'role', 'permissions',
             ]),
+            'reference' => $u->memberNumber(),
+            'numero' => $u->memberNumber(),
+            'code' => $u->cardCode(),
+            'role_label' => $u->roleLabel(),
             'date_naissance' => $u->date_naissance?->toDateString(),
             'preferences' => $u->preferences ?? $u->defaultPreferences(),
             'date_adhesion' => $u->created_at?->toDateString(),
@@ -142,6 +141,7 @@ class AuthController extends Controller
             'profil' => 'nullable|in:etudiant,porteur,entrepreneur',
             'organisation' => 'nullable|string|max:120',
             'bio' => 'nullable|string|max:600',
+            'photo' => 'nullable|url|max:500', // URL de la photo (fichier stocké côté frontend)
         ]);
 
         if ($validator->fails()) {

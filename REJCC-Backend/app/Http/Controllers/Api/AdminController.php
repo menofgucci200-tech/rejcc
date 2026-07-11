@@ -116,11 +116,6 @@ class AdminController extends Controller
     {
         $user = User::findOrFail($id);
 
-        if (! $user->reference) {
-            $user->reference = 'REJCC-'.now()->format('Y').'-'.str_pad((string) $user->id, 4, '0', STR_PAD_LEFT);
-            $user->save();
-        }
-
         $application = MembershipApplication::where('email', $user->email)
             ->orderByDesc('created_at')
             ->first();
@@ -142,9 +137,12 @@ class AdminController extends Controller
                 ...$user->only([
                     'id', 'prenom', 'nom', 'email', 'telephone', 'genre', 'ville',
                     'paroisse', 'secteur', 'profil', 'organisation', 'bio', 'photo',
-                    'role', 'permissions', 'reference', 'is_active',
+                    'role', 'permissions', 'is_active',
                 ]),
-                'code' => str_pad((string) $user->id, 4, '0', STR_PAD_LEFT),
+                'reference' => $user->memberNumber(),
+                'numero' => $user->memberNumber(),
+                'code' => $user->cardCode(),
+                'role_label' => $user->roleLabel(),
                 'date_naissance' => $user->date_naissance?->toDateString(),
                 'date_adhesion' => $user->created_at?->toDateString(),
             ],

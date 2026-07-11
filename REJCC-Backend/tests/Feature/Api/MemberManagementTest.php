@@ -83,13 +83,26 @@ class MemberManagementTest extends TestCase
 
         $this->assertSame('Marie', $card['prenom']);
         $this->assertSame($code, $card['code']);
-        $this->assertSame('Membre', $card['role']);
+        $this->assertSame('member', $card['role']);
+        $this->assertSame('Membre officiel', $card['role_label']);
         $this->assertTrue($card['is_active']);
-        $this->assertStringStartsWith('REJCC-', $card['reference']);
+
+        // N° membre : REJCC-{année}-{jour}{mois}{code}
+        $attendu = 'REJCC-'.$membre->created_at->format('Y').'-'.$membre->created_at->format('dm').$code;
+        $this->assertSame($attendu, $card['numero']);
 
         // La carte n'expose pas de données sensibles.
         $this->assertArrayNotHasKey('email', $card);
         $this->assertArrayNotHasKey('telephone', $card);
+    }
+
+    public function test_le_libelle_de_role_varie_selon_le_statut(): void
+    {
+        $mentor = User::factory()->create(['role' => 'mentor']);
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->assertSame('Mentor', $this->getJson('/api/member-card/'.$mentor->id)->json('card.role_label'));
+        $this->assertSame('Administrateur', $this->getJson('/api/member-card/'.$admin->id)->json('card.role_label'));
     }
 
     public function test_la_carte_membre_renvoie_404_pour_un_code_inconnu(): void

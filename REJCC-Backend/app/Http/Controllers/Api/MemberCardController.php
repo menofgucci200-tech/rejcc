@@ -24,28 +24,19 @@ class MemberCardController extends Controller
             return response()->json(['ok' => false, 'message' => 'Aucun membre pour ce code.'], 404);
         }
 
-        if (! $user->reference) {
-            $user->reference = 'REJCC-'.now()->format('Y').'-'.str_pad((string) $user->id, 4, '0', STR_PAD_LEFT);
-            $user->save();
-        }
-
-        $roles = ['admin' => 'Administrateur', 'mentor' => 'Mentor', 'member' => 'Membre'];
-
-        return response()->json([
-            'ok' => true,
-            'card' => [
-                'code' => str_pad((string) $user->id, 4, '0', STR_PAD_LEFT),
-                'prenom' => $user->prenom,
-                'nom' => $user->nom,
-                'name' => $user->name,
-                'photo' => $user->photo,
-                'role' => $roles[$user->role] ?? 'Membre',
-                'reference' => $user->reference,
-                'ville' => $user->ville,
-                'secteur' => $user->secteur,
-                'is_active' => (bool) $user->is_active,
-                'membre_depuis' => $user->created_at?->toDateString(),
-            ],
-        ]);
+        return response()->json(['ok' => true, 'card' => [
+            'code' => $user->cardCode(),
+            'numero' => $user->memberNumber(),
+            'prenom' => $user->prenom,
+            'nom' => $user->nom,
+            'name' => $user->name,
+            'photo' => $user->photo,
+            'role' => $user->role,               // brut, pour la variante de design
+            'role_label' => $user->roleLabel(),  // libellé affiché
+            'ville' => $user->ville,
+            'secteur' => $user->secteur,
+            'is_active' => (bool) $user->is_active,
+            'membre_depuis' => $user->created_at?->toDateString(),
+        ]]);
     }
 }

@@ -22,6 +22,7 @@ use App\Livewire\Admin\Notifications as AdminNotifications;
 use App\Livewire\Admin\Partenariats as AdminPartenariats;
 use App\Livewire\Admin\Projets as AdminProjets;
 use App\Livewire\Admin\Ressources as AdminRessources;
+use App\Livewire\Member\Carte as MemberCarte;
 use App\Livewire\Member\Catalogue as MemberCatalogue;
 use App\Livewire\Member\Certificats as MemberCertificats;
 use App\Livewire\Member\Communaute as MemberCommunaute;
@@ -91,6 +92,7 @@ Route::middleware('api.auth')->prefix('espace-membre')->name('espace-membre.')->
     Route::get('/emplois', MemberEmplois::class)->name('emplois');
     Route::get('/ressources', MemberRessources::class)->name('ressources');
     Route::get('/certificats', MemberCertificats::class)->name('certificats');
+    Route::get('/carte', MemberCarte::class)->name('carte');
 });
 
 Route::middleware(['api.auth', 'admin.web'])->prefix('admin')->name('admin.')->group(function () {

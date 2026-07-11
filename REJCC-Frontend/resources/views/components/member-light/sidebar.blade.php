@@ -3,6 +3,7 @@
 @php
     $navItems = [
         ['label' => 'Accueil', 'icon' => 'nav-home', 'route' => 'espace-membre.dashboard'],
+        ['label' => 'Ma carte membre', 'icon' => 'qr-code', 'route' => 'espace-membre.carte'],
         ['label' => 'Mes formations', 'icon' => 'graduation-cap', 'route' => 'espace-membre.formations'],
         ['label' => 'Catalogue', 'icon' => 'nav-compass', 'route' => 'espace-membre.catalogue'],
         ['label' => 'Mes parcours', 'icon' => 'nav-route', 'route' => 'espace-membre.parcours'],
