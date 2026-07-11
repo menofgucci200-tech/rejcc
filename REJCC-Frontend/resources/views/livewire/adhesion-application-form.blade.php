@@ -13,49 +13,37 @@
         </div>
     </div>
 @else
-    <div class="flex min-h-screen flex-col">
-        <div class="sticky top-0 z-40 bg-brand px-6 py-4 text-white">
-            <div class="mb-3.5 flex items-center justify-between gap-3">
-                <div class="flex items-center gap-2.5">
-                    <div class="flex size-8 shrink-0 items-center justify-center rounded-[9px] bg-white">
-                        <img src="{{ asset('brand/rejcc-monogram-color.png') }}" alt="REJCC" class="size-[22px] object-contain">
-                    </div>
-                    <div>
-                        <p class="text-sm font-extrabold tracking-[0.03em]">Formulaire d'adhésion</p>
-                        <p class="text-[10.5px] tracking-[0.04em] text-[#8FA3D9]">RÉSEAU ENTREPRENEURIAL DES JEUNES CATHOLIQUES</p>
-                    </div>
-                </div>
-                <a href="{{ route('home') }}" wire:navigate aria-label="Fermer" class="flex size-8 shrink-0 items-center justify-center rounded-[9px] border border-white/25 text-white">
-                    <x-ui.icon name="x" class="size-[15px]" />
-                </a>
-            </div>
-            <div class="mb-2 flex items-center justify-between">
-                <span class="text-[11.5px] font-bold text-[#C4D0EC]">Étape {{ $step + 1 }} sur 8</span>
-                <span class="text-[11.5px] font-bold text-white">{{ $stepTitles[$step] }}</span>
-            </div>
-            <div class="h-1.5 overflow-hidden rounded bg-white/[.18]">
-                <div class="h-full rounded transition-all duration-300" style="width: {{ round(($step + 1) / 8 * 100) }}%; background: linear-gradient(90deg, #AC0100, #D95B5A)"></div>
-            </div>
-        </div>
+    <div class="min-h-screen bg-cloud">
+        <div class="mx-auto w-full max-w-[600px] px-4 py-8 sm:py-10">
 
-        <main class="mx-auto w-full max-w-[560px] flex-1 px-4 py-5 pb-[110px]">
-            <div class="rounded-[18px] border border-brand/10 bg-white p-6 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+            {{-- En-tête clair : flèche retour + titre + étape --}}
+            <div class="mb-4 flex items-start gap-3.5">
+                <a href="{{ route('home') }}" wire:navigate aria-label="Retour à l'accueil" class="flex size-11 shrink-0 items-center justify-center rounded-[12px] border border-brand/15 bg-white text-brand shadow-[0_2px_6px_rgba(3,29,89,.06)] hover:bg-cloud">
+                    <x-ui.icon name="arrow-left" class="size-[18px]" />
+                </a>
+                <div class="min-w-0 pt-0.5">
+                    <h1 class="text-[19px] font-extrabold leading-tight text-brand">Formulaire d'adhésion</h1>
+                    <p class="mt-0.5 text-[11px] font-bold uppercase tracking-[0.06em] text-[#9AA6B8]">Réseau Entrepreneurial des Jeunes Catholiques de Côte d'Ivoire</p>
+                    <p class="mt-1.5 text-[13px] font-bold text-brand">Étape {{ $step + 1 }} sur 8 · {{ $stepTitles[$step] }}</p>
+                </div>
+            </div>
+
+            {{-- Barre de progression fine --}}
+            <div class="mb-6 h-1.5 overflow-hidden rounded-full bg-brand/10">
+                <div class="h-full rounded-full transition-all duration-300" style="width: {{ round(($step + 1) / 8 * 100) }}%; background: linear-gradient(90deg, #AC0100, #D95B5A)"></div>
+            </div>
+
+            {{-- Carte du formulaire, mise en avant --}}
+            <div class="rounded-[20px] border border-brand/10 bg-white p-6 shadow-[0_18px_50px_-24px_rgba(3,29,89,.28)] sm:p-8">
 
                 @if ($step === 0)
                     <p class="mb-1 text-[15px] font-extrabold text-brand">Informations générales</p>
                     <p class="mb-4.5 text-[12.5px] leading-relaxed text-[#5B677A]">Bienvenue dans le formulaire d'adhésion au REJCC. Parlons d'abord de vous.</p>
 
-                    <div class="mb-4 grid grid-cols-2 gap-3">
-                        <div class="flex flex-col gap-1.5">
-                            <label for="ma-prenom" class="text-[13px] font-bold text-brand">Prénom *</label>
-                            <input wire:model="prenom" id="ma-prenom" type="text" placeholder="Votre prénom" class="rounded-[9px] border border-brand/15 px-3.5 py-2.5 text-sm text-ink outline-none focus:border-azure" />
-                            @error('prenom') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
-                        </div>
-                        <div class="flex flex-col gap-1.5">
-                            <label for="ma-nom" class="text-[13px] font-bold text-brand">Nom *</label>
-                            <input wire:model="nom" id="ma-nom" type="text" placeholder="Votre nom" class="rounded-[9px] border border-brand/15 px-3.5 py-2.5 text-sm text-ink outline-none focus:border-azure" />
-                            @error('nom') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
-                        </div>
+                    <div class="mb-4 flex flex-col gap-1.5">
+                        <label for="ma-nom-complet" class="text-[13px] font-bold text-brand">Nom et prénoms *</label>
+                        <input wire:model="nom_complet" id="ma-nom-complet" type="text" placeholder="Votre nom complet" class="rounded-[9px] border border-brand/15 px-3.5 py-2.5 text-sm text-ink outline-none focus:border-azure" />
+                        @error('nom_complet') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
                     </div>
 
                     <div class="mb-4">
@@ -311,15 +299,16 @@
                     @error('revenu_mensuel') <p class="mt-4 text-xs font-medium text-accent">{{ $message }}</p> @enderror
                 @endif
 
-            </div>
-        </main>
+                {{-- Boutons intégrés dans la carte --}}
+                <div class="mt-7 flex gap-3 border-t border-brand/10 pt-6">
+                    <button type="button" wire:click="back" @disabled($step === 0) class="flex-1 rounded-[10px] border border-[#C9D3E6] bg-white py-3 text-sm font-bold text-brand hover:bg-cloud disabled:opacity-40">Précédent</button>
+                    <button type="button" wire:click="next" wire:loading.attr="disabled" class="flex-[1.4] rounded-[10px] bg-accent py-3 text-sm font-bold text-white shadow-[0_8px_20px_-8px_rgba(172,1,0,.6)] hover:bg-accent-600 disabled:opacity-70">
+                        <span wire:loading.remove>{{ $step === 7 ? 'Envoyer ma demande' : 'Suivant' }}</span>
+                        <span wire:loading>Envoi…</span>
+                    </button>
+                </div>
 
-        <div class="fixed inset-x-0 bottom-0 z-40 flex gap-2.5 border-t border-brand/10 bg-white px-4 py-3" style="padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px))">
-            <button type="button" wire:click="back" @disabled($step === 0) class="flex-1 rounded-[10px] border border-[#C9D3E6] bg-white py-3 text-sm font-bold text-brand disabled:opacity-40">Précédent</button>
-            <button type="button" wire:click="next" wire:loading.attr="disabled" class="flex-[1.4] rounded-[10px] bg-accent py-3 text-sm font-bold text-white hover:bg-accent-600 disabled:opacity-70">
-                <span wire:loading.remove>{{ $step === 7 ? 'Envoyer ma demande' : 'Suivant' }}</span>
-                <span wire:loading>Envoi…</span>
-            </button>
+            </div>
         </div>
     </div>
 @endif

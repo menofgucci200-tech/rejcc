@@ -21,6 +21,8 @@ class AdhesionApplicationForm extends Component
     ];
 
     // Informations générales
+    public string $nom_complet = '';
+
     public string $prenom = '';
 
     public string $nom = '';
@@ -100,7 +102,32 @@ class AdhesionApplicationForm extends Component
         }
 
         $this->validate($this->rulesFor($this->step));
+
+        // « Nom et prénoms » saisi en un seul champ : on le scinde (premier mot
+        // = prénom, le reste = nom) pour alimenter l'API qui les attend séparés.
+        if ($this->step === 0 && ! $this->splitNomComplet()) {
+            return;
+        }
+
         $this->step = min(7, $this->step + 1);
+    }
+
+    private function splitNomComplet(): bool
+    {
+        $parts = preg_split('/\s+/', trim($this->nom_complet), -1, PREG_SPLIT_NO_EMPTY);
+        $prenom = $parts[0] ?? '';
+        $nom = implode(' ', array_slice($parts, 1));
+
+        if (count($parts) < 2 || mb_strlen($prenom) < 2 || mb_strlen($nom) < 2) {
+            $this->addError('nom_complet', 'Saisissez votre nom et vos prénoms (au moins deux mots).');
+
+            return false;
+        }
+
+        $this->prenom = $prenom;
+        $this->nom = $nom;
+
+        return true;
     }
 
     public function back(): void
@@ -110,6 +137,13 @@ class AdhesionApplicationForm extends Component
 
     protected function submit(): void
     {
+        // Filet de sécurité si l'on arrive à la soumission sans re-passer l'étape 0.
+        if ($this->prenom === '' && ! $this->splitNomComplet()) {
+            $this->step = 0;
+
+            return;
+        }
+
         $result = Api::post('/membership-applications', [
             'prenom' => $this->prenom,
             'nom' => $this->nom,
@@ -163,8 +197,7 @@ class AdhesionApplicationForm extends Component
     {
         return match ($step) {
             0 => [
-                'prenom' => 'required|string|min:2|max:80',
-                'nom' => 'required|string|min:2|max:80',
+                'nom_complet' => 'required|string|min:3|max:160',
                 'sexe' => 'required|in:Homme,Femme',
                 'tranche_age' => 'required|string',
                 'whatsapp' => ['required', 'string', 'min:8', 'max:20'],
@@ -206,7 +239,7 @@ class AdhesionApplicationForm extends Component
     public function render()
     {
         $recap = [
-            ['label' => 'Nom et prénoms', 'value' => trim($this->prenom.' '.$this->nom) ?: '—'],
+            ['label' => 'Nom et prénoms', 'value' => trim($this->nom_complet) ?: '—'],
             ['label' => 'Contact', 'value' => collect([$this->whatsapp, $this->email])->filter()->join(' · ') ?: '—'],
             ['label' => 'Ville', 'value' => $this->ville ?: '—'],
             ['label' => 'Diocèse / Paroisse', 'value' => collect([$this->diocese, $this->paroisse])->filter()->join(' — ') ?: '—'],
