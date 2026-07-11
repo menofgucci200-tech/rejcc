@@ -7,10 +7,27 @@ function initLenis() {
     document.documentElement.classList.add('lenis');
 
     function raf(time) {
+        if (window.__lenis !== lenis) return; // instance détruite : on arrête la boucle
         lenis.raf(time);
         requestAnimationFrame(raf);
     }
     requestAnimationFrame(raf);
+}
+
+// Lenis n'a de sens que sur la vitrine (scroll de la fenêtre). Dans l'admin et
+// l'espace membre, le défilement se fait dans des panneaux internes (sidebar,
+// colonne de contenu) et Lenis avalerait la molette partout ailleurs : on
+// l'active/détruit selon le marqueur data-smooth-scroll posé par le layout.
+function syncLenis() {
+    const wants = document.body.hasAttribute('data-smooth-scroll');
+
+    if (wants && !window.__lenis) {
+        initLenis();
+    } else if (!wants && window.__lenis) {
+        window.__lenis.destroy();
+        window.__lenis = null;
+        document.documentElement.classList.remove('lenis');
+    }
 }
 
 function initScrollProgress() {
@@ -97,13 +114,8 @@ function dismissLoader() {
     setTimeout(() => loader.remove(), 600);
 }
 
-let lenisStarted = false;
-
 function boot() {
-    if (!lenisStarted) {
-        initLenis();
-        lenisStarted = true;
-    }
+    syncLenis();
     initScrollProgress();
     initReveal();
     initCounters();

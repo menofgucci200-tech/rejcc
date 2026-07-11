@@ -47,7 +47,7 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @livewireStyles
     </head>
-    <body class="min-h-screen bg-white antialiased">
+    <body class="min-h-screen bg-white antialiased" data-smooth-scroll>
         <div id="page-loader" class="fixed inset-0 z-[200] flex items-center justify-center bg-brand transition-opacity duration-500">
             <x-ui.logo-mark kind="mono-white" class="h-14 animate-pulse" />
         </div>
