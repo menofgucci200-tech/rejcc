@@ -77,6 +77,51 @@ class Dashboard extends Component
 
         $formations = Collection::make(Api::get('/my-formations', [], $token)['formations'] ?? []);
 
+        // Statistiques d'apprentissage réelles.
+        $terminees = $formations->where('completed', true)->count();
+        $certificats = count(Api::get('/my-certificates', [], $token)['certificates'] ?? []);
+        $progressionMoyenne = $formations->isNotEmpty()
+            ? (int) round($formations->avg(fn ($f) => $f['completed'] ? 100 : (int) $f['progress']))
+            : 0;
+
+        // Formation à reprendre : la première en cours (progression la plus avancée).
+        $continuer = $formations
+            ->reject(fn ($f) => $f['completed'])
+            ->sortByDesc('progress')
+            ->map(function (array $f) {
+                $modules = max(1, (int) $f['modules_count']);
+                $moduleCourant = min($modules, (int) ceil($f['progress'] / 100 * $modules) + 1);
+
+                return [
+                    'titre' => $f['title'],
+                    'categorie' => $f['category'],
+                    'pct' => (int) $f['progress'],
+                    'module' => "Module {$moduleCourant} sur {$modules}",
+                ];
+            })
+            ->first();
+
+        // Suggestions : formations du catalogue non encore suivies + prochain événement.
+        $catalogue = Collection::make(Api::get('/formations', [], $token)['formations'] ?? [])
+            ->reject(fn ($f) => $f['enrolled'])
+            ->take(2)
+            ->map(fn ($f) => [
+                'type' => 'Formation',
+                'titre' => $f['title'],
+                'detail' => $f['category'].($f['is_certifying'] ? ' · certifiante' : ''),
+                'route' => 'espace-membre.catalogue',
+            ]);
+        $recommandations = $catalogue->all();
+        if ($upcomingEvents->isNotEmpty()) {
+            $prochain = $upcomingEvents->first();
+            $recommandations[] = [
+                'type' => 'Événement',
+                'titre' => $prochain->title,
+                'detail' => $prochain->starts_at->translatedFormat('l j F').($prochain->location ? ' · '.$prochain->location : ''),
+                'route' => 'espace-membre.evenements',
+            ];
+        }
+
         $defis = $this->defis($formations, $events, $completion);
 
         $activites = Collection::make(Api::get('/my-activity', [], $token)['activity'] ?? [])
@@ -114,6 +159,12 @@ class Dashboard extends Component
             'defis' => $defis,
             'defisFaits' => collect($defis)->where('fait', true)->count(),
             'activites' => $activites,
+            'progression' => $progressionMoyenne,
+            'formationsTerminees' => $terminees,
+            'certificatsObtenus' => $certificats,
+            'heuresApprentissage' => $terminees * 6, // estimation : ~6 h par formation terminée
+            'continuer' => $continuer,
+            'recommandations' => $recommandations,
         ]);
     }
 }

@@ -21,19 +21,25 @@
             <div class="relative">
                 <p class="mb-2.5 text-xs font-semibold tracking-[0.12em] text-[#8FA3D9]">PROGRESSION GÉNÉRALE</p>
                 <div class="flex items-baseline gap-2">
-                    <span class="text-[52px] font-extrabold leading-none tracking-tight"><x-ui.counter :value="72" /></span>
+                    <span class="text-[52px] font-extrabold leading-none tracking-tight"><x-ui.counter :value="$progression" /></span>
                     <span class="text-2xl font-bold text-[#8FA3D9]">%</span>
                 </div>
                 <div class="mt-4 h-2.5 max-w-[420px] overflow-hidden rounded-md bg-white/15">
-                    <div class="h-full rounded-md" style="width: 72%; background: linear-gradient(90deg,#4F6FBF,#8FB0FF)"></div>
+                    <div class="h-full rounded-md" style="width: {{ $progression }}%; background: linear-gradient(90deg,#4F6FBF,#8FB0FF)"></div>
                 </div>
-                <p class="mt-3.5 text-[13px] text-[#C4D0EC]">Encore 2 modules pour terminer <strong class="text-white">Leadership chrétien — Niveau 2</strong>.</p>
+                <p class="mt-3.5 text-[13px] text-[#C4D0EC]">
+                    @if ($continuer)
+                        Continuez <strong class="text-white">{{ $continuer['titre'] }}</strong> — {{ $continuer['module'] }}.
+                    @else
+                        Inscrivez-vous à une formation du catalogue pour démarrer votre progression.
+                    @endif
+                </p>
             </div>
             <div class="grid grid-cols-3 gap-3 max-[480px]:grid-cols-1">
                 @foreach ([
-                    ['icon' => 'graduation-cap', 'value' => 5, 'label' => 'Formations terminées'],
-                    ['icon' => 'award', 'value' => 3, 'label' => 'Certificats obtenus'],
-                    ['icon' => 'clock', 'value' => 48, 'label' => "Heures d'apprentissage", 'suffix' => 'h'],
+                    ['icon' => 'graduation-cap', 'value' => $formationsTerminees, 'label' => 'Formations terminées'],
+                    ['icon' => 'award', 'value' => $certificatsObtenus, 'label' => 'Certificats obtenus'],
+                    ['icon' => 'clock', 'value' => $heuresApprentissage, 'label' => "Heures d'apprentissage", 'suffix' => 'h'],
                 ] as $stat)
                     <div class="rounded-[14px] border border-white/10 bg-white/[.08] px-3.5 py-4">
                         <x-ui.icon :name="$stat['icon']" class="size-5 text-[#8FB0FF]" />
@@ -46,55 +52,50 @@
 
         <div class="mb-8 grid grid-cols-1 items-start gap-6 lg:grid-cols-[1.85fr_1fr]">
             <div class="flex min-w-0 flex-col gap-6">
-                <section>
-                    <h2 class="mb-1 text-[17px] font-bold text-brand">Continuer ma formation</h2>
-                    <div class="mb-4 h-[3px] w-9 rounded bg-accent"></div>
-                    <div class="grid grid-cols-1 overflow-hidden rounded-[18px] border border-brand/10 bg-white shadow-[0_2px_8px_rgba(3,29,89,.05)] transition-shadow hover:shadow-[0_14px_34px_rgba(3,29,89,.14)] lg:grid-cols-[260px_1fr]">
-                        <div class="flex min-h-[150px] items-center justify-center" style="background: repeating-linear-gradient(45deg,#0B2E7A 0 22px,#123A8C 22px 44px)">
-                            <x-ui.icon name="graduation-cap" class="size-10 text-white/70" />
-                        </div>
-                        <div class="flex flex-col gap-2.5 p-6">
-                            <div class="flex gap-2">
-                                <span class="rounded-full bg-[#E8EDF8] px-2.5 py-1 text-[11px] font-bold text-brand">Leadership chrétien</span>
-                                <span class="rounded-full bg-[#F9E9E9] px-2.5 py-1 text-[11px] font-bold text-accent">Niveau 2</span>
+                @if ($continuer)
+                    <section>
+                        <h2 class="mb-1 text-[17px] font-bold text-brand">Continuer ma formation</h2>
+                        <div class="mb-4 h-[3px] w-9 rounded bg-accent"></div>
+                        <div class="grid grid-cols-1 overflow-hidden rounded-[18px] border border-brand/10 bg-white shadow-[0_2px_8px_rgba(3,29,89,.05)] transition-shadow hover:shadow-[0_14px_34px_rgba(3,29,89,.14)] lg:grid-cols-[260px_1fr]">
+                            <div class="flex min-h-[150px] items-center justify-center" style="background: repeating-linear-gradient(45deg,#0B2E7A 0 22px,#123A8C 22px 44px)">
+                                <x-ui.icon name="graduation-cap" class="size-10 text-white/70" />
                             </div>
-                            <h3 class="text-[19px] font-bold text-brand">Diriger avec intégrité : servir avant de gouverner</h3>
-                            <p class="text-[13px] text-[#5B677A]">Module 6 sur 8 · Animé par P. Emmanuel Koffi</p>
-                            <div class="mt-auto flex items-center gap-3">
-                                <div class="h-2 flex-1 overflow-hidden rounded-md bg-[#EDF0F5]">
-                                    <div class="h-full rounded-md" style="width: 75%; background: linear-gradient(90deg,#031D59,#4F6FBF)"></div>
+                            <div class="flex flex-col gap-2.5 p-6">
+                                <span class="w-fit rounded-full bg-[#E8EDF8] px-2.5 py-1 text-[11px] font-bold text-brand">{{ $continuer['categorie'] }}</span>
+                                <h3 class="text-[19px] font-bold text-brand">{{ $continuer['titre'] }}</h3>
+                                <p class="text-[13px] text-[#5B677A]">{{ $continuer['module'] }}</p>
+                                <div class="mt-auto flex items-center gap-3">
+                                    <div class="h-2 flex-1 overflow-hidden rounded-md bg-[#EDF0F5]">
+                                        <div class="h-full rounded-md" style="width: {{ $continuer['pct'] }}%; background: linear-gradient(90deg,#031D59,#4F6FBF)"></div>
+                                    </div>
+                                    <span class="text-[13px] font-bold text-brand">{{ $continuer['pct'] }} %</span>
+                                    <a href="{{ route('espace-membre.formations') }}" wire:navigate class="rounded-[10px] bg-brand px-5 py-2.5 text-[13px] font-bold text-white hover:bg-accent">Continuer</a>
                                 </div>
-                                <span class="text-[13px] font-bold text-brand">75 %</span>
-                                <a href="{{ route('espace-membre.formations') }}" wire:navigate class="rounded-[10px] bg-brand px-5 py-2.5 text-[13px] font-bold text-white hover:bg-accent">Continuer</a>
                             </div>
                         </div>
-                    </div>
-                </section>
+                    </section>
+                @endif
 
-                <section>
-                    <h2 class="mb-1 text-[17px] font-bold text-brand">Recommandé pour vous</h2>
-                    <div class="mb-4 h-[3px] w-9 rounded bg-accent"></div>
-                    <div class="relative overflow-hidden rounded-[18px] bg-brand p-5 text-white">
-                        <div class="mb-3 flex items-center gap-2 text-[11px] font-bold tracking-[0.1em] text-[#8FA3D9]">
-                            <x-ui.icon name="sparkles" class="size-3.5 text-[#8FB0FF]" />
-                            SUGGESTIONS PERSONNALISÉES
+                @if (! empty($recommandations))
+                    <section>
+                        <h2 class="mb-1 text-[17px] font-bold text-brand">Recommandé pour vous</h2>
+                        <div class="mb-4 h-[3px] w-9 rounded bg-accent"></div>
+                        <div class="relative overflow-hidden rounded-[18px] bg-brand p-5 text-white">
+                            <div class="mb-3 flex items-center gap-2 text-[11px] font-bold tracking-[0.1em] text-[#8FA3D9]">
+                                <x-ui.icon name="sparkles" class="size-3.5 text-[#8FB0FF]" />
+                                À DÉCOUVRIR DANS LE RÉSEAU
+                            </div>
+                            <div class="flex flex-col gap-2.5">
+                                @foreach ($recommandations as $r)
+                                    <a href="{{ route($r['route']) }}" wire:navigate class="block rounded-xl border border-white/10 bg-white/[.08] px-3.5 py-3 hover:bg-white/[.16]">
+                                        <p class="text-[13px] font-bold">{{ $r['type'] }} · {{ $r['titre'] }}</p>
+                                        <p class="mt-0.5 text-[11.5px] text-[#C4D0EC]">{{ $r['detail'] }}</p>
+                                    </a>
+                                @endforeach
+                            </div>
                         </div>
-                        <div class="flex flex-col gap-2.5">
-                            <a href="{{ route('espace-membre.catalogue') }}" wire:navigate class="block rounded-xl border border-white/10 bg-white/[.08] px-3.5 py-3 hover:bg-white/[.16]">
-                                <p class="text-[13px] font-bold">Formation · Pitch d'investisseurs</p>
-                                <p class="mt-0.5 text-[11.5px] text-[#C4D0EC]">Basé sur votre parcours Entrepreneuriat</p>
-                            </a>
-                            <a href="{{ route('espace-membre.mentorat') }}" wire:navigate class="block rounded-xl border border-white/10 bg-white/[.08] px-3.5 py-3 hover:bg-white/[.16]">
-                                <p class="text-[13px] font-bold">Mentor · Awa Diabaté, levée de fonds</p>
-                                <p class="mt-0.5 text-[11.5px] text-[#C4D0EC]">Disponible cette semaine</p>
-                            </a>
-                            <a href="{{ route('espace-membre.evenements') }}" wire:navigate class="block rounded-xl border border-white/10 bg-white/[.08] px-3.5 py-3 hover:bg-white/[.16]">
-                                <p class="text-[13px] font-bold">Événement · Masterclass Finance</p>
-                                <p class="mt-0.5 text-[11.5px] text-[#C4D0EC]">Mardi 21 juillet · en ligne</p>
-                            </a>
-                        </div>
-                    </div>
-                </section>
+                    </section>
+                @endif
             </div>
 
             <div class="flex min-w-0 flex-col gap-6">

@@ -1,3 +1,4 @@
+<div>
 @if ($status === 'success')
     <div class="flex min-h-screen flex-col items-center justify-center px-5 py-10 text-center">
         <span class="mb-5 flex size-[76px] items-center justify-center rounded-full text-white shadow-[0_10px_26px_rgba(34,168,90,.3)]" style="background: linear-gradient(135deg, #22A85A, #1C8A49)">
@@ -322,3 +323,4 @@
         </div>
     </div>
 @endif
+</div>

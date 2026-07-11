@@ -15,6 +15,7 @@
         <title>{{ $seoTitle }}</title>
         <meta name="description" content="{{ $seoDescription }}">
         <link rel="canonical" href="{{ url()->current() }}">
+        @include('partials.favicon')
 
         <meta property="og:site_name" content="{{ $site['name'] }}">
         <meta property="og:locale" content="fr_FR">
