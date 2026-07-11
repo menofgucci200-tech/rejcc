@@ -117,6 +117,23 @@ Route::middleware(['auth.token', 'auth.admin'])->prefix('admin')->group(function
     Route::put('/formations/{id}', [FormationController::class, 'update']);
     Route::delete('/formations/{id}', [FormationController::class, 'destroy']);
 
+    // Événements
+    Route::get('/events', [EventController::class, 'adminIndex']);
+    Route::post('/events', [EventController::class, 'store']);
+    Route::put('/events/{id}', [EventController::class, 'update']);
+    Route::delete('/events/{id}', [EventController::class, 'destroy']);
+
+    // Actualités
+    Route::get('/news', [NewsArticleController::class, 'adminIndex']);
+    Route::post('/news', [NewsArticleController::class, 'store']);
+    Route::put('/news/{id}', [NewsArticleController::class, 'update']);
+    Route::delete('/news/{id}', [NewsArticleController::class, 'destroy']);
+
+    // Opportunités (modération)
+    Route::get('/opportunities', [OpportunityController::class, 'index']);
+    Route::put('/opportunities/{id}', [OpportunityController::class, 'adminUpdate']);
+    Route::delete('/opportunities/{id}', [OpportunityController::class, 'adminDestroy']);
+
     // Documents
     Route::get('/documents', [AdminController::class, 'documents']);
     Route::post('/documents', [AdminController::class, 'createDocument']);

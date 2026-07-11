@@ -52,4 +52,39 @@ class OpportunityController extends Controller
 
         return response()->json(['ok' => true, 'opportunity' => $opp], 201);
     }
+
+    // ------------------------------------------------------------------
+    // Administration (modération des annonces)
+    // ------------------------------------------------------------------
+
+    public function adminUpdate(Request $request, int $id)
+    {
+        $opp = Opportunity::find($id);
+        if (! $opp) {
+            return response()->json(['ok' => false, 'message' => 'Annonce introuvable.'], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'title' => 'required|string|max:160',
+            'description' => 'required|string|max:3000',
+            'type' => 'required|string|max:40',
+            'contact' => 'nullable|string|max:160',
+            'deadline' => 'nullable|date',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['ok' => false, 'message' => $validator->errors()->first()], 422);
+        }
+
+        $opp->fill($validator->validated())->save();
+
+        return response()->json(['ok' => true, 'opportunity' => $opp]);
+    }
+
+    public function adminDestroy(int $id)
+    {
+        Opportunity::where('id', $id)->delete();
+
+        return response()->json(['ok' => true]);
+    }
 }

@@ -2,53 +2,117 @@
 
 namespace App\Livewire\Admin;
 
+use App\Support\Api;
+use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
 #[Layout('layouts.admin-light')]
 class Emplois extends Component
 {
-    public array $statuts = ['attente', 'attente', 'approuve', 'approuve', 'approuve', 'approuve'];
+    public bool $showForm = false;
 
-    public function approuver(int $index): void
-    {
-        $this->statuts[$index] = 'approuve';
-    }
+    public ?int $editingId = null;
 
-    public function rejeter(int $index): void
-    {
-        $this->statuts[$index] = 'rejete';
-    }
+    public string $title = '';
 
-    protected function data(): array
+    public string $type = 'emploi';
+
+    public string $description = '';
+
+    public string $contact = '';
+
+    public string $deadline = '';
+
+    protected function rules(): array
     {
         return [
-            ['poste' => 'Chargé(e) de projet junior', 'entreprise' => 'AgriConnect CI', 'lieu' => 'Abidjan', 'type' => 'Emploi'],
-            ['poste' => 'Stagiaire communication digitale', 'entreprise' => 'Boutique solidaire', 'lieu' => 'Abidjan', 'type' => 'Stage'],
-            ['poste' => 'Développeur mobile (Flutter)', 'entreprise' => 'FinTech Partenaire', 'lieu' => 'Remote', 'type' => 'Emploi'],
-            ['poste' => 'Analyste financier junior', 'entreprise' => 'Cabinet KM Conseils', 'lieu' => 'Abidjan', 'type' => 'Emploi'],
-            ['poste' => 'Stagiaire gestion de projet', 'entreprise' => 'REJCC Incubateur', 'lieu' => 'Abidjan', 'type' => 'Stage'],
-            ['poste' => 'Chargé(e) de partenariats', 'entreprise' => 'Fondation Ivoire Avenir', 'lieu' => 'Yamoussoukro', 'type' => 'Emploi'],
+            'title' => 'required|string|min:4|max:160',
+            'type' => 'required|string|max:40',
+            'description' => 'required|string|min:20|max:3000',
+            'contact' => 'nullable|string|max:160',
+            'deadline' => 'nullable|date',
         ];
+    }
+
+    protected function annonces(): Collection
+    {
+        return Collection::make(Api::get('/admin/opportunities', [], Api::token())['opportunities'] ?? []);
+    }
+
+    public function openCreate(): void
+    {
+        $this->reset(['editingId', 'title', 'description', 'contact', 'deadline']);
+        $this->type = 'emploi';
+        $this->resetValidation();
+        $this->showForm = true;
+    }
+
+    public function openEdit(int $id): void
+    {
+        $o = $this->annonces()->firstWhere('id', $id);
+        if (! $o) {
+            return;
+        }
+
+        $this->editingId = $o['id'];
+        $this->title = $o['title'];
+        $this->type = $o['type'];
+        $this->description = $o['description'];
+        $this->contact = $o['contact'] ?? '';
+        $this->deadline = $o['deadline'] ?? '';
+        $this->resetValidation();
+        $this->showForm = true;
+    }
+
+    public function closeForm(): void
+    {
+        $this->showForm = false;
+        $this->editingId = null;
+    }
+
+    public function save(): void
+    {
+        $this->validate();
+
+        $data = [
+            'title' => $this->title,
+            'type' => $this->type,
+            'description' => $this->description,
+            'contact' => $this->contact ?: null,
+            'deadline' => $this->deadline ?: null,
+        ];
+        $token = Api::token();
+
+        if ($this->editingId) {
+            Api::put("/admin/opportunities/{$this->editingId}", $data, $token);
+        } else {
+            // L'admin publie via le même endpoint que les membres (auteur = admin).
+            Api::post('/opportunities', array_filter($data), $token);
+        }
+
+        $this->closeForm();
+    }
+
+    public function delete(int $id): void
+    {
+        Api::delete("/admin/opportunities/{$id}", Api::token());
     }
 
     public function render()
     {
-        $offres = array_map(function ($o, $i) {
-            $s = $this->statuts[$i];
-            $info = $s === 'approuve' ? ['#22A85A', '#EAF6EE', 'Approuvée'] : ($s === 'rejete' ? ['#AC0100', '#F9E9E9', 'Rejetée'] : ['#F5A623', '#FCF1DD', 'En attente']);
-            $o['index'] = $i;
-            $o['initiales'] = mb_strtoupper(collect(explode(' ', $o['entreprise']))->map(fn ($w) => mb_substr($w, 0, 1))->take(2)->implode(''));
-            $o['typeColor'] = $o['type'] === 'Emploi' ? '#031D59' : '#AC0100';
-            $o['typeBg'] = $o['type'] === 'Emploi' ? '#E8EDF8' : '#F9E9E9';
-            $o['statutColor'] = $info[0];
-            $o['statutBg'] = $info[1];
-            $o['statutLabel'] = $info[2];
-            $o['enAttente'] = $s === 'attente';
+        $annonces = $this->annonces()->map(fn (array $o) => [
+            'id' => $o['id'],
+            'titre' => $o['title'],
+            'type' => strtolower($o['type']),
+            'description' => $o['description'],
+            'auteur' => $o['author'] ?? 'REJCC',
+            'contact' => $o['contact'],
+            'deadline' => $o['deadline'] ? Carbon::parse($o['deadline'])->translatedFormat('j F Y') : null,
+            'date' => Carbon::parse($o['created_at'])->diffForHumans(),
+        ]);
 
-            return $o;
-        }, $this->data(), array_keys($this->data()));
-
-        return view('livewire.admin.emplois', ['offres' => $offres]);
+        return view('livewire.admin.emplois', ['annonces' => $annonces]);
     }
 }

@@ -2,39 +2,135 @@
 
 namespace App\Livewire\Admin;
 
+use App\Support\Api;
+use App\Support\CategoryPalette;
+use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
 #[Layout('layouts.admin-light')]
 class Evenements extends Component
 {
-    public array $annules = [false, false, false, false, false];
+    public bool $showForm = false;
 
-    public function toggle(int $index): void
-    {
-        $this->annules[$index] = ! $this->annules[$index];
-    }
+    public ?int $editingId = null;
 
-    protected function data(): array
+    public string $title = '';
+
+    public string $category = '';
+
+    public string $startsAt = '';
+
+    public string $timeLabel = '';
+
+    public string $location = '';
+
+    public string $excerpt = '';
+
+    public string $description = '';
+
+    public ?int $capacity = null;
+
+    protected function rules(): array
     {
         return [
-            ['jour' => '15', 'mois' => 'JUIL', 'tag' => 'ATELIER', 'tagColor' => '#AC0100', 'titre' => 'Prototyper son offre en 3 heures', 'detail' => 'Abidjan, Plateau · 14 h – 17 h', 'inscrits' => 38],
-            ['jour' => '18', 'mois' => 'JUIL', 'tag' => 'NETWORKING', 'tagColor' => '#4F6FBF', 'titre' => 'Café des entrepreneurs REJCC', 'detail' => 'Cocody · 9 h – 11 h', 'inscrits' => 52],
-            ['jour' => '21', 'mois' => 'JUIL', 'tag' => 'MASTERCLASS', 'tagColor' => '#031D59', 'titre' => 'Finance : lever ses premiers fonds', 'detail' => 'En ligne · 19 h', 'inscrits' => 121],
-            ['jour' => '25', 'mois' => 'JUIL', 'tag' => 'CONFÉRENCE', 'tagColor' => '#AC0100', 'titre' => 'Foi et excellence en affaires', 'detail' => 'Paroisse St-Jean · 16 h', 'inscrits' => 87],
-            ['jour' => '02', 'mois' => 'AOÛT', 'tag' => 'ATELIER', 'tagColor' => '#AC0100', 'titre' => 'Storytelling pour entrepreneurs', 'detail' => 'Bouaké · 10 h – 13 h', 'inscrits' => 24],
+            'title' => 'required|string|min:2|max:160',
+            'category' => 'required|string|min:2|max:60',
+            'startsAt' => 'required|date',
+            'timeLabel' => 'nullable|string|max:60',
+            'location' => 'nullable|string|max:160',
+            'excerpt' => 'nullable|string|max:300',
+            'description' => 'nullable|string|max:3000',
+            'capacity' => 'nullable|integer|min:1',
         ];
+    }
+
+    protected function evenements(): Collection
+    {
+        return Collection::make(Api::get('/admin/events', [], Api::token())['events'] ?? []);
+    }
+
+    public function openCreate(): void
+    {
+        $this->reset(['editingId', 'title', 'category', 'startsAt', 'timeLabel', 'location', 'excerpt', 'description', 'capacity']);
+        $this->resetValidation();
+        $this->showForm = true;
+    }
+
+    public function openEdit(int $id): void
+    {
+        $e = $this->evenements()->firstWhere('id', $id);
+        if (! $e) {
+            return;
+        }
+
+        $this->editingId = $e['id'];
+        $this->title = $e['title'];
+        $this->category = $e['category'];
+        $this->startsAt = Carbon::parse($e['starts_at'])->format('Y-m-d\TH:i');
+        $this->timeLabel = $e['time_label'] ?? '';
+        $this->location = $e['location'] ?? '';
+        $this->excerpt = $e['excerpt'] ?? '';
+        $this->description = $e['description'] ?? '';
+        $this->capacity = $e['capacity'];
+        $this->resetValidation();
+        $this->showForm = true;
+    }
+
+    public function closeForm(): void
+    {
+        $this->showForm = false;
+        $this->editingId = null;
+    }
+
+    public function save(): void
+    {
+        $this->validate();
+
+        $data = [
+            'title' => $this->title,
+            'category' => $this->category,
+            'starts_at' => $this->startsAt,
+            'time_label' => $this->timeLabel ?: null,
+            'location' => $this->location ?: null,
+            'excerpt' => $this->excerpt ?: null,
+            'description' => $this->description ?: null,
+            'capacity' => $this->capacity,
+        ];
+        $token = Api::token();
+
+        if ($this->editingId) {
+            Api::put("/admin/events/{$this->editingId}", $data, $token);
+        } else {
+            Api::post('/admin/events', $data, $token);
+        }
+
+        $this->closeForm();
+    }
+
+    public function delete(int $id): void
+    {
+        Api::delete("/admin/events/{$id}", Api::token());
     }
 
     public function render()
     {
-        $evenements = array_map(function ($ev, $i) {
-            $annule = $this->annules[$i];
-            $ev['index'] = $i;
-            $ev['annule'] = $annule;
+        $evenements = $this->evenements()->map(function (array $e) {
+            $starts = Carbon::parse($e['starts_at']);
 
-            return $ev;
-        }, $this->data(), array_keys($this->data()));
+            return [
+                'id' => $e['id'],
+                'jour' => $starts->format('d'),
+                'mois' => mb_strtoupper($starts->translatedFormat('M')),
+                'passe' => $starts->isPast(),
+                'tag' => mb_strtoupper($e['category']),
+                'tagColor' => CategoryPalette::for($e['category'])['tag'],
+                'titre' => $e['title'],
+                'detail' => implode(' · ', array_filter([$e['location'], $e['time_label']])),
+                'inscrits' => (int) ($e['registrations_count'] ?? 0),
+            ];
+        });
 
         return view('livewire.admin.evenements', ['evenements' => $evenements]);
     }

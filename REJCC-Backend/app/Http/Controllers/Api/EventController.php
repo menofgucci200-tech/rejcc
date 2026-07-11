@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\EventRegistration;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class EventController extends Controller
 {
@@ -49,6 +51,73 @@ class EventController extends Controller
         ]);
 
         return response()->json(['ok' => true, 'events' => $out]);
+    }
+
+    // ------------------------------------------------------------------
+    // Administration
+    // ------------------------------------------------------------------
+
+    public function adminIndex()
+    {
+        $events = Event::withCount('registrations')->orderByDesc('starts_at')->get();
+
+        return response()->json(['ok' => true, 'events' => $events]);
+    }
+
+    public function store(Request $request)
+    {
+        return $this->persist($request, new Event());
+    }
+
+    public function update(Request $request, int $id)
+    {
+        $event = Event::find($id);
+        if (! $event) {
+            return response()->json(['ok' => false, 'message' => 'Événement introuvable.'], 404);
+        }
+
+        return $this->persist($request, $event);
+    }
+
+    public function destroy(int $id)
+    {
+        Event::where('id', $id)->delete();
+
+        return response()->json(['ok' => true]);
+    }
+
+    private function persist(Request $request, Event $event)
+    {
+        $validator = Validator::make($request->all(), [
+            'title' => 'required|string|min:2|max:160',
+            'category' => 'required|string|min:2|max:60',
+            'starts_at' => 'required|date',
+            'time_label' => 'nullable|string|max:60',
+            'location' => 'nullable|string|max:160',
+            'excerpt' => 'nullable|string|max:300',
+            'description' => 'nullable|string|max:3000',
+            'capacity' => 'nullable|integer|min:1',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['ok' => false, 'message' => $validator->errors()->first()], 422);
+        }
+
+        $data = $validator->validated();
+
+        // Slug généré à la création puis stable (les URLs publiques ne changent pas).
+        if (! $event->exists) {
+            $base = Str::slug($data['title']) ?: 'evenement';
+            $slug = $base;
+            for ($i = 2; Event::where('slug', $slug)->exists(); $i++) {
+                $slug = "{$base}-{$i}";
+            }
+            $data['slug'] = $slug;
+        }
+
+        $event->fill($data)->save();
+
+        return response()->json(['ok' => true, 'event' => $event]);
     }
 
     /** Bascule l'inscription du membre courant à un événement. */

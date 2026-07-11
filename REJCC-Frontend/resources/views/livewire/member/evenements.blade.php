@@ -11,7 +11,7 @@
             <div class="lg:col-span-2">
                 <h2 class="mb-4 text-sm font-bold text-brand">À venir</h2>
                 <div class="space-y-3">
-                    @foreach ($evenements as $e)
+                    @forelse ($evenements as $e)
                         <article class="flex flex-wrap items-center gap-4 rounded-[16px] border border-brand/10 bg-white p-4 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
                             <div class="flex size-12 shrink-0 flex-col items-center justify-center rounded-xl bg-cloud text-brand">
                                 <span class="text-sm font-bold leading-none">{{ $e['jour'] }}</span>
@@ -19,11 +19,19 @@
                             <div class="min-w-[180px] flex-1">
                                 <span class="mb-1 inline-block rounded-full px-2.5 py-0.5 text-[10.5px] font-bold" style="background: {{ $e['tagColor'] }}1A; color: {{ $e['tagColor'] }}">{{ $e['tag'] }}</span>
                                 <p class="text-[13.5px] font-bold text-brand">{{ $e['titre'] }}</p>
-                                <p class="mt-0.5 text-xs text-[#9AA6B8]">{{ $e['detail'] }}</p>
+                                <p class="mt-0.5 text-xs text-[#9AA6B8]">{{ $e['date'] }} · {{ $e['detail'] }}</p>
                             </div>
-                            <button class="shrink-0 rounded-full border border-azure/25 bg-azure/10 px-3.5 py-1.5 text-xs font-semibold text-azure">S'inscrire</button>
+                            @if ($e['inscrit'])
+                                <button wire:click="toggleInscription({{ $e['id'] }})" wire:confirm="Annuler votre inscription à « {{ $e['titre'] }} » ?" class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#22A85A]/10 px-3.5 py-1.5 text-xs font-semibold text-[#22A85A]">
+                                    <x-ui.icon name="check" class="size-3.5" /> Inscrit
+                                </button>
+                            @else
+                                <button wire:click="toggleInscription({{ $e['id'] }})" wire:loading.attr="disabled" class="shrink-0 rounded-full border border-azure/25 bg-azure/10 px-3.5 py-1.5 text-xs font-semibold text-azure disabled:opacity-60">S'inscrire</button>
+                            @endif
                         </article>
-                    @endforeach
+                    @empty
+                        <p class="rounded-[16px] border border-brand/10 bg-white py-10 text-center text-sm text-[#5B677A]">Aucun événement à venir pour le moment.</p>
+                    @endforelse
                 </div>
             </div>
 
