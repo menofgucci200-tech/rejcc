@@ -19,81 +19,83 @@
         default => '#AC0100',
     };
     $qrUrl = url('/carte/'.$code);
+    // Toutes les tailles sont en cqw (% de la largeur de la carte) : le rendu
+    // reste fidèle à la maquette quelle que soit la taille d'affichage.
+    $bg = 'background: radial-gradient(125% 135% at 22% 5%, #1B2E63 0%, #142350 45%, #0B1636 100%)';
 @endphp
 
-<div {{ $attributes->merge(['class' => 'mx-auto grid w-full max-w-[1060px] gap-6 lg:grid-cols-2']) }}>
+<div {{ $attributes->merge(['class' => 'mx-auto grid w-full max-w-[1040px] gap-6 lg:grid-cols-2']) }}>
 
-    {{-- ═══ RECTO ═══ --}}
-    <div class="relative aspect-[1.585/1] overflow-hidden rounded-[22px] text-white shadow-[0_24px_60px_-24px_rgba(3,29,89,.55)]"
-         style="background: radial-gradient(120% 130% at 20% 0%, #1A2E63 0%, #14224E 45%, #0C1838 100%)">
+    {{-- ═══════════════ RECTO ═══════════════ --}}
+    <div class="relative aspect-[317/200] overflow-hidden rounded-[4cqw] text-white shadow-[0_24px_60px_-24px_rgba(3,29,89,.55)]"
+         style="container-type: inline-size; {{ $bg }}">
 
-        {{-- Filigrane monogramme --}}
+        {{-- Filigranes monogramme --}}
         <img src="{{ asset('brand/rejcc-monogram-white.png') }}" alt="" aria-hidden="true"
-             class="pointer-events-none absolute -left-16 -top-14 w-[46%] opacity-[.06]">
+             class="pointer-events-none absolute -left-[10cqw] -top-[8cqw] w-[42cqw] opacity-[.06]">
         <img src="{{ asset('brand/rejcc-monogram-white.png') }}" alt="" aria-hidden="true"
-             class="pointer-events-none absolute -bottom-20 left-6 w-[38%] opacity-[.05]">
+             class="pointer-events-none absolute -bottom-[14cqw] left-[3cqw] w-[34cqw] opacity-[.05]">
 
-        <div class="relative flex h-full flex-col items-center px-[6%] py-[6%]">
-            {{-- Zone photo (haut-gauche) --}}
-            <div class="absolute left-[6%] top-[6%]">
-                @if ($photo)
-                    <img src="{{ $photo }}" alt="Photo de {{ $name }}"
-                         class="size-[74px] rounded-[14px] object-cover ring-2 ring-white/25 sm:size-[96px]">
-                @elseif ($editable && $uploadId)
-                    <label for="{{ $uploadId }}"
-                           class="flex size-[74px] cursor-pointer flex-col items-center justify-center gap-1 rounded-[14px] border border-dashed border-white/35 bg-white/[.06] text-center text-white/60 hover:bg-white/[.12] sm:size-[96px]">
-                        <x-ui.icon name="image" class="size-5" />
-                        <span class="text-[8.5px] font-semibold leading-tight">Photo du membre<br><span class="underline">parcourir</span></span>
-                    </label>
-                @else
-                    <div class="flex size-[74px] items-center justify-center rounded-[14px] bg-white/10 text-lg font-bold text-white/70 ring-2 ring-white/15 sm:size-[96px]">
-                        {{ mb_strtoupper(mb_substr($name, 0, 2)) }}
-                    </div>
-                @endif
-            </div>
+        {{-- Photo (haut-gauche) --}}
+        <div class="absolute left-[6cqw] top-[6cqw] z-10">
+            @if ($photo)
+                <img src="{{ $photo }}" alt="Photo de {{ $name }}"
+                     class="size-[24cqw] rounded-[3cqw] object-cover ring-1 ring-white/25">
+            @elseif ($editable && $uploadId)
+                <label for="{{ $uploadId }}"
+                       class="flex size-[24cqw] cursor-pointer flex-col items-center justify-center gap-[1.5cqw] rounded-[3cqw] border border-dashed border-white/35 bg-white/[.05] text-center text-white/55 hover:bg-white/[.12]">
+                    <x-ui.icon name="image" class="w-[6cqw]" />
+                    <span class="text-[2cqw] font-semibold leading-tight">Photo du membre<br><span class="underline">parcourir</span></span>
+                </label>
+            @else
+                <div class="flex size-[24cqw] items-center justify-center rounded-[3cqw] bg-white/10 text-[7cqw] font-bold text-white/70 ring-1 ring-white/15">
+                    {{ mb_strtoupper(mb_substr($name, 0, 2)) }}
+                </div>
+            @endif
+        </div>
 
-            {{-- Logo REJCC centré --}}
+        {{-- Contenu centré --}}
+        <div class="relative flex h-full flex-col items-center px-[6cqw] pb-[6cqw] pt-[5cqw]">
             <img src="{{ asset('brand/rejcc-logo-white.png') }}" alt="REJCC"
-                 class="mt-[2%] h-[38%] max-h-[190px] object-contain">
+                 class="h-[27cqw] object-contain">
 
-            {{-- Nom --}}
-            <p class="mt-auto text-center font-serif text-[clamp(20px,4.2vw,40px)] font-bold uppercase leading-none tracking-[0.02em]">{{ $name }}</p>
-            <p class="mt-2 text-center text-[clamp(9px,1.5vw,13px)] font-bold uppercase tracking-[0.32em]" style="color: {{ $accent }}">{{ $roleLabel }}</p>
+            <p class="mt-[5cqw] text-center font-serif text-[5.4cqw] font-bold uppercase leading-none tracking-[0.02em]">{{ $name }}</p>
+            <p class="mt-[2.2cqw] text-center text-[1.9cqw] font-bold uppercase tracking-[0.34em]" style="color: {{ $accent }}">{{ $roleLabel }}</p>
 
-            {{-- Organisation --}}
-            <div class="mb-[2%] mt-auto text-center">
-                <p class="text-[clamp(8px,1.4vw,12px)] font-bold uppercase tracking-[0.14em] text-white/90">Réseau Entrepreneurial des Jeunes Catholiques</p>
-                <p class="mt-1 text-[clamp(8px,1.3vw,12px)] font-bold uppercase tracking-[0.28em]" style="color: {{ $accent }}">de Côte d'Ivoire</p>
+            <div class="mt-auto text-center">
+                <p class="text-[1.7cqw] font-bold uppercase tracking-[0.16em] text-white/90">Réseau Entrepreneurial des Jeunes Catholiques</p>
+                <p class="mt-[1cqw] text-[1.6cqw] font-bold uppercase tracking-[0.3em]" style="color: {{ $accent }}">de Côte d'Ivoire</p>
             </div>
         </div>
     </div>
 
-    {{-- ═══ VERSO ═══ --}}
-    <div class="relative aspect-[1.585/1] overflow-hidden rounded-[22px] text-white shadow-[0_24px_60px_-24px_rgba(3,29,89,.55)]"
-         style="background: radial-gradient(120% 130% at 80% 100%, #1A2E63 0%, #14224E 45%, #0C1838 100%)">
+    {{-- ═══════════════ VERSO ═══════════════ --}}
+    <div class="relative aspect-[317/200] overflow-hidden rounded-[4cqw] text-white shadow-[0_24px_60px_-24px_rgba(3,29,89,.55)]"
+         style="container-type: inline-size; background: radial-gradient(125% 135% at 82% 100%, #1B2E63 0%, #142350 45%, #0B1636 100%)">
 
-        {{-- Filigrane monogramme (à droite) --}}
+        {{-- Filigrane monogramme (droite) --}}
         <img src="{{ asset('brand/rejcc-monogram-white.png') }}" alt="" aria-hidden="true"
-             class="pointer-events-none absolute -right-10 bottom-[-10%] w-[42%] opacity-[.06]">
+             class="pointer-events-none absolute -right-[6cqw] bottom-[-8cqw] w-[40cqw] opacity-[.06]">
 
-        <div class="relative flex h-full flex-col px-[7%] py-[7%]">
-            {{-- QR code --}}
-            <div class="w-fit rounded-[16px] bg-white p-2.5 shadow-lg sm:p-3">
-                <canvas x-data x-init="window.QRCode && window.QRCode.toCanvas($el, '{{ $qrUrl }}', { width: 150, margin: 0, color: { dark: '#0C1838', light: '#ffffff' } })"
-                        class="block size-[96px] sm:size-[130px]"></canvas>
+        <div class="relative flex h-full flex-col px-[7cqw] py-[7cqw]">
+            {{-- QR --}}
+            <div class="w-fit rounded-[3cqw] bg-white p-[1.6cqw] shadow-lg">
+                <canvas x-data x-init="window.QRCode && window.QRCode.toCanvas($el, '{{ $qrUrl }}', { width: 200, margin: 0, color: { dark: '#0B1636', light: '#ffffff' } })"
+                        class="block size-[22cqw]"></canvas>
             </div>
-            <p class="mt-4 max-w-[220px] text-[clamp(10px,1.5vw,14px)] font-bold uppercase leading-snug tracking-[0.16em]">Scannez pour accéder à votre profil membre</p>
-            <span class="mt-2 block h-[3px] w-16 rounded-full" style="background: {{ $accent }}"></span>
 
-            <div class="mt-auto space-y-3.5">
+            <p class="mt-[4cqw] max-w-[46cqw] text-[2cqw] font-bold uppercase leading-snug tracking-[0.16em]">Scannez pour accéder à votre profil membre</p>
+            <span class="mt-[2cqw] block h-[0.6cqw] w-[13cqw] rounded-full" style="background: {{ $accent }}"></span>
+
+            <div class="mt-auto space-y-[3.5cqw]">
                 <div>
-                    <p class="text-[clamp(9px,1.3vw,12px)] font-bold uppercase tracking-[0.2em] text-white/85">N° Membre</p>
-                    <p class="text-[clamp(12px,2vw,17px)] font-bold uppercase tracking-[0.12em]" style="color: {{ $accent }}">{{ $numero }}</p>
+                    <p class="text-[1.6cqw] font-bold uppercase tracking-[0.22em] text-white/85">N° Membre</p>
+                    <p class="mt-[0.6cqw] text-[2.4cqw] font-bold uppercase tracking-[0.12em]" style="color: {{ $accent }}">{{ $numero }}</p>
                 </div>
                 @if ($dateAdhesion)
                     <div>
-                        <p class="text-[clamp(9px,1.3vw,12px)] font-bold uppercase tracking-[0.2em] text-white/85">Date d'adhésion</p>
-                        <p class="text-[clamp(12px,2vw,17px)] font-bold uppercase tracking-[0.12em]" style="color: {{ $accent }}">{{ $dateAdhesion }}</p>
+                        <p class="text-[1.6cqw] font-bold uppercase tracking-[0.22em] text-white/85">Date d'adhésion</p>
+                        <p class="mt-[0.6cqw] text-[2.4cqw] font-bold uppercase tracking-[0.12em]" style="color: {{ $accent }}">{{ $dateAdhesion }}</p>
                     </div>
                 @endif
             </div>
