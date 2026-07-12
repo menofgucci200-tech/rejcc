@@ -80,8 +80,9 @@
         <div class="absolute left-[2cqw] top-0 flex h-full w-[33cqw] flex-col items-center">
             {{-- QR --}}
             <div class="mt-[12cqh] rounded-[2.6cqw] bg-white p-[1.4cqw] shadow-lg">
-                <canvas x-data x-init="window.QRCode && window.QRCode.toCanvas($el, '{{ $qrUrl }}', { width: 220, margin: 0, color: { dark: '{{ $navy }}', light: '#ffffff' } })"
-                        class="block size-[15cqw]"></canvas>
+                {{-- la lib qrcode pose width/height inline : on les retire après rendu et la classe !size garde la main --}}
+                <canvas x-data x-init="window.QRCode && window.QRCode.toCanvas($el, '{{ $qrUrl }}', { width: 220, margin: 0, color: { dark: '{{ $navy }}', light: '#ffffff' } }, () => { $el.style.width = ''; $el.style.height = ''; })"
+                        class="!block !size-[15cqw]"></canvas>
             </div>
 
             <p class="mt-[6.5cqh] text-center text-[1.55cqw] font-bold uppercase leading-relaxed tracking-[0.2em] text-white">Scannez pour accéder à<br>votre profil membre</p>
