@@ -11,92 +11,88 @@
 ])
 
 @php
-    // Accent distinct selon le statut : la carte diffère visuellement mais garde
-    // le même principe (N° membre, QR). Membre = rouge, mentor = or, admin = azur.
+    // Design officiel « Carte Standard REJCC » (PDF de la charte).
+    // Fond navy #1D2556 et accent #A44B4B extraits du fichier source ;
+    // les visuels carte-logo.png et carte-cathedrale.png en sont découpés.
+    // Les statuts non-membres gardent la même carte avec un accent distinct.
     $accent = match ($role) {
         'mentor' => '#F5A623',
         'admin' => '#4F6FBF',
-        default => '#AC0100',
+        default => '#A44B4B',
     };
+    $navy = '#1D2556';
     $qrUrl = url('/carte/'.$code);
-    // Toutes les tailles sont en cqw (% de la largeur de la carte) : le rendu
-    // reste fidèle à la maquette quelle que soit la taille d'affichage.
-    $bg = 'background: radial-gradient(125% 135% at 22% 5%, #1B2E63 0%, #142350 45%, #0B1636 100%)';
+    // Unités cqw/cqh : proportionnelles à la carte (container queries).
 @endphp
 
-<div {{ $attributes->merge(['class' => 'mx-auto grid w-full max-w-[1040px] gap-6 lg:grid-cols-2']) }}>
+<div {{ $attributes->merge(['class' => 'mx-auto grid w-full max-w-[1060px] gap-6 lg:grid-cols-2']) }}>
 
     {{-- ═══════════════ RECTO ═══════════════ --}}
-    <div class="relative aspect-[317/200] overflow-hidden rounded-[4cqw] text-white shadow-[0_24px_60px_-24px_rgba(3,29,89,.55)]"
-         style="container-type: inline-size; {{ $bg }}">
+    <div class="relative aspect-[1586/1000] overflow-hidden rounded-[4.5cqw] shadow-[0_24px_60px_-24px_rgba(3,29,89,.55)]"
+         style="container-type: size; background: {{ $navy }}">
 
-        {{-- Filigranes monogramme --}}
+        {{-- Filigranes monogramme (haut-gauche fragmenté + bas-gauche) --}}
         <img src="{{ asset('brand/rejcc-monogram-white.png') }}" alt="" aria-hidden="true"
-             class="pointer-events-none absolute -left-[10cqw] -top-[8cqw] w-[42cqw] opacity-[.06]">
+             class="pointer-events-none absolute -left-[9cqw] -top-[10cqw] w-[34cqw] opacity-[.05]">
         <img src="{{ asset('brand/rejcc-monogram-white.png') }}" alt="" aria-hidden="true"
-             class="pointer-events-none absolute -bottom-[14cqw] left-[3cqw] w-[34cqw] opacity-[.05]">
+             class="pointer-events-none absolute -left-[4cqw] bottom-[-16cqw] w-[36cqw] opacity-[.07]">
 
-        {{-- Photo (haut-gauche) --}}
-        <div class="absolute left-[6cqw] top-[6cqw] z-10">
+        {{-- Photo du membre (haut-gauche) --}}
+        <div class="absolute left-[6.5cqw] top-[9cqh]">
             @if ($photo)
                 <img src="{{ $photo }}" alt="Photo de {{ $name }}"
-                     class="size-[24cqw] rounded-[3cqw] object-cover ring-1 ring-white/25">
+                     class="h-[40cqh] w-[22cqw] rounded-[2cqw] object-cover ring-1 ring-white/20">
             @elseif ($editable && $uploadId)
                 <label for="{{ $uploadId }}"
-                       class="flex size-[24cqw] cursor-pointer flex-col items-center justify-center gap-[1.5cqw] rounded-[3cqw] border border-dashed border-white/35 bg-white/[.05] text-center text-white/55 hover:bg-white/[.12]">
-                    <x-ui.icon name="image" class="w-[6cqw]" />
-                    <span class="text-[2cqw] font-semibold leading-tight">Photo du membre<br><span class="underline">parcourir</span></span>
+                       class="flex h-[40cqh] w-[22cqw] cursor-pointer flex-col items-center justify-center gap-[1.5cqw] rounded-[2cqw] border border-dashed border-white/30 bg-white/[.04] text-center text-white/50 hover:bg-white/[.1]">
+                    <x-ui.icon name="image" class="w-[4.5cqw]" />
+                    <span class="text-[1.7cqw] font-semibold leading-snug">Photo du membre</span>
                 </label>
             @else
-                <div class="flex size-[24cqw] items-center justify-center rounded-[3cqw] bg-white/10 text-[7cqw] font-bold text-white/70 ring-1 ring-white/15">
+                <div class="flex h-[40cqh] w-[22cqw] items-center justify-center rounded-[2cqw] bg-white/[.07] text-[6cqw] font-bold text-white/60 ring-1 ring-white/10">
                     {{ mb_strtoupper(mb_substr($name, 0, 2)) }}
                 </div>
             @endif
         </div>
 
-        {{-- Contenu centré --}}
-        <div class="relative flex h-full flex-col items-center px-[6cqw] pb-[6cqw] pt-[5cqw]">
-            <img src="{{ asset('brand/rejcc-logo-white.png') }}" alt="REJCC"
-                 class="h-[27cqw] object-contain">
+        {{-- Lockup logo officiel (monogramme + REJCC + filet), découpé du PDF --}}
+        <img src="{{ asset('brand/carte-logo.png') }}" alt="REJCC"
+             class="absolute left-1/2 top-[7cqh] w-[30cqw] -translate-x-1/2">
 
-            <p class="mt-[5cqw] text-center font-serif text-[5.4cqw] font-bold uppercase leading-none tracking-[0.02em]">{{ $name }}</p>
-            <p class="mt-[2.2cqw] text-center text-[1.9cqw] font-bold uppercase tracking-[0.34em]" style="color: {{ $accent }}">{{ $roleLabel }}</p>
+        {{-- Nom + statut --}}
+        <p class="absolute inset-x-[8cqw] top-[57cqh] text-center font-serif text-[5cqw] font-bold uppercase leading-none tracking-[0.06em] text-white">{{ $name }}</p>
+        <p class="absolute inset-x-[8cqw] top-[70.5cqh] text-center text-[1.8cqw] font-bold uppercase tracking-[0.4em]" style="color: {{ $accent }}">{{ $roleLabel }}</p>
 
-            <div class="mt-auto text-center">
-                <p class="text-[1.7cqw] font-bold uppercase tracking-[0.16em] text-white/90">Réseau Entrepreneurial des Jeunes Catholiques</p>
-                <p class="mt-[1cqw] text-[1.6cqw] font-bold uppercase tracking-[0.3em]" style="color: {{ $accent }}">de Côte d'Ivoire</p>
-            </div>
-        </div>
+        {{-- Organisation --}}
+        <p class="absolute inset-x-[4cqw] top-[83.5cqh] text-center text-[1.9cqw] font-bold uppercase tracking-[0.18em] text-white">Réseau Entrepreneurial des Jeunes Catholiques</p>
+        <p class="absolute inset-x-[4cqw] top-[89.5cqh] text-center text-[1.8cqw] font-bold uppercase tracking-[0.3em]" style="color: {{ $accent }}">de Côte d'Ivoire</p>
     </div>
 
     {{-- ═══════════════ VERSO ═══════════════ --}}
-    <div class="relative aspect-[317/200] overflow-hidden rounded-[4cqw] text-white shadow-[0_24px_60px_-24px_rgba(3,29,89,.55)]"
-         style="container-type: inline-size; background: radial-gradient(125% 135% at 82% 100%, #1B2E63 0%, #142350 45%, #0B1636 100%)">
+    <div class="relative aspect-[1586/1000] overflow-hidden rounded-[4.5cqw] shadow-[0_24px_60px_-24px_rgba(3,29,89,.55)]"
+         style="container-type: size; background: {{ $navy }}">
 
-        {{-- Filigrane monogramme (droite) --}}
-        <img src="{{ asset('brand/rejcc-monogram-white.png') }}" alt="" aria-hidden="true"
-             class="pointer-events-none absolute -right-[6cqw] bottom-[-8cqw] w-[40cqw] opacity-[.06]">
+        {{-- Cathédrale + liseré monogramme (moitié droite), découpés du PDF --}}
+        <img src="{{ asset('brand/carte-cathedrale.png') }}" alt="" aria-hidden="true"
+             class="pointer-events-none absolute bottom-0 right-0 h-[82cqh] w-[66cqw] object-cover object-right-bottom">
 
-        <div class="relative flex h-full flex-col px-[7cqw] py-[7cqw]">
+        {{-- Colonne gauche, centrée sur ~18 % de la largeur --}}
+        <div class="absolute left-[2cqw] top-0 flex h-full w-[33cqw] flex-col items-center">
             {{-- QR --}}
-            <div class="w-fit rounded-[3cqw] bg-white p-[1.6cqw] shadow-lg">
-                <canvas x-data x-init="window.QRCode && window.QRCode.toCanvas($el, '{{ $qrUrl }}', { width: 200, margin: 0, color: { dark: '#0B1636', light: '#ffffff' } })"
-                        class="block size-[22cqw]"></canvas>
+            <div class="mt-[12cqh] rounded-[2.6cqw] bg-white p-[1.4cqw] shadow-lg">
+                <canvas x-data x-init="window.QRCode && window.QRCode.toCanvas($el, '{{ $qrUrl }}', { width: 220, margin: 0, color: { dark: '{{ $navy }}', light: '#ffffff' } })"
+                        class="block size-[15cqw]"></canvas>
             </div>
 
-            <p class="mt-[4cqw] max-w-[46cqw] text-[2cqw] font-bold uppercase leading-snug tracking-[0.16em]">Scannez pour accéder à votre profil membre</p>
-            <span class="mt-[2cqw] block h-[0.6cqw] w-[13cqw] rounded-full" style="background: {{ $accent }}"></span>
+            <p class="mt-[6.5cqh] text-center text-[1.55cqw] font-bold uppercase leading-relaxed tracking-[0.2em] text-white">Scannez pour accéder à<br>votre profil membre</p>
+            <span class="mt-[2.5cqh] block h-[0.28cqw] w-[14.5cqw] rounded-full" style="background: {{ $accent }}"></span>
 
-            <div class="mt-auto space-y-[3.5cqw]">
-                <div>
-                    <p class="text-[1.6cqw] font-bold uppercase tracking-[0.22em] text-white/85">N° Membre</p>
-                    <p class="mt-[0.6cqw] text-[2.4cqw] font-bold uppercase tracking-[0.12em]" style="color: {{ $accent }}">{{ $numero }}</p>
-                </div>
+            <div class="mt-auto w-full pb-[7cqh] text-center">
+                <p class="text-[1.6cqw] font-bold uppercase tracking-[0.28em] text-white">N° Membre</p>
+                <p class="mt-[1.6cqh] text-[1.75cqw] font-semibold uppercase tracking-[0.14em]" style="color: {{ $accent }}">{{ $numero }}</p>
                 @if ($dateAdhesion)
-                    <div>
-                        <p class="text-[1.6cqw] font-bold uppercase tracking-[0.22em] text-white/85">Date d'adhésion</p>
-                        <p class="mt-[0.6cqw] text-[2.4cqw] font-bold uppercase tracking-[0.12em]" style="color: {{ $accent }}">{{ $dateAdhesion }}</p>
-                    </div>
+                    <p class="mt-[5.5cqh] text-[1.6cqw] font-bold uppercase tracking-[0.28em] text-white">Date d'adhésion</p>
+                    <p class="mt-[1.6cqh] text-[1.75cqw] font-semibold uppercase tracking-[0.14em]" style="color: {{ $accent }}">{{ $dateAdhesion }}</p>
                 @endif
             </div>
         </div>
