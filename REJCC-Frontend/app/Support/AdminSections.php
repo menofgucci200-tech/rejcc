@@ -46,6 +46,8 @@ class AdminSections
         'admin.mentors' => 'mentors',
         'admin.actualites' => 'actualites',
         'admin.contenu' => 'contenu',
+        'admin.pages' => 'contenu',
+        'admin.reglages' => 'contenu',
         'admin.newsletter' => 'newsletter',
         'admin.documents' => 'documents',
         'admin.contacts' => 'contacts',

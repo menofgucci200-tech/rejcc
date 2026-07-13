@@ -26,6 +26,8 @@ class LogAdminActivity
         'adhesions' => 'Adhésion',
         'documents' => 'Document',
         'site-content' => 'Contenu du site',
+        'site-settings' => 'Réglages du site',
+        'page-sections' => 'Section de page',
         'notifications' => 'Notification',
         'partenariats' => 'Partenariat',
         'contacts' => 'Contact',

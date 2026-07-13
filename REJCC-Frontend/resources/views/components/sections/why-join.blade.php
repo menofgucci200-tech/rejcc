@@ -1,9 +1,12 @@
-@php $benefits = collect(\App\Support\Api::get('/home-content')['benefits'] ?? [])->map(fn ($b) => (object) $b); @endphp
+@php
+    $benefits = collect(\App\Support\Api::get('/home-content')['benefits'] ?? [])->map(fn ($b) => (object) $b);
+    $whyJoinSubtitle = \App\Support\Content\SiteRemote::field('home', 'why-join', 'subtitle', 'Le REJCC met à votre disposition un environnement complet pour faire grandir vos projets et vos compétences.');
+@endphp
 
 <section class="relative bg-cloud py-24 sm:py-32">
     <div class="pointer-events-none absolute inset-0 bg-grid opacity-40 [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]"></div>
     <x-ui.container class="relative">
-        <x-ui.section-heading eyebrow="Pourquoi nous rejoindre" subtitle="Le REJCC met à votre disposition un environnement complet pour faire grandir vos projets et vos compétences.">
+        <x-ui.section-heading eyebrow="Pourquoi nous rejoindre" :subtitle="$whyJoinSubtitle">
             <x-slot:title>
                 Tout ce dont vous avez besoin pour <span class="text-gradient">réussir</span>
             </x-slot:title>

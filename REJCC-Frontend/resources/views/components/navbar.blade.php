@@ -10,7 +10,8 @@
 
     <header
         :class="(scrolled || {{ $isHome ? 'false' : 'true' }} || open) ? 'glass border-b border-brand/10 py-2.5 shadow-[0_8px_30px_-18px_rgba(3,29,89,0.35)]' : 'border-b border-transparent py-4'"
-        class="fixed inset-x-0 top-0 z-[80] transition-all duration-500"
+        class="fixed inset-x-0 z-[80] transition-all duration-500"
+        style="top: var(--banner-h, 0px)"
     >
         <nav class="mx-auto flex w-full max-w-7xl items-center justify-between container-px">
             <a href="{{ url('/') }}" wire:navigate aria-label="REJCC — Accueil" class="relative z-10 flex items-center">

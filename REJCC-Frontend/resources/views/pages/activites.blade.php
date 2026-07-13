@@ -1,8 +1,14 @@
-@php $activities = collect(\App\Support\Api::get('/activities')['activities'] ?? [])->map(fn ($a) => (object) $a); @endphp
+@php
+    use App\Support\Content\SiteRemote;
+
+    $activities = collect(\App\Support\Api::get('/activities')['activities'] ?? [])->map(fn ($a) => (object) $a);
+    $headerTitle = SiteRemote::field('activites', 'header', 'title');
+    $headerSubtitle = SiteRemote::field('activites', 'header', 'subtitle', "Un programme riche pour apprendre, entreprendre et grandir ensemble, tout au long de l'année.");
+@endphp
 
 <x-site-layout title="Nos activités" description="Formations en entrepreneuriat, mentorat, réseautage et incubation de projets : les activités du REJCC pour les jeunes entrepreneurs catholiques en Côte d'Ivoire.">
-    <x-page-header eyebrow="Ce que nous faisons" crumb="Activités" subtitle="Un programme riche pour apprendre, entreprendre et grandir ensemble, tout au long de l'année.">
-        Nos <span class="font-serif italic normal-case text-azure">activités</span>
+    <x-page-header eyebrow="Ce que nous faisons" crumb="Activités" :subtitle="$headerSubtitle">
+        @if ($headerTitle) {{ $headerTitle }} @else Nos <span class="font-serif italic normal-case text-azure">activités</span> @endif
     </x-page-header>
 
     <section class="bg-white py-24 sm:py-28">

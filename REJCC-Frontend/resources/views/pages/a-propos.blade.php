@@ -1,5 +1,10 @@
 @php
+    use App\Support\Content\SiteRemote;
+
     $site = \App\Support\Content\SiteConfig::get();
+    $headerTitle = SiteRemote::field('a-propos', 'header', 'title');
+    $headerSubtitle = SiteRemote::field('a-propos', 'header', 'subtitle', $site['about']);
+    $histoireText = SiteRemote::field('a-propos', 'histoire', 'subtitle', "Le REJCC est né de la volonté de jeunes entrepreneurs catholiques de Côte d'Ivoire de conjuguer leur foi, leur ambition et leur sens du service pour bâtir, ensemble, une nouvelle génération d'entreprises à impact.");
     $objectives = [
         "Collaborer et co-créer entre membres",
         "Apprendre et monter en compétences",
@@ -11,8 +16,8 @@
 @endphp
 
 <x-site-layout title="À propos" description="Découvrez le REJCC : mission, vision et valeurs du réseau de référence des jeunes entrepreneurs catholiques de Côte d'Ivoire — foi, innovation et entrepreneuriat.">
-    <x-page-header eyebrow="Le réseau" crumb="À propos" :subtitle="$site['about']">
-        À propos du <span class="font-serif italic normal-case text-azure">REJCC</span>
+    <x-page-header eyebrow="Le réseau" crumb="À propos" :subtitle="$headerSubtitle">
+        @if ($headerTitle) {{ $headerTitle }} @else À propos du <span class="font-serif italic normal-case text-azure">REJCC</span> @endif
     </x-page-header>
 
     <section class="bg-white py-24 sm:py-28">
@@ -22,7 +27,7 @@
                     align="left"
                     eyebrow="Notre histoire"
                     title="Né d'une vision partagée"
-                    subtitle="Le REJCC est né de la volonté de jeunes entrepreneurs catholiques de Côte d'Ivoire de conjuguer leur foi, leur ambition et leur sens du service pour bâtir, ensemble, une nouvelle génération d'entreprises à impact."
+                    :subtitle="$histoireText"
                 />
                 <p class="mt-6 leading-relaxed text-ink/75">{{ $site['positioning'] }}</p>
             </x-ui.reveal>

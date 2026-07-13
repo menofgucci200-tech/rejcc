@@ -7,8 +7,17 @@
 
         @php
             $site = \App\Support\Content\SiteConfig::get();
-            $seoTitle = ($title ?? null) ? $title.' · '.$site['name'] : $site['name'].' — '.$site['fullName'];
-            $seoDescription = $description ?? "Le REJCC accompagne les jeunes entrepreneurs catholiques de Côte d'Ivoire : formations en entrepreneuriat, mentorat, réseautage, incubateur de projets et opportunités professionnelles à Abidjan et dans tous les diocèses.";
+
+            // SEO éditable par page depuis l'admin (clés seo.{slug}.title/description),
+            // avec repli sur les valeurs passées par la page puis les défauts.
+            $seoSlug = str_replace('/', '-', trim(request()->path(), '/')) ?: 'home';
+            $adminTitle = \App\Support\Content\SiteRemote::setting("seo.{$seoSlug}.title");
+            $adminDescription = \App\Support\Content\SiteRemote::setting("seo.{$seoSlug}.description");
+
+            $seoTitle = $adminTitle
+                ? $adminTitle.' · '.$site['name']
+                : (($title ?? null) ? $title.' · '.$site['name'] : $site['name'].' — '.$site['fullName']);
+            $seoDescription = $adminDescription ?? $description ?? "Le REJCC accompagne les jeunes entrepreneurs catholiques de Côte d'Ivoire : formations en entrepreneuriat, mentorat, réseautage, incubateur de projets et opportunités professionnelles à Abidjan et dans tous les diocèses.";
             $seoImage = $image ?? asset('brand/rejcc-logo-color.png');
         @endphp
 
@@ -55,6 +64,7 @@
 
         <div id="scroll-progress-bar" class="fixed inset-x-0 top-0 z-[90] h-[3px] bg-accent" style="width: 0%"></div>
 
+        <x-site-banner />
         <x-navbar />
 
         <main>

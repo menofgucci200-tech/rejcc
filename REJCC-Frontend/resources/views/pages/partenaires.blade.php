@@ -1,11 +1,15 @@
 @php
+    use App\Support\Content\SiteRemote;
+
     $partners = collect(\App\Support\Api::get('/partners')['partners'] ?? [])->map(fn ($p) => (object) $p);
     $benefits = \App\Support\Content\PartnersContent::partnershipBenefits();
+    $headerTitle = SiteRemote::field('partenaires', 'header', 'title');
+    $headerSubtitle = SiteRemote::field('partenaires', 'header', 'subtitle', "Entreprises, institutions et organisations qui soutiennent l'entrepreneuriat des jeunes catholiques de Côte d'Ivoire.");
 @endphp
 
 <x-site-layout title="Partenaires" description="Les partenaires qui soutiennent le REJCC et l'entrepreneuriat des jeunes catholiques en Côte d'Ivoire. Devenez partenaire du réseau.">
-    <x-page-header eyebrow="Ensemble, plus loin" crumb="Partenaires" subtitle="Entreprises, institutions et organisations qui soutiennent l'entrepreneuriat des jeunes catholiques de Côte d'Ivoire.">
-        Nos <span class="font-serif italic normal-case text-azure">partenaires</span>
+    <x-page-header eyebrow="Ensemble, plus loin" crumb="Partenaires" :subtitle="$headerSubtitle">
+        @if ($headerTitle) {{ $headerTitle }} @else Nos <span class="font-serif italic normal-case text-azure">partenaires</span> @endif
     </x-page-header>
 
     <section class="bg-white py-20 sm:py-24">

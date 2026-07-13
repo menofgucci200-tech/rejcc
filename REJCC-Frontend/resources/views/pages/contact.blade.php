@@ -1,4 +1,6 @@
 @php
+    use App\Support\Content\SiteRemote;
+
     $site = \App\Support\Content\SiteConfig::get();
     $infos = [
         ['icon' => 'map-pin', 'label' => 'Adresse', 'value' => $site['contact']['address']],
@@ -6,11 +8,13 @@
         ['icon' => 'phone', 'label' => 'Téléphone', 'value' => $site['contact']['phone']],
     ];
     $socials = \App\Support\Content\SiteConfig::socials();
+    $headerTitle = SiteRemote::field('contact', 'header', 'title');
+    $headerSubtitle = SiteRemote::field('contact', 'header', 'subtitle', "Une question, un projet, une envie de collaborer ? L'équipe du REJCC vous répond.");
 @endphp
 
 <x-site-layout title="Contact" description="Contactez le REJCC — Réseau Entrepreneurial des Jeunes Catholiques de Côte d'Ivoire : questions, adhésions, partenariats.">
-    <x-page-header eyebrow="Parlons-en" crumb="Contact" subtitle="Une question, un projet, une envie de collaborer ? L'équipe du REJCC vous répond.">
-        Nous <span class="font-serif italic normal-case text-azure">contacter</span>
+    <x-page-header eyebrow="Parlons-en" crumb="Contact" :subtitle="$headerSubtitle">
+        @if ($headerTitle) {{ $headerTitle }} @else Nous <span class="font-serif italic normal-case text-azure">contacter</span> @endif
     </x-page-header>
 
     <section class="bg-white py-20 sm:py-28">

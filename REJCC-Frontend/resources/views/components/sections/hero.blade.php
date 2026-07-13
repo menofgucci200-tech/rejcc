@@ -1,5 +1,10 @@
 @php
+    use App\Support\Content\SiteRemote;
+
     $cta = \App\Support\Content\SiteConfig::ctaPrimary();
+    $heroEyebrow = SiteRemote::field('home', 'hero', 'eyebrow', "Réseau entrepreneurial catholique · Côte d'Ivoire");
+    $heroSubtitle = SiteRemote::field('home', 'hero', 'subtitle', "Le réseau de référence des jeunes entrepreneurs et porteurs de projets catholiques. Collaborer, innover et bâtir des entreprises à impact durable — au service de l'Église et de la société.");
+    $heroNote = SiteRemote::field('home', 'hero', 'note', '350+ membres déjà engagés dans 33 domaines.');
     $floatingCards = [
         ['icon' => 'network', 'label' => 'Networking', 'sub' => 'Connexions ciblées', 'x' => '-12%', 'y' => '8%'],
         ['icon' => 'graduation-cap', 'label' => 'Mentorat', 'sub' => 'Experts confirmés', 'x' => '76%', 'y' => '-4%'],
@@ -18,7 +23,7 @@
     <div class="relative mx-auto grid w-full max-w-7xl items-center gap-16 container-px lg:grid-cols-[1.05fr_0.95fr]">
         <div>
             <x-ui.reveal>
-                <x-ui.eyebrow tone="dark">Réseau entrepreneurial catholique · Côte d'Ivoire</x-ui.eyebrow>
+                <x-ui.eyebrow tone="dark">{{ $heroEyebrow }}</x-ui.eyebrow>
             </x-ui.reveal>
 
             <h1 class="mt-6 font-display uppercase leading-[0.9] tracking-[-0.01em] text-white text-[clamp(2.75rem,8vw,5.75rem)]">
@@ -30,7 +35,7 @@
 
             <x-ui.reveal :delay="0.28">
                 <p class="mt-7 max-w-xl text-pretty text-lg leading-relaxed text-white/75">
-                    Le réseau de référence des jeunes entrepreneurs et porteurs de projets catholiques. Collaborer, innover et bâtir des entreprises à impact durable — au service de l'Église et de la société.
+                    {{ $heroSubtitle }}
                 </p>
             </x-ui.reveal>
 
@@ -45,7 +50,7 @@
                         <span class="inline-flex size-9 items-center justify-center rounded-full border-2 border-brand bg-azure/30 text-[0.7rem] font-bold text-white">{{ $initials }}</span>
                     @endforeach
                 </div>
-                <span><span class="font-semibold text-white">350+ membres</span> déjà engagés dans 33 domaines.</span>
+                <span class="font-medium text-white/80">{{ $heroNote }}</span>
             </x-ui.reveal>
         </div>
 
