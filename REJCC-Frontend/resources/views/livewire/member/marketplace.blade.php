@@ -70,7 +70,7 @@
                     <input wire:model="contact" type="text" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
                 </div>
                 <div class="sm:col-span-2">
-                    <x-ui.media-field label="Photo de votre service / produit (optionnel)" hint="Une belle photo augmente vos chances d'être contacté." :media-url="$mediaUrl" :media-name="$mediaName" :media-size="$mediaSize" />
+                    <x-ui.media-field label="Image ou vidéo de votre service / produit (optionnel)" hint="Ajoutez une photo, une courte vidéo de présentation (20 Mo max), ou collez un lien YouTube/TikTok — un visuel augmente vos chances d'être contacté." :media-url="$mediaUrl" :media-name="$mediaName" :media-size="$mediaSize" />
                 </div>
                 <button wire:click="soumettre" wire:loading.attr="disabled" class="btn-tap rounded-[9px] bg-brand px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-brand/90 hover:shadow-md disabled:opacity-60 sm:col-span-2 sm:w-fit">Soumettre à la validation</button>
             </div>
@@ -115,13 +115,7 @@
                 <div class="grid gap-4" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr))">
                     @foreach ($listings as $l)
                         <article class="card-hover flex flex-col overflow-hidden rounded-[16px] border border-brand/10 bg-white shadow-[0_2px_8px_rgba(3,29,89,.05)]">
-                            @if ($l['photo'])
-                                <img src="{{ $l['photo'] }}" alt="{{ $l['title'] }}" class="h-36 w-full object-cover" loading="lazy">
-                            @else
-                                <div class="flex h-24 items-center justify-center" style="background: linear-gradient(135deg,#0B2E7A,#4F6FBF)">
-                                    <x-ui.icon :name="$l['type'] === 'produit' ? 'nav-library' : 'nav-briefcase'" class="size-8 text-white/75" />
-                                </div>
-                            @endif
+                            <x-ui.media-thumb :url="$l['photo']" :alt="$l['title']" mode="card" :fallback-icon="$l['type'] === 'produit' ? 'nav-library' : 'nav-briefcase'" />
                             <div class="flex flex-1 flex-col p-4">
                                 <div class="mb-2 flex items-center gap-2">
                                     <span class="rounded-full px-2.5 py-0.5 text-[10.5px] font-bold {{ $l['type'] === 'service' ? 'bg-azure/10 text-azure' : 'bg-[#F5A623]/10 text-[#B87A0D]' }}">{{ ucfirst($l['type']) }}</span>
@@ -170,13 +164,7 @@
                     @foreach ($mesAnnonces as $l)
                         @php $b = $statutBadge($l['statut']); @endphp
                         <article class="card-hover flex flex-wrap items-center gap-4 rounded-[16px] border border-brand/10 bg-white p-4 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
-                            @if ($l['photo'])
-                                <img src="{{ $l['photo'] }}" alt="" class="size-14 shrink-0 rounded-xl object-cover">
-                            @else
-                                <span class="flex size-14 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand">
-                                    <x-ui.icon :name="$l['type'] === 'produit' ? 'nav-library' : 'nav-briefcase'" class="size-5" />
-                                </span>
-                            @endif
+                            <x-ui.media-thumb :url="$l['photo']" mode="thumb" :fallback-icon="$l['type'] === 'produit' ? 'nav-library' : 'nav-briefcase'" />
                             <div class="min-w-[200px] flex-1">
                                 <p class="text-[13.5px] font-bold text-brand">{{ $l['title'] }}</p>
                                 <p class="mt-0.5 text-xs text-[#5B677A]">{{ ucfirst($l['type']) }} · {{ $l['category'] }}@if ($l['price']) · {{ $l['price'] }}@endif</p>

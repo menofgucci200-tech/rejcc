@@ -36,13 +36,7 @@
                 @php $b = $badge($l['statut']); @endphp
                 <div class="row-hover -mx-5 border-t border-[#EDF0F5] px-5 py-4 first:border-t-0">
                     <div class="flex flex-wrap items-center gap-4">
-                        @if ($l['photo'])
-                            <img src="{{ $l['photo'] }}" alt="" class="size-12 shrink-0 rounded-xl object-cover">
-                        @else
-                            <span class="flex size-12 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand">
-                                <x-ui.icon :name="$l['type'] === 'produit' ? 'nav-library' : 'nav-briefcase'" class="size-5" />
-                            </span>
-                        @endif
+                        <x-ui.media-thumb :url="$l['photo']" mode="thumb" :fallback-icon="$l['type'] === 'produit' ? 'nav-library' : 'nav-briefcase'" />
                         <div class="min-w-[220px] flex-1">
                             <p class="text-[13.5px] font-bold text-brand">{{ $l['title'] }}</p>
                             <p class="mt-0.5 text-xs text-[#5B677A]">
@@ -75,6 +69,11 @@
 
                     @if ($expandedId === $l['id'])
                         <div class="panel-enter mt-3 rounded-xl bg-[#F8FAFC] p-4">
+                            @if ($l['photo'])
+                                <div class="mb-3 max-w-[420px] overflow-hidden rounded-xl border border-brand/10">
+                                    <x-ui.media-thumb :url="$l['photo']" :alt="$l['title']" mode="card" />
+                                </div>
+                            @endif
                             <p class="text-[12.5px] leading-relaxed text-ink">{{ $l['description'] }}</p>
                             <div class="mt-2.5 flex flex-wrap gap-4 text-[11.5px] text-[#5B677A]">
                                 @if ($l['contact']) <span>📞 {{ $l['contact'] }}</span> @endif
