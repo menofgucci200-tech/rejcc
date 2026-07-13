@@ -106,6 +106,12 @@ Route::middleware('auth.token')->group(function () {
     // Opportunités & annonces
     Route::get('/opportunities', [OpportunityController::class, 'index']);
     Route::post('/opportunities', [OpportunityController::class, 'store']);
+
+    // Marketplace (annonces validées par l'administration avant publication)
+    Route::get('/marketplace', [\App\Http\Controllers\Api\MarketplaceController::class, 'index']);
+    Route::get('/marketplace/mine', [\App\Http\Controllers\Api\MarketplaceController::class, 'mine']);
+    Route::post('/marketplace', [\App\Http\Controllers\Api\MarketplaceController::class, 'store']);
+    Route::delete('/marketplace/{id}', [\App\Http\Controllers\Api\MarketplaceController::class, 'destroy']);
 });
 
 // Administration. Chaque section porte son slug de permission : un admin dont
@@ -211,5 +217,12 @@ Route::middleware(['auth.token', 'audit.log'])->prefix('admin')->group(function 
     Route::middleware('auth.admin:partenariats')->group(function () {
         Route::get('/partenariats', [AdminController::class, 'partnershipRequests']);
         Route::put('/partenariats/{id}', [AdminController::class, 'updatePartnershipRequest']);
+    });
+
+    Route::middleware('auth.admin:communaute')->group(function () {
+        Route::get('/marketplace', [\App\Http\Controllers\Api\MarketplaceController::class, 'adminIndex']);
+        Route::put('/marketplace/{id}/approve', [\App\Http\Controllers\Api\MarketplaceController::class, 'approve']);
+        Route::put('/marketplace/{id}/reject', [\App\Http\Controllers\Api\MarketplaceController::class, 'reject']);
+        Route::delete('/marketplace/{id}', [\App\Http\Controllers\Api\MarketplaceController::class, 'adminDestroy']);
     });
 });

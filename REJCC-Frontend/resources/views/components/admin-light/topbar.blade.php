@@ -3,7 +3,7 @@
 @php
     $user = \App\Support\Api::user();
     $stats = \App\Support\Api::get('/admin/stats', [], \App\Support\Api::token())['stats'] ?? [];
-    $attention = ($stats['candidatures_attente'] ?? 0) + ($stats['adhesions_attente'] ?? 0) + ($stats['non_traites'] ?? 0) + ($stats['partenariats_attente'] ?? 0);
+    $attention = ($stats['candidatures_attente'] ?? 0) + ($stats['adhesions_attente'] ?? 0) + ($stats['non_traites'] ?? 0) + ($stats['partenariats_attente'] ?? 0) + ($stats['marketplace_attente'] ?? 0);
 @endphp
 
 <header class="sticky top-0 z-50 flex h-16 items-center gap-4 border-b border-brand/10 border-t-[3px] border-t-accent bg-white/85 px-7 backdrop-blur-lg">

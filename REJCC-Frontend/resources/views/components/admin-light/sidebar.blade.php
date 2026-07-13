@@ -22,7 +22,7 @@
                 ['label' => 'Formations', 'icon' => 'graduation-cap', 'route' => 'admin.formations'],
                 ['label' => 'Événements', 'icon' => 'calendar-days', 'route' => 'admin.evenements'],
                 ['label' => 'Projets & Incubateur', 'icon' => 'nav-incubator', 'route' => 'admin.projets'],
-                ['label' => 'Communauté', 'icon' => 'message-circle', 'route' => 'admin.communaute'],
+                ['label' => 'Marketplace', 'icon' => 'store', 'route' => 'admin.marketplace'],
                 ['label' => 'Ressources', 'icon' => 'nav-library', 'route' => 'admin.ressources'],
                 ['label' => 'Certificats', 'icon' => 'award', 'route' => 'admin.certificats'],
                 ['label' => 'Opportunités', 'icon' => 'nav-briefcase', 'route' => 'admin.emplois'],

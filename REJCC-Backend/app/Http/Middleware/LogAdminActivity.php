@@ -25,6 +25,7 @@ class LogAdminActivity
         'membership-applications' => 'Candidature',
         'adhesions' => 'Adhésion',
         'documents' => 'Document',
+        'marketplace' => 'Annonce marketplace',
         'site-content' => 'Contenu du site',
         'site-settings' => 'Réglages du site',
         'page-sections' => 'Section de page',
@@ -57,7 +58,7 @@ class LogAdminActivity
         $target = $label.($id && is_numeric($id) ? " #{$id}" : '');
 
         $action = match (true) {
-            $subAction === 'accept' => 'Acceptation',
+            $subAction === 'accept', $subAction === 'approve' => 'Acceptation',
             $subAction === 'reject' => 'Rejet',
             $subAction === 'traite' => 'Marqué traité',
             $subAction === 'broadcast', $resource === 'notifications' => 'Notification diffusée',

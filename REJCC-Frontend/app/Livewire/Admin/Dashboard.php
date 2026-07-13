@@ -46,6 +46,7 @@ class Dashboard extends Component
             ($stats['candidatures_attente'] ?? 0) > 0 ? ['texte' => ($stats['candidatures_attente']).' demande(s) d\'adhésion en attente de traitement', 'dot' => '#F5A623', 'route' => 'admin.adhesions'] : null,
             ($stats['non_traites'] ?? 0) > 0 ? ['texte' => ($stats['non_traites']).' message(s) de contact non traités', 'dot' => '#AC0100', 'route' => 'admin.contacts'] : null,
             ($stats['partenariats_attente'] ?? 0) > 0 ? ['texte' => ($stats['partenariats_attente']).' demande(s) de partenariat à étudier', 'dot' => '#4F6FBF', 'route' => 'admin.partenariats'] : null,
+            ($stats['marketplace_attente'] ?? 0) > 0 ? ['texte' => ($stats['marketplace_attente']).' annonce(s) marketplace à valider', 'dot' => '#22A85A', 'route' => 'admin.marketplace'] : null,
         ]));
 
         // Répartition réelle des inscriptions par formation (top 6).

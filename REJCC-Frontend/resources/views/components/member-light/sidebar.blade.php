@@ -10,7 +10,7 @@
         ['label' => 'Mentorat', 'icon' => 'nav-mentor', 'route' => 'espace-membre.mentorat'],
         ['label' => 'Annuaire', 'icon' => 'users', 'route' => 'espace-membre.directory'],
         ['label' => 'Messagerie', 'icon' => 'message-circle', 'route' => 'espace-membre.messaging'],
-        ['label' => 'Communauté', 'icon' => 'network', 'route' => 'espace-membre.communaute'],
+        ['label' => 'Marketplace', 'icon' => 'store', 'route' => 'espace-membre.marketplace'],
         ['label' => 'Événements', 'icon' => 'calendar-days', 'route' => 'espace-membre.evenements'],
         ['label' => 'Projets', 'icon' => 'nav-projects', 'route' => 'espace-membre.projets'],
         ['label' => 'Incubateur', 'icon' => 'nav-incubator', 'route' => 'espace-membre.incubateur'],
