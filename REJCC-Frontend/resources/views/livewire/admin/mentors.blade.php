@@ -13,7 +13,7 @@
 
         <div class="rounded-[18px] border border-brand/10 bg-white px-5 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
             @forelse ($mentors as $m)
-                <div class="flex flex-wrap items-center gap-4 border-t border-[#EDF0F5] py-3.5 first:border-t-0 {{ $m['actif'] ? '' : 'opacity-55' }}">
+                <div class="row-hover -mx-5 flex flex-wrap items-center gap-4 border-t border-[#EDF0F5] px-5 py-3.5 first:border-t-0 {{ $m['actif'] ? '' : 'opacity-55' }}">
                     <span class="flex size-10 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white" style="background: linear-gradient(135deg, #F5A623, #F7C873)">{{ $m['initiales'] }}</span>
                     <div class="min-w-[200px] flex-1">
                         <p class="text-[13.5px] font-bold text-brand">{{ $m['nom'] }}</p>

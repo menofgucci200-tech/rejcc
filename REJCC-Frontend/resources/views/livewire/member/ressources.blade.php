@@ -8,16 +8,16 @@
                 <div class="h-[3px] w-9 rounded bg-accent"></div>
             </div>
             <div class="flex flex-wrap gap-2">
-                <button wire:click="setFiltre('tous')" class="rounded-full border px-3.5 py-1.5 text-xs font-semibold {{ $filtre === 'tous' ? 'border-brand bg-brand text-white' : 'border-brand/10 bg-white text-[#5B677A]' }}">Toutes</button>
+                <button wire:click="setFiltre('tous')" class="btn-tap rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors duration-200 {{ $filtre === 'tous' ? 'border-brand bg-brand text-white' : 'border-brand/10 bg-white text-[#5B677A]' }}">Toutes</button>
                 @foreach ($categories as $type => $nombre)
-                    <button wire:click="setFiltre('{{ $type }}')" class="rounded-full border px-3.5 py-1.5 text-xs font-semibold {{ $filtre === $type ? 'border-brand bg-brand text-white' : 'border-brand/10 bg-white text-[#5B677A]' }}">{{ $type }}s ({{ $nombre }})</button>
+                    <button wire:click="setFiltre('{{ $type }}')" class="btn-tap rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors duration-200 {{ $filtre === $type ? 'border-brand bg-brand text-white' : 'border-brand/10 bg-white text-[#5B677A]' }}">{{ $type }}s ({{ $nombre }})</button>
                 @endforeach
             </div>
         </div>
 
         <div class="space-y-3">
             @forelse ($ressources as $r)
-                <article class="flex flex-wrap items-center gap-4 rounded-[16px] border border-brand/10 bg-white p-4 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                <article class="card-hover flex flex-wrap items-center gap-4 rounded-[16px] border border-brand/10 bg-white p-4 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
                     <span class="flex size-12 shrink-0 items-center justify-center rounded-xl" style="background: {{ $r['color'] }}1A; color: {{ $r['color'] }}">
                         <x-ui.icon :name="$r['icon']" class="size-5" />
                     </span>
@@ -28,7 +28,7 @@
                         @endif
                         <p class="mt-1 text-[11px] text-[#9AA6B8]">{{ $r['type'] }}@if ($r['taille']) · {{ $r['taille'] }}@endif · {{ $r['telechargements'] }} téléchargement{{ $r['telechargements'] > 1 ? 's' : '' }}</p>
                     </div>
-                    <a href="{{ $r['url'] }}" target="_blank" rel="noopener" wire:click="compter({{ $r['id'] }})" class="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-azure/25 bg-azure/10 px-3.5 py-1.5 text-xs font-semibold text-azure">
+                    <a href="{{ $r['url'] }}" target="_blank" rel="noopener" wire:click="compter({{ $r['id'] }})" class="btn-tap inline-flex shrink-0 items-center gap-1.5 rounded-full border border-azure/25 bg-azure/10 px-3.5 py-1.5 text-xs font-semibold text-azure hover:bg-azure/20">
                         <x-ui.icon name="download" class="size-3.5" /> Consulter
                     </a>
                 </article>

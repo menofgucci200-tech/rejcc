@@ -10,16 +10,16 @@
 
         <div class="mb-5 flex flex-wrap gap-2">
             @foreach ($onglets as $key => $label)
-                <button wire:click="setOnglet('{{ $key }}')" class="rounded-full border px-4 py-2 text-[12.5px] font-bold {{ $onglet === $key ? 'border-brand bg-brand text-white' : 'border-brand/10 bg-white text-[#5B677A]' }}">{{ $label }}</button>
+                <button wire:click="setOnglet('{{ $key }}')" class="btn-tap rounded-full border px-4 py-2 text-[12.5px] font-bold transition-colors duration-200 {{ $onglet === $key ? 'border-brand bg-brand text-white' : 'border-brand/10 bg-white text-[#5B677A] hover:border-brand/30' }}">{{ $label }}</button>
             @endforeach
-            <button wire:click="openCreate" class="ml-auto rounded-[10px] bg-accent px-4 py-2 text-xs font-bold text-white hover:bg-accent-600">+ Ajouter</button>
+            <button wire:click="openCreate" class="ml-auto btn-tap rounded-[10px] bg-accent px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-accent-600 hover:shadow-md">+ Ajouter</button>
         </div>
 
         @if ($showForm)
-            <div class="mb-6 grid grid-cols-1 gap-3.5 rounded-[18px] border border-brand/10 bg-white p-[22px] shadow-[0_2px_8px_rgba(3,29,89,.05)] sm:grid-cols-2">
+            <div class="panel-enter mb-6 grid grid-cols-1 gap-3.5 rounded-[18px] border border-brand/10 bg-white p-[22px] shadow-[0_2px_8px_rgba(3,29,89,.05)] sm:grid-cols-2">
                 <div class="flex items-center justify-between sm:col-span-2">
                     <p class="text-sm font-bold text-brand">{{ $editingId ? 'Modifier' : 'Ajouter' }} — {{ $onglets[$onglet] }}</p>
-                    <button wire:click="closeForm"><x-ui.icon name="x" class="size-4 text-[#5B677A]" /></button>
+                    <button wire:click="closeForm" class="icon-btn rounded-lg p-1 hover:bg-cloud hover:text-brand"><x-ui.icon name="x" class="size-4 text-[#5B677A]" /></button>
                 </div>
 
                 @if ($onglet === 'sectors')
@@ -105,13 +105,13 @@
                     </div>
                 @endif
 
-                <button wire:click="save" wire:loading.attr="disabled" class="rounded-[9px] bg-brand px-5 py-2.5 text-sm font-bold text-white hover:bg-brand/90 disabled:opacity-60 sm:col-span-2 sm:w-fit">Publier</button>
+                <button wire:click="save" wire:loading.attr="disabled" class="btn-tap rounded-[9px] bg-brand px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-brand/90 hover:shadow-md disabled:opacity-60 sm:col-span-2 sm:w-fit">Publier</button>
             </div>
         @endif
 
         <div class="rounded-[18px] border border-brand/10 bg-white px-5 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
-            @forelse ($items as $item)
-                <div class="flex flex-wrap items-center gap-4 border-t border-[#EDF0F5] py-3.5 first:border-t-0">
+            @forelse ($elements as $item)
+                <div class="row-hover -mx-5 flex flex-wrap items-center gap-4 border-t border-[#EDF0F5] px-5 py-3.5 first:border-t-0">
                     <div class="min-w-[220px] flex-1">
                         @if ($onglet === 'sectors')
                             <p class="text-[13.5px] font-bold text-brand">{{ $item['title'] }}</p>
@@ -132,10 +132,10 @@
                         @endif
                     </div>
                     <div class="flex shrink-0 items-center gap-1.5">
-                        <button wire:click="openEdit({{ $item['id'] }})" class="rounded-lg p-1.5 text-[#9AA6B8] hover:bg-brand/10 hover:text-brand">
+                        <button wire:click="openEdit({{ $item['id'] }})" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-brand/10 hover:text-brand">
                             <x-ui.icon name="pencil" class="size-3.5" />
                         </button>
-                        <button wire:click="delete({{ $item['id'] }})" wire:confirm="Supprimer cet élément du site ?" class="rounded-lg p-1.5 text-[#9AA6B8] hover:bg-accent/10 hover:text-accent">
+                        <button wire:click="delete({{ $item['id'] }})" wire:confirm="Supprimer cet élément du site ?" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-accent/10 hover:text-accent">
                             <x-ui.icon name="trash-2" class="size-3.5" />
                         </button>
                     </div>

@@ -9,7 +9,7 @@
         </div>
 
         @if ($message)
-            <div class="mb-5 flex items-center gap-2.5 rounded-[12px] border border-[#BFE3CD] bg-[#EAF6EE] px-4 py-3 text-[13px] font-semibold text-[#1C8F4C]">
+            <div class="panel-enter mb-5 flex items-center gap-2.5 rounded-[12px] border border-[#BFE3CD] bg-[#EAF6EE] px-4 py-3 text-[13px] font-semibold text-[#1C8F4C]">
                 <x-ui.icon name="check-circle" class="size-4 shrink-0" /> {{ $message }}
             </div>
         @endif
@@ -19,7 +19,7 @@
                 <label class="mb-2 block text-xs font-semibold text-[#5B677A]">Type de compte</label>
                 <div class="flex flex-wrap gap-2">
                     @foreach (['member' => 'Membre', 'mentor' => 'Mentor', 'admin' => 'Administrateur'] as $value => $label)
-                        <button type="button" wire:click="$set('type', '{{ $value }}')" class="rounded-full border px-4 py-2 text-xs font-semibold {{ $type === $value ? 'border-brand bg-brand text-white' : 'border-brand/10 bg-white text-[#5B677A]' }}">{{ $label }}</button>
+                        <button type="button" wire:click="$set('type', '{{ $value }}')" class="btn-tap rounded-full border px-4 py-2 text-xs font-semibold transition-colors duration-200 {{ $type === $value ? 'border-brand bg-brand text-white' : 'border-brand/10 bg-white text-[#5B677A] hover:border-brand/30' }}">{{ $label }}</button>
                     @endforeach
                 </div>
             </div>
@@ -45,7 +45,7 @@
             </div>
             <div class="sm:col-span-2">
                 <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Mot de passe provisoire (min. 8 caractères — à communiquer à la personne)</label>
-                <input wire:model="password" type="text" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
+                <x-ui.password-input wire:model="password" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
                 @error('password') <span class="text-xs text-accent">{{ $message }}</span> @enderror
             </div>
 
@@ -70,7 +70,7 @@
                 </div>
             @endif
 
-            <button wire:click="save" wire:loading.attr="disabled" class="rounded-[9px] bg-brand px-5 py-2.5 text-sm font-bold text-white hover:bg-brand/90 disabled:opacity-60 sm:col-span-2 sm:w-fit">Créer le compte</button>
+            <button wire:click="save" wire:loading.attr="disabled" class="btn-tap rounded-[9px] bg-brand px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-brand/90 hover:shadow-md disabled:opacity-60 sm:col-span-2 sm:w-fit">Créer le compte</button>
         </div>
     </div>
 </div>

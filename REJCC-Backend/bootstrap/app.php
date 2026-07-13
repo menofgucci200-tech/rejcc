@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'auth.token'   => \App\Http\Middleware\AuthenticateToken::class,
             'auth.admin'   => \App\Http\Middleware\RequireAdmin::class,
+            'audit.log'    => \App\Http\Middleware\LogAdminActivity::class,
         ]);
 
         // Derriere le proxy HTTPS de l'hebergeur (Render, etc.), sans quoi

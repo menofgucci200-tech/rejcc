@@ -22,6 +22,8 @@ class OpportunityController extends Controller
             'contact' => $o->contact,
             'deadline' => $o->deadline?->toDateString(),
             'author' => $o->author ? trim($o->author->prenom.' '.$o->author->nom) : null,
+            'media_url' => $o->media_url,
+            'media_name' => $o->media_name,
             'created_at' => $o->created_at,
         ]);
 
@@ -39,6 +41,8 @@ class OpportunityController extends Controller
             'type' => 'required|string|max:40',
             'contact' => 'nullable|string|max:160',
             'deadline' => 'nullable|date',
+            'media_url' => 'nullable|url|max:500',
+            'media_name' => 'nullable|string|max:200',
         ]);
 
         if ($validator->fails()) {
@@ -70,6 +74,8 @@ class OpportunityController extends Controller
             'type' => 'required|string|max:40',
             'contact' => 'nullable|string|max:160',
             'deadline' => 'nullable|date',
+            'media_url' => 'nullable|url|max:500',
+            'media_name' => 'nullable|string|max:200',
         ]);
 
         if ($validator->fails()) {

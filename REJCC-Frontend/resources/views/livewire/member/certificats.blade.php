@@ -12,7 +12,7 @@
         @else
             <div class="grid gap-4" style="grid-template-columns: repeat(auto-fill, minmax(260px, 1fr))">
                 @foreach ($certificats as $c)
-                    <article class="overflow-hidden rounded-[16px] border border-brand/10 bg-white shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                    <article class="card-hover overflow-hidden rounded-[16px] border border-brand/10 bg-white shadow-[0_2px_8px_rgba(3,29,89,.05)]">
                         <div class="flex h-28 items-center justify-center" style="background: linear-gradient(135deg, {{ $c['from'] }}, {{ $c['to'] }})">
                             <x-ui.icon name="award" class="size-10 text-white/90" />
                         </div>

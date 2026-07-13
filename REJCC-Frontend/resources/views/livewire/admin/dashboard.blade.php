@@ -9,7 +9,7 @@
 
         <section class="mb-7 grid grid-cols-2 gap-3.5 lg:grid-cols-4">
             @foreach ($cards as $c)
-                <div class="rounded-2xl border border-brand/10 bg-white p-[18px] shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                <div class="card-hover rounded-2xl border border-brand/10 bg-white p-[18px] shadow-[0_2px_8px_rgba(3,29,89,.05)]">
                     <p class="text-xs font-semibold text-[#5B677A]">{{ $c['label'] }}</p>
                     <p class="mt-1.5 text-[26px] font-extrabold text-brand">{{ $c['value'] }}</p>
                     <p class="mt-1 text-[11.5px] font-bold" style="color: {{ $c['subColor'] }}">{{ $c['sub'] }}</p>
@@ -26,7 +26,7 @@
                     </div>
                     <div class="flex gap-1.5">
                         @foreach ([3, 6, 12] as $p)
-                            <button wire:click="setPeriode({{ $p }})" class="rounded-full border px-3 py-1.5 text-[11.5px] font-semibold {{ $periode === $p ? 'border-brand bg-brand text-white' : 'border-brand/10 bg-white text-[#5B677A]' }}">{{ $p }} mois</button>
+                            <button wire:click="setPeriode({{ $p }})" class="rounded-full border px-3 py-1.5 text-[11.5px] font-semibold transition-all duration-200 ease-out active:scale-95 {{ $periode === $p ? 'border-brand bg-brand text-white' : 'border-brand/10 bg-white text-[#5B677A] hover:border-brand/30 hover:text-brand' }}">{{ $p }} mois</button>
                         @endforeach
                     </div>
                 </div>
@@ -48,10 +48,10 @@
                 <div class="mb-4 h-[3px] w-9 rounded bg-accent"></div>
                 <div class="rounded-[18px] border border-brand/10 bg-white px-4.5 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
                     @forelse ($enAttente as $a)
-                        <a href="{{ route($a['route']) }}" wire:navigate class="flex items-center gap-3 border-t border-[#EDF0F5] py-3 first:border-t-0">
+                        <a href="{{ route($a['route']) }}" wire:navigate class="group flex items-center gap-3 border-t border-[#EDF0F5] py-3 -mx-4.5 px-4.5 transition-colors duration-200 first:border-t-0 hover:bg-cloud/60">
                             <span class="size-2 shrink-0 rounded-full" style="background: {{ $a['dot'] }}"></span>
                             <span class="min-w-0 flex-1 text-[13px] font-semibold text-ink">{{ $a['texte'] }}</span>
-                            <span class="shrink-0 text-[11.5px] text-[#9AA6B8]">→</span>
+                            <span class="nudge-x shrink-0 text-[11.5px] text-[#9AA6B8] group-hover:text-accent">→</span>
                         </a>
                     @empty
                         <p class="py-8 text-center text-sm text-[#5B677A]">Rien à traiter pour le moment.</p>
@@ -75,6 +75,25 @@
                 @empty
                     <p class="py-6 text-center text-sm text-[#5B677A]">Les inscriptions aux formations apparaîtront ici.</p>
                 @endforelse
+            </div>
+        </section>
+
+        <section class="mb-8">
+            <h2 class="mb-1 text-[17px] font-bold text-brand">Exporter les données</h2>
+            <div class="mb-4 h-[3px] w-9 rounded bg-accent"></div>
+            <div class="rounded-[18px] border border-brand/10 bg-white p-[22px] shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                <p class="mb-4 text-[13px] text-[#5B677A]">Téléchargez un jeu de données au format CSV (ouvrable directement dans Excel, Google Sheets ou LibreOffice).</p>
+                <div class="flex flex-wrap gap-2.5">
+                    @foreach ([
+                        'members' => 'Membres', 'candidatures' => 'Candidatures', 'contacts' => 'Contacts',
+                        'newsletter' => 'Newsletter', 'formations' => 'Formations', 'evenements' => 'Événements',
+                        'opportunites' => 'Opportunités',
+                    ] as $ds => $label)
+                        <a href="{{ route('admin.export', $ds) }}" class="inline-flex items-center gap-2 rounded-[10px] border border-brand/15 bg-cloud/60 px-4 py-2.5 text-xs font-bold text-brand transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-azure/30 hover:bg-cloud hover:shadow-md active:scale-95">
+                            <x-ui.icon name="download" class="size-3.5 text-azure" /> {{ $label }}
+                        </a>
+                    @endforeach
+                </div>
             </div>
         </section>
     </div>

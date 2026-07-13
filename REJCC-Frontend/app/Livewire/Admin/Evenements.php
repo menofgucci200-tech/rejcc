@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\HandlesMedia;
 use App\Support\Api;
 use App\Support\CategoryPalette;
 use Carbon\Carbon;
@@ -12,6 +13,8 @@ use Livewire\Component;
 #[Layout('layouts.admin-light')]
 class Evenements extends Component
 {
+    use HandlesMedia;
+
     public bool $showForm = false;
 
     public ?int $editingId = null;
@@ -54,6 +57,7 @@ class Evenements extends Component
     public function openCreate(): void
     {
         $this->reset(['editingId', 'title', 'category', 'startsAt', 'timeLabel', 'location', 'excerpt', 'description', 'capacity']);
+        $this->clearMedia();
         $this->resetValidation();
         $this->showForm = true;
     }
@@ -74,6 +78,7 @@ class Evenements extends Component
         $this->excerpt = $e['excerpt'] ?? '';
         $this->description = $e['description'] ?? '';
         $this->capacity = $e['capacity'];
+        $this->fillMedia($e['image'] ?? null);
         $this->resetValidation();
         $this->showForm = true;
     }
@@ -97,6 +102,7 @@ class Evenements extends Component
             'excerpt' => $this->excerpt ?: null,
             'description' => $this->description ?: null,
             'capacity' => $this->capacity,
+            'image' => $this->mediaUrl ?: null,
         ];
         $token = Api::token();
 

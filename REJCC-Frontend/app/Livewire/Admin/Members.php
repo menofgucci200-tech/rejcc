@@ -199,24 +199,25 @@ class Members extends Component
                 'id' => $m['id'],
                 'nom' => trim(($m['prenom'] ?? '').' '.($m['nom'] ?? '')) ?: $m['email'],
                 'email' => $m['email'],
-                'telephone' => $m['telephone'] ?? '—',
+                'telephone' => $m['telephone'] ?: '—',
+                'domaine' => $m['domaines_formation'] ?: '—',
                 'ville' => $m['ville'] ?? null,
+                'numero' => $m['numero'] ?? '—',
                 'role' => $m['role'],
                 'restreint' => $m['role'] === 'admin' && ($m['permissions'] ?? null) !== null,
                 'actif' => (bool) ($m['is_active'] ?? true),
                 'depuis' => Carbon::parse($m['created_at'])->translatedFormat('j M Y'),
                 'initiales' => mb_strtoupper(mb_substr($m['prenom'] ?? $m['email'], 0, 1).mb_substr($m['nom'] ?? '', 0, 1)),
-            ]);
-
-        // Classement par rôle : administrateurs, puis mentors, puis membres.
-        $groupes = collect([
-            'Administrateurs' => $tous->where('role', 'admin')->values(),
-            'Mentors' => $tous->where('role', 'mentor')->values(),
-            'Membres' => $tous->where('role', 'member')->values(),
-        ])->filter(fn ($g) => $g->isNotEmpty());
+            ])
+            // Classement : administrateurs, puis mentors, puis membres, puis par nom.
+            ->sortBy([
+                fn ($m) => ['admin' => 0, 'mentor' => 1, 'member' => 2][$m['role']] ?? 3,
+                fn ($m) => mb_strtolower($m['nom']),
+            ])
+            ->values();
 
         return view('livewire.admin.members', [
-            'groupes' => $groupes,
+            'membres' => $tous,
             'total' => $tous->count(),
             'sectionsDisponibles' => AdminSections::SECTIONS,
         ]);

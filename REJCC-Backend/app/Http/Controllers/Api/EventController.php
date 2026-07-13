@@ -97,6 +97,7 @@ class EventController extends Controller
             'excerpt' => 'nullable|string|max:300',
             'description' => 'nullable|string|max:3000',
             'capacity' => 'nullable|integer|min:1',
+            'image' => 'nullable|url|max:500',
         ]);
 
         if ($validator->fails()) {

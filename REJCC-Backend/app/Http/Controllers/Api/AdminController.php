@@ -55,6 +55,23 @@ class AdminController extends Controller
         ]);
     }
 
+    /** Journal d'audit : dernières actions d'administration. */
+    public function auditLog(Request $request)
+    {
+        $q = $request->query('q', '');
+
+        $logs = \App\Models\AuditLog::orderByDesc('created_at')
+            ->when($q, fn ($query) => $query->where(function ($qb) use ($q) {
+                $qb->where('actor', 'like', "%{$q}%")
+                   ->orWhere('action', 'like', "%{$q}%")
+                   ->orWhere('target', 'like', "%{$q}%");
+            }))
+            ->limit(300)
+            ->get(['id', 'actor', 'action', 'target', 'method', 'path', 'ip', 'created_at']);
+
+        return response()->json(['ok' => true, 'logs' => $logs]);
+    }
+
     // ── Membres (comptes) ─────────────────────────────────────────────────────
 
     public function members(Request $request)
@@ -74,6 +91,25 @@ class AdminController extends Controller
             'id', 'prenom', 'nom', 'email', 'telephone',
             'ville', 'profil', 'secteur', 'role', 'permissions', 'is_active', 'created_at',
         ]);
+
+        // Domaine de formation : issu du formulaire d'adhésion (une seule requête,
+        // indexée par email, pour éviter le N+1).
+        $domaines = MembershipApplication::whereIn('email', $members->pluck('email'))
+            ->orderBy('created_at')
+            ->pluck('domaines_formation', 'email');
+
+        $members = $members->map(function (User $u) use ($domaines) {
+            return [
+                ...$u->only([
+                    'id', 'prenom', 'nom', 'email', 'telephone',
+                    'ville', 'profil', 'secteur', 'role', 'permissions', 'is_active',
+                ]),
+                'numero' => $u->memberNumber(),
+                'code' => $u->cardCode(),
+                'domaines_formation' => $domaines[$u->email] ?? null,
+                'created_at' => $u->created_at,
+            ];
+        });
 
         return response()->json(['ok' => true, 'members' => $members]);
     }

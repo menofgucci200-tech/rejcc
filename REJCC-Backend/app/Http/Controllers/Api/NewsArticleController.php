@@ -66,6 +66,8 @@ class NewsArticleController extends Controller
             'body' => 'required|string|min:20|max:20000',
             'author' => 'nullable|string|max:120',
             'published_at' => 'nullable|date',
+            'media_url' => 'nullable|url|max:500',
+            'media_name' => 'nullable|string|max:200',
         ]);
 
         if ($validator->fails()) {

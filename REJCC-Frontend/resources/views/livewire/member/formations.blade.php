@@ -7,7 +7,7 @@
                 <h1 class="mb-1 text-[17px] font-bold text-brand">Mes formations</h1>
                 <div class="h-[3px] w-9 rounded bg-accent"></div>
             </div>
-            <a href="{{ route('espace-membre.catalogue') }}" wire:navigate class="rounded-full bg-brand px-4 py-2 text-xs font-semibold text-white hover:bg-brand/90">
+            <a href="{{ route('espace-membre.catalogue') }}" wire:navigate class="btn-tap rounded-full bg-brand px-4 py-2 text-xs font-semibold text-white hover:bg-brand/90">
                 Parcourir le catalogue
             </a>
         </div>
@@ -21,21 +21,21 @@
                     <div class="h-2 rounded-full bg-white" style="width: {{ $enCours['pct'] }}%"></div>
                 </div>
                 <p class="mb-4 text-xs font-semibold text-white/80">{{ $enCours['pct'] }}% complété</p>
-                <button wire:click="validerModule({{ $enCours['id'] }})" wire:loading.attr="disabled" class="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-xs font-bold text-brand disabled:opacity-60">
-                    Valider le module en cours <x-ui.icon name="arrow-right" class="size-3.5" />
+                <button wire:click="validerModule({{ $enCours['id'] }})" wire:loading.attr="disabled" class="group btn-tap inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-xs font-bold text-brand disabled:opacity-60">
+                    Valider le module en cours <x-ui.icon name="arrow-right" class="nudge-x size-3.5" />
                 </button>
             </div>
         @endif
 
         <div class="mb-5 flex flex-wrap gap-2">
-            <button wire:click="setFiltre('tous')" class="rounded-full border px-3.5 py-1.5 text-xs font-semibold {{ $filtre === 'tous' ? 'border-brand bg-brand text-white' : 'border-brand/10 bg-white text-[#5B677A]' }}">Toutes</button>
-            <button wire:click="setFiltre('encours')" class="rounded-full border px-3.5 py-1.5 text-xs font-semibold {{ $filtre === 'encours' ? 'border-brand bg-brand text-white' : 'border-brand/10 bg-white text-[#5B677A]' }}">En cours</button>
-            <button wire:click="setFiltre('termine')" class="rounded-full border px-3.5 py-1.5 text-xs font-semibold {{ $filtre === 'termine' ? 'border-brand bg-brand text-white' : 'border-brand/10 bg-white text-[#5B677A]' }}">Terminées</button>
+            <button wire:click="setFiltre('tous')" class="btn-tap rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors duration-200 {{ $filtre === 'tous' ? 'border-brand bg-brand text-white' : 'border-brand/10 bg-white text-[#5B677A]' }}">Toutes</button>
+            <button wire:click="setFiltre('encours')" class="btn-tap rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors duration-200 {{ $filtre === 'encours' ? 'border-brand bg-brand text-white' : 'border-brand/10 bg-white text-[#5B677A]' }}">En cours</button>
+            <button wire:click="setFiltre('termine')" class="btn-tap rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors duration-200 {{ $filtre === 'termine' ? 'border-brand bg-brand text-white' : 'border-brand/10 bg-white text-[#5B677A]' }}">Terminées</button>
         </div>
 
         <div class="space-y-3">
             @foreach ($cours as $c)
-                <article class="flex flex-wrap items-center gap-4 rounded-[16px] border border-brand/10 bg-white p-4 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                <article class="card-hover flex flex-wrap items-center gap-4 rounded-[16px] border border-brand/10 bg-white p-4 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
                     <span class="flex size-12 shrink-0 items-center justify-center rounded-xl text-white" style="background: linear-gradient(135deg, {{ $c['from'] }}, {{ $c['to'] }})">
                         <x-ui.icon name="graduation-cap" class="size-6" />
                     </span>
@@ -54,7 +54,7 @@
                             <x-ui.icon name="check" class="size-3.5" /> Terminée
                         </span>
                     @else
-                        <button wire:click="validerModule({{ $c['id'] }})" wire:loading.attr="disabled" class="shrink-0 rounded-full border border-azure/25 bg-azure/10 px-3.5 py-1.5 text-xs font-semibold text-azure disabled:opacity-60">Valider le module</button>
+                        <button wire:click="validerModule({{ $c['id'] }})" wire:loading.attr="disabled" class="btn-tap shrink-0 rounded-full border border-azure/25 bg-azure/10 px-3.5 py-1.5 text-xs font-semibold text-azure hover:bg-azure/20 disabled:opacity-60">Valider le module</button>
                     @endif
                 </article>
             @endforeach

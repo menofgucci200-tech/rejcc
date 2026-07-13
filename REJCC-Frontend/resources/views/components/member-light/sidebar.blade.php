@@ -41,15 +41,35 @@
         @endif
     </div>
 
-    <nav class="flex flex-1 flex-col gap-0.5 overflow-y-auto p-3">
+    <nav
+        x-data="{
+            top: 0, height: 0, visible: false,
+            place(el) {
+                const nav = el.closest('nav');
+                const r = el.getBoundingClientRect();
+                const nr = nav.getBoundingClientRect();
+                this.top = r.top - nr.top + nav.scrollTop;
+                this.height = r.height;
+                this.visible = true;
+            },
+            hide() { this.visible = false; },
+        }"
+        @mouseleave="hide()"
+        class="relative flex flex-1 flex-col gap-0.5 overflow-y-auto p-3"
+    >
+        <div
+            class="pointer-events-none absolute inset-x-3 rounded-[10px] bg-white/[.09] transition-all duration-300 ease-out"
+            x-bind:style="`top:${top}px; height:${height}px; opacity:${visible ? 1 : 0}`"
+        ></div>
         @foreach ($navItems as $item)
             @php $active = $isActive($item); @endphp
             <a
                 href="{{ $itemHref($item) }}"
                 wire:navigate
-                class="flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm font-medium transition-colors {{ $active ? 'bg-white/10 text-white' : 'text-[#C4D0EC] hover:bg-white/[.08] hover:text-white' }}"
+                @mouseenter="place($el)"
+                class="group relative flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm font-medium transition-all duration-200 ease-out active:scale-[0.98] {{ $active ? 'bg-white/[.07] text-white shadow-[inset_2px_0_0_var(--color-accent)]' : 'text-[#C4D0EC] hover:text-white' }}"
             >
-                <x-ui.icon :name="$item['icon']" class="size-[18px] shrink-0" />
+                <x-ui.icon :name="$item['icon']" class="size-[18px] shrink-0 transition-transform duration-200 group-hover:scale-110" />
                 {{ $item['label'] }}
             </a>
         @endforeach
@@ -60,9 +80,9 @@
         <a
             href="{{ route('espace-membre.profile') }}"
             wire:navigate
-            class="flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm font-medium transition-colors {{ $paramActive ? 'bg-white/10 text-white' : 'text-[#C4D0EC] hover:bg-white/[.08] hover:text-white' }}"
+            class="group flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm font-medium transition-all duration-200 ease-out hover:translate-x-0.5 active:scale-[0.98] {{ $paramActive ? 'bg-white/10 text-white' : 'text-[#C4D0EC] hover:bg-white/[.08] hover:text-white' }}"
         >
-            <x-ui.icon name="settings" class="size-[18px] shrink-0" />
+            <x-ui.icon name="settings" class="size-[18px] shrink-0 transition-transform duration-200 group-hover:rotate-45" />
             Paramètres
         </a>
     </div>

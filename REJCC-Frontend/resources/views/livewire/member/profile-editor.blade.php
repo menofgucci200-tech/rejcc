@@ -16,14 +16,65 @@
                 <div>
                     <p class="mb-3.5 text-[13px] font-bold text-brand">Profil</p>
                     <div class="mb-4 flex items-center gap-4">
-                        <div class="flex size-[84px] shrink-0 items-center justify-center rounded-full text-2xl font-bold tracking-wide text-white" style="background: linear-gradient(135deg, #4F6FBF, #AC0100)">
-                            {{ mb_substr($prenom ?: '?', 0, 1) }}{{ mb_substr($nom ?: '', 0, 1) }}
-                        </div>
-                        <div>
+                        @if ($photo)
+                            <img src="{{ $photo }}" alt="Photo de profil" class="size-[84px] shrink-0 rounded-full object-cover ring-2 ring-brand/10">
+                        @else
+                            <div class="flex size-[84px] shrink-0 items-center justify-center rounded-full text-2xl font-bold tracking-wide text-white" style="background: linear-gradient(135deg, #4F6FBF, #AC0100)">
+                                {{ mb_substr($prenom ?: '?', 0, 1) }}{{ mb_substr($nom ?: '', 0, 1) }}
+                            </div>
+                        @endif
+                        <div class="min-w-0">
                             <p class="text-[13.5px] font-bold text-brand">Photo de profil</p>
-                            <p class="mt-0.5 text-[11.5px] text-[#9AA6B8]">Fonctionnalité bientôt disponible.</p>
+                            <div class="mt-1.5 flex flex-wrap items-center gap-2">
+                                <label class="btn-tap inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-brand px-3 py-1.5 text-[11.5px] font-bold text-white hover:bg-brand/90">
+                                    <x-ui.icon name="image" class="size-3.5" /> {{ $photo ? 'Changer' : 'Ajouter' }}
+                                    <input type="file" wire:model="photoFile" accept="image/*" class="hidden">
+                                </label>
+                                @if ($photo)
+                                    <button type="button" wire:click="removePhoto" class="btn-tap rounded-full border border-brand/15 px-3 py-1.5 text-[11.5px] font-semibold text-[#5B677A] hover:bg-cloud">Retirer</button>
+                                @endif
+                                <span wire:loading wire:target="photoFile" class="text-[11px] font-semibold text-azure">Envoi…</span>
+                            </div>
+                            @error('photoFile') <p class="mt-1 text-[11px] text-accent">{{ $message }}</p> @enderror
                         </div>
                     </div>
+
+                    {{-- Complétion du profil --}}
+                    <div class="mb-4 rounded-[12px] border border-brand/10 bg-cloud/50 p-3.5">
+                        <div class="mb-1.5 flex items-center justify-between">
+                            <span class="text-[12px] font-bold text-brand">Complétion du profil</span>
+                            <span class="text-[12px] font-bold text-azure">{{ $completion }}%</span>
+                        </div>
+                        <div class="h-2 overflow-hidden rounded-full bg-white">
+                            <div class="h-full rounded-full transition-all" style="width: {{ $completion }}%; background: linear-gradient(90deg,#4F6FBF,#22A85A)"></div>
+                        </div>
+                        @if ($completion < 100)
+                            <p class="mt-2 text-[11px] text-[#9AA6B8]">Complétez vos informations pour améliorer votre visibilité dans le réseau.</p>
+                        @endif
+                    </div>
+
+                    {{-- Pièce d'identité --}}
+                    <div class="mb-4 rounded-[12px] border border-brand/10 p-3.5">
+                        <p class="text-[12.5px] font-bold text-brand">Pièce d'identité</p>
+                        <p class="mt-0.5 text-[11px] text-[#9AA6B8]">CNI, passeport ou attestation (image ou PDF, 5 Mo max). Confidentiel, visible par l'administration uniquement.</p>
+                        <div class="mt-2.5 flex flex-wrap items-center gap-2">
+                            @if ($piece_identite)
+                                <a href="{{ $piece_identite }}" target="_blank" rel="noopener" class="btn-tap inline-flex items-center gap-1.5 rounded-full bg-[#22A85A]/10 px-3 py-1.5 text-[11.5px] font-semibold text-[#22A85A]">
+                                    <x-ui.icon name="check-circle" class="size-3.5" /> Document fourni · voir
+                                </a>
+                            @endif
+                            <label class="btn-tap inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-brand/15 px-3 py-1.5 text-[11.5px] font-bold text-brand hover:bg-cloud">
+                                <x-ui.icon name="file-text" class="size-3.5" /> {{ $piece_identite ? 'Remplacer' : 'Téléverser' }}
+                                <input type="file" wire:model="idFile" accept="image/*,application/pdf" class="hidden">
+                            </label>
+                            <span wire:loading wire:target="idFile" class="text-[11px] font-semibold text-azure">Envoi…</span>
+                        </div>
+                        @error('idFile') <p class="mt-1 text-[11px] text-accent">{{ $message }}</p> @enderror
+                    </div>
+
+                    @if ($mediaMessage)
+                        <p class="panel-enter mb-3 inline-flex items-center gap-1.5 rounded-full bg-[#22A85A]/10 px-3 py-1.5 text-[11.5px] font-semibold text-[#22A85A]"><x-ui.icon name="check-circle" class="size-3.5" /> {{ $mediaMessage }}</p>
+                    @endif
 
                     <form wire:submit="save" class="flex flex-col gap-3">
                         <label class="flex flex-col gap-1.5 text-xs font-semibold text-[#5B677A]">Nom complet
@@ -89,7 +140,7 @@
                         <button
                             type="submit"
                             wire:loading.attr="disabled"
-                            class="self-start rounded-[9px] px-5 py-2.5 text-[12.5px] font-bold text-white transition-colors"
+                            class="btn-tap self-start rounded-[9px] px-5 py-2.5 text-[12.5px] font-bold text-white shadow-sm hover:shadow-md"
                             style="background: {{ $status === 'saved' ? '#22A85A' : '#031D59' }}"
                         >
                             <span wire:loading.remove>{{ $status === 'saved' ? 'Enregistré !' : 'Enregistrer' }}</span>
@@ -109,10 +160,10 @@
                             <button
                                 type="button"
                                 wire:click="togglePreference('{{ $pref['key'] }}')"
-                                class="relative h-6 w-[42px] shrink-0 rounded-full transition-colors"
+                                class="relative h-6 w-[42px] shrink-0 rounded-full transition-colors duration-200 active:scale-95"
                                 style="background: {{ $pref['on'] ? '#22A85A' : '#E6EAF0' }}"
                             >
-                                <span class="absolute top-[3px] size-[18px] rounded-full bg-white shadow transition-all" style="left: {{ $pref['on'] ? '21px' : '3px' }}"></span>
+                                <span class="absolute top-[3px] size-[18px] rounded-full bg-white shadow transition-all duration-200 ease-out" style="left: {{ $pref['on'] ? '21px' : '3px' }}"></span>
                             </button>
                         </div>
                     @endforeach
@@ -128,20 +179,20 @@
             <div class="max-w-[480px] rounded-[18px] border border-brand/10 bg-white p-6 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
                 <form wire:submit="updatePassword" class="flex flex-col gap-3">
                     <label class="flex flex-col gap-1.5 text-xs font-semibold text-[#5B677A]">Mot de passe actuel
-                        <input wire:model="current_password" type="password" placeholder="••••••••" class="rounded-[9px] border border-brand/10 px-3 py-2.5 text-[13px] text-ink outline-none focus:border-azure" />
+                        <x-ui.password-input wire:model="current_password" placeholder="••••••••" class="w-full rounded-[9px] border border-brand/10 px-3 py-2.5 text-[13px] text-ink outline-none focus:border-azure" />
                         @error('current_password') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
                     </label>
                     <label class="flex flex-col gap-1.5 text-xs font-semibold text-[#5B677A]">Nouveau mot de passe
-                        <input wire:model="password" type="password" placeholder="••••••••" class="rounded-[9px] border border-brand/10 px-3 py-2.5 text-[13px] text-ink outline-none focus:border-azure" />
+                        <x-ui.password-input wire:model="password" placeholder="••••••••" class="w-full rounded-[9px] border border-brand/10 px-3 py-2.5 text-[13px] text-ink outline-none focus:border-azure" />
                         @error('password') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
                     </label>
                     <label class="flex flex-col gap-1.5 text-xs font-semibold text-[#5B677A]">Confirmer le nouveau mot de passe
-                        <input wire:model="password_confirmation" type="password" placeholder="••••••••" class="rounded-[9px] border border-brand/10 px-3 py-2.5 text-[13px] text-ink outline-none focus:border-azure" />
+                        <x-ui.password-input wire:model="password_confirmation" placeholder="••••••••" class="w-full rounded-[9px] border border-brand/10 px-3 py-2.5 text-[13px] text-ink outline-none focus:border-azure" />
                     </label>
                     <button
                         type="submit"
                         wire:loading.attr="disabled"
-                        class="self-start rounded-[9px] px-5 py-2.5 text-[12.5px] font-bold text-white"
+                        class="btn-tap self-start rounded-[9px] px-5 py-2.5 text-[12.5px] font-bold text-white shadow-sm hover:shadow-md"
                         style="background: {{ $passwordStatus === 'saved' ? '#22A85A' : '#031D59' }}"
                     >
                         <span wire:loading.remove>{{ $passwordStatus === 'saved' ? 'Mot de passe mis à jour !' : 'Mettre à jour le mot de passe' }}</span>
@@ -221,7 +272,7 @@
                             </div>
                         </div>
                     </div>
-                    <button type="button" class="mt-3.5 rounded-[9px] border border-[#C9D3E6] px-4.5 py-2.5 text-[12.5px] font-bold text-brand hover:bg-cloud">Télécharger la carte</button>
+                    <button type="button" class="btn-tap mt-3.5 rounded-[9px] border border-[#C9D3E6] px-4.5 py-2.5 text-[12.5px] font-bold text-brand hover:bg-cloud">Télécharger la carte</button>
                 </div>
 
                 <div>

@@ -59,7 +59,7 @@ new #[Layout('layouts.site')] class extends Component
 
                     <div class="flex flex-col gap-1.5">
                         <label for="password" class="text-sm font-semibold text-brand">Mot de passe</label>
-                        <input wire:model="password" id="password" type="password" required autocomplete="current-password"
+                        <x-ui.password-input wire:model="password" id="password" required autocomplete="current-password"
                             class="w-full rounded-xl border bg-white px-4 py-3 text-brand placeholder:text-ink/40 outline-none transition focus:ring-2 {{ $errors->has('password') ? 'border-accent focus:border-accent focus:ring-accent/25' : 'border-brand/15 focus:border-brand focus:ring-accent/20' }}" />
                         @error('password') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
                     </div>

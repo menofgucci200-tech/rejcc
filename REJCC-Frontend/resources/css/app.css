@@ -82,10 +82,25 @@
 :root {
   --bg: #ffffff;
   --fg: #333333;
+  /* Barre de progression Livewire (wire:navigate) aux couleurs de la marque.
+     !important nécessaire : Livewire injecte son propre <style>:root{...}
+     APRÈS le nôtre au premier chargement, qui l'emporterait sinon dans la cascade. */
+  --livewire-progress-bar-color: var(--color-accent) !important;
+}
+
+/* La barre nprogress est injectée en JS par Livewire : on la surcharge en
+   spécificité pour lui donner un dégradé de marque + un peu plus d'épaisseur. */
+#nprogress .bar {
+  height: 3px !important;
+  background: linear-gradient(90deg, var(--color-accent), var(--color-azure)) !important;
 }
 
 * {
   border-color: color-mix(in oklab, var(--color-brand) 12%, transparent);
+}
+
+[x-cloak] {
+  display: none !important;
 }
 
 html {
@@ -101,12 +116,13 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   overflow-x: hidden;
-  transition: opacity 220ms ease, transform 220ms ease;
+  transition: opacity 160ms ease;
 }
 
 /* Transition douce entre les pages lors d'une navigation wire:navigate.
-   Opacité seule : un transform sur <body> casserait le position:fixed
-   de la navbar et de la barre d'onglets mobile pendant la transition. */
+   Opacité seule sur <body> : un transform casserait le position:fixed
+   de la navbar et de la barre d'onglets mobile pendant la transition.
+   L'échelle légère est appliquée à <main> à l'entrée (page-enter). */
 html.is-navigating body {
   opacity: 0;
 }
@@ -114,13 +130,102 @@ html.is-navigating body {
 /* Entrée de page : le <body> étant remplacé à chaque wire:navigate,
    l'animation rejoue naturellement à chaque navigation. */
 main {
-  animation: page-enter 0.45s var(--ease-smooth);
+  animation: page-enter 0.5s var(--ease-smooth);
 }
 @keyframes page-enter {
   from {
     opacity: 0;
-    transform: translateY(14px);
+    transform: translateY(16px) scale(0.99);
   }
+}
+
+/* ============================================================
+   Micro-interactions de navigation (dashboard admin & espace membre)
+   ============================================================ */
+
+/* Carte cliquable générique : légère élévation + accent au survol. */
+@utility card-hover {
+  transition: transform 220ms var(--ease-smooth), box-shadow 220ms var(--ease-smooth),
+    border-color 220ms var(--ease-smooth);
+  will-change: transform;
+}
+@media (pointer: fine) {
+  .card-hover:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 32px rgba(3, 29, 89, 0.14);
+  }
+}
+.card-hover:active {
+  transform: translateY(-1px) scale(0.99);
+}
+
+/* Icône qui glisse légèrement au survol de son lien parent (flèches "→"). */
+.group:hover .nudge-x {
+  transform: translateX(3px);
+}
+.nudge-x {
+  transition: transform 200ms var(--ease-smooth);
+}
+
+/* Pastille d'onglet actif (barre d'onglets mobile) : petite apparition. */
+@keyframes tab-pop {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.tab-dot {
+  animation: tab-pop 0.35s var(--ease-smooth);
+}
+
+/* Panneau de formulaire (création/édition) : Livewire remonte le contenu à
+   chaque ouverture, l'animation d'entrée rejoue donc naturellement à chaque fois. */
+@keyframes panel-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+}
+.panel-enter {
+  animation: panel-enter 0.32s var(--ease-smooth);
+}
+
+/* Bouton d'action icône (voir / modifier / supprimer / QR…) dans les tableaux. */
+.icon-btn {
+  transition: transform 200ms var(--ease-smooth), background-color 200ms var(--ease-smooth),
+    color 200ms var(--ease-smooth);
+}
+.icon-btn:hover {
+  transform: scale(1.12);
+}
+.icon-btn:active {
+  transform: scale(0.9);
+}
+
+/* Retour tactile générique pour les boutons d'action pleins (Enregistrer, Publier…). */
+.btn-tap {
+  transition: transform 200ms var(--ease-smooth), background-color 200ms var(--ease-smooth),
+    box-shadow 200ms var(--ease-smooth), opacity 200ms var(--ease-smooth);
+}
+@media (pointer: fine) {
+  .btn-tap:hover {
+    transform: translateY(-1px);
+  }
+}
+.btn-tap:active {
+  transform: translateY(0) scale(0.96);
+}
+
+/* Ligne de tableau/liste : légère teinte au survol. */
+.row-hover {
+  transition: background-color 200ms ease;
+}
+.row-hover:hover {
+  background-color: color-mix(in oklab, var(--color-cloud) 65%, white);
 }
 
 @media (prefers-reduced-motion: reduce) {

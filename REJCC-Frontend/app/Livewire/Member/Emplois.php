@@ -73,6 +73,7 @@ class Emplois extends Component
                 'type' => strtolower($o['type']),
                 'auteur' => $o['author'] ?? 'REJCC',
                 'contact' => $o['contact'],
+                'media' => $o['media_url'] ?? null,
                 'deadline' => $o['deadline'] ? Carbon::parse($o['deadline'])->translatedFormat('j F Y') : null,
                 'date' => Carbon::parse($o['created_at'])->diffForHumans(),
             ])

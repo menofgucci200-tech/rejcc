@@ -7,14 +7,14 @@
                 <h1 class="mb-1 text-[17px] font-bold text-brand">Projets</h1>
                 <div class="h-[3px] w-9 rounded bg-accent"></div>
             </div>
-            <button wire:click="openForm" class="rounded-full bg-brand px-4 py-2 text-xs font-semibold text-white hover:bg-brand/90">Proposer un projet</button>
+            <button wire:click="openForm" class="btn-tap rounded-full bg-brand px-4 py-2 text-xs font-semibold text-white hover:bg-brand/90">Proposer un projet</button>
         </div>
 
         @if ($showForm)
-            <div class="mb-6 grid grid-cols-1 gap-3.5 rounded-[16px] border border-brand/10 bg-white p-5 shadow-[0_2px_8px_rgba(3,29,89,.05)] sm:grid-cols-2">
+            <div class="panel-enter mb-6 grid grid-cols-1 gap-3.5 rounded-[16px] border border-brand/10 bg-white p-5 shadow-[0_2px_8px_rgba(3,29,89,.05)] sm:grid-cols-2">
                 <div class="flex items-center justify-between sm:col-span-2">
                     <p class="text-sm font-bold text-brand">Proposer un projet au réseau</p>
-                    <button wire:click="closeForm"><x-ui.icon name="x" class="size-4 text-[#5B677A]" /></button>
+                    <button wire:click="closeForm" class="icon-btn rounded-lg p-1 hover:bg-cloud hover:text-brand"><x-ui.icon name="x" class="size-4 text-[#5B677A]" /></button>
                 </div>
                 <div class="sm:col-span-2">
                     <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Nom du projet</label>
@@ -35,7 +35,7 @@
                     <input wire:model="fundingGoal" type="number" min="0" step="100000" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
                 </div>
                 <div class="sm:col-span-2">
-                    <button wire:click="proposer" wire:loading.attr="disabled" class="rounded-[9px] bg-brand px-5 py-2.5 text-sm font-bold text-white hover:bg-brand/90 disabled:opacity-60">Soumettre à l'évaluation</button>
+                    <button wire:click="proposer" wire:loading.attr="disabled" class="btn-tap rounded-[9px] bg-brand px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-brand/90 hover:shadow-md disabled:opacity-60">Soumettre à l'évaluation</button>
                     <p class="mt-2 text-[11px] text-[#9AA6B8]">Votre projet sera examiné par l'équipe avant d'apparaître comme validé.</p>
                 </div>
             </div>
@@ -43,7 +43,7 @@
 
         <div class="grid gap-4" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr))">
             @foreach ($projets as $p)
-                <article class="rounded-[16px] border border-brand/10 bg-white p-[18px] shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                <article class="card-hover rounded-[16px] border border-brand/10 bg-white p-[18px] shadow-[0_2px_8px_rgba(3,29,89,.05)]">
                     <div class="mb-3 flex items-start justify-between gap-2">
                         <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand">
                             <x-ui.icon name="nav-projects" class="size-5" />

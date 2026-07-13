@@ -9,10 +9,10 @@
         </div>
 
         @if ($showForm)
-            <div class="mb-6 grid grid-cols-1 gap-3.5 rounded-[18px] border border-brand/10 bg-white p-[22px] shadow-[0_2px_8px_rgba(3,29,89,.05)] sm:grid-cols-2">
+            <div class="panel-enter mb-6 grid grid-cols-1 gap-3.5 rounded-[18px] border border-brand/10 bg-white p-[22px] shadow-[0_2px_8px_rgba(3,29,89,.05)] sm:grid-cols-2">
                 <div class="flex items-center justify-between sm:col-span-2">
                     <p class="text-sm font-bold text-brand">Gérer le projet</p>
-                    <button wire:click="closeForm"><x-ui.icon name="x" class="size-4 text-[#5B677A]" /></button>
+                    <button wire:click="closeForm" class="icon-btn rounded-lg p-1 hover:bg-cloud hover:text-brand"><x-ui.icon name="x" class="size-4 text-[#5B677A]" /></button>
                 </div>
                 <div>
                     <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Titre</label>
@@ -59,13 +59,13 @@
                         @endforeach
                     </div>
                 </div>
-                <button wire:click="save" wire:loading.attr="disabled" class="rounded-[9px] bg-brand px-5 py-2.5 text-sm font-bold text-white hover:bg-brand/90 disabled:opacity-60 sm:col-span-2 sm:w-fit">Enregistrer</button>
+                <button wire:click="save" wire:loading.attr="disabled" class="btn-tap rounded-[9px] bg-brand px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-brand/90 hover:shadow-md disabled:opacity-60 sm:col-span-2 sm:w-fit">Enregistrer</button>
             </div>
         @endif
 
         <div class="rounded-[18px] border border-brand/10 bg-white px-5 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
             @forelse ($projets as $p)
-                <div class="flex flex-wrap items-center gap-4 border-t border-[#EDF0F5] py-3.5 first:border-t-0">
+                <div class="row-hover -mx-5 flex flex-wrap items-center gap-4 border-t border-[#EDF0F5] px-5 py-3.5 first:border-t-0">
                     <span class="flex size-11 shrink-0 items-center justify-center rounded-[10px] bg-brand/10 text-brand">
                         <x-ui.icon name="nav-projects" class="size-4" />
                     </span>
@@ -81,10 +81,10 @@
                     </div>
                     <span class="shrink-0 rounded-full px-2.5 py-1 text-[10.5px] font-bold" style="background: {{ $p['statutColor'] }}1A; color: {{ $p['statutColor'] }}">{{ $p['statut'] }}</span>
                     <div class="flex shrink-0 items-center gap-1.5">
-                        <button wire:click="openEdit({{ $p['id'] }})" class="rounded-lg p-1.5 text-[#9AA6B8] hover:bg-brand/10 hover:text-brand">
+                        <button wire:click="openEdit({{ $p['id'] }})" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-brand/10 hover:text-brand">
                             <x-ui.icon name="pencil" class="size-3.5" />
                         </button>
-                        <button wire:click="delete({{ $p['id'] }})" wire:confirm="Supprimer le projet « {{ $p['titre'] }} » ?" class="rounded-lg p-1.5 text-[#9AA6B8] hover:bg-accent/10 hover:text-accent">
+                        <button wire:click="delete({{ $p['id'] }})" wire:confirm="Supprimer le projet « {{ $p['titre'] }} » ?" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-accent/10 hover:text-accent">
                             <x-ui.icon name="trash-2" class="size-3.5" />
                         </button>
                     </div>

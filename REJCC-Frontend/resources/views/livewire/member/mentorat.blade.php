@@ -13,8 +13,8 @@
                 via la messagerie et l'annuaire.
             </p>
             <div class="mt-5 flex gap-2">
-                <a href="{{ route('espace-membre.directory') }}" wire:navigate class="rounded-full bg-brand px-4 py-2 text-xs font-semibold text-white hover:bg-brand/90">Voir l'annuaire</a>
-                <a href="{{ route('espace-membre.messaging') }}" wire:navigate class="rounded-full border border-brand/15 px-4 py-2 text-xs font-semibold text-brand hover:bg-cloud">Ouvrir la messagerie</a>
+                <a href="{{ route('espace-membre.directory') }}" wire:navigate class="btn-tap rounded-full bg-brand px-4 py-2 text-xs font-semibold text-white hover:bg-brand/90">Voir l'annuaire</a>
+                <a href="{{ route('espace-membre.messaging') }}" wire:navigate class="btn-tap rounded-full border border-brand/15 px-4 py-2 text-xs font-semibold text-brand hover:bg-cloud">Ouvrir la messagerie</a>
             </div>
         </div>
     </div>

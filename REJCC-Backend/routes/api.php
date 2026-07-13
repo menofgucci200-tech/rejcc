@@ -109,8 +109,14 @@ Route::middleware('auth.token')->group(function () {
 
 // Administration. Chaque section porte son slug de permission : un admin dont
 // `permissions` est null accède à tout, sinon uniquement aux sections listées.
-Route::middleware('auth.token')->prefix('admin')->group(function () {
+Route::middleware(['auth.token', 'audit.log'])->prefix('admin')->group(function () {
     Route::get('/stats', [AdminController::class, 'stats'])->middleware('auth.admin');
+
+    // Journal d'audit (lecture seule)
+    Route::get('/audit', [AdminController::class, 'auditLog'])->middleware('auth.admin:audit');
+
+    // Export des jeux de données
+    Route::get('/export/{dataset}', [\App\Http\Controllers\Api\ExportController::class, 'data'])->middleware('auth.admin');
 
     Route::middleware('auth.admin:membres')->group(function () {
         Route::get('/members', [AdminController::class, 'members']);

@@ -26,7 +26,7 @@ class FormationController extends Controller
                 return [
                     ...$f->only([
                         'id', 'title', 'category', 'description', 'duration',
-                        'level', 'is_free', 'is_certifying', 'modules_count',
+                        'level', 'is_free', 'is_certifying', 'modules_count', 'media_url', 'media_name',
                     ]),
                     'enrolled' => (bool) $e,
                     'progress' => $e?->progress,
@@ -149,6 +149,8 @@ class FormationController extends Controller
             'is_certifying' => 'boolean',
             'modules_count' => 'integer|min:1|max:50',
             'is_published' => 'boolean',
+            'media_url' => 'nullable|url|max:500',
+            'media_name' => 'nullable|string|max:200',
         ]);
 
         if ($validator->fails()) {

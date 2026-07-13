@@ -87,12 +87,12 @@
 
                     <div class="mb-1.5 flex flex-col gap-1.5">
                         <label for="ma-password" class="text-[13px] font-bold text-brand">Mot de passe (8 caractères min.) *</label>
-                        <input wire:model="password" id="ma-password" type="password" autocomplete="new-password" class="rounded-[9px] border border-brand/15 px-3.5 py-2.5 text-sm text-ink outline-none focus:border-azure" />
+                        <x-ui.password-input wire:model="password" id="ma-password" autocomplete="new-password" class="w-full rounded-[9px] border border-brand/15 px-3.5 py-2.5 text-sm text-ink outline-none focus:border-azure" />
                         @error('password') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
                     </div>
                     <div class="mb-1.5 flex flex-col gap-1.5">
                         <label for="ma-password-confirmation" class="text-[13px] font-bold text-brand">Confirmer le mot de passe *</label>
-                        <input wire:model="password_confirmation" id="ma-password-confirmation" type="password" autocomplete="new-password" class="rounded-[9px] border border-brand/15 px-3.5 py-2.5 text-sm text-ink outline-none focus:border-azure" />
+                        <x-ui.password-input wire:model="password_confirmation" id="ma-password-confirmation" autocomplete="new-password" class="w-full rounded-[9px] border border-brand/15 px-3.5 py-2.5 text-sm text-ink outline-none focus:border-azure" />
                     </div>
                     <p class="text-xs text-[#9AA6B8]">Ce mot de passe vous servira à vous connecter à votre espace membre une fois votre candidature acceptée.</p>
                 @endif

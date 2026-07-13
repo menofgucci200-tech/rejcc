@@ -30,7 +30,7 @@ class AuthController extends Controller
             ...$u->only([
                 'id', 'prenom', 'nom', 'email', 'telephone', 'genre',
                 'ville', 'paroisse', 'secteur', 'profil',
-                'organisation', 'bio', 'photo', 'role', 'permissions',
+                'organisation', 'bio', 'photo', 'piece_identite', 'role', 'permissions',
             ]),
             'reference' => $u->memberNumber(),
             'numero' => $u->memberNumber(),
@@ -142,6 +142,7 @@ class AuthController extends Controller
             'organisation' => 'nullable|string|max:120',
             'bio' => 'nullable|string|max:600',
             'photo' => 'nullable|url|max:500', // URL de la photo (fichier stocké côté frontend)
+            'piece_identite' => 'nullable|url|max:500', // URL de la pièce d'identité
         ]);
 
         if ($validator->fails()) {

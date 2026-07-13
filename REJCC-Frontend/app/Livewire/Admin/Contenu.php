@@ -175,7 +175,9 @@ class Contenu extends Component
     {
         return view('livewire.admin.contenu', [
             'onglets' => self::ONGLETS,
-            'items' => $this->contenu(),
+            // « elements » et non « items » : la propriété publique $items
+            // (textarea des filières) écraserait la variable de vue.
+            'elements' => $this->contenu(),
         ]);
     }
 }

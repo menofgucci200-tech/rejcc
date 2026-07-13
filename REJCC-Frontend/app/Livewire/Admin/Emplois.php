@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\HandlesMedia;
 use App\Support\Api;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -11,6 +12,8 @@ use Livewire\Component;
 #[Layout('layouts.admin-light')]
 class Emplois extends Component
 {
+    use HandlesMedia;
+
     public bool $showForm = false;
 
     public ?int $editingId = null;
@@ -44,6 +47,7 @@ class Emplois extends Component
     public function openCreate(): void
     {
         $this->reset(['editingId', 'title', 'description', 'contact', 'deadline']);
+        $this->clearMedia();
         $this->type = 'emploi';
         $this->resetValidation();
         $this->showForm = true;
@@ -62,6 +66,7 @@ class Emplois extends Component
         $this->description = $o['description'];
         $this->contact = $o['contact'] ?? '';
         $this->deadline = $o['deadline'] ?? '';
+        $this->fillMedia($o['media_url'] ?? null, $o['media_name'] ?? null);
         $this->resetValidation();
         $this->showForm = true;
     }
@@ -82,6 +87,8 @@ class Emplois extends Component
             'description' => $this->description,
             'contact' => $this->contact ?: null,
             'deadline' => $this->deadline ?: null,
+            'media_url' => $this->mediaUrl ?: null,
+            'media_name' => $this->mediaName ?: null,
         ];
         $token = Api::token();
 

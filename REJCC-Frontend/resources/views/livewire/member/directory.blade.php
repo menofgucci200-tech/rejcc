@@ -8,9 +8,9 @@
                 <div class="h-[3px] w-9 rounded bg-accent"></div>
             </div>
             <div class="flex flex-wrap gap-2">
-                <button wire:click="setFiltre('tous')" class="rounded-full border px-3.5 py-1.5 text-xs font-semibold {{ $filtre === 'tous' ? 'border-brand bg-brand text-white' : 'border-brand/10 bg-white text-[#5B677A]' }}">Tous</button>
+                <button wire:click="setFiltre('tous')" class="btn-tap rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors duration-200 {{ $filtre === 'tous' ? 'border-brand bg-brand text-white' : 'border-brand/10 bg-white text-[#5B677A]' }}">Tous</button>
                 @foreach ($profiles as $p)
-                    <button wire:click="setFiltre('{{ $p['id'] }}')" class="rounded-full border px-3.5 py-1.5 text-xs font-semibold {{ $filtre === $p['id'] ? 'border-brand bg-brand text-white' : 'border-brand/10 bg-white text-[#5B677A]' }}">{{ $p['label'] }}</button>
+                    <button wire:click="setFiltre('{{ $p['id'] }}')" class="btn-tap rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors duration-200 {{ $filtre === $p['id'] ? 'border-brand bg-brand text-white' : 'border-brand/10 bg-white text-[#5B677A]' }}">{{ $p['label'] }}</button>
                 @endforeach
             </div>
         </div>
@@ -30,7 +30,7 @@
         @else
             <div class="grid gap-4" style="grid-template-columns: repeat(auto-fill, minmax(240px, 1fr))">
                 @foreach ($members as $m)
-                    <article class="rounded-[16px] border border-brand/10 bg-white p-[18px] shadow-[0_2px_8px_rgba(3,29,89,.05)] transition-transform hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(3,29,89,.12)]">
+                    <article class="card-hover rounded-[16px] border border-brand/10 bg-white p-[18px] shadow-[0_2px_8px_rgba(3,29,89,.05)]">
                         <div class="flex items-center gap-3">
                             <span class="flex size-11 shrink-0 items-center justify-center rounded-xl text-sm font-bold text-white" style="background: linear-gradient(135deg, #4F6FBF, #AC0100)">
                                 {{ mb_substr($m->prenom, 0, 1) }}{{ mb_substr($m->nom, 0, 1) }}
@@ -53,7 +53,7 @@
                         <a
                             href="{{ route('espace-membre.messaging', ['to' => $m->id]) }}"
                             wire:navigate
-                            class="mt-3.5 flex items-center justify-center gap-1.5 rounded-[9px] border border-azure/25 bg-azure/10 py-2 text-[12.5px] font-semibold text-azure"
+                            class="btn-tap mt-3.5 flex items-center justify-center gap-1.5 rounded-[9px] border border-azure/25 bg-azure/10 py-2 text-[12.5px] font-semibold text-azure hover:bg-azure/20"
                         >
                             <x-ui.icon name="message-circle" class="size-[13px]" /> Envoyer un message
                         </a>

@@ -8,15 +8,15 @@
                 <div class="h-[3px] w-9 rounded bg-accent"></div>
             </div>
             <div class="flex flex-wrap gap-2">
-                <button wire:click="setFiltre('toutes')" class="rounded-full border px-3.5 py-1.5 text-xs font-semibold {{ $filtre === 'toutes' ? 'border-brand bg-brand text-white' : 'border-brand/10 bg-white text-[#5B677A]' }}">Toutes</button>
-                <button wire:click="setFiltre('gratuit')" class="rounded-full border px-3.5 py-1.5 text-xs font-semibold {{ $filtre === 'gratuit' ? 'border-brand bg-brand text-white' : 'border-brand/10 bg-white text-[#5B677A]' }}">Gratuites</button>
-                <button wire:click="setFiltre('certifiante')" class="rounded-full border px-3.5 py-1.5 text-xs font-semibold {{ $filtre === 'certifiante' ? 'border-brand bg-brand text-white' : 'border-brand/10 bg-white text-[#5B677A]' }}">Certifiantes</button>
+                <button wire:click="setFiltre('toutes')" class="btn-tap rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors duration-200 {{ $filtre === 'toutes' ? 'border-brand bg-brand text-white' : 'border-brand/10 bg-white text-[#5B677A]' }}">Toutes</button>
+                <button wire:click="setFiltre('gratuit')" class="btn-tap rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors duration-200 {{ $filtre === 'gratuit' ? 'border-brand bg-brand text-white' : 'border-brand/10 bg-white text-[#5B677A]' }}">Gratuites</button>
+                <button wire:click="setFiltre('certifiante')" class="btn-tap rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors duration-200 {{ $filtre === 'certifiante' ? 'border-brand bg-brand text-white' : 'border-brand/10 bg-white text-[#5B677A]' }}">Certifiantes</button>
             </div>
         </div>
 
         <div class="grid gap-4" style="grid-template-columns: repeat(auto-fill, minmax(260px, 1fr))">
             @foreach ($cours as $c)
-                <article class="overflow-hidden rounded-[16px] border border-brand/10 bg-white shadow-[0_2px_8px_rgba(3,29,89,.05)] transition-transform hover:-translate-y-0.5 hover:shadow-[0_12px_28px_rgba(3,29,89,.12)]">
+                <article class="card-hover overflow-hidden rounded-[16px] border border-brand/10 bg-white shadow-[0_2px_8px_rgba(3,29,89,.05)]">
                     <div class="flex h-24 items-center justify-center" style="background: linear-gradient(135deg, {{ $c['from'] }}, {{ $c['to'] }})">
                         <x-ui.icon name="graduation-cap" class="size-9 text-white/85" />
                     </div>
@@ -41,9 +41,14 @@
                                     <x-ui.icon name="check" class="size-3.5" /> Inscrit
                                 </span>
                             @else
-                                <button wire:click="inscrire({{ $c['id'] }})" wire:loading.attr="disabled" class="rounded-full bg-brand px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-brand/90 disabled:opacity-60">S'inscrire</button>
+                                <button wire:click="inscrire({{ $c['id'] }})" wire:loading.attr="disabled" class="btn-tap rounded-full bg-brand px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-brand/90 disabled:opacity-60">S'inscrire</button>
                             @endif
                         </div>
+                        @if ($c['media'])
+                            <a href="{{ $c['media'] }}" target="_blank" rel="noopener" class="mt-3 inline-flex items-center gap-1.5 text-[11.5px] font-semibold text-azure hover:underline">
+                                <x-ui.icon name="download" class="size-3.5" /> Support de la formation
+                            </a>
+                        @endif
                     </div>
                 </article>
             @endforeach

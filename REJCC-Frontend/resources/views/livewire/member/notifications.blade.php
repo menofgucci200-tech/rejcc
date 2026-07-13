@@ -20,7 +20,7 @@
                             <a href="{{ $n->link }}" wire:navigate class="block">
                         @endif
 
-                        <div class="flex items-start gap-3.5 rounded-2xl border border-brand/10 bg-white px-[18px] py-4 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                        <div class="flex items-start gap-3.5 rounded-2xl border border-brand/10 bg-white px-[18px] py-4 shadow-[0_2px_8px_rgba(3,29,89,.05)] {{ $n->link ? 'card-hover' : '' }}">
                             <span class="flex size-10 shrink-0 items-center justify-center rounded-[11px] bg-cloud text-[#5B677A]">
                                 <x-ui.icon :name="$n->type === 'message' ? 'message-circle' : 'info'" class="size-[17px]" />
                             </span>

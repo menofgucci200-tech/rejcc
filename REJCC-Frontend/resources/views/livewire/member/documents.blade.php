@@ -19,7 +19,7 @@
                         <p class="mb-3.5 text-[10.5px] font-bold uppercase tracking-[0.14em] text-[#9AA6B8]">{{ $cat }}</p>
                         <div class="grid gap-3" style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr))">
                             @foreach ($docs->where('category', $cat) as $d)
-                                <a href="{{ $d->url }}" target="_blank" rel="noopener noreferrer" class="flex items-center gap-3.5 rounded-2xl border border-brand/10 bg-white px-[18px] py-4 shadow-[0_2px_8px_rgba(3,29,89,.05)] transition-transform hover:-translate-y-0.5">
+                                <a href="{{ $d->url }}" target="_blank" rel="noopener noreferrer" class="card-hover flex items-center gap-3.5 rounded-2xl border border-brand/10 bg-white px-[18px] py-4 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
                                     <span class="flex size-[42px] shrink-0 items-center justify-center rounded-[11px] bg-accent/10">
                                         <x-ui.icon name="file-text" class="size-[18px] text-accent" />
                                     </span>

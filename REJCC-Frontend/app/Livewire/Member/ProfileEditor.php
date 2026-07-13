@@ -4,12 +4,26 @@ namespace App\Livewire\Member;
 
 use App\Support\Api;
 use App\Support\Content\MembershipContent;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 #[Layout('layouts.member-light')]
 class ProfileEditor extends Component
 {
+    use WithFileUploads;
+
+    public string $photo = '';
+
+    public string $piece_identite = '';
+
+    public $photoFile = null;
+
+    public $idFile = null;
+
+    public ?string $mediaMessage = null;
+
     public string $prenom = '';
 
     public string $nom = '';
@@ -78,7 +92,53 @@ class ProfileEditor extends Component
         $this->bio = $user->bio ?? '';
         $this->reference = $user->reference ?? '';
         $this->date_adhesion = $user->date_adhesion ?? '';
+        $this->photo = $user->photo ?? '';
+        $this->piece_identite = $user->piece_identite ?? '';
         $this->preferences = (array) ($user->preferences ?? []);
+    }
+
+    public function updatedPhotoFile(): void
+    {
+        $this->validate(['photoFile' => 'image|max:2048'], [], ['photoFile' => 'photo']);
+        $this->photo = Storage::disk('uploads')->url($this->photoFile->store('membres/photos', 'uploads'));
+        $this->photoFile = null;
+        $this->persistMedia('Photo mise à jour.');
+    }
+
+    public function updatedIdFile(): void
+    {
+        $this->validate(['idFile' => 'file|max:5120|mimes:jpg,jpeg,png,webp,pdf'], [], ['idFile' => 'pièce d\'identité']);
+        $this->piece_identite = Storage::disk('uploads')->url($this->idFile->store('membres/pieces', 'uploads'));
+        $this->idFile = null;
+        $this->persistMedia('Pièce d\'identité enregistrée.');
+    }
+
+    public function removePhoto(): void
+    {
+        $this->photo = '';
+        $this->persistMedia('Photo retirée.');
+    }
+
+    private function persistMedia(string $message): void
+    {
+        $result = Api::put('/auth/profile', [
+            'photo' => $this->photo ?: null,
+            'piece_identite' => $this->piece_identite ?: null,
+        ], Api::token());
+
+        if ($result['ok'] ?? false) {
+            session(['api_user' => $result['user']]);
+            $this->mediaMessage = $message;
+        }
+    }
+
+    /** Complétion du profil (indicateur d'amélioration). */
+    protected function completion(): int
+    {
+        $fields = [$this->prenom, $this->nom, $this->telephone, $this->ville, $this->secteur, $this->profil, $this->bio, $this->photo, $this->genre, $this->paroisse];
+        $filled = count(array_filter($fields, fn ($v) => trim((string) $v) !== ''));
+
+        return (int) round($filled / count($fields) * 100);
     }
 
     public function save(): void
@@ -162,6 +222,7 @@ class ProfileEditor extends Component
         return view('livewire.member.profile-editor', [
             'profiles' => MembershipContent::profiles(),
             'preferenceRows' => $preferences,
+            'completion' => $this->completion(),
         ]);
     }
 }

@@ -79,13 +79,13 @@
         </div>
     </div>
 
-    <div class="flex flex-1 flex-col gap-0.5 p-3">
+    <div class="flex flex-1 flex-col gap-0.5 overflow-y-auto p-3">
         <a
             href="{{ route('admin.dashboard') }}"
             wire:navigate
-            class="flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm font-medium transition-colors {{ request()->routeIs('admin.dashboard') ? 'bg-white/10 text-white' : 'text-[#C4D0EC] hover:bg-white/[.08] hover:text-white' }}"
+            class="group flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm font-medium transition-all duration-200 ease-out active:scale-[0.98] {{ request()->routeIs('admin.dashboard') ? 'bg-white/10 text-white shadow-[inset_2px_0_0_var(--color-accent)]' : 'text-[#C4D0EC] hover:translate-x-0.5 hover:bg-white/[.08] hover:text-white' }}"
         >
-            <x-ui.icon name="layout-dashboard" class="size-[18px] shrink-0" />
+            <x-ui.icon name="layout-dashboard" class="size-[18px] shrink-0 transition-transform duration-200 group-hover:scale-110" />
             Vue d'ensemble
         </a>
 
@@ -94,23 +94,27 @@
                 <button
                     type="button"
                     @click="open = !open"
-                    class="flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm font-semibold transition-colors {{ $groupActive($group) ? 'text-white' : 'text-[#C4D0EC] hover:bg-white/[.08] hover:text-white' }}"
+                    class="group flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm font-semibold transition-all duration-200 ease-out active:scale-[0.98] {{ $groupActive($group) ? 'text-white' : 'text-[#C4D0EC] hover:translate-x-0.5 hover:bg-white/[.08] hover:text-white' }}"
                 >
-                    <x-ui.icon :name="$group['icon']" class="size-[18px] shrink-0" />
+                    <x-ui.icon :name="$group['icon']" class="size-[18px] shrink-0 transition-transform duration-200 group-hover:scale-110" />
                     <span class="flex-1 text-left">{{ $group['label'] }}</span>
-                    <x-ui.icon name="chevron-right" class="size-3.5 shrink-0 transition-transform duration-200" x-bind:class="open ? 'rotate-90' : ''" />
+                    <x-ui.icon name="chevron-right" class="size-3.5 shrink-0 transition-transform duration-300 ease-out" x-bind:class="open ? 'rotate-90' : ''" />
                 </button>
-                <div x-show="open" style="display: none;" class="mt-0.5 space-y-0.5 border-l border-white/10 pl-3">
-                    @foreach ($group['items'] as $item)
-                        <a
-                            href="{{ route($item['route']) }}"
-                            wire:navigate
-                            class="flex items-center gap-2.5 rounded-[9px] px-3 py-2 text-[13px] font-medium transition-colors {{ $active($item) ? 'bg-white/10 text-white' : 'text-[#C4D0EC] hover:bg-white/[.08] hover:text-white' }}"
-                        >
-                            <x-ui.icon :name="$item['icon']" class="size-4 shrink-0" />
-                            {{ $item['label'] }}
-                        </a>
-                    @endforeach
+                <div class="grid transition-[grid-template-rows] duration-300 ease-out" x-bind:class="open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'" x-bind:inert="! open">
+                    <div class="overflow-hidden">
+                        <div class="mt-0.5 space-y-0.5 border-l border-white/10 py-0.5 pl-3">
+                            @foreach ($group['items'] as $item)
+                                <a
+                                    href="{{ route($item['route']) }}"
+                                    wire:navigate
+                                    class="group flex items-center gap-2.5 rounded-[9px] px-3 py-2 text-[13px] font-medium transition-all duration-200 ease-out active:scale-[0.97] {{ $active($item) ? 'bg-white/10 text-white shadow-[inset_2px_0_0_var(--color-accent)]' : 'text-[#C4D0EC] hover:translate-x-0.5 hover:bg-white/[.08] hover:text-white' }}"
+                                >
+                                    <x-ui.icon :name="$item['icon']" class="size-4 shrink-0 transition-transform duration-200 group-hover:scale-110" />
+                                    {{ $item['label'] }}
+                                </a>
+                            @endforeach
+                        </div>
+                    </div>
                 </div>
             </div>
         @endforeach
@@ -120,15 +124,15 @@
         <a
             href="{{ route('espace-membre.dashboard') }}"
             wire:navigate
-            class="flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm font-medium text-[#C4D0EC] transition-colors hover:bg-white/[.08] hover:text-white"
+            class="group flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm font-medium text-[#C4D0EC] transition-all duration-200 ease-out hover:translate-x-0.5 hover:bg-white/[.08] hover:text-white active:scale-[0.98]"
         >
-            <x-ui.icon name="nav-home" class="size-[18px] shrink-0" />
+            <x-ui.icon name="nav-home" class="size-[18px] shrink-0 transition-transform duration-200 group-hover:scale-110" />
             Espace membre
         </a>
         <form action="{{ route('logout') }}" method="POST">
             @csrf
-            <button type="submit" class="mt-0.5 flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm font-medium text-[#C4D0EC] transition-colors hover:bg-white/[.08] hover:text-white">
-                <x-ui.icon name="log-out" class="size-[18px] shrink-0" />
+            <button type="submit" class="group mt-0.5 flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm font-medium text-[#C4D0EC] transition-all duration-200 ease-out hover:translate-x-0.5 hover:bg-white/[.08] hover:text-white active:scale-[0.98]">
+                <x-ui.icon name="log-out" class="size-[18px] shrink-0 transition-transform duration-200 group-hover:scale-110" />
                 Se déconnecter
             </button>
         </form>

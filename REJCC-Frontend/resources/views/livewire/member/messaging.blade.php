@@ -15,7 +15,7 @@
                     <div class="px-6 py-10 text-center">
                         <x-ui.icon name="message-circle" class="mx-auto mb-3 size-8 text-[#9AA6B8]" />
                         <p class="mb-4 text-[13.5px] text-[#5B677A]">Aucune conversation. Démarrez-en une depuis l'annuaire.</p>
-                        <a href="{{ route('espace-membre.directory') }}" wire:navigate class="inline-flex items-center gap-1.5 rounded-[10px] border border-azure/25 bg-azure/10 px-4 py-2 text-[12.5px] font-semibold text-azure">
+                        <a href="{{ route('espace-membre.directory') }}" wire:navigate class="btn-tap inline-flex items-center gap-1.5 rounded-[10px] border border-azure/25 bg-azure/10 px-4 py-2 text-[12.5px] font-semibold text-azure hover:bg-azure/20">
                             <x-ui.icon name="users" class="size-[13px]" /> Voir l'annuaire
                         </a>
                     </div>
@@ -53,7 +53,7 @@
                     </div>
                 @else
                     <div class="flex shrink-0 items-center gap-3 border-b border-cloud-200 px-[18px] py-3.5">
-                        <button wire:click="closeThread" class="p-1 text-[#5B677A] lg:hidden" aria-label="Retour">
+                        <button wire:click="closeThread" class="icon-btn rounded-lg p-1 text-[#5B677A] lg:hidden" aria-label="Retour">
                             <x-ui.icon name="arrow-left" class="size-[18px]" />
                         </button>
                         <span class="flex size-[38px] shrink-0 items-center justify-center rounded-full text-xs font-bold text-white" style="background: linear-gradient(135deg, #4F6FBF, #AC0100)">
@@ -86,7 +86,7 @@
                             placeholder="Votre message…"
                             class="min-w-0 flex-1 rounded-[10px] border border-brand/10 bg-cloud px-4 py-2.5 text-[13.5px] text-ink outline-none focus:border-azure"
                         />
-                        <button type="submit" aria-label="Envoyer" class="flex size-[42px] shrink-0 items-center justify-center rounded-[11px] bg-accent text-white hover:bg-accent-600">
+                        <button type="submit" aria-label="Envoyer" class="btn-tap flex size-[42px] shrink-0 items-center justify-center rounded-[11px] bg-accent text-white shadow-sm hover:bg-accent-600 hover:shadow-md">
                             <x-ui.icon name="send" class="size-[15px]" />
                         </button>
                     </form>

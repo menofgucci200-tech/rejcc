@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\HandlesMedia;
 use App\Support\Api;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
@@ -10,6 +11,8 @@ use Livewire\Component;
 #[Layout('layouts.admin-light')]
 class Ressources extends Component
 {
+    use HandlesMedia;
+
     private const EMOJIS = [
         'Ebook' => ['emoji' => '📘', 'tint' => '#E8EDF8'],
         'Modèle' => ['emoji' => '📊', 'tint' => '#F9E9E9'],
@@ -38,8 +41,6 @@ class Ressources extends Component
             'title' => 'required|string|min:2|max:200',
             'type' => 'required|in:Ebook,Modèle,Vidéo,Audio,Document',
             'description' => 'nullable|string|max:1000',
-            'url' => 'required|url|max:500',
-            'size' => 'nullable|string|max:20',
         ];
     }
 
@@ -52,6 +53,7 @@ class Ressources extends Component
     {
         $this->reset(['editingId', 'title', 'description', 'url', 'size']);
         $this->type = 'Document';
+        $this->clearMedia();
         $this->resetValidation();
         $this->showForm = true;
     }
@@ -67,8 +69,7 @@ class Ressources extends Component
         $this->title = $r['title'];
         $this->type = $r['type'];
         $this->description = $r['description'] ?? '';
-        $this->url = $r['url'];
-        $this->size = $r['size'] ?? '';
+        $this->fillMedia($r['url'] ?? null, null, $r['size'] ?? null);
         $this->resetValidation();
         $this->showForm = true;
     }
@@ -83,12 +84,18 @@ class Ressources extends Component
     {
         $this->validate();
 
+        if (! $this->mediaUrl) {
+            $this->addError('mediaFile', 'Ajoutez un fichier ou collez un lien vers la ressource.');
+
+            return;
+        }
+
         $data = [
             'title' => $this->title,
             'type' => $this->type,
             'description' => $this->description ?: null,
-            'url' => $this->url,
-            'size' => $this->size ?: null,
+            'url' => $this->mediaUrl,
+            'size' => $this->mediaSize ?: null,
         ];
         $token = Api::token();
 

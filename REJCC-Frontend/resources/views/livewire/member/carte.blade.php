@@ -35,10 +35,10 @@
         @error('photo') <p class="mt-4 text-center text-xs font-medium text-accent">{{ $message }}</p> @enderror
 
         <div class="mt-6 flex flex-wrap items-center justify-center gap-3">
-            <label for="card-photo-input" class="inline-flex cursor-pointer items-center gap-2 rounded-full bg-brand px-4 py-2 text-xs font-bold text-white hover:bg-brand/90">
+            <label for="card-photo-input" class="btn-tap inline-flex cursor-pointer items-center gap-2 rounded-full bg-brand px-4 py-2 text-xs font-bold text-white hover:bg-brand/90">
                 <x-ui.icon name="image" class="size-3.5" /> {{ $photo ? 'Changer ma photo' : 'Ajouter ma photo' }}
             </label>
-            <button type="button" onclick="window.print()" class="inline-flex items-center gap-2 rounded-full border border-brand/15 bg-white px-4 py-2 text-xs font-bold text-brand hover:bg-cloud">
+            <button type="button" onclick="window.print()" class="btn-tap inline-flex items-center gap-2 rounded-full border border-brand/15 bg-white px-4 py-2 text-xs font-bold text-brand hover:bg-cloud">
                 <x-ui.icon name="download" class="size-3.5" /> Imprimer / enregistrer en PDF
             </button>
             <span wire:loading wire:target="photo" class="text-xs font-semibold text-[#9AA6B8]">Envoi de la photo…</span>

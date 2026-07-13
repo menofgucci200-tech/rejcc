@@ -11,9 +11,9 @@
                 <h1 class="mb-2 text-[28px] font-extrabold tracking-tight text-brand">Bonjour {{ $user->prenom }} 👋</h1>
                 <p class="max-w-lg font-serif text-[15px] italic text-[#5B677A]">« Tout ce que vous faites, faites-le de bon cœur, comme pour le Seigneur. » — Colossiens 3:23</p>
             </div>
-            <a href="{{ route('espace-membre.formations') }}" wire:navigate class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-[22px] py-3 text-sm font-bold text-white shadow-[0_6px_16px_rgba(172,1,0,.25)] hover:bg-accent-600 sm:w-fit">
+            <a href="{{ route('espace-membre.formations') }}" wire:navigate class="group inline-flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-[22px] py-3 text-sm font-bold text-white shadow-[0_6px_16px_rgba(172,1,0,.25)] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-accent-600 hover:shadow-[0_10px_22px_rgba(172,1,0,.32)] active:scale-95 sm:w-fit">
                 Reprendre ma formation
-                <x-ui.icon name="arrow-right" class="size-4" />
+                <x-ui.icon name="arrow-right" class="nudge-x size-4" />
             </a>
         </section>
 
@@ -56,7 +56,7 @@
                     <section>
                         <h2 class="mb-1 text-[17px] font-bold text-brand">Continuer ma formation</h2>
                         <div class="mb-4 h-[3px] w-9 rounded bg-accent"></div>
-                        <div class="grid grid-cols-1 overflow-hidden rounded-[18px] border border-brand/10 bg-white shadow-[0_2px_8px_rgba(3,29,89,.05)] transition-shadow hover:shadow-[0_14px_34px_rgba(3,29,89,.14)] lg:grid-cols-[260px_1fr]">
+                        <div class="card-hover grid grid-cols-1 overflow-hidden rounded-[18px] border border-brand/10 bg-white shadow-[0_2px_8px_rgba(3,29,89,.05)] lg:grid-cols-[260px_1fr]">
                             <div class="flex min-h-[150px] items-center justify-center" style="background: repeating-linear-gradient(45deg,#0B2E7A 0 22px,#123A8C 22px 44px)">
                                 <x-ui.icon name="graduation-cap" class="size-10 text-white/70" />
                             </div>
@@ -69,7 +69,7 @@
                                         <div class="h-full rounded-md" style="width: {{ $continuer['pct'] }}%; background: linear-gradient(90deg,#031D59,#4F6FBF)"></div>
                                     </div>
                                     <span class="text-[13px] font-bold text-brand">{{ $continuer['pct'] }} %</span>
-                                    <a href="{{ route('espace-membre.formations') }}" wire:navigate class="rounded-[10px] bg-brand px-5 py-2.5 text-[13px] font-bold text-white hover:bg-accent">Continuer</a>
+                                    <a href="{{ route('espace-membre.formations') }}" wire:navigate class="rounded-[10px] bg-brand px-5 py-2.5 text-[13px] font-bold text-white transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-accent hover:shadow-md active:scale-95">Continuer</a>
                                 </div>
                             </div>
                         </div>
@@ -87,7 +87,7 @@
                             </div>
                             <div class="flex flex-col gap-2.5">
                                 @foreach ($recommandations as $r)
-                                    <a href="{{ route($r['route']) }}" wire:navigate class="block rounded-xl border border-white/10 bg-white/[.08] px-3.5 py-3 hover:bg-white/[.16]">
+                                    <a href="{{ route($r['route']) }}" wire:navigate class="block rounded-xl border border-white/10 bg-white/[.08] px-3.5 py-3 transition-all duration-200 ease-out hover:translate-x-1 hover:bg-white/[.16] active:scale-[0.98]">
                                         <p class="text-[13px] font-bold">{{ $r['type'] }} · {{ $r['titre'] }}</p>
                                         <p class="mt-0.5 text-[11.5px] text-[#C4D0EC]">{{ $r['detail'] }}</p>
                                     </a>
@@ -168,8 +168,8 @@
                         <h2 class="text-[17px] font-bold text-brand">Membres du réseau</h2>
                         <p class="mt-0.5 text-[13px] text-[#5B677A]">Connectez-vous avec vos pairs</p>
                     </div>
-                    <a href="{{ route('espace-membre.directory') }}" wire:navigate class="inline-flex items-center gap-1.5 rounded-lg border border-azure/25 bg-azure/10 px-3 py-1.5 text-[12.5px] font-semibold text-azure">
-                        Voir l'annuaire <x-ui.icon name="arrow-right" class="size-3" />
+                    <a href="{{ route('espace-membre.directory') }}" wire:navigate class="group inline-flex items-center gap-1.5 rounded-lg border border-azure/25 bg-azure/10 px-3 py-1.5 text-[12.5px] font-semibold text-azure transition-all duration-200 ease-out hover:bg-azure/20 active:scale-95">
+                        Voir l'annuaire <x-ui.icon name="arrow-right" class="nudge-x size-3" />
                     </a>
                 </div>
                 <div class="rounded-[18px] border border-brand/10 bg-white shadow-[0_2px_8px_rgba(3,29,89,.05)]">
@@ -178,7 +178,7 @@
                     @else
                         <ul class="list-none p-0">
                             @foreach ($members as $i => $m)
-                                <li class="flex items-center gap-3 px-[18px] py-3.5 {{ $i < $members->count() - 1 ? 'border-b border-cloud-200' : '' }}">
+                                <li class="flex items-center gap-3 px-[18px] py-3.5 transition-colors duration-200 hover:bg-cloud/50 {{ $i < $members->count() - 1 ? 'border-b border-cloud-200' : '' }}">
                                     <div class="flex size-10 shrink-0 items-center justify-center rounded-full text-[13px] font-bold text-white" style="background: linear-gradient(135deg, #4F6FBF, #AC0100)">
                                         {{ mb_substr($m->prenom, 0, 1) }}{{ mb_substr($m->nom, 0, 1) }}
                                     </div>
@@ -188,7 +188,7 @@
                                             <p class="mt-0.5 truncate text-xs text-[#9AA6B8]">{{ collect([$m->secteur, $m->ville])->filter()->join(' · ') }}</p>
                                         @endif
                                     </div>
-                                    <a href="{{ route('espace-membre.messaging', ['to' => $m->id]) }}" wire:navigate title="Envoyer un message" class="flex size-[30px] shrink-0 items-center justify-center rounded-lg border border-brand/10 bg-cloud text-[#5B677A]">
+                                    <a href="{{ route('espace-membre.messaging', ['to' => $m->id]) }}" wire:navigate title="Envoyer un message" class="flex size-[30px] shrink-0 items-center justify-center rounded-lg border border-brand/10 bg-cloud text-[#5B677A] transition-all duration-200 ease-out hover:scale-110 hover:border-azure/30 hover:text-azure active:scale-95">
                                         <x-ui.icon name="message-circle" class="size-[13px]" />
                                     </a>
                                 </li>
@@ -204,8 +204,8 @@
                         <h2 class="text-[17px] font-bold text-brand">Événements à venir</h2>
                         <p class="mt-0.5 text-[13px] text-[#5B677A]">Restez connecté à l'agenda du réseau</p>
                     </div>
-                    <a href="{{ url('/evenements') }}" class="inline-flex items-center gap-1.5 rounded-lg border border-azure/25 bg-azure/10 px-3 py-1.5 text-[12.5px] font-semibold text-azure">
-                        Tous les événements <x-ui.icon name="arrow-right" class="size-3" />
+                    <a href="{{ url('/evenements') }}" class="group inline-flex items-center gap-1.5 rounded-lg border border-azure/25 bg-azure/10 px-3 py-1.5 text-[12.5px] font-semibold text-azure transition-all duration-200 ease-out hover:bg-azure/20 active:scale-95">
+                        Tous les événements <x-ui.icon name="arrow-right" class="nudge-x size-3" />
                     </a>
                 </div>
                 <div class="rounded-[18px] border border-brand/10 bg-white shadow-[0_2px_8px_rgba(3,29,89,.05)]">
@@ -214,7 +214,7 @@
                     @else
                         <ul class="list-none py-2">
                             @foreach ($upcomingEvents as $ev)
-                                <li class="flex items-start gap-3.5 px-[18px] py-3">
+                                <li class="flex items-start gap-3.5 px-[18px] py-3 transition-colors duration-200 hover:bg-cloud/50">
                                     <div class="mt-1.5 size-2 shrink-0 rounded-full bg-azure"></div>
                                     <div class="min-w-0 flex-1">
                                         <div class="mb-1 flex items-center gap-2">
@@ -239,19 +239,19 @@
                         <h2 class="text-[17px] font-bold text-brand">Documents récents</h2>
                         <p class="mt-0.5 text-[13px] text-[#5B677A]">Dernières ressources partagées</p>
                     </div>
-                    <a href="{{ route('espace-membre.documents') }}" wire:navigate class="inline-flex items-center gap-1.5 rounded-lg border border-azure/25 bg-azure/10 px-3 py-1.5 text-[12.5px] font-semibold text-azure">
-                        Tous les documents <x-ui.icon name="arrow-right" class="size-3" />
+                    <a href="{{ route('espace-membre.documents') }}" wire:navigate class="group inline-flex items-center gap-1.5 rounded-lg border border-azure/25 bg-azure/10 px-3 py-1.5 text-[12.5px] font-semibold text-azure transition-all duration-200 ease-out hover:bg-azure/20 active:scale-95">
+                        Tous les documents <x-ui.icon name="arrow-right" class="nudge-x size-3" />
                     </a>
                 </div>
                 <div class="grid gap-3.5" style="grid-template-columns: repeat(auto-fill, minmax(220px, 1fr))">
                     @foreach ($docs as $doc)
-                        <div class="rounded-[18px] border border-brand/10 bg-white px-5 py-[18px] shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                        <div class="card-hover rounded-[18px] border border-brand/10 bg-white px-5 py-[18px] shadow-[0_2px_8px_rgba(3,29,89,.05)]">
                             <div class="mb-3 flex size-9 items-center justify-center rounded-[10px] bg-accent/10">
                                 <x-ui.icon name="folder-open" class="size-4 text-accent" />
                             </div>
                             <p class="mb-1 text-[13.5px] font-semibold leading-tight text-brand">{{ $doc->title }}</p>
                             <p class="mb-3.5 text-[11.5px] text-[#9AA6B8]">{{ $doc->category }}</p>
-                            <a href="{{ $doc->url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 rounded-lg border border-azure/25 bg-azure/10 px-3 py-1.5 text-xs font-semibold text-azure">
+                            <a href="{{ $doc->url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 rounded-lg border border-azure/25 bg-azure/10 px-3 py-1.5 text-xs font-semibold text-azure transition-all duration-200 ease-out hover:bg-azure/20 active:scale-95">
                                 <x-ui.icon name="download" class="size-3" /> Télécharger
                             </a>
                         </div>
@@ -266,8 +266,8 @@
                     <h3 class="mb-1.5 font-serif text-lg italic text-brand">Complétez votre profil</h3>
                     <p class="text-[13.5px] text-[#5B677A]">Votre profil est complété à {{ $completion }}%. Ajoutez vos informations pour améliorer votre visibilité dans le réseau.</p>
                 </div>
-                <a href="{{ route('espace-membre.profile') }}" wire:navigate class="inline-flex shrink-0 items-center gap-2 rounded-xl bg-brand px-5 py-2.5 text-[13.5px] font-bold text-white">
-                    Compléter mon profil <x-ui.icon name="arrow-right" class="size-3.5" />
+                <a href="{{ route('espace-membre.profile') }}" wire:navigate class="group inline-flex shrink-0 items-center gap-2 rounded-xl bg-brand px-5 py-2.5 text-[13.5px] font-bold text-white transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-accent hover:shadow-md active:scale-95">
+                    Compléter mon profil <x-ui.icon name="arrow-right" class="nudge-x size-3.5" />
                 </a>
             </div>
         @endif

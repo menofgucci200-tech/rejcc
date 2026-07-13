@@ -31,7 +31,7 @@
                             <option value="alert">Urgent</option>
                         </select>
                     </div>
-                    <button type="submit" wire:loading.attr="disabled" class="rounded-[9px] bg-accent py-2.5 text-sm font-bold text-white hover:bg-accent-600 disabled:opacity-60">
+                    <button type="submit" wire:loading.attr="disabled" class="btn-tap rounded-[9px] bg-accent py-2.5 text-sm font-bold text-white shadow-sm hover:bg-accent-600 hover:shadow-md disabled:opacity-60">
                         <span wire:loading.remove>Envoyer à tous les membres</span>
                         <span wire:loading>Envoi…</span>
                     </button>
@@ -46,7 +46,7 @@
                 <div class="mb-4 h-[3px] w-9 rounded bg-accent"></div>
                 <div class="rounded-[18px] border border-brand/10 bg-white px-5 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
                     @forelse ($historique as $h)
-                        <div class="border-t border-[#EDF0F5] py-3.5 first:border-t-0">
+                        <div class="row-hover -mx-5 border-t border-[#EDF0F5] px-5 py-3.5 first:border-t-0">
                             <p class="text-[13px] font-bold text-brand">{{ $h->title }}</p>
                             <p class="mt-0.5 text-[11.5px] text-[#9AA6B8]">{{ $typeLabels[$h->type] ?? $h->type }} · envoyée {{ $h->created_at->diffForHumans() }} · {{ $h->destinataires }} destinataires</p>
                         </div>

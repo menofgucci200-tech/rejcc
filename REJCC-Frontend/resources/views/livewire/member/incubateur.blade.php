@@ -8,13 +8,13 @@
                 <div class="h-[3px] w-9 rounded bg-accent"></div>
                 <p class="mt-3 max-w-xl text-[13px] text-[#5B677A]">Un accompagnement complet — mentorat, financement et mise en réseau — pour faire grandir votre projet.</p>
             </div>
-            <a href="{{ route('espace-membre.projets') }}" wire:navigate class="rounded-full bg-brand px-4 py-2 text-xs font-semibold text-white hover:bg-brand/90">Soumettre un projet</a>
+            <a href="{{ route('espace-membre.projets') }}" wire:navigate class="btn-tap rounded-full bg-brand px-4 py-2 text-xs font-semibold text-white hover:bg-brand/90">Soumettre un projet</a>
         </div>
 
         <div class="grid gap-4" style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr))">
             @foreach ($projets as $p)
                 @php $pct = $p['objectif'] > 0 ? min(100, round($p['leve'] / $p['objectif'] * 100)) : 0; @endphp
-                <article class="rounded-[16px] border border-brand/10 bg-white p-[18px] shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                <article class="card-hover rounded-[16px] border border-brand/10 bg-white p-[18px] shadow-[0_2px_8px_rgba(3,29,89,.05)]">
                     <div class="mb-3 flex items-start justify-between gap-2">
                         <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand">
                             <x-ui.icon name="nav-incubator" class="size-5" />

@@ -12,7 +12,7 @@
                 sont en cours de préparation. En attendant, progressez librement dans le catalogue
                 de formations.
             </p>
-            <a href="{{ route('espace-membre.catalogue') }}" wire:navigate class="mt-5 rounded-full bg-brand px-4 py-2 text-xs font-semibold text-white hover:bg-brand/90">Parcourir le catalogue</a>
+            <a href="{{ route('espace-membre.catalogue') }}" wire:navigate class="btn-tap mt-5 rounded-full bg-brand px-4 py-2 text-xs font-semibold text-white hover:bg-brand/90">Parcourir le catalogue</a>
         </div>
     </div>
 </div>

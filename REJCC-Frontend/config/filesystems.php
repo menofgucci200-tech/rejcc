@@ -47,6 +47,18 @@ return [
             'report' => false,
         ],
 
+        // Fichiers uploadés (médias des contenus, photos, pièces d'identité) :
+        // écrits directement sous public/uploads, servis sans symlink storage:link
+        // (robuste en local Windows comme sur l'hébergement mutualisé Hostinger).
+        'uploads' => [
+            'driver' => 'local',
+            'root' => public_path('uploads'),
+            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/uploads',
+            'visibility' => 'public',
+            'throw' => false,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

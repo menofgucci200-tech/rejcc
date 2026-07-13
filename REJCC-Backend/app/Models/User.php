@@ -36,6 +36,7 @@ class User extends Authenticatable
         'bio',
         'preferences',
         'photo',
+        'piece_identite',
         'role',
         'permissions',
         'reference',

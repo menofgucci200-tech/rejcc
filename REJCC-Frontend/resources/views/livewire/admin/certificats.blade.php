@@ -10,7 +10,7 @@
 
         <div class="rounded-[18px] border border-brand/10 bg-white px-5 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
             @forelse ($certificats as $c)
-                <div class="flex flex-wrap items-center gap-4 border-t border-[#EDF0F5] py-3.5 first:border-t-0">
+                <div class="row-hover -mx-5 flex flex-wrap items-center gap-4 border-t border-[#EDF0F5] px-5 py-3.5 first:border-t-0">
                     <span class="flex size-10 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white" style="background: linear-gradient(135deg, {{ $c['from'] }}, {{ $c['to'] }})">{{ $c['initiales'] }}</span>
                     <div class="min-w-[200px] flex-1">
                         <p class="text-[13.5px] font-bold text-brand">{{ $c['membre'] }}</p>

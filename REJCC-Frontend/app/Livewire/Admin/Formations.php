@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\HandlesMedia;
 use App\Support\Api;
 use App\Support\CategoryPalette;
 use Illuminate\Support\Collection;
@@ -11,6 +12,8 @@ use Livewire\Component;
 #[Layout('layouts.admin-light')]
 class Formations extends Component
 {
+    use HandlesMedia;
+
     public bool $showForm = false;
 
     public ?int $editingId = null;
@@ -56,6 +59,7 @@ class Formations extends Component
         $this->modulesCount = 1;
         $this->isFree = true;
         $this->isCertifying = false;
+        $this->clearMedia();
         $this->resetValidation();
         $this->showForm = true;
     }
@@ -76,6 +80,7 @@ class Formations extends Component
         $this->modulesCount = (int) $f['modules_count'];
         $this->isFree = (bool) $f['is_free'];
         $this->isCertifying = (bool) $f['is_certifying'];
+        $this->fillMedia($f['media_url'] ?? null, $f['media_name'] ?? null);
         $this->resetValidation();
         $this->showForm = true;
     }
@@ -99,6 +104,8 @@ class Formations extends Component
             'modules_count' => $this->modulesCount,
             'is_free' => $this->isFree,
             'is_certifying' => $this->isCertifying,
+            'media_url' => $this->mediaUrl ?: null,
+            'media_name' => $this->mediaName ?: null,
         ];
         $token = Api::token();
 

@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\HandlesMedia;
 use App\Support\Api;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -11,6 +12,8 @@ use Livewire\Component;
 #[Layout('layouts.admin-light')]
 class Actualites extends Component
 {
+    use HandlesMedia;
+
     public bool $showForm = false;
 
     public ?int $editingId = null;
@@ -44,6 +47,7 @@ class Actualites extends Component
     public function openCreate(): void
     {
         $this->reset(['editingId', 'title', 'category', 'excerpt', 'body', 'author']);
+        $this->clearMedia();
         $this->resetValidation();
         $this->showForm = true;
     }
@@ -61,6 +65,7 @@ class Actualites extends Component
         $this->excerpt = $a['excerpt'];
         $this->body = implode("\n\n", $a['body'] ?? []);
         $this->author = $a['author'] ?? '';
+        $this->fillMedia($a['media_url'] ?? null, $a['media_name'] ?? null);
         $this->resetValidation();
         $this->showForm = true;
     }
@@ -81,6 +86,8 @@ class Actualites extends Component
             'excerpt' => $this->excerpt,
             'body' => $this->body,
             'author' => $this->author ?: null,
+            'media_url' => $this->mediaUrl ?: null,
+            'media_name' => $this->mediaName ?: null,
         ];
         $token = Api::token();
 
