@@ -53,10 +53,26 @@ class PageCatalog
                         'hint' => 'Les étapes se modifient dans Contenu du site → Étapes d\'adhésion.',
                         'fields' => [],
                     ],
+                    'video' => [
+                        'label' => 'Vidéo de présentation',
+                        'hint' => 'Collez un lien YouTube ou TikTok : la vidéo s\'affiche sur l\'accueil (lecture au clic). Laissez vide pour ne rien afficher.',
+                        'fields' => [
+                            'url' => ['label' => 'Lien de la vidéo (YouTube ou TikTok)', 'type' => 'text', 'default' => ''],
+                            'title' => ['label' => 'Titre de la section', 'type' => 'text', 'default' => 'Découvrez le REJCC en vidéo'],
+                        ],
+                    ],
                     'testimonials' => [
                         'label' => 'Témoignages',
                         'hint' => 'Les témoignages se modifient dans Contenu du site → Témoignages.',
                         'fields' => [],
+                    ],
+                    'gallery' => [
+                        'label' => 'Galerie photos',
+                        'hint' => 'Les photos s\'ajoutent dans Contenu du site → Galerie photos. La section n\'apparaît que s\'il y a des photos.',
+                        'fields' => [
+                            'title' => ['label' => 'Titre de la section', 'type' => 'text', 'default' => 'La vie du réseau'],
+                            'subtitle' => ['label' => 'Sous-titre', 'type' => 'text', 'default' => 'Rencontres, formations, événements : le REJCC en images.'],
+                        ],
                     ],
                     'events' => ['label' => 'Événements à venir', 'fields' => []],
                     'news' => ['label' => 'Dernières actualités', 'fields' => []],

@@ -115,6 +115,7 @@ Route::middleware(['api.auth', 'admin.web'])->prefix('admin')->name('admin.')->g
     Route::get('/contenu', AdminContenu::class)->name('contenu');
     Route::get('/pages', \App\Livewire\Admin\Pages::class)->name('pages');
     Route::get('/reglages', \App\Livewire\Admin\Reglages::class)->name('reglages');
+    Route::get('/mediatheque', \App\Livewire\Admin\Mediatheque::class)->name('mediatheque');
     Route::get('/newsletter', AdminNewsletter::class)->name('newsletter');
     Route::get('/documents', AdminDocuments::class)->name('documents');
     Route::get('/contacts', AdminContacts::class)->name('contacts');

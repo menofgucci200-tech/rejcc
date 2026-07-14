@@ -103,6 +103,16 @@
                         <textarea wire:model="text" rows="2" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure"></textarea>
                         @error('text') <span class="text-xs text-accent">{{ $message }}</span> @enderror
                     </div>
+                @elseif ($onglet === 'gallery')
+                    <div class="sm:col-span-2">
+                        <x-ui.media-field label="Photo" hint="Uploadez une photo (JPG, PNG, WebP) ou collez le lien d'une image — par exemple depuis la Médiathèque." :media-url="$mediaUrl" :media-name="$mediaName" :media-size="$mediaSize" />
+                        @error('mediaFile') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Légende (optionnel — ex : Rencontre annuelle 2026)</label>
+                        <input wire:model="caption" type="text" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
+                        @error('caption') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                    </div>
                 @endif
 
                 <button wire:click="save" wire:loading.attr="disabled" class="btn-tap rounded-[9px] bg-brand px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-brand/90 hover:shadow-md disabled:opacity-60 sm:col-span-2 sm:w-fit">Publier</button>
@@ -129,6 +139,14 @@
                         @elseif ($onglet === 'steps')
                             <p class="text-[13.5px] font-bold text-brand">{{ $item['title'] }}</p>
                             <p class="line-clamp-1 text-xs text-[#5B677A]">{{ $item['text'] }}</p>
+                        @elseif ($onglet === 'gallery')
+                            <div class="flex items-center gap-3">
+                                <img src="{{ $item['url'] }}" alt="" class="size-12 shrink-0 rounded-lg object-cover">
+                                <div class="min-w-0">
+                                    <p class="truncate text-[13.5px] font-bold text-brand">{{ $item['caption'] ?: 'Sans légende' }}</p>
+                                    <a href="{{ $item['url'] }}" target="_blank" rel="noopener" class="truncate text-[11px] text-azure hover:underline">Voir la photo</a>
+                                </div>
+                            </div>
                         @endif
                     </div>
                     <div class="flex shrink-0 items-center gap-1.5">

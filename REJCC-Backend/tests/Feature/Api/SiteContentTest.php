@@ -69,6 +69,29 @@ class SiteContentTest extends TestCase
         $this->assertSame(['Agriculture', 'Élevage', 'Pêche'], Sector::find($item['id'])->items);
     }
 
+    public function test_l_admin_gere_la_galerie_photos(): void
+    {
+        $token = $this->adminToken();
+
+        $item = $this->withToken($token)->postJson('/api/admin/site-content/gallery', [
+            'url' => 'https://rejcc.site/uploads/bibliotheque/photo.jpg',
+            'caption' => 'Rencontre annuelle 2026',
+        ])->assertOk()->json('item');
+
+        // La photo est visible sur l'endpoint public de la vitrine.
+        $this->getJson('/api/gallery')->assertOk()
+            ->assertJsonPath('photos.0.caption', 'Rencontre annuelle 2026');
+
+        // Une URL invalide est refusée.
+        $this->withToken($token)->postJson('/api/admin/site-content/gallery', [
+            'url' => 'pas-une-url',
+        ])->assertStatus(422);
+
+        // Suppression.
+        $this->withToken($token)->deleteJson("/api/admin/site-content/gallery/{$item['id']}")->assertOk();
+        $this->getJson('/api/gallery')->assertOk()->assertJsonCount(0, 'photos');
+    }
+
     public function test_un_type_inconnu_renvoie_404_et_un_membre_403(): void
     {
         $this->withToken($this->adminToken())->getJson('/api/admin/site-content/inconnu')->assertStatus(404);

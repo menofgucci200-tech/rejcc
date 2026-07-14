@@ -65,6 +65,14 @@ class SiteContentController extends Controller
                 'ordre' => 'nullable|integer|min:0',
             ],
         ],
+        'gallery' => [
+            'model' => \App\Models\GalleryPhoto::class,
+            'rules' => [
+                'url' => 'required|url|max:500',
+                'caption' => 'nullable|string|max:200',
+                'ordre' => 'nullable|integer|min:0',
+            ],
+        ],
     ];
 
     public function index(string $type)

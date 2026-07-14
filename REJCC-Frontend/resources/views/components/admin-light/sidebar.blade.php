@@ -36,6 +36,7 @@
                 ['label' => 'Actualités', 'icon' => 'file-text', 'route' => 'admin.actualites'],
                 ['label' => 'Pages du site', 'icon' => 'globe', 'route' => 'admin.pages'],
                 ['label' => 'Blocs de contenu', 'icon' => 'layout-dashboard', 'route' => 'admin.contenu'],
+                ['label' => 'Médiathèque', 'icon' => 'image', 'route' => 'admin.mediatheque'],
                 ['label' => 'Réglages du site', 'icon' => 'settings', 'route' => 'admin.reglages'],
                 ['label' => 'Newsletter', 'icon' => 'send', 'route' => 'admin.newsletter'],
                 ['label' => 'Documents', 'icon' => 'folder-open', 'route' => 'admin.documents'],

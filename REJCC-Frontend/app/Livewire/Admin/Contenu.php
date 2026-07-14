@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\HandlesMedia;
 use App\Support\Api;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
@@ -10,6 +11,8 @@ use Livewire\Component;
 #[Layout('layouts.admin-light')]
 class Contenu extends Component
 {
+    use HandlesMedia;
+
     /** Onglets : type côté API => libellé. */
     public const ONGLETS = [
         'sectors' => 'Secteurs',
@@ -17,6 +20,7 @@ class Contenu extends Component
         'partners' => 'Partenaires',
         'stats' => 'Chiffres clés',
         'steps' => "Étapes d'adhésion",
+        'gallery' => 'Galerie photos',
     ];
 
     public string $onglet = 'sectors';
@@ -50,6 +54,8 @@ class Contenu extends Component
 
     public string $text = '';
 
+    public string $caption = '';
+
     public function setOnglet(string $onglet): void
     {
         if (isset(self::ONGLETS[$onglet])) {
@@ -65,7 +71,8 @@ class Contenu extends Component
 
     public function openCreate(): void
     {
-        $this->reset(['editingId', 'title', 'blurb', 'items', 'icon', 'name', 'role', 'quote', 'sector', 'label', 'value', 'suffix', 'text']);
+        $this->reset(['editingId', 'title', 'blurb', 'items', 'icon', 'name', 'role', 'quote', 'sector', 'label', 'value', 'suffix', 'text', 'caption']);
+        $this->clearMedia();
         $this->resetValidation();
         $this->showForm = true;
     }
@@ -91,6 +98,10 @@ class Contenu extends Component
         $this->value = $item['value'] ?? null;
         $this->suffix = $item['suffix'] ?? '';
         $this->text = $item['text'] ?? '';
+        $this->caption = $item['caption'] ?? '';
+        if ($this->onglet === 'gallery') {
+            $this->fillMedia($item['url'] ?? null);
+        }
     }
 
     public function closeForm(): void
@@ -150,6 +161,16 @@ class Contenu extends Component
                     'text' => 'required|string|min:5|max:400',
                 ]);
                 $data = ['icon' => $this->icon, 'title' => $this->title, 'text' => $this->text];
+                break;
+
+            case 'gallery':
+                if (! $this->mediaUrl) {
+                    $this->addError('mediaFile', 'Ajoutez une photo (fichier ou lien).');
+
+                    return;
+                }
+                $this->validate(['caption' => 'nullable|string|max:200']);
+                $data = ['url' => $this->mediaUrl, 'caption' => $this->caption ?: null];
                 break;
 
             default:

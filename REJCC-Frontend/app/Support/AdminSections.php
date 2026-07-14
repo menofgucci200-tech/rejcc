@@ -48,6 +48,7 @@ class AdminSections
         'admin.contenu' => 'contenu',
         'admin.pages' => 'contenu',
         'admin.reglages' => 'contenu',
+        'admin.mediatheque' => 'contenu',
         'admin.newsletter' => 'newsletter',
         'admin.documents' => 'documents',
         'admin.contacts' => 'contacts',
