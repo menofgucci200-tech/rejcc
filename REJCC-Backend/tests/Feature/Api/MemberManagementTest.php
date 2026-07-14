@@ -91,9 +91,26 @@ class MemberManagementTest extends TestCase
         $attendu = 'REJCC-'.$membre->created_at->format('Y').'-'.$membre->created_at->format('dm').$code;
         $this->assertSame($attendu, $card['numero']);
 
-        // La carte n'expose pas de données sensibles.
-        $this->assertArrayNotHasKey('email', $card);
-        $this->assertArrayNotHasKey('telephone', $card);
+        // Profil professionnel : le contact est visible par défaut
+        // (préférence « visibilité du profil » activée).
+        $this->assertSame($membre->email, $card['email']);
+        $this->assertSame($membre->telephone, $card['telephone']);
+        $this->assertSame([], $card['listings']);
+    }
+
+    public function test_le_contact_est_masque_si_le_profil_n_est_pas_visible(): void
+    {
+        $membre = User::factory()->create([
+            'bio' => 'Entrepreneur dans l\'agro-transformation.',
+            'preferences' => ['visibilite_profil' => false],
+        ]);
+
+        $card = $this->getJson('/api/member-card/'.$membre->id)->assertOk()->json('card');
+
+        $this->assertNull($card['email']);
+        $this->assertNull($card['telephone']);
+        // Les informations professionnelles restent affichées.
+        $this->assertSame('Entrepreneur dans l\'agro-transformation.', $card['bio']);
     }
 
     public function test_le_libelle_de_role_varie_selon_le_statut(): void
