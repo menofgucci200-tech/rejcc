@@ -85,5 +85,12 @@
             <x-ui.icon name="settings" class="size-[18px] shrink-0 transition-transform duration-200 group-hover:rotate-45" />
             Paramètres
         </a>
+        <form action="{{ route('logout') }}" method="POST">
+            @csrf
+            <button type="submit" class="group mt-0.5 flex w-full items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm font-medium text-[#C4D0EC] transition-all duration-200 ease-out hover:translate-x-0.5 hover:bg-white/[.08] hover:text-white active:scale-[0.98]">
+                <x-ui.icon name="log-out" class="size-[18px] shrink-0 transition-transform duration-200 group-hover:scale-110" />
+                Se déconnecter
+            </button>
+        </form>
     </div>
 </aside>
