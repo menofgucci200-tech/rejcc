@@ -10,6 +10,17 @@
                 <h2 class="mb-1 text-[17px] font-bold text-brand">Diffuser une notification</h2>
                 <div class="mb-4 h-[3px] w-9 rounded bg-accent"></div>
                 <form wire:submit="send" class="flex flex-col gap-3 rounded-[18px] border border-brand/10 bg-white p-[22px] shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                    @if ($membres)
+                        <div>
+                            <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Destinataire</label>
+                            <select wire:model.live="cible" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure">
+                                <option value="">Tous les membres</option>
+                                @foreach ($membres as $m)
+                                    <option value="{{ $m['id'] }}">{{ $m['label'] }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    @endif
                     <div>
                         <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Titre</label>
                         <input wire:model="title" type="text" placeholder="Ex : Nouvel atelier disponible" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
@@ -17,7 +28,7 @@
                     </div>
                     <div>
                         <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Message</label>
-                        <textarea wire:model="body" rows="3" placeholder="Contenu du message envoyé à tous les membres…" class="w-full resize-y rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure"></textarea>
+                        <textarea wire:model="body" rows="3" placeholder="Contenu du message…" class="w-full resize-y rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure"></textarea>
                     </div>
                     <div>
                         <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Lien (optionnel)</label>
@@ -32,7 +43,7 @@
                         </select>
                     </div>
                     <button type="submit" wire:loading.attr="disabled" class="btn-tap rounded-[9px] bg-accent py-2.5 text-sm font-bold text-white shadow-sm hover:bg-accent-600 hover:shadow-md disabled:opacity-60">
-                        <span wire:loading.remove>Envoyer à tous les membres</span>
+                        <span wire:loading.remove>{{ $cible !== '' ? 'Envoyer à ce membre' : 'Envoyer à tous les membres' }}</span>
                         <span wire:loading>Envoi…</span>
                     </button>
                     @if ($sentTo !== null)

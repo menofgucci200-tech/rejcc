@@ -76,6 +76,7 @@ Route::get('/mon-espace', function () {
 Route::middleware('api.auth')->prefix('espace-membre')->name('espace-membre.')->group(function () {
     Route::get('/', MemberDashboard::class)->name('dashboard');
     Route::get('/annuaire', MemberDirectory::class)->name('directory');
+    Route::get('/groupes', \App\Livewire\Member\Groupes::class)->name('groupes');
     Route::get('/messagerie', MemberMessaging::class)->name('messaging');
     Route::get('/notifications', MemberNotifications::class)->name('notifications');
     Route::get('/documents', MemberDocuments::class)->name('documents');

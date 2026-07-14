@@ -18,7 +18,27 @@ class Notifications extends Component
 
     public string $link = '';
 
+    /** Destinataire : '' = tous les membres, sinon id du membre. */
+    public string $cible = '';
+
+    /** @var array<int, array{id:int, label:string}> */
+    public array $membres = [];
+
     public ?int $sentTo = null;
+
+    public function mount(): void
+    {
+        // Liste des membres pour le ciblage. Vide (envoi à tous uniquement)
+        // si l'admin n'a pas la permission « membres ».
+        $this->membres = collect(Api::get('/admin/members', [], Api::token())['members'] ?? [])
+            ->map(fn (array $m) => [
+                'id' => $m['id'],
+                'label' => trim(($m['prenom'] ?? '').' '.($m['nom'] ?? '')).' — '.($m['email'] ?? ''),
+            ])
+            ->sortBy('label', SORT_NATURAL | SORT_FLAG_CASE)
+            ->values()
+            ->all();
+    }
 
     public function send(): void
     {
@@ -34,10 +54,17 @@ class Notifications extends Component
             'body' => $this->body ?: null,
             'link' => $this->link ?: null,
             'type' => $this->type,
+            'user_id' => $this->cible !== '' ? (int) $this->cible : null,
         ], Api::token());
 
+        if (! ($result['ok'] ?? false)) {
+            $this->addError('title', $result['message'] ?? 'L\'envoi a échoué.');
+
+            return;
+        }
+
         $this->sentTo = $result['sent_to'] ?? 0;
-        $this->reset(['title', 'body', 'link', 'type']);
+        $this->reset(['title', 'body', 'link', 'type', 'cible']);
         $this->type = 'info';
     }
 

@@ -110,6 +110,11 @@ Route::middleware('auth.token')->group(function () {
     Route::get('/opportunities', [OpportunityController::class, 'index']);
     Route::post('/opportunities', [OpportunityController::class, 'store']);
 
+    // Groupes sectoriels (adhésion libre, multiple)
+    Route::get('/groups', [\App\Http\Controllers\Api\GroupController::class, 'index']);
+    Route::post('/groups/{id}/join', [\App\Http\Controllers\Api\GroupController::class, 'join']);
+    Route::post('/groups/{id}/leave', [\App\Http\Controllers\Api\GroupController::class, 'leave']);
+
     // Marketplace (annonces validées par l'administration avant publication)
     Route::get('/marketplace', [\App\Http\Controllers\Api\MarketplaceController::class, 'index']);
     Route::get('/marketplace/mine', [\App\Http\Controllers\Api\MarketplaceController::class, 'mine']);

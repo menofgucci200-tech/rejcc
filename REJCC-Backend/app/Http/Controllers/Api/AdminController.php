@@ -340,13 +340,17 @@ class AdminController extends Controller
             'body'  => 'nullable|string|max:500',
             'link'  => 'nullable|string|max:300',
             'type'  => 'sometimes|in:info,message,alert',
+            // Destinataire précis (sinon : tous les membres).
+            'user_id' => 'nullable|integer|exists:users,id',
         ]);
         if ($validator->fails()) {
             return response()->json(['ok' => false, 'message' => $validator->errors()->first()], 422);
         }
 
         $d = $validator->validated();
-        $members = User::where('role', 'member')->pluck('id');
+        $members = isset($d['user_id'])
+            ? collect([(int) $d['user_id']])
+            : User::where('role', 'member')->pluck('id');
 
         foreach ($members as $uid) {
             MemberNotification::create([

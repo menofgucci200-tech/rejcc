@@ -9,6 +9,7 @@
         ['label' => 'Mes parcours', 'icon' => 'nav-route', 'route' => 'espace-membre.parcours'],
         ['label' => 'Mentorat', 'icon' => 'nav-mentor', 'route' => 'espace-membre.mentorat'],
         ['label' => 'Annuaire', 'icon' => 'users', 'route' => 'espace-membre.directory'],
+        ['label' => 'Groupes sectoriels', 'icon' => 'network', 'route' => 'espace-membre.groupes'],
         ['label' => 'Messagerie', 'icon' => 'message-circle', 'route' => 'espace-membre.messaging'],
         ['label' => 'Marketplace', 'icon' => 'store', 'route' => 'espace-membre.marketplace'],
         ['label' => 'Événements', 'icon' => 'calendar-days', 'route' => 'espace-membre.evenements'],
