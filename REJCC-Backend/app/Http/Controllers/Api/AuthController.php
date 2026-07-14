@@ -3,10 +3,14 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Mail\ReinitialisationMotDePasse;
 use App\Models\ApiToken;
 use App\Models\MemberNotification;
 use App\Models\User;
+use App\Support\Mailer;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -113,6 +117,80 @@ class AuthController extends Controller
             'token' => $this->issueToken($user),
             'user' => $this->payload($user),
         ]);
+    }
+
+    /**
+     * Mot de passe oublié : envoie un lien de réinitialisation par e-mail.
+     * La réponse est identique que le compte existe ou non (anti-énumération).
+     */
+    public function forgotPassword(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['ok' => false, 'message' => $validator->errors()->first()], 422);
+        }
+
+        $user = User::where('email', $request->email)->first();
+
+        if ($user && $user->is_active) {
+            $token = Str::random(64);
+
+            DB::table('password_reset_tokens')->where('email', $user->email)->delete();
+            DB::table('password_reset_tokens')->insert([
+                'email' => $user->email,
+                'token' => Hash::make($token),
+                'created_at' => now(),
+            ]);
+
+            Mailer::send($user->email, new ReinitialisationMotDePasse($user, $token));
+        }
+
+        return response()->json([
+            'ok' => true,
+            'message' => 'Si un compte existe avec cette adresse, un e-mail de réinitialisation vient de lui être envoyé.',
+        ]);
+    }
+
+    /** Réinitialise le mot de passe à partir du lien reçu par e-mail. */
+    public function resetPassword(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+            'token' => 'required|string',
+            'password' => 'required|string|min:8|max:100|confirmed',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['ok' => false, 'message' => $validator->errors()->first()], 422);
+        }
+
+        $row = DB::table('password_reset_tokens')->where('email', $request->email)->first();
+
+        $expired = ! $row || Carbon::parse($row->created_at)->addHour()->isPast();
+        if ($expired || ! Hash::check($request->token, $row->token)) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Ce lien de réinitialisation est invalide ou a expiré. Refaites une demande.',
+            ], 422);
+        }
+
+        $user = User::where('email', $request->email)->first();
+        if (! $user) {
+            return response()->json(['ok' => false, 'message' => 'Compte introuvable.'], 422);
+        }
+
+        $user->password = $request->password; // hashé via le cast 'hashed'
+        $user->save();
+
+        DB::table('password_reset_tokens')->where('email', $request->email)->delete();
+
+        // Déconnecte les éventuelles sessions ouvertes avec l'ancien mot de passe.
+        ApiToken::where('user_id', $user->id)->delete();
+
+        return response()->json(['ok' => true]);
     }
 
     public function me(Request $request)

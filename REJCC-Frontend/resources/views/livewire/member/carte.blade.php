@@ -16,9 +16,9 @@
         </div>
 
         {{-- Input fichier caché, relié à la zone photo du recto via l'id --}}
-        <input type="file" id="card-photo-input" wire:model="photo" accept="image/*" class="hidden">
+        <input type="file" id="card-photo-input" wire:model="photoUpload" accept="image/*" class="hidden">
 
-        <div wire:loading.class="opacity-60" wire:target="photo">
+        <div id="carte-print-zone" wire:loading.class="opacity-60" wire:target="photoUpload">
             <x-member-card
                 :name="$name"
                 :roleLabel="$roleLabel"
@@ -32,7 +32,7 @@
             />
         </div>
 
-        @error('photo') <p class="mt-4 text-center text-xs font-medium text-accent">{{ $message }}</p> @enderror
+        @error('photoUpload') <p class="mt-4 text-center text-xs font-medium text-accent">{{ $message }}</p> @enderror
 
         <div class="mt-6 flex flex-wrap items-center justify-center gap-3">
             <label for="card-photo-input" class="btn-tap inline-flex cursor-pointer items-center gap-2 rounded-full bg-brand px-4 py-2 text-xs font-bold text-white hover:bg-brand/90">
@@ -41,7 +41,39 @@
             <button type="button" onclick="window.print()" class="btn-tap inline-flex items-center gap-2 rounded-full border border-brand/15 bg-white px-4 py-2 text-xs font-bold text-brand hover:bg-cloud">
                 <x-ui.icon name="download" class="size-3.5" /> Imprimer / enregistrer en PDF
             </button>
-            <span wire:loading wire:target="photo" class="text-xs font-semibold text-[#9AA6B8]">Envoi de la photo…</span>
+            <span wire:loading wire:target="photoUpload" class="text-xs font-semibold text-[#9AA6B8]">Envoi de la photo…</span>
         </div>
     </div>
+
+    {{-- Impression / export PDF : n'imprimer que la carte, en conservant les
+         couleurs de fond (par défaut les navigateurs les suppriment). --}}
+    <style>
+        @media print {
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            /* Le layout membre défile dans un conteneur interne (overflow-hidden) :
+               on sort la carte du flux (fixed) pour qu'elle occupe seule la page. */
+            body * { visibility: hidden; }
+            #carte-print-zone, #carte-print-zone * { visibility: visible; }
+            #carte-print-zone {
+                position: fixed;
+                inset: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 0;
+                padding: 0;
+                opacity: 1 !important;
+            }
+            #carte-print-zone > .grid {
+                grid-template-columns: 1fr !important;
+                width: 158mm;
+                max-width: 158mm;
+                gap: 8mm !important;
+            }
+            @page { size: A4 portrait; margin: 10mm; }
+        }
+    </style>
 </div>

@@ -31,7 +31,10 @@ trait HandlesMedia
     {
         $this->validate([
             'mediaFile' => 'file|max:20480|mimes:jpg,jpeg,png,gif,webp,svg,pdf,doc,docx,ppt,pptx,xls,xlsx,csv,txt,mp4,webm,mov,mp3,wav',
-        ], [], ['mediaFile' => 'fichier']);
+        ], [
+            'mediaFile.max' => 'Le fichier ne doit pas dépasser 20 Mo.',
+            'mediaFile.mimes' => 'Format non pris en charge : utilisez une image, un PDF, un document Word/Excel, un audio ou une vidéo.',
+        ], ['mediaFile' => 'fichier']);
 
         $path = $this->mediaFile->store('media/'.date('Y/m'), 'uploads');
 

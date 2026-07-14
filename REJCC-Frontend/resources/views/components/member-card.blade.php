@@ -78,8 +78,9 @@
 
         {{-- Colonne gauche, centrée sur ~18 % de la largeur --}}
         <div class="absolute left-[2cqw] top-0 flex h-full w-[33cqw] flex-col items-center">
-            {{-- QR --}}
-            <div class="mt-[12cqh] rounded-[2.6cqw] bg-white p-[1.4cqw] shadow-lg">
+            {{-- QR. wire:ignore : le morphing Livewire (ex. après l'ajout de la
+                 photo) réécrit les attributs du canvas, ce qui efface son dessin. --}}
+            <div wire:ignore class="mt-[12cqh] rounded-[2.6cqw] bg-white p-[1.4cqw] shadow-lg">
                 {{-- la lib qrcode pose width/height inline : on les retire après rendu et la classe !size garde la main --}}
                 <canvas x-data x-init="window.QRCode && window.QRCode.toCanvas($el, '{{ $qrUrl }}', { width: 220, margin: 0, color: { dark: '{{ $navy }}', light: '#ffffff' } }, () => { $el.style.width = ''; $el.style.height = ''; })"
                         class="!block !size-[15cqw]"></canvas>

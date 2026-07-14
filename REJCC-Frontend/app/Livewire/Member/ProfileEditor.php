@@ -99,18 +99,24 @@ class ProfileEditor extends Component
 
     public function updatedPhotoFile(): void
     {
-        $this->validate(['photoFile' => 'image|max:2048'], [], ['photoFile' => 'photo']);
+        $this->validate(['photoFile' => 'image|max:2048'], [
+            'photoFile.image' => 'Choisissez une image (JPG, PNG, WebP…).',
+            'photoFile.max' => 'La photo ne doit pas dépasser 2 Mo.',
+        ], ['photoFile' => 'photo']);
         $this->photo = Storage::disk('uploads')->url($this->photoFile->store('membres/photos', 'uploads'));
         $this->photoFile = null;
-        $this->persistMedia('Photo mise à jour.');
+        $this->persistMedia('Photo mise à jour.', 'photoFile');
     }
 
     public function updatedIdFile(): void
     {
-        $this->validate(['idFile' => 'file|max:5120|mimes:jpg,jpeg,png,webp,pdf'], [], ['idFile' => 'pièce d\'identité']);
+        $this->validate(['idFile' => 'file|max:5120|mimes:jpg,jpeg,png,webp,pdf'], [
+            'idFile.max' => 'La pièce d\'identité ne doit pas dépasser 5 Mo.',
+            'idFile.mimes' => 'Formats acceptés : JPG, PNG, WebP ou PDF.',
+        ], ['idFile' => 'pièce d\'identité']);
         $this->piece_identite = Storage::disk('uploads')->url($this->idFile->store('membres/pieces', 'uploads'));
         $this->idFile = null;
-        $this->persistMedia('Pièce d\'identité enregistrée.');
+        $this->persistMedia('Pièce d\'identité enregistrée.', 'idFile');
     }
 
     public function removePhoto(): void
@@ -119,7 +125,7 @@ class ProfileEditor extends Component
         $this->persistMedia('Photo retirée.');
     }
 
-    private function persistMedia(string $message): void
+    private function persistMedia(string $message, string $errorKey = 'photoFile'): void
     {
         $result = Api::put('/auth/profile', [
             'photo' => $this->photo ?: null,
@@ -129,6 +135,8 @@ class ProfileEditor extends Component
         if ($result['ok'] ?? false) {
             session(['api_user' => $result['user']]);
             $this->mediaMessage = $message;
+        } else {
+            $this->addError($errorKey, $result['message'] ?? 'L\'enregistrement a échoué. Réessayez.');
         }
     }
 

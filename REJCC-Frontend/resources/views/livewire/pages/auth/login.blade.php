@@ -69,7 +69,8 @@ new #[Layout('layouts.site')] class extends Component
                         Se souvenir de moi
                     </label>
 
-                    <div class="mt-2 flex items-center justify-end gap-3">
+                    <div class="mt-2 flex items-center justify-between gap-3">
+                        <a href="{{ route('password.request') }}" wire:navigate class="text-sm font-semibold text-brand hover:text-accent">Mot de passe oublié ?</a>
                         <button type="submit" wire:loading.attr="disabled" class="inline-flex items-center justify-center gap-2 rounded-full bg-accent px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:opacity-70">
                             <span wire:loading.remove>Se connecter</span>
                             <span wire:loading>Connexion…</span>

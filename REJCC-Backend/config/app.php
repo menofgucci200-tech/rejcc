@@ -54,6 +54,9 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    // URL publique du site vitrine/espace membre (liens dans les e-mails).
+    'frontend_url' => env('FRONTEND_URL', 'https://rejcc.site'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

@@ -202,95 +202,16 @@
             </div>
         </section>
 
-        {{-- Carte de membre & pièce d'identité --}}
+        {{-- Ma carte membre : la carte officielle vit sur sa propre page --}}
         <section>
-            <h2 class="mb-1 text-[17px] font-bold text-brand">Carte de membre &amp; pièce d'identité</h2>
+            <h2 class="mb-1 text-[17px] font-bold text-brand">Ma carte membre</h2>
             <div class="mb-4 h-[3px] w-9 rounded bg-accent"></div>
 
-            <div class="grid gap-7 rounded-[18px] border border-brand/10 bg-white p-6 shadow-[0_2px_8px_rgba(3,29,89,.05)] lg:grid-cols-2">
-                <div>
-                    <p class="mb-1.5 text-[13px] font-bold text-brand">Carte de membre REJCC</p>
-                    <p class="mb-3.5 text-[11.5px] text-[#9AA6B8]">Générée automatiquement à partir de votre profil.</p>
-
-                    <div class="grid grid-cols-2 gap-3.5">
-                        {{-- Recto --}}
-                        <div>
-                            <p class="mb-2 text-[11px] font-bold tracking-[0.06em] text-[#5B677A]">RECTO</p>
-                            <div class="relative aspect-[1.6/1] overflow-hidden rounded-2xl p-4 text-white" style="background: linear-gradient(135deg,#0B1F52,#031D59)">
-                                <div class="pointer-events-none absolute -bottom-[30px] -left-3.5 font-serif text-[90px] font-bold leading-none text-white/[.06]">JCC</div>
-                                <div class="relative flex h-full gap-3">
-                                    <div class="flex h-[68px] w-[58px] shrink-0 items-center justify-center rounded-lg bg-white/10 text-lg font-bold">
-                                        {{ mb_substr($prenom ?: '?', 0, 1) }}{{ mb_substr($nom ?: '', 0, 1) }}
-                                    </div>
-                                    <div class="flex min-w-0 flex-1 flex-col pb-7">
-                                        <div class="text-center">
-                                            <img src="{{ asset('brand/rejcc-logo-white.png') }}" alt="" class="mx-auto h-[22px] w-[22px] object-contain">
-                                            <p class="mt-0.5 font-serif text-[11px] font-bold tracking-[0.15em]">REJCC</p>
-                                            <div class="mx-0 my-1 flex items-center gap-1.5">
-                                                <span class="h-px flex-1 bg-white/40"></span>
-                                                <span class="size-[3px] shrink-0 rounded-full bg-[#D95B5A]"></span>
-                                                <span class="h-px flex-1 bg-white/40"></span>
-                                            </div>
-                                        </div>
-                                        <div class="mt-auto">
-                                            <p class="truncate font-serif text-xs uppercase tracking-[0.06em]">{{ $prenom }} {{ $nom }}</p>
-                                            <p class="mt-px text-[8.5px] font-bold tracking-[0.1em] text-[#D95B5A]">MEMBRE OFFICIEL</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="absolute inset-x-4 bottom-3">
-                                    <p class="text-[6.5px] font-bold leading-[1.4] tracking-[0.08em] text-white">RESEAU ENTREPRENEURIAL DES JEUNES CATHOLIQUES</p>
-                                    <p class="text-[6.5px] font-bold tracking-[0.08em] text-[#D95B5A]">DE COTE D'IVOIRE</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {{-- Verso --}}
-                        <div>
-                            <p class="mb-2 text-[11px] font-bold tracking-[0.06em] text-[#5B677A]">VERSO</p>
-                            <div class="relative aspect-[1.6/1] overflow-hidden rounded-2xl p-4 text-white" style="background: linear-gradient(135deg,#0B1F52,#031D59)">
-                                <div class="pointer-events-none absolute -right-10 -top-5 size-[140px] rounded-full border border-white/[.06]"></div>
-                                <div class="relative flex max-w-[150px] flex-col gap-0.5">
-                                    <div class="grid size-14 grid-cols-5 grid-rows-5 gap-px rounded-lg bg-white p-1.5">
-                                        <div class="col-span-2 row-span-2 rounded-sm bg-brand"></div>
-                                        <div class="col-span-2 col-start-4 row-span-2 rounded-sm bg-brand"></div>
-                                        <div class="col-span-2 row-span-2 row-start-4 rounded-sm bg-brand"></div>
-                                        <div class="col-start-3 row-start-3 bg-brand"></div>
-                                        <div class="col-start-4 row-start-4 bg-brand"></div>
-                                        <div class="col-start-5 row-start-5 bg-brand"></div>
-                                        <div class="col-start-4 row-start-5 bg-brand"></div>
-                                    </div>
-                                    <p class="mt-2 text-[6.5px] font-bold leading-[1.5] tracking-[0.05em]">SCANNEZ POUR ACCÉDER À<br>VOTRE PROFIL MEMBRE</p>
-                                    <div class="my-2 h-px w-[30px] bg-[#D95B5A]"></div>
-                                    <p class="text-[6px] font-bold tracking-[0.08em] text-[#C4D0EC]">N° MEMBRE</p>
-                                    <p class="mb-1.5 text-[7px] font-bold tracking-[0.05em] text-[#D95B5A]">{{ $reference }}</p>
-                                    <p class="text-[6px] font-bold tracking-[0.08em] text-[#C4D0EC]">DATE D'ADHÉSION</p>
-                                    <p class="text-[7px] font-bold tracking-[0.05em] text-[#D95B5A]">
-                                        {{ $date_adhesion ? \Illuminate\Support\Carbon::parse($date_adhesion)->locale('fr')->translatedFormat('d F Y') : '—' }}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <button type="button" class="btn-tap mt-3.5 rounded-[9px] border border-[#C9D3E6] px-4.5 py-2.5 text-[12.5px] font-bold text-brand hover:bg-cloud">Télécharger la carte</button>
-                </div>
-
-                <div>
-                    <p class="mb-1.5 text-[13px] font-bold text-brand">Pièce d'identité (vérification)</p>
-                    <p class="mb-3 text-[11.5px] text-[#9AA6B8]">CNI, passeport ou attestation — recto et verso.</p>
-                    <div class="grid grid-cols-2 gap-2.5">
-                        <div>
-                            <div class="flex aspect-[8/5] w-full items-center justify-center rounded-[10px] border-2 border-dashed border-brand/15 bg-cloud text-[11px] text-[#9AA6B8]">Recto</div>
-                        </div>
-                        <div>
-                            <div class="flex aspect-[8/5] w-full items-center justify-center rounded-[10px] border-2 border-dashed border-brand/15 bg-cloud text-[11px] text-[#9AA6B8]">Verso</div>
-                        </div>
-                    </div>
-                    <div class="mt-3 flex items-center gap-2">
-                        <span class="size-2 shrink-0 rounded-full bg-[#F5A623]"></span>
-                        <span class="text-[11.5px] text-[#5B677A]">Envoi de documents bientôt disponible</span>
-                    </div>
-                </div>
+            <div class="flex flex-wrap items-center justify-between gap-4 rounded-[18px] border border-brand/10 bg-white p-6 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                <p class="max-w-xl text-[12.5px] text-[#5B677A]">Votre carte officielle REJCC (recto, verso et QR code) est générée automatiquement à partir de votre profil. Vous pouvez y ajouter votre photo et l'imprimer ou l'enregistrer en PDF.</p>
+                <a href="{{ route('espace-membre.carte') }}" wire:navigate class="btn-tap inline-flex items-center gap-2 rounded-full bg-brand px-4 py-2 text-xs font-bold text-white hover:bg-brand/90">
+                    <x-ui.icon name="qr-code" class="size-3.5" /> Voir ma carte membre
+                </a>
             </div>
         </section>
     </div>

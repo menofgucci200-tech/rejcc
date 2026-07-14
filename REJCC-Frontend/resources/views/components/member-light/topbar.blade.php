@@ -27,8 +27,13 @@
             <p class="whitespace-nowrap text-[13px] font-bold leading-tight text-brand">{{ $user->prenom }} {{ $user->nom }}</p>
             <p class="whitespace-nowrap text-[11px] leading-tight text-[#5B677A]">Membre</p>
         </div>
-        <div class="flex size-11 shrink-0 items-center justify-center rounded-full text-xs font-bold tracking-wide text-white transition-transform duration-200 group-hover:scale-105" style="background: linear-gradient(135deg, #4F6FBF, #AC0100)">
-            {{ mb_substr($user->prenom, 0, 1) }}{{ mb_substr($user->nom, 0, 1) }}
-        </div>
+        @if ($user->photo ?? null)
+            <img src="{{ $user->photo }}" alt="Photo de {{ $user->prenom }} {{ $user->nom }}"
+                 class="size-11 shrink-0 rounded-full object-cover ring-1 ring-brand/10 transition-transform duration-200 group-hover:scale-105">
+        @else
+            <div class="flex size-11 shrink-0 items-center justify-center rounded-full text-xs font-bold tracking-wide text-white transition-transform duration-200 group-hover:scale-105" style="background: linear-gradient(135deg, #4F6FBF, #AC0100)">
+                {{ mb_substr($user->prenom, 0, 1) }}{{ mb_substr($user->nom, 0, 1) }}
+            </div>
+        @endif
     </a>
 </header>

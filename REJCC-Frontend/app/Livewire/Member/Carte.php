@@ -12,7 +12,10 @@ class Carte extends Component
 {
     use WithFileUploads;
 
-    public $photo;
+    /** Fichier en cours d'upload. Nommé différemment de la variable de vue
+     *  « photo » (URL enregistrée) : les propriétés publiques Livewire
+     *  écrasent les données passées à la vue en cas de collision de nom. */
+    public $photoUpload;
 
     public ?string $message = null;
 
@@ -28,15 +31,18 @@ class Carte extends Component
         }
     }
 
-    public function updatedPhoto(): void
+    public function updatedPhotoUpload(): void
     {
         $this->validate([
-            'photo' => 'image|max:2048', // 2 Mo
-        ]);
+            'photoUpload' => 'image|max:2048', // 2 Mo
+        ], [
+            'photoUpload.image' => 'Choisissez une image (JPG, PNG, WebP…).',
+            'photoUpload.max' => 'La photo ne doit pas dépasser 2 Mo.',
+        ], ['photoUpload' => 'photo']);
 
         // Stockée sur le disque public du frontend (rejcc.site/storage/...),
         // puis l'URL est enregistrée côté backend via l'API.
-        $path = $this->photo->store('members', 'public');
+        $path = $this->photoUpload->store('members', 'public');
         $url = url('storage/'.$path);
 
         $result = Api::put('/auth/profile', ['photo' => $url], Api::token());
@@ -45,10 +51,10 @@ class Carte extends Component
             session(['api_user' => $result['user']]);
             $this->message = 'Photo mise à jour.';
         } else {
-            $this->addError('photo', $result['message'] ?? "L'enregistrement de la photo a échoué.");
+            $this->addError('photoUpload', $result['message'] ?? "L'enregistrement de la photo a échoué.");
         }
 
-        $this->reset('photo');
+        $this->reset('photoUpload');
     }
 
     public function render()

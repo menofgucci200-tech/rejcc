@@ -31,6 +31,7 @@ Route::get('/testimonials', [TestimonialController::class, 'index']);
 Route::get('/partners', [PartnerController::class, 'index']);
 Route::get('/home-content', [HomeContentController::class, 'index']);
 Route::get('/site-settings', [\App\Http\Controllers\Api\SiteSettingsController::class, 'index']);
+Route::get('/gallery', fn () => response()->json(['ok' => true, 'photos' => \App\Models\GalleryPhoto::orderBy('ordre')->orderBy('id')->get()]));
 Route::get('/news', [NewsArticleController::class, 'index']);
 Route::get('/news/{slug}', [NewsArticleController::class, 'show']);
 Route::get('/public-events', [EventController::class, 'publicIndex']);
@@ -54,6 +55,8 @@ Route::middleware('throttle:10,1')->group(function () {
 Route::middleware('throttle:5,1')->group(function () {
     Route::post('/auth/register', [AuthController::class, 'register']);
     Route::post('/auth/login', [AuthController::class, 'login']);
+    Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
+    Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
 });
 
 Route::middleware('auth.token')->group(function () {
