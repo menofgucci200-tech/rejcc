@@ -11,6 +11,7 @@
         @livewireStyles
     </head>
     <body class="bg-cloud font-sans text-ink antialiased">
+        @include('partials.splash')
         <div x-data="{ mobileOpen: false }" class="flex h-screen overflow-hidden">
             <!-- Sidebar (desktop) -->
             <div class="hidden lg:block lg:shrink-0">

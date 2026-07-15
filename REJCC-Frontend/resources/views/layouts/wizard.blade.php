@@ -14,6 +14,7 @@
         @livewireStyles
     </head>
     <body class="bg-cloud font-sans text-ink antialiased">
+        @include('partials.splash')
         {{ $slot }}
 
         @livewireScripts
