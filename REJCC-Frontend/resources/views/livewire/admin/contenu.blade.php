@@ -61,14 +61,24 @@
                     </div>
                 @elseif ($onglet === 'partners')
                     <div>
-                        <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Nom du partenaire</label>
-                        <input wire:model="name" type="text" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
+                        <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Nom de l'entreprise / organisation</label>
+                        <input wire:model="name" type="text" placeholder="Ex : Ivoire Tech SARL" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
                         @error('name') <span class="text-xs text-accent">{{ $message }}</span> @enderror
                     </div>
                     <div>
-                        <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Domaine (ex : Partenaire financier)</label>
+                        <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Domaine (optionnel — ex : Partenaire financier)</label>
                         <input wire:model="sector" type="text" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
                         @error('sector') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Site web (optionnel)</label>
+                        <input wire:model="site_url" type="url" placeholder="https://…" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
+                        @error('site_url') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                        <p class="mt-1 text-[11px] text-[#9AA6B8]">Le logo deviendra cliquable et ouvrira ce site.</p>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <x-ui.media-field label="Logo du partenaire (optionnel)" hint="Uploadez le logo (PNG ou SVG à fond transparent de préférence), ou collez son lien. Sans logo, le nom du partenaire s'affiche à la place sur la vitrine." :media-url="$mediaUrl" :media-name="$mediaName" :media-size="$mediaSize" />
+                        @error('mediaFile') <span class="text-xs text-accent">{{ $message }}</span> @enderror
                     </div>
                 @elseif ($onglet === 'stats')
                     <div>
@@ -131,8 +141,20 @@
                             <p class="text-[13.5px] font-bold text-brand">{{ $item['name'] }} <span class="font-normal text-[#9AA6B8]">— {{ $item['role'] }}</span></p>
                             <p class="line-clamp-2 text-xs italic text-[#5B677A]">« {{ $item['quote'] }} »</p>
                         @elseif ($onglet === 'partners')
-                            <p class="text-[13.5px] font-bold text-brand">{{ $item['name'] }}</p>
-                            <p class="text-xs text-[#5B677A]">{{ $item['sector'] }}</p>
+                            <div class="flex items-center gap-3">
+                                @if ($item['logo'] ?? null)
+                                    <img src="{{ $item['logo'] }}" alt="" class="h-10 w-16 shrink-0 rounded-lg border border-brand/10 bg-white object-contain p-1">
+                                @else
+                                    <span class="flex h-10 w-16 shrink-0 items-center justify-center rounded-lg bg-brand/[.06] text-[10px] font-bold text-[#9AA6B8]">Sans logo</span>
+                                @endif
+                                <div class="min-w-0">
+                                    <p class="truncate text-[13.5px] font-bold text-brand">{{ $item['name'] }}</p>
+                                    <p class="truncate text-xs text-[#5B677A]">{{ $item['sector'] ?: '—' }}</p>
+                                    @if ($item['site_url'] ?? null)
+                                        <a href="{{ $item['site_url'] }}" target="_blank" rel="noopener" class="truncate text-[11px] text-azure hover:underline">{{ $item['site_url'] }}</a>
+                                    @endif
+                                </div>
+                            </div>
                         @elseif ($onglet === 'stats')
                             <p class="text-[13.5px] font-bold text-brand">{{ number_format($item['value'], 0, ',', ' ') }}{{ $item['suffix'] }}</p>
                             <p class="text-xs text-[#5B677A]">{{ $item['label'] }}</p>

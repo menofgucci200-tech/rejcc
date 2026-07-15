@@ -12,24 +12,22 @@
         @if ($headerTitle) {{ $headerTitle }} @else Nos <span class="font-serif italic normal-case text-azure">partenaires</span> @endif
     </x-page-header>
 
-    <section class="bg-white py-20 sm:py-24">
+    <section class="overflow-hidden bg-white py-20 sm:py-24">
         <x-ui.container>
             <x-ui.section-heading
                 eyebrow="Ils nous soutiennent"
                 title="Un réseau de confiance"
-                subtitle="Logos provisoires — la liste officielle de nos partenaires sera bientôt mise à jour."
+                :subtitle="$partners->isNotEmpty() ? 'Les entreprises et organisations qui accompagnent le REJCC. Cliquez sur un logo pour découvrir le partenaire.' : 'La liste officielle de nos partenaires sera bientôt mise à jour.'"
             />
-            <div class="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-                @foreach ($partners as $i => $p)
-                    <x-ui.reveal :delay="($i % 4) * 0.06">
-                        <div class="flex h-28 flex-col items-center justify-center gap-2 rounded-2xl border border-brand/10 bg-cloud transition-colors hover:border-brand/25">
-                            <span class="flex size-12 items-center justify-center rounded-xl bg-brand font-display text-lg text-white">{{ $p->initials }}</span>
-                            <span class="px-2 text-center text-xs font-medium text-ink/70">{{ $p->name }}</span>
-                        </div>
-                    </x-ui.reveal>
-                @endforeach
-            </div>
         </x-ui.container>
+
+        @if ($partners->isNotEmpty())
+            {{-- Bandeau animé : défile en continu, se met en pause au survol.
+                 Hors container pour occuper toute la largeur de l'écran. --}}
+            <x-ui.reveal class="mt-12">
+                <x-partners-marquee :partners="$partners" class="py-2" />
+            </x-ui.reveal>
+        @endif
     </section>
 
     <section class="bg-cloud py-20 sm:py-24">

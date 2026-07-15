@@ -56,6 +56,8 @@ class Contenu extends Component
 
     public string $caption = '';
 
+    public string $site_url = '';
+
     public function setOnglet(string $onglet): void
     {
         if (isset(self::ONGLETS[$onglet])) {
@@ -71,7 +73,7 @@ class Contenu extends Component
 
     public function openCreate(): void
     {
-        $this->reset(['editingId', 'title', 'blurb', 'items', 'icon', 'name', 'role', 'quote', 'sector', 'label', 'value', 'suffix', 'text', 'caption']);
+        $this->reset(['editingId', 'title', 'blurb', 'items', 'icon', 'name', 'role', 'quote', 'sector', 'label', 'value', 'suffix', 'text', 'caption', 'site_url']);
         $this->clearMedia();
         $this->resetValidation();
         $this->showForm = true;
@@ -99,8 +101,12 @@ class Contenu extends Component
         $this->suffix = $item['suffix'] ?? '';
         $this->text = $item['text'] ?? '';
         $this->caption = $item['caption'] ?? '';
+        $this->site_url = $item['site_url'] ?? '';
         if ($this->onglet === 'gallery') {
             $this->fillMedia($item['url'] ?? null);
+        }
+        if ($this->onglet === 'partners') {
+            $this->fillMedia($item['logo'] ?? null);
         }
     }
 
@@ -140,9 +146,20 @@ class Contenu extends Component
             case 'partners':
                 $this->validate([
                     'name' => 'required|string|min:2|max:120',
-                    'sector' => 'required|string|min:2|max:120',
+                    'sector' => 'nullable|string|max:120',
+                    'site_url' => 'nullable|url|max:500',
+                ], [
+                    'name.required' => "Indiquez le nom de l'entreprise / organisation.",
+                    'site_url.url' => 'Le lien du site doit être une adresse valide (https://…).',
                 ]);
-                $data = ['name' => $this->name, 'sector' => $this->sector];
+                // Logo et site web optionnels : sans logo la vitrine affiche le
+                // nom, sans site web le logo n'est pas cliquable.
+                $data = [
+                    'name' => $this->name,
+                    'sector' => $this->sector ?: null,
+                    'logo' => $this->mediaUrl ?: null,
+                    'site_url' => $this->site_url ?: null,
+                ];
                 break;
 
             case 'stats':

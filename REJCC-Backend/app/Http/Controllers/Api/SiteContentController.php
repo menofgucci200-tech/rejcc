@@ -43,7 +43,11 @@ class SiteContentController extends Controller
             'model' => Partner::class,
             'rules' => [
                 'name' => 'required|string|min:2|max:120',
-                'sector' => 'required|string|min:2|max:120',
+                // Tout le reste est optionnel : sans logo on affiche le nom,
+                // sans site web le logo n'est pas cliquable.
+                'sector' => 'nullable|string|max:120',
+                'logo' => 'nullable|url|max:500',
+                'site_url' => 'nullable|url|max:500',
                 'ordre' => 'nullable|integer|min:0',
             ],
         ],
