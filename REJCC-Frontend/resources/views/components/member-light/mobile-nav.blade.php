@@ -2,8 +2,8 @@
     $tabs = [
         ['label' => 'Accueil', 'icon' => 'nav-home', 'route' => 'espace-membre.dashboard'],
         ['label' => 'Cours', 'icon' => 'graduation-cap', 'route' => 'espace-membre.formations'],
-        ['label' => 'Catalogue', 'icon' => 'nav-compass', 'route' => 'espace-membre.catalogue'],
-        ['label' => 'Mentorat', 'icon' => 'nav-mentor', 'route' => 'espace-membre.mentorat'],
+        ['label' => 'Emploi', 'icon' => 'nav-briefcase', 'route' => 'espace-membre.emplois'],
+        ['label' => 'Marketplace', 'icon' => 'store', 'route' => 'espace-membre.marketplace'],
     ];
 
     $isActive = fn (array $item) => request()->routeIs($item['route'].'*');
