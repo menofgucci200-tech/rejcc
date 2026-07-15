@@ -15,37 +15,44 @@ class Directory extends Component
 
     public string $filtre = 'tous';
 
+    public int $page = 1;
+
+    public function updatedQuery(): void
+    {
+        $this->page = 1;
+    }
+
     public function setFiltre(string $filtre): void
     {
         $this->filtre = $filtre;
+        $this->page = 1;
+    }
+
+    public function gotoPage(int $p): void
+    {
+        $this->page = max(1, $p);
     }
 
     public function render()
     {
-        $token = Api::token();
-        $me = Api::user();
-        $q = trim(mb_strtolower($this->query));
+        // Recherche, filtre et pagination côté serveur (l'annuaire peut
+        // compter plusieurs milliers de membres).
+        $params = ['page' => $this->page];
+        if (trim($this->query) !== '') {
+            $params['q'] = trim($this->query);
+        }
+        if ($this->filtre !== 'tous') {
+            $params['profil'] = $this->filtre;
+        }
 
-        $members = Collection::make(Api::get('/members', [], $token)['members'] ?? [])
-            ->reject(fn ($m) => $m['id'] === $me->id)
-            ->when($this->filtre !== 'tous', function ($collection) {
-                return $collection->filter(fn ($m) => ($m['profil'] ?? null) === $this->filtre);
-            })
-            ->when($q !== '', function ($collection) use ($q) {
-                return $collection->filter(function ($m) use ($q) {
-                    $fullName = mb_strtolower(trim(($m['prenom'] ?? '').' '.($m['nom'] ?? '')));
+        $result = Api::get('/members', $params, Api::token());
 
-                    return str_contains($fullName, $q)
-                        || str_contains(mb_strtolower($m['secteur'] ?? ''), $q)
-                        || str_contains(mb_strtolower($m['ville'] ?? ''), $q);
-                });
-            })
-            ->sortBy('prenom')
-            ->map(fn ($m) => (object) $m)
-            ->values();
+        $members = Collection::make($result['members'] ?? [])
+            ->map(fn ($m) => (object) $m);
 
         return view('livewire.member.directory', [
             'members' => $members,
+            'meta' => $result['meta'] ?? [],
             'profiles' => MembershipContent::profiles(),
         ]);
     }

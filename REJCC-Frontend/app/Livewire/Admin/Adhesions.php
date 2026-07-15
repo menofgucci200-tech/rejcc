@@ -13,6 +13,28 @@ class Adhesions extends Component
 {
     public ?int $expanded = null;
 
+    public string $recherche = '';
+
+    public string $filtreStatut = 'tous'; // tous | en_attente | accepte | refuse
+
+    public int $page = 1;
+
+    public function updatedRecherche(): void
+    {
+        $this->page = 1;
+    }
+
+    public function setFiltreStatut(string $statut): void
+    {
+        $this->filtreStatut = $statut;
+        $this->page = 1;
+    }
+
+    public function gotoPage(int $p): void
+    {
+        $this->page = max(1, $p);
+    }
+
     public function toggleDetail(int $id): void
     {
         $this->expanded = $this->expanded === $id ? null : $id;
@@ -55,13 +77,26 @@ class Adhesions extends Component
 
     public function render()
     {
-        $candidatures = Collection::make(Api::get('/admin/membership-applications', [], Api::token())['applications'] ?? [])
+        $params = ['page' => $this->page];
+        if (trim($this->recherche) !== '') {
+            $params['q'] = trim($this->recherche);
+        }
+        if ($this->filtreStatut !== 'tous') {
+            $params['statut'] = $this->filtreStatut;
+        }
+
+        $result = Api::get('/admin/membership-applications', $params, Api::token());
+
+        $candidatures = Collection::make($result['applications'] ?? [])
             ->map(function ($a) {
                 $a['created_at'] = Carbon::parse($a['created_at']);
 
                 return (object) $a;
             });
 
-        return view('livewire.admin.adhesions', ['candidatures' => $candidatures]);
+        return view('livewire.admin.adhesions', [
+            'candidatures' => $candidatures,
+            'meta' => $result['meta'] ?? [],
+        ]);
     }
 }

@@ -14,8 +14,17 @@
                 <h2 class="mb-1 text-[17px] font-bold text-brand">Demandes d'adhésion</h2>
                 <div class="h-[3px] w-9 rounded bg-accent"></div>
             </div>
-            <span class="text-xs text-[#5B677A]">{{ $candidatures->count() }} demande{{ $candidatures->count() > 1 ? 's' : '' }} · réponses complètes consultables via « Voir »</span>
+            <span class="text-xs text-[#5B677A]">{{ $meta['total'] ?? $candidatures->count() }} demande{{ ($meta['total'] ?? 0) > 1 ? 's' : '' }} · réponses complètes consultables via « Voir »</span>
         </div>
+
+        <div class="mb-5 flex flex-wrap items-center gap-2 rounded-[14px] border border-brand/10 bg-white p-3 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+            <input wire:model.live.debounce.400ms="recherche" type="search" placeholder="Rechercher nom ou email…" class="w-52 rounded-full border border-brand/15 px-4 py-2 text-xs outline-none focus:border-azure" />
+            <span class="mx-1 h-5 w-px bg-brand/10"></span>
+            @foreach (['tous' => 'Toutes', 'en_attente' => 'En attente', 'accepte' => 'Approuvées', 'refuse' => 'Rejetées'] as $value => $label)
+                <button wire:click="setFiltreStatut('{{ $value }}')" class="rounded-full border px-3 py-1.5 text-xs font-semibold transition-all duration-200 ease-out active:scale-95 {{ $filtreStatut === $value ? 'border-brand bg-brand text-white' : 'border-brand/10 bg-white text-[#5B677A] hover:border-brand/30 hover:text-brand' }}">{{ $label }}</button>
+            @endforeach
+        </div>
+
         <div class="rounded-[18px] border border-brand/10 bg-white px-5 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
             @forelse ($candidatures as $c)
                 @php $b = $candBadge($c->statut ?? null); @endphp
@@ -86,8 +95,10 @@
                     </div>
                 @endif
             @empty
-                <p class="py-10 text-center text-sm text-[#5B677A]">Aucune demande d'adhésion pour le moment.</p>
+                <p class="py-10 text-center text-sm text-[#5B677A]">Aucune demande d'adhésion{{ $filtreStatut !== 'tous' || trim($recherche) !== '' ? ' ne correspond à ces critères' : ' pour le moment' }}.</p>
             @endforelse
         </div>
+
+        <x-ui.pager :meta="$meta" />
     </div>
 </div>

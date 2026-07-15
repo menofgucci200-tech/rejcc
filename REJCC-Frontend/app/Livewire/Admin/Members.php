@@ -21,6 +21,8 @@ class Members extends Component
 
     public string $recherche = '';
 
+    public int $page = 1;
+
     // ── Dossier membre (Voir) ────────────────────────────────────────────
     public ?int $voirId = null;
 
@@ -51,11 +53,29 @@ class Members extends Component
     public function setFiltreRole(string $filtre): void
     {
         $this->filtreRole = $filtre;
+        $this->page = 1;
     }
 
     public function setFiltreStatut(string $filtre): void
     {
         $this->filtreStatut = $filtre;
+        $this->page = 1;
+    }
+
+    // Toute recherche/changement de période revient à la première page.
+    public function updatedRecherche(): void
+    {
+        $this->page = 1;
+    }
+
+    public function updatedPeriode(): void
+    {
+        $this->page = 1;
+    }
+
+    public function gotoPage(int $p): void
+    {
+        $this->page = max(1, $p);
     }
 
     public function voir(int $id): void
@@ -157,16 +177,11 @@ class Members extends Component
         ];
     }
 
-    public function toggleStatut(int $id): void
+    public function toggleStatut(int $id, bool $actif): void
     {
-        $member = Collection::make(Api::get('/admin/members', [], Api::token())['members'] ?? [])
-            ->firstWhere('id', $id);
-
-        if (! $member) {
-            return;
-        }
-
-        Api::put("/admin/members/{$id}", ['is_active' => ! ($member['is_active'] ?? true)], Api::token());
+        // L'état courant est passé par la vue : plus besoin de charger toute
+        // la liste (indispensable maintenant que la liste est paginée).
+        Api::put("/admin/members/{$id}", ['is_active' => ! $actif], Api::token());
     }
 
     public function delete(int $id): void
@@ -176,25 +191,26 @@ class Members extends Component
 
     public function render()
     {
-        $tous = Collection::make(Api::get('/admin/members', [], Api::token())['members'] ?? [])
-            ->when($this->recherche !== '', function ($c) {
-                $q = mb_strtolower($this->recherche);
+        // Recherche, filtres, tri et pagination sont faits côté serveur
+        // (indispensable à l'échelle : plusieurs milliers de membres).
+        $params = ['page' => $this->page];
+        if (trim($this->recherche) !== '') {
+            $params['q'] = trim($this->recherche);
+        }
+        if ($this->filtreRole !== 'tous') {
+            $params['role'] = $this->filtreRole;
+        }
+        if ($this->filtreStatut !== 'tous') {
+            $params['statut'] = $this->filtreStatut;
+        }
+        if ($this->periode !== 'toutes') {
+            $params['periode'] = $this->periode;
+        }
 
-                return $c->filter(fn ($m) => str_contains(mb_strtolower(($m['prenom'] ?? '').' '.($m['nom'] ?? '').' '.($m['email'] ?? '')), $q));
-            })
-            ->when($this->filtreRole !== 'tous', fn ($c) => $c->where('role', $this->filtreRole))
-            ->when($this->filtreStatut === 'actifs', fn ($c) => $c->filter(fn ($m) => $m['is_active'] ?? true))
-            ->when($this->filtreStatut === 'suspendus', fn ($c) => $c->filter(fn ($m) => ! ($m['is_active'] ?? true)))
-            ->when($this->periode !== 'toutes', function ($c) {
-                $depuis = match ($this->periode) {
-                    '30j' => now()->subDays(30),
-                    '90j' => now()->subDays(90),
-                    'annee' => now()->startOfYear(),
-                    default => null,
-                };
+        $result = Api::get('/admin/members', $params, Api::token());
+        $meta = $result['meta'] ?? [];
 
-                return $depuis ? $c->filter(fn ($m) => Carbon::parse($m['created_at'])->gte($depuis)) : $c;
-            })
+        $membres = Collection::make($result['members'] ?? [])
             ->map(fn ($m) => [
                 'id' => $m['id'],
                 'nom' => trim(($m['prenom'] ?? '').' '.($m['nom'] ?? '')) ?: $m['email'],
@@ -208,17 +224,12 @@ class Members extends Component
                 'actif' => (bool) ($m['is_active'] ?? true),
                 'depuis' => Carbon::parse($m['created_at'])->translatedFormat('j M Y'),
                 'initiales' => mb_strtoupper(mb_substr($m['prenom'] ?? $m['email'], 0, 1).mb_substr($m['nom'] ?? '', 0, 1)),
-            ])
-            // Classement : administrateurs, puis mentors, puis membres, puis par nom.
-            ->sortBy([
-                fn ($m) => ['admin' => 0, 'mentor' => 1, 'member' => 2][$m['role']] ?? 3,
-                fn ($m) => mb_strtolower($m['nom']),
-            ])
-            ->values();
+            ]);
 
         return view('livewire.admin.members', [
-            'membres' => $tous,
-            'total' => $tous->count(),
+            'membres' => $membres,
+            'total' => $meta['total'] ?? $membres->count(),
+            'meta' => $meta,
             'sectionsDisponibles' => AdminSections::SECTIONS,
         ]);
     }

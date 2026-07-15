@@ -28,7 +28,7 @@
         @if ($members->isEmpty())
             <p class="py-10 text-center text-sm text-[#5B677A]">Aucun membre trouvé.</p>
         @else
-            <div class="grid gap-4" style="grid-template-columns: repeat(auto-fill, minmax(240px, 1fr))">
+            <div class="grid gap-4" style="grid-template-columns: repeat(auto-fill, minmax(240px, 1fr))" wire:key="dir-page-{{ $meta['current_page'] ?? 1 }}">
                 @foreach ($members as $m)
                     <article class="card-hover rounded-[16px] border border-brand/10 bg-white p-[18px] shadow-[0_2px_8px_rgba(3,29,89,.05)]">
                         <div class="flex items-center gap-3">
@@ -60,6 +60,8 @@
                     </article>
                 @endforeach
             </div>
+
+            <x-ui.pager :meta="$meta" />
         @endif
     </div>
 </div>

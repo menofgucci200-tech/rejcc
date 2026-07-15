@@ -278,10 +278,39 @@ class AuthController extends Controller
 
     public function directory(Request $request)
     {
-        $members = User::where('role', 'member')
-            ->orderBy('prenom')
-            ->get(['id', 'prenom', 'nom', 'ville', 'secteur', 'profil', 'organisation', 'photo']);
+        $q = trim((string) $request->query('q', ''));
+        $profil = $request->query('profil');
 
-        return response()->json(['ok' => true, 'members' => $members]);
+        $query = User::where('role', 'member')
+            ->where('id', '!=', $request->user()->id)
+            ->orderBy('prenom')
+            ->orderBy('nom');
+
+        if (in_array($profil, ['etudiant', 'porteur', 'entrepreneur'], true)) {
+            $query->where('profil', $profil);
+        }
+
+        if ($q !== '') {
+            $query->where(function ($qb) use ($q) {
+                $qb->where('prenom', 'like', "%{$q}%")
+                    ->orWhere('nom', 'like', "%{$q}%")
+                    ->orWhere('secteur', 'like', "%{$q}%")
+                    ->orWhere('ville', 'like', "%{$q}%")
+                    ->orWhere('organisation', 'like', "%{$q}%");
+            });
+        }
+
+        $page = $query->paginate(24, ['id', 'prenom', 'nom', 'ville', 'secteur', 'profil', 'organisation', 'photo']);
+
+        return response()->json([
+            'ok' => true,
+            'members' => $page->items(),
+            'meta' => [
+                'current_page' => $page->currentPage(),
+                'last_page' => $page->lastPage(),
+                'total' => $page->total(),
+                'per_page' => $page->perPage(),
+            ],
+        ]);
     }
 }

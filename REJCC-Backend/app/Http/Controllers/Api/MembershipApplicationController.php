@@ -95,10 +95,12 @@ class MembershipApplicationController extends Controller
 
     public function index(Request $request)
     {
-        $q = $request->query('q', '');
+        $q = trim((string) $request->query('q', ''));
+        $statut = $request->query('statut'); // en_attente | accepte | refuse
+
         $query = MembershipApplication::orderBy('created_at', 'desc');
 
-        if ($q) {
+        if ($q !== '') {
             $query->where(function ($qb) use ($q) {
                 $qb->where('prenom', 'like', "%{$q}%")
                    ->orWhere('nom', 'like', "%{$q}%")
@@ -106,7 +108,22 @@ class MembershipApplicationController extends Controller
             });
         }
 
-        return response()->json(['ok' => true, 'applications' => $query->get()]);
+        if (in_array($statut, ['en_attente', 'accepte', 'refuse'], true)) {
+            $query->where('statut', $statut);
+        }
+
+        $page = $query->paginate(30);
+
+        return response()->json([
+            'ok' => true,
+            'applications' => $page->items(),
+            'meta' => [
+                'current_page' => $page->currentPage(),
+                'last_page' => $page->lastPage(),
+                'total' => $page->total(),
+                'per_page' => $page->perPage(),
+            ],
+        ]);
     }
 
     public function show($id)

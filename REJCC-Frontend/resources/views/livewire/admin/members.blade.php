@@ -102,7 +102,7 @@
                                     <button wire:click="qr({{ $m['id'] }})" title="Carte membre & QR code" class="icon-btn rounded-lg p-1.5 {{ $qrId === $m['id'] ? 'bg-brand/10 text-brand' : 'text-[#9AA6B8] hover:bg-brand/10 hover:text-brand' }}">
                                         <x-ui.icon name="qr-code" class="size-4" />
                                     </button>
-                                    <button wire:click="toggleStatut({{ $m['id'] }})" title="{{ $m['actif'] ? 'Suspendre' : 'Réactiver' }}" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-[#F5A623]/10 hover:text-[#B87A0D]">
+                                    <button wire:click="toggleStatut({{ $m['id'] }}, {{ $m['actif'] ? 'true' : 'false' }})" title="{{ $m['actif'] ? 'Suspendre' : 'Réactiver' }}" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-[#F5A623]/10 hover:text-[#B87A0D]">
                                         <x-ui.icon name="{{ $m['actif'] ? 'user-x' : 'user-check' }}" class="size-4" />
                                     </button>
                                     @if ($m['role'] !== 'admin')
@@ -251,5 +251,7 @@
                 </tbody>
             </table>
         </div>
+
+        <x-ui.pager :meta="$meta" />
     </div>
 </div>

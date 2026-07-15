@@ -77,10 +77,14 @@ class AdminController extends Controller
 
     public function members(Request $request)
     {
-        $q = $request->query('q', '');
-        $query = User::orderBy('created_at', 'desc');
+        $q = trim((string) $request->query('q', ''));
+        $role = $request->query('role');       // member | mentor | admin
+        $statut = $request->query('statut');   // actifs | suspendus
+        $periode = $request->query('periode'); // 30j | 90j | annee
 
-        if ($q) {
+        $query = User::query();
+
+        if ($q !== '') {
             $query->where(function ($qb) use ($q) {
                 $qb->where('prenom', 'like', "%{$q}%")
                    ->orWhere('nom', 'like', "%{$q}%")
@@ -88,18 +92,44 @@ class AdminController extends Controller
             });
         }
 
-        $members = $query->get([
+        if (in_array($role, ['member', 'mentor', 'admin'], true)) {
+            $query->where('role', $role);
+        }
+
+        if ($statut === 'actifs') {
+            $query->where('is_active', true);
+        } elseif ($statut === 'suspendus') {
+            $query->where('is_active', false);
+        }
+
+        $depuis = match ($periode) {
+            '30j' => now()->subDays(30),
+            '90j' => now()->subDays(90),
+            'annee' => now()->startOfYear(),
+            default => null,
+        };
+        if ($depuis) {
+            $query->where('created_at', '>=', $depuis);
+        }
+
+        // Tri : administrateurs, puis mentors, puis membres, puis par nom.
+        // CASE (SQL portable : MySQL en prod, SQLite en test).
+        $query->orderByRaw("CASE role WHEN 'admin' THEN 0 WHEN 'mentor' THEN 1 ELSE 2 END")
+            ->orderBy('nom')
+            ->orderBy('prenom');
+
+        $page = $query->paginate(30, [
             'id', 'prenom', 'nom', 'email', 'telephone',
             'ville', 'profil', 'secteur', 'role', 'permissions', 'is_active', 'created_at',
         ]);
 
-        // Domaine de formation : issu du formulaire d'adhésion (une seule requête,
-        // indexée par email, pour éviter le N+1).
-        $domaines = MembershipApplication::whereIn('email', $members->pluck('email'))
+        // Domaine de formation : issu du formulaire d'adhésion (une seule requête
+        // sur la page courante seulement, pour éviter le N+1).
+        $domaines = MembershipApplication::whereIn('email', collect($page->items())->pluck('email'))
             ->orderBy('created_at')
             ->pluck('domaines_formation', 'email');
 
-        $members = $members->map(function (User $u) use ($domaines) {
+        $members = collect($page->items())->map(function (User $u) use ($domaines) {
             return [
                 ...$u->only([
                     'id', 'prenom', 'nom', 'email', 'telephone',
@@ -112,7 +142,16 @@ class AdminController extends Controller
             ];
         });
 
-        return response()->json(['ok' => true, 'members' => $members]);
+        return response()->json([
+            'ok' => true,
+            'members' => $members,
+            'meta' => [
+                'current_page' => $page->currentPage(),
+                'last_page' => $page->lastPage(),
+                'total' => $page->total(),
+                'per_page' => $page->perPage(),
+            ],
+        ]);
     }
 
     public function createMember(Request $request)
