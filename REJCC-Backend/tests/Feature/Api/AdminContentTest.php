@@ -155,8 +155,29 @@ class AdminContentTest extends TestCase
             'title' => 'Recherche développeur web',
             'description' => $opp->description,
             'type' => 'emploi',
+            'entreprise' => 'Ivoire Tech',
+            'site_url' => 'https://ivoire-tech.ci',
+            'lieu' => 'Abidjan, Cocody',
         ])->assertOk();
-        $this->assertSame('Recherche développeur web', $opp->fresh()->title);
+
+        $fresh = $opp->fresh();
+        $this->assertSame('Recherche développeur web', $fresh->title);
+        $this->assertSame('Ivoire Tech', $fresh->entreprise);
+        $this->assertSame('Abidjan, Cocody', $fresh->lieu);
+
+        // L'offre enrichie ressort sur l'endpoint listé des membres.
+        $listed = $this->withToken($this->tokenFor($member))->getJson('/api/opportunities')
+            ->assertOk()->json('opportunities.0');
+        $this->assertSame('https://ivoire-tech.ci', $listed['site_url']);
+        $this->assertSame('Ivoire Tech', $listed['entreprise']);
+
+        // Un lien de site invalide est refusé.
+        $this->withToken($token)->putJson("/api/admin/opportunities/{$opp->id}", [
+            'title' => 'Recherche développeur web',
+            'description' => $opp->description,
+            'type' => 'emploi',
+            'site_url' => 'pas-une-url',
+        ])->assertStatus(422);
 
         $this->withToken($token)->deleteJson("/api/admin/opportunities/{$opp->id}")->assertOk();
         $this->assertNull(Opportunity::find($opp->id));

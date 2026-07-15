@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Opportunity extends Model
 {
-    protected $fillable = ['title', 'description', 'type', 'contact', 'deadline', 'author_id', 'media_url', 'media_name'];
+    protected $fillable = ['title', 'description', 'type', 'entreprise', 'site_url', 'lieu', 'contact', 'deadline', 'author_id', 'media_url', 'media_name'];
 
     protected $casts = ['deadline' => 'date'];
 

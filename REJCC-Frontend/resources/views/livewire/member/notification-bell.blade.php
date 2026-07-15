@@ -12,11 +12,13 @@
         @endif
     </button>
 
+    {{-- Mobile : ancré au viewport (inset-x-3) pour ne pas déborder de l'écran.
+         Desktop (sm+) : dropdown classique ancré sous la cloche. --}}
     <div
         x-show="open"
         x-cloak
         x-transition.origin.top.right
-        class="absolute right-0 top-12 z-[90] w-[330px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-[16px] border border-brand/10 bg-white shadow-[0_24px_60px_-20px_rgba(3,29,89,.35)]"
+        class="fixed inset-x-3 top-[68px] z-[90] overflow-hidden rounded-[16px] border border-brand/10 bg-white shadow-[0_24px_60px_-20px_rgba(3,29,89,.35)] sm:absolute sm:inset-x-auto sm:right-0 sm:top-12 sm:w-[330px]"
     >
         <div class="flex items-center justify-between border-b border-cloud-200 px-4 py-3">
             <p class="text-[13px] font-bold text-brand">Notifications</p>

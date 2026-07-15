@@ -25,7 +25,7 @@
                 ['label' => 'Marketplace', 'icon' => 'store', 'route' => 'admin.marketplace'],
                 ['label' => 'Ressources', 'icon' => 'nav-library', 'route' => 'admin.ressources'],
                 ['label' => 'Certificats', 'icon' => 'award', 'route' => 'admin.certificats'],
-                ['label' => 'Opportunités', 'icon' => 'nav-briefcase', 'route' => 'admin.emplois'],
+                ['label' => 'Emploi & Stage', 'icon' => 'nav-briefcase', 'route' => 'admin.emplois'],
                 ['label' => 'Mentors', 'icon' => 'hand-heart', 'route' => 'admin.mentors'],
             ],
         ],

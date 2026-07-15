@@ -15,7 +15,7 @@
         ['label' => 'Événements', 'icon' => 'calendar-days', 'route' => 'espace-membre.evenements'],
         ['label' => 'Projets', 'icon' => 'nav-projects', 'route' => 'espace-membre.projets'],
         ['label' => 'Incubateur', 'icon' => 'nav-incubator', 'route' => 'espace-membre.incubateur'],
-        ['label' => 'Opportunités', 'icon' => 'nav-briefcase', 'route' => 'espace-membre.emplois'],
+        ['label' => 'Emploi & Stage', 'icon' => 'nav-briefcase', 'route' => 'espace-membre.emplois'],
         ['label' => 'Ressources', 'icon' => 'nav-library', 'route' => 'espace-membre.ressources'],
         ['label' => 'Documents', 'icon' => 'folder-open', 'route' => 'espace-membre.documents'],
         ['label' => 'Certificats', 'icon' => 'award', 'route' => 'espace-membre.certificats'],

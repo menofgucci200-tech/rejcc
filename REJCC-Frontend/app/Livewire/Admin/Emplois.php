@@ -22,6 +22,12 @@ class Emplois extends Component
 
     public string $type = 'emploi';
 
+    public string $entreprise = '';
+
+    public string $site_url = '';
+
+    public string $lieu = '';
+
     public string $description = '';
 
     public string $contact = '';
@@ -33,6 +39,9 @@ class Emplois extends Component
         return [
             'title' => 'required|string|min:4|max:160',
             'type' => 'required|string|max:40',
+            'entreprise' => 'nullable|string|max:160',
+            'site_url' => 'nullable|url|max:500',
+            'lieu' => 'nullable|string|max:160',
             'description' => 'required|string|min:20|max:3000',
             'contact' => 'nullable|string|max:160',
             'deadline' => 'nullable|date',
@@ -46,7 +55,7 @@ class Emplois extends Component
 
     public function openCreate(): void
     {
-        $this->reset(['editingId', 'title', 'description', 'contact', 'deadline']);
+        $this->reset(['editingId', 'title', 'entreprise', 'site_url', 'lieu', 'description', 'contact', 'deadline']);
         $this->clearMedia();
         $this->type = 'emploi';
         $this->resetValidation();
@@ -63,6 +72,9 @@ class Emplois extends Component
         $this->editingId = $o['id'];
         $this->title = $o['title'];
         $this->type = $o['type'];
+        $this->entreprise = $o['entreprise'] ?? '';
+        $this->site_url = $o['site_url'] ?? '';
+        $this->lieu = $o['lieu'] ?? '';
         $this->description = $o['description'];
         $this->contact = $o['contact'] ?? '';
         $this->deadline = $o['deadline'] ?? '';
@@ -84,6 +96,9 @@ class Emplois extends Component
         $data = [
             'title' => $this->title,
             'type' => $this->type,
+            'entreprise' => $this->entreprise ?: null,
+            'site_url' => $this->site_url ?: null,
+            'lieu' => $this->lieu ?: null,
             'description' => $this->description,
             'contact' => $this->contact ?: null,
             'deadline' => $this->deadline ?: null,
@@ -113,6 +128,8 @@ class Emplois extends Component
             'id' => $o['id'],
             'titre' => $o['title'],
             'type' => strtolower($o['type']),
+            'entreprise' => $o['entreprise'] ?? null,
+            'lieu' => $o['lieu'] ?? null,
             'description' => $o['description'],
             'auteur' => $o['author'] ?? 'REJCC',
             'contact' => $o['contact'],

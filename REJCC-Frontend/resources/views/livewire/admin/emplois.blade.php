@@ -1,13 +1,13 @@
 <div>
-    <x-admin-light.topbar title="Opportunités" />
+    <x-admin-light.topbar title="Emploi & Stage" />
 
     <div class="mx-auto max-w-[1280px] px-8 py-8">
         <div class="mb-4 flex flex-wrap items-end justify-between gap-4">
             <div>
-                <h2 class="mb-1 text-[17px] font-bold text-brand">Opportunités &amp; annonces</h2>
+                <h2 class="mb-1 text-[17px] font-bold text-brand">Emploi, stage &amp; annonces</h2>
                 <div class="h-[3px] w-9 rounded bg-accent"></div>
             </div>
-            <button wire:click="openCreate" class="btn-tap rounded-[10px] bg-accent px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-accent-600 hover:shadow-md">+ Publier une annonce</button>
+            <button wire:click="openCreate" class="btn-tap rounded-[10px] bg-accent px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-accent-600 hover:shadow-md">+ Publier une offre</button>
         </div>
 
         @if ($showForm)
@@ -29,10 +29,25 @@
                         <option value="annonce">Annonce</option>
                     </select>
                 </div>
+                <div>
+                    <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Entreprise / structure (optionnel)</label>
+                    <input wire:model="entreprise" type="text" placeholder="Ex : Ivoire Tech SARL" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
+                    @error('entreprise') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                </div>
+                <div>
+                    <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Lieu (ville / à distance, optionnel)</label>
+                    <input wire:model="lieu" type="text" placeholder="Ex : Abidjan, Cocody" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
+                    @error('lieu') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                </div>
                 <div class="sm:col-span-2">
                     <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Description</label>
                     <textarea wire:model="description" rows="4" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure"></textarea>
                     @error('description') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                </div>
+                <div>
+                    <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Site web de l'entreprise (optionnel)</label>
+                    <input wire:model="site_url" type="url" placeholder="https://…" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
+                    @error('site_url') <span class="text-xs text-accent">{{ $message }}</span> @enderror
                 </div>
                 <div>
                     <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Contact (email ou téléphone, optionnel)</label>
@@ -57,6 +72,9 @@
                     </span>
                     <div class="min-w-[220px] flex-1">
                         <p class="text-[13.5px] font-bold text-brand">{{ $o['titre'] }}</p>
+                        @if ($o['entreprise'] || $o['lieu'])
+                            <p class="mt-0.5 text-[11.5px] font-semibold text-[#5B677A]">{{ collect([$o['entreprise'], $o['lieu']])->filter()->implode(' · ') }}</p>
+                        @endif
                         <p class="mt-0.5 line-clamp-1 text-xs text-[#5B677A]">{{ $o['description'] }}</p>
                         <p class="mt-1 text-[11px] text-[#9AA6B8]">Par {{ $o['auteur'] }} · {{ $o['date'] }}@if ($o['deadline']) · limite : {{ $o['deadline'] }}@endif</p>
                     </div>
