@@ -2,11 +2,13 @@
 
 namespace Tests\Feature\Api;
 
+use App\Mail\InscriptionEvenementConfirmee;
 use App\Models\ApiToken;
 use App\Models\EventParticipant;
 use App\Models\RegistrationEvent;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -49,6 +51,27 @@ class EventSignupTest extends TestCase
             'registration_event_id' => $event->id,
             'telephone' => '0102030405',
         ]);
+    }
+
+    public function test_un_email_de_confirmation_est_envoye_si_une_adresse_est_fournie(): void
+    {
+        Mail::fake();
+        RegistrationEvent::create(['title' => 'Lancement REJCC', 'slug' => 'lancement-rejcc']);
+
+        $this->postJson('/api/event-signup/lancement-rejcc', $this->payload(['email' => 'awa@example.com']))->assertOk();
+
+        Mail::assertSent(InscriptionEvenementConfirmee::class, fn ($m) => $m->hasTo('awa@example.com'));
+    }
+
+    public function test_aucun_email_si_aucune_adresse_n_est_fournie(): void
+    {
+        Mail::fake();
+        RegistrationEvent::create(['title' => 'Lancement REJCC', 'slug' => 'lancement-rejcc']);
+
+        // Le participant ne laisse pas d'e-mail : aucune confirmation envoyée.
+        $this->postJson('/api/event-signup/lancement-rejcc', $this->payload())->assertOk();
+
+        Mail::assertNothingSent();
     }
 
     public function test_le_meme_numero_ne_s_inscrit_pas_deux_fois(): void

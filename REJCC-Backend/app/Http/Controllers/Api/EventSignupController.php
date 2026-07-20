@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Mail\InscriptionEvenementConfirmee;
 use App\Models\EventParticipant;
 use App\Models\RegistrationEvent;
+use App\Support\Mailer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -74,7 +76,7 @@ class EventSignupController extends Controller
             return response()->json(['ok' => false, 'message' => 'Toutes les places ont été réservées entre-temps.'], 422);
         }
 
-        EventParticipant::create([
+        $participant = EventParticipant::create([
             'registration_event_id' => $event->id,
             'prenom' => $d['prenom'],
             'nom' => $d['nom'],
@@ -82,6 +84,10 @@ class EventSignupController extends Controller
             'email' => $d['email'] ?? null,
             'is_member' => (bool) ($d['is_member'] ?? false),
         ]);
+
+        // E-mail de confirmation (uniquement si une adresse a été fournie).
+        // Envoi best-effort APRÈS la réponse HTTP (cf. App\Support\Mailer).
+        Mailer::send($participant->email, new InscriptionEvenementConfirmee($participant, $event));
 
         return response()->json([
             'ok' => true,
