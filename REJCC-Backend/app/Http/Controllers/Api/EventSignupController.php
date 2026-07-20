@@ -9,6 +9,7 @@ use App\Models\RegistrationEvent;
 use App\Support\Mailer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 /**
  * Inscription publique à un événement (cible des QR codes). N'importe qui
@@ -44,24 +45,47 @@ class EventSignupController extends Controller
             return response()->json(['ok' => false, 'message' => 'Toutes les places ont été réservées. Les inscriptions sont complètes.'], 422);
         }
 
-        $validator = Validator::make($request->all(), [
-            'prenom' => 'required|string|min:2|max:80',
-            'nom' => 'required|string|min:2|max:80',
-            'telephone' => 'required|string|min:8|max:30',
-            'email' => 'nullable|email|max:150',
-            'is_member' => 'nullable|boolean',
-        ], [
+        // Règles de base + règles dynamiques issues des champs personnalisés.
+        $rules = [
+            'prenom' => ['required', 'string', 'min:2', 'max:80'],
+            'nom' => ['required', 'string', 'min:2', 'max:80'],
+            'telephone' => ['required', 'string', 'min:8', 'max:30'],
+            'email' => ['nullable', 'email', 'max:150'],
+            'is_member' => ['nullable', 'boolean'],
+        ];
+        $names = [];
+        foreach ($event->fields ?? [] as $f) {
+            $key = 'answers.'.$f['key'];
+            $required = $f['required'] ?? false;
+
+            if ($f['type'] === 'checkbox') {
+                $rules[$key] = $required ? ['accepted'] : ['nullable', 'boolean'];
+            } elseif ($f['type'] === 'file') {
+                $rules[$key] = [$required ? 'required' : 'nullable', 'url', 'max:500'];
+            } else {
+                $r = [$required ? 'required' : 'nullable', 'string', 'max:2000'];
+                if ($f['type'] === 'select' && ! empty($f['options'])) {
+                    $r[] = Rule::in($f['options']);
+                }
+                $rules[$key] = $r;
+            }
+            $names[$key] = $f['label'];
+        }
+
+        $validator = Validator::make($request->all(), $rules, [
             'prenom.required' => 'Indiquez votre prénom.',
             'nom.required' => 'Indiquez votre nom.',
             'telephone.required' => 'Indiquez votre numéro de téléphone / WhatsApp.',
             'telephone.min' => 'Le numéro de téléphone est trop court.',
         ]);
+        $validator->setAttributeNames($names);
 
         if ($validator->fails()) {
             return response()->json(['ok' => false, 'message' => $validator->errors()->first()], 422);
         }
 
         $d = $validator->validated();
+        $answers = $this->collectAnswers($event, $request);
 
         // Anti-doublon : une même personne (par téléphone) ne s'inscrit qu'une fois.
         $exists = EventParticipant::where('registration_event_id', $event->id)
@@ -83,6 +107,7 @@ class EventSignupController extends Controller
             'telephone' => $d['telephone'],
             'email' => $d['email'] ?? null,
             'is_member' => (bool) ($d['is_member'] ?? false),
+            'answers' => $answers ?: null,
         ]);
 
         // E-mail de confirmation (uniquement si une adresse a été fournie).
@@ -96,6 +121,27 @@ class EventSignupController extends Controller
         ]);
     }
 
+    /** Ne conserve que les réponses aux champs définis, typées proprement. */
+    private function collectAnswers(RegistrationEvent $event, Request $request): array
+    {
+        $answers = [];
+        foreach ($event->fields ?? [] as $f) {
+            $val = $request->input('answers.'.$f['key']);
+            if ($f['type'] === 'checkbox') {
+                if ($request->has('answers.'.$f['key'])) {
+                    $answers[$f['key']] = (bool) $val;
+                }
+
+                continue;
+            }
+            if ($val !== null && $val !== '') {
+                $answers[$f['key']] = $val;
+            }
+        }
+
+        return $answers;
+    }
+
     private function payload(RegistrationEvent $event): array
     {
         $count = $event->participants()->count();
@@ -104,6 +150,8 @@ class EventSignupController extends Controller
             'title' => $event->title,
             'slug' => $event->slug,
             'description' => $event->description,
+            'poster' => $event->poster,
+            'fields' => $event->fields ?? [],
             'location' => $event->location,
             'starts_at' => $event->starts_at?->toIso8601String(),
             'capacity' => $event->capacity,

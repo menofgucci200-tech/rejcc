@@ -7,6 +7,8 @@
     $remaining = $event['remaining'] ?? null;
     $capacity = $event['capacity'] ?? null;
     $date = ($event['starts_at'] ?? null) ? Carbon::parse($event['starts_at']) : null;
+    $fields = $event['fields'] ?? [];
+    $inputClass = 'w-full rounded-xl border border-brand/15 bg-white px-3.5 py-2.5 text-sm text-brand outline-none focus:border-azure focus:ring-2 focus:ring-accent/15';
 @endphp
 
 <div>
@@ -31,7 +33,11 @@
 
     <section class="bg-cloud py-12 sm:py-16">
         <div class="mx-auto max-w-lg px-5">
-            <div class="rounded-3xl border border-brand/10 bg-white p-6 shadow-[0_30px_80px_-50px_rgba(3,29,89,0.45)] sm:p-8">
+            <div class="overflow-hidden rounded-3xl border border-brand/10 bg-white shadow-[0_30px_80px_-50px_rgba(3,29,89,0.45)]">
+                @if ($event['poster'] ?? null)
+                    <img src="{{ $event['poster'] }}" alt="Affiche — {{ $event['title'] ?? '' }}" class="max-h-80 w-full object-cover">
+                @endif
+                <div class="p-6 sm:p-8">
 
                 @if ($event['description'] ?? null)
                     <p class="mb-6 text-[14px] leading-relaxed text-ink/75">{{ $event['description'] }}</p>
@@ -103,6 +109,42 @@
                             @error('email') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
                         </div>
 
+                        {{-- ══════════ Champs personnalisés ══════════ --}}
+                        @foreach ($fields as $f)
+                            @php $key = $f['key']; $req = $f['required'] ?? false; @endphp
+                            @if ($f['type'] === 'checkbox')
+                                <label class="flex items-start gap-2.5 rounded-xl border border-brand/10 bg-cloud/50 px-3.5 py-3 text-sm text-ink/80">
+                                    <input wire:model="answers.{{ $key }}" type="checkbox" class="mt-0.5 size-4 rounded border-brand/25 text-brand focus:ring-accent/25" />
+                                    <span>{{ $f['label'] }} @if ($req) <span class="text-accent">*</span> @endif</span>
+                                </label>
+                                @error('answers.'.$key) <span class="-mt-2 text-xs font-medium text-accent">{{ $message }}</span> @enderror
+                            @else
+                                <div class="flex flex-col gap-1.5">
+                                    <label class="text-xs font-semibold text-[#5B677A]">{{ $f['label'] }} @if ($req) <span class="text-accent">*</span> @else <span class="font-normal text-[#9AA6B8]">(optionnel)</span> @endif</label>
+
+                                    @if ($f['type'] === 'textarea')
+                                        <textarea wire:model="answers.{{ $key }}" rows="3" class="{{ $inputClass }}"></textarea>
+                                    @elseif ($f['type'] === 'select')
+                                        <select wire:model="answers.{{ $key }}" class="{{ $inputClass }}">
+                                            <option value="">— Choisir —</option>
+                                            @foreach ($f['options'] ?? [] as $opt)
+                                                <option value="{{ $opt }}">{{ $opt }}</option>
+                                            @endforeach
+                                        </select>
+                                    @elseif ($f['type'] === 'file')
+                                        <input wire:model="uploads.{{ $key }}" type="file" accept="image/*,application/pdf,video/*,.doc,.docx" class="text-xs text-[#5B677A] file:mr-3 file:rounded-full file:border-0 file:bg-brand/10 file:px-3.5 file:py-2 file:text-xs file:font-bold file:text-brand hover:file:bg-brand/15" />
+                                        <span wire:loading wire:target="uploads.{{ $key }}" class="text-[11px] font-semibold text-azure">Envoi du fichier…</span>
+                                        <span class="text-[11px] text-[#9AA6B8]">Image, PDF, Word ou vidéo — 20 Mo max.</span>
+                                    @else
+                                        <input wire:model="answers.{{ $key }}" type="text" class="{{ $inputClass }}" />
+                                    @endif
+
+                                    @error('answers.'.$key) <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
+                                    @error('uploads.'.$key) <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
+                                </div>
+                            @endif
+                        @endforeach
+
                         <label class="flex items-center gap-2.5 rounded-xl border border-brand/10 bg-cloud/50 px-3.5 py-3 text-sm text-ink/80">
                             <input wire:model="is_member" type="checkbox" class="size-4 rounded border-brand/25 text-brand focus:ring-accent/25" />
                             Je suis déjà membre du REJCC
@@ -115,6 +157,7 @@
                         <p class="text-center text-[11px] text-[#9AA6B8]">Vos informations servent uniquement à l'organisation de l'événement.</p>
                     </form>
                 @endif
+                </div>
             </div>
         </div>
     </section>

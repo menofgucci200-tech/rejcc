@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Livewire\Concerns\HandlesMedia;
 use App\Support\Api;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -16,6 +17,8 @@ use Livewire\Component;
 #[Layout('layouts.admin-light')]
 class Inscriptions extends Component
 {
+    use HandlesMedia; // affiche de l'événement (mediaFile / mediaUrl)
+
     // ── Formulaire création / édition ────────────────────────────────────
     public bool $showForm = false;
 
@@ -33,10 +36,15 @@ class Inscriptions extends Component
 
     public bool $is_open = true;
 
+    /** Champs personnalisés (label, type, required, options en texte multi-ligne). */
+    public array $fields = [];
+
     // ── Panneau détail (QR / participants) ───────────────────────────────
     public ?int $detailId = null;
 
     public string $detailTab = 'qr'; // qr | participants
+
+    public ?int $expandedParticipant = null;
 
     // ── Participants (pagination + recherche) ────────────────────────────
     public string $q = '';
@@ -52,8 +60,9 @@ class Inscriptions extends Component
 
     public function openCreate(): void
     {
-        $this->reset(['editingId', 'title', 'date', 'location', 'description', 'capacity']);
+        $this->reset(['editingId', 'title', 'date', 'location', 'description', 'capacity', 'fields']);
         $this->is_open = true;
+        $this->clearMedia();
         $this->resetValidation();
         $this->showForm = true;
     }
@@ -72,8 +81,27 @@ class Inscriptions extends Component
         $this->description = $e['description'] ?? '';
         $this->capacity = $e['capacity'] ?? null;
         $this->is_open = (bool) ($e['is_open'] ?? true);
+        $this->fillMedia($e['poster'] ?? null);
+        // Options stockées en tableau → texte multi-ligne pour l'édition.
+        $this->fields = collect($e['fields'] ?? [])->map(fn ($f) => [
+            'label' => $f['label'] ?? '',
+            'type' => $f['type'] ?? 'text',
+            'required' => (bool) ($f['required'] ?? false),
+            'options' => implode("\n", $f['options'] ?? []),
+        ])->all();
         $this->resetValidation();
         $this->showForm = true;
+    }
+
+    public function addField(): void
+    {
+        $this->fields[] = ['label' => '', 'type' => 'text', 'required' => false, 'options' => ''];
+    }
+
+    public function removeField(int $i): void
+    {
+        unset($this->fields[$i]);
+        $this->fields = array_values($this->fields);
     }
 
     public function closeForm(): void
@@ -97,13 +125,33 @@ class Inscriptions extends Component
             'capacity.min' => 'La capacité doit être d\'au moins 1.',
         ]);
 
+        // Champs personnalisés : options (texte multi-ligne) → tableau.
+        $fieldsPayload = [];
+        foreach ($this->fields as $f) {
+            $label = trim($f['label'] ?? '');
+            if ($label === '') {
+                continue;
+            }
+            $entry = [
+                'label' => $label,
+                'type' => $f['type'] ?? 'text',
+                'required' => (bool) ($f['required'] ?? false),
+            ];
+            if (($f['type'] ?? '') === 'select') {
+                $entry['options'] = array_values(array_filter(array_map('trim', explode("\n", $f['options'] ?? ''))));
+            }
+            $fieldsPayload[] = $entry;
+        }
+
         $data = [
             'title' => $this->title,
             'description' => $this->description ?: null,
+            'poster' => $this->mediaUrl ?: null,
             'location' => $this->location ?: null,
             'starts_at' => $this->date ?: null,
             'capacity' => $this->capacity ?: null,
             'is_open' => $this->is_open,
+            'fields' => $fieldsPayload,
         ];
 
         $token = Api::token();
@@ -165,6 +213,11 @@ class Inscriptions extends Component
         $this->page = max(1, $p);
     }
 
+    public function toggleParticipant(int $id): void
+    {
+        $this->expandedParticipant = $this->expandedParticipant === $id ? null : $id;
+    }
+
     public function render()
     {
         $events = $this->events()->map(function (array $e) {
@@ -194,10 +247,16 @@ class Inscriptions extends Component
             $pMeta = $res['meta'] ?? [];
         }
 
+        // Définitions des champs de l'événement ouvert (pour afficher les réponses).
+        $detailFields = $this->detailId
+            ? ($events->firstWhere('id', $this->detailId)['fields'] ?? [])
+            : [];
+
         return view('livewire.admin.inscriptions', [
             'events' => $events,
             'participants' => $participants,
             'meta' => $pMeta,
+            'detailFields' => $detailFields,
         ]);
     }
 }

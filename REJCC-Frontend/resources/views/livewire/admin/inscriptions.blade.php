@@ -49,6 +49,52 @@
                     <input wire:model="is_open" type="checkbox" class="size-4 rounded border-brand/25 text-brand focus:ring-accent/25" />
                     Inscriptions ouvertes
                 </label>
+
+                {{-- Affiche de l'événement --}}
+                <div class="sm:col-span-2">
+                    <x-ui.media-field label="Affiche de l'événement (optionnel)" hint="Image affichée en haut du formulaire d'inscription (JPG, PNG). Uploadez un fichier ou collez un lien." :media-url="$mediaUrl" :media-name="$mediaName" :media-size="$mediaSize" />
+                    @error('mediaFile') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                </div>
+
+                {{-- Constructeur de champs personnalisés --}}
+                <div class="sm:col-span-2">
+                    <div class="mb-2 flex items-center justify-between">
+                        <p class="text-[13px] font-bold text-brand">Questions personnalisées</p>
+                        <button type="button" wire:click="addField" class="btn-tap inline-flex items-center gap-1.5 rounded-full border border-brand/15 bg-white px-3 py-1.5 text-[11.5px] font-bold text-brand hover:bg-cloud">
+                            <x-ui.icon name="plus" class="size-3.5" /> Ajouter un champ
+                        </button>
+                    </div>
+                    <p class="mb-3 text-[11px] text-[#9AA6B8]">Ajoutez les informations à demander aux participants : domaine de formation, statut social, upload d'un document, etc.</p>
+
+                    @forelse ($fields as $i => $f)
+                        <div class="mb-2.5 rounded-[12px] border border-brand/10 bg-cloud/40 p-3" wire:key="field-{{ $i }}">
+                            <div class="grid grid-cols-1 gap-2.5 sm:grid-cols-[1fr_170px_auto]">
+                                <input wire:model="fields.{{ $i }}.label" type="text" placeholder="Intitulé (ex : Domaine de formation)" class="rounded-[9px] border border-brand/15 bg-white px-3 py-2 text-sm outline-none focus:border-azure" />
+                                <select wire:model.live="fields.{{ $i }}.type" class="rounded-[9px] border border-brand/15 bg-white px-3 py-2 text-sm outline-none focus:border-azure">
+                                    <option value="text">Texte court</option>
+                                    <option value="textarea">Paragraphe</option>
+                                    <option value="select">Liste déroulante</option>
+                                    <option value="checkbox">Case à cocher</option>
+                                    <option value="file">Fichier à uploader</option>
+                                </select>
+                                <div class="flex items-center gap-2">
+                                    <label class="inline-flex items-center gap-1.5 text-[11.5px] font-semibold text-[#5B677A]">
+                                        <input wire:model="fields.{{ $i }}.required" type="checkbox" class="size-3.5 rounded border-brand/25 text-brand" /> Requis
+                                    </label>
+                                    <button type="button" wire:click="removeField({{ $i }})" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-accent/10 hover:text-accent" title="Supprimer ce champ"><x-ui.icon name="trash-2" class="size-3.5" /></button>
+                                </div>
+                            </div>
+                            @if (($f['type'] ?? '') === 'select')
+                                <textarea wire:model="fields.{{ $i }}.options" rows="3" placeholder="Une option par ligne (ex : Étudiant / Salarié / Entrepreneur…)" class="mt-2.5 w-full rounded-[9px] border border-brand/15 bg-white px-3 py-2 text-sm outline-none focus:border-azure"></textarea>
+                            @elseif (($f['type'] ?? '') === 'file')
+                                <p class="mt-2 text-[11px] text-[#9AA6B8]">Le participant pourra uploader une image, une vidéo ou un PDF (20 Mo max).</p>
+                            @endif
+                        </div>
+                    @empty
+                        <p class="rounded-[10px] border border-dashed border-brand/15 py-4 text-center text-[12px] text-[#9AA6B8]">Aucune question personnalisée. Le formulaire ne demandera que nom, téléphone et e-mail.</p>
+                    @endforelse
+                </div>
+
                 <button wire:click="save" wire:loading.attr="disabled" wire:target="save" class="btn-tap rounded-[9px] bg-brand px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-brand/90 hover:shadow-md disabled:opacity-60 sm:col-span-2 sm:w-fit">Enregistrer</button>
             </div>
         @endif
@@ -172,7 +218,14 @@
                                             <tbody>
                                                 @foreach ($participants as $p)
                                                     <tr class="border-b border-[#EDF0F5] last:border-b-0 hover:bg-[#FAFBFD]">
-                                                        <td class="px-4 py-2.5 text-[13px] font-semibold text-brand">{{ $p['prenom'] }} {{ $p['nom'] }}</td>
+                                                        <td class="px-4 py-2.5 text-[13px] font-semibold text-brand">
+                                                            <span class="flex items-center gap-1.5">
+                                                                {{ $p['prenom'] }} {{ $p['nom'] }}
+                                                                @if (! empty($p['answers']) && count($detailFields))
+                                                                    <button wire:click="toggleParticipant({{ $p['id'] }})" class="icon-btn rounded p-0.5 text-azure hover:bg-azure/10" title="Voir les réponses"><x-ui.icon name="{{ $expandedParticipant === $p['id'] ? 'chevron-right' : 'plus' }}" class="size-3.5" /></button>
+                                                                @endif
+                                                            </span>
+                                                        </td>
                                                         <td class="px-3 py-2.5 text-[12.5px] text-[#5B677A]">{{ $p['telephone'] }}</td>
                                                         <td class="px-3 py-2.5 text-[12.5px] text-[#5B677A]">{{ $p['email'] ?: '—' }}</td>
                                                         <td class="px-3 py-2.5">
@@ -184,6 +237,27 @@
                                                         </td>
                                                         <td class="px-4 py-2.5 text-[12px] text-[#9AA6B8]">{{ $p['date_label'] }}</td>
                                                     </tr>
+                                                    @if ($expandedParticipant === $p['id'] && count($detailFields))
+                                                        <tr class="bg-[#F8FAFC]">
+                                                            <td colspan="5" class="px-4 py-3">
+                                                                <div class="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
+                                                                    @foreach ($detailFields as $f)
+                                                                        @php $val = $p['answers'][$f['key']] ?? null; @endphp
+                                                                        <div>
+                                                                            <p class="text-[11px] font-bold text-[#5B677A]">{{ $f['label'] }}</p>
+                                                                            @if ($f['type'] === 'file' && $val)
+                                                                                <a href="{{ $val }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1 text-[12.5px] font-semibold text-azure hover:underline"><x-ui.icon name="file-text" class="size-3.5" /> Ouvrir le fichier</a>
+                                                                            @elseif ($f['type'] === 'checkbox')
+                                                                                <p class="text-[12.5px] text-ink">{{ $val ? 'Oui' : 'Non' }}</p>
+                                                                            @else
+                                                                                <p class="text-[12.5px] text-ink">{{ $val !== null && $val !== '' ? $val : '—' }}</p>
+                                                                            @endif
+                                                                        </div>
+                                                                    @endforeach
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    @endif
                                                 @endforeach
                                             </tbody>
                                         </table>

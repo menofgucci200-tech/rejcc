@@ -112,17 +112,66 @@ class RegistrationEventController extends Controller
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|min:3|max:160',
             'description' => 'nullable|string|max:2000',
+            'poster' => 'nullable|url|max:500',
             'location' => 'nullable|string|max:200',
             'starts_at' => 'nullable|date',
             'capacity' => 'nullable|integer|min:1|max:1000000',
             'is_open' => 'nullable|boolean',
+            // Champs personnalisés du formulaire d'inscription.
+            'fields' => 'nullable|array|max:20',
+            'fields.*.label' => 'required|string|max:120',
+            'fields.*.type' => 'required|in:text,textarea,select,checkbox,file',
+            'fields.*.required' => 'nullable|boolean',
+            'fields.*.options' => 'nullable|array|max:30',
+            'fields.*.options.*' => 'string|max:120',
+        ], [
+            'fields.*.label.required' => 'Chaque champ personnalisé doit avoir un intitulé.',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['ok' => false, 'message' => $validator->errors()->first()], 422);
         }
 
-        return $validator->validated();
+        $data = $validator->validated();
+        $data['poster'] = $data['poster'] ?? null;
+        $data['fields'] = $this->normalizeFields($data['fields'] ?? []);
+
+        return $data;
+    }
+
+    /** Génère une clé stable par champ et nettoie sa définition. */
+    private function normalizeFields(array $fields): array
+    {
+        $out = [];
+        $used = [];
+        foreach ($fields as $f) {
+            $label = trim($f['label'] ?? '');
+            if ($label === '') {
+                continue;
+            }
+
+            $base = Str::slug($label) ?: 'champ';
+            $key = $base;
+            $i = 2;
+            while (in_array($key, $used, true)) {
+                $key = $base.'-'.$i++;
+            }
+            $used[] = $key;
+
+            $type = in_array($f['type'] ?? 'text', ['text', 'textarea', 'select', 'checkbox', 'file'], true) ? $f['type'] : 'text';
+            $field = [
+                'key' => $key,
+                'label' => $label,
+                'type' => $type,
+                'required' => (bool) ($f['required'] ?? false),
+            ];
+            if ($type === 'select') {
+                $field['options'] = array_values(array_filter(array_map('trim', $f['options'] ?? [])));
+            }
+            $out[] = $field;
+        }
+
+        return $out;
     }
 
     private function uniqueSlug(string $title): string
@@ -146,6 +195,8 @@ class RegistrationEventController extends Controller
             'title' => $event->title,
             'slug' => $event->slug,
             'description' => $event->description,
+            'poster' => $event->poster,
+            'fields' => $event->fields ?? [],
             'location' => $event->location,
             'starts_at' => $event->starts_at?->toIso8601String(),
             'capacity' => $event->capacity,

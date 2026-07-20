@@ -7,9 +7,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class EventParticipant extends Model
 {
-    protected $fillable = ['registration_event_id', 'prenom', 'nom', 'telephone', 'email', 'is_member'];
+    protected $fillable = ['registration_event_id', 'prenom', 'nom', 'telephone', 'email', 'is_member', 'answers'];
 
-    protected $casts = ['is_member' => 'boolean'];
+    protected $casts = ['is_member' => 'boolean', 'answers' => 'array'];
 
     public function event(): BelongsTo
     {

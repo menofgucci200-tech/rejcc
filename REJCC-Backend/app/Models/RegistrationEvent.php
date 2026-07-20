@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class RegistrationEvent extends Model
 {
-    protected $fillable = ['title', 'slug', 'description', 'location', 'starts_at', 'capacity', 'is_open'];
+    protected $fillable = ['title', 'slug', 'description', 'poster', 'fields', 'location', 'starts_at', 'capacity', 'is_open'];
 
     // Inscriptions ouvertes par défaut (aligné sur la valeur par défaut en base),
     // pour que le modèle fraîchement créé le reflète sans refresh().
@@ -17,6 +17,7 @@ class RegistrationEvent extends Model
         'starts_at' => 'datetime',
         'capacity' => 'integer',
         'is_open' => 'boolean',
+        'fields' => 'array',
     ];
 
     public function participants(): HasMany

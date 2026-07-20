@@ -157,6 +157,79 @@ class EventSignupTest extends TestCase
         $this->assertCount(1, $export['rows']);
     }
 
+    // ── Champs personnalisés ─────────────────────────────────────────────
+
+    public function test_l_admin_definit_des_champs_personnalises(): void
+    {
+        $token = $this->adminToken();
+
+        $event = $this->withToken($token)->postJson('/api/admin/registration-events', [
+            'title' => 'Lancement',
+            'poster' => 'https://rejcc.site/uploads/affiche.jpg',
+            'fields' => [
+                ['label' => 'Domaine de formation', 'type' => 'text', 'required' => true],
+                ['label' => 'Statut social', 'type' => 'select', 'required' => true, 'options' => ['Étudiant', 'Salarié', 'Entrepreneur']],
+                ['label' => 'Votre CV', 'type' => 'file', 'required' => false],
+            ],
+        ])->assertCreated()->json('event');
+
+        $this->assertSame('https://rejcc.site/uploads/affiche.jpg', $event['poster']);
+        $this->assertCount(3, $event['fields']);
+        // Une clé stable est générée depuis l'intitulé.
+        $this->assertSame('domaine-de-formation', $event['fields'][0]['key']);
+        $this->assertSame(['Étudiant', 'Salarié', 'Entrepreneur'], $event['fields'][1]['options']);
+    }
+
+    public function test_les_reponses_sont_validees_et_enregistrees(): void
+    {
+        $event = RegistrationEvent::create([
+            'title' => 'Lancement',
+            'slug' => 'lancement',
+            'fields' => [
+                ['key' => 'domaine', 'label' => 'Domaine de formation', 'type' => 'text', 'required' => true],
+                ['key' => 'statut', 'label' => 'Statut social', 'type' => 'select', 'required' => true, 'options' => ['Étudiant', 'Salarié']],
+            ],
+        ]);
+
+        // Champ requis manquant → refus.
+        $this->postJson('/api/event-signup/lancement', $this->payload())
+            ->assertStatus(422);
+
+        // Valeur hors options → refus.
+        $this->postJson('/api/event-signup/lancement', $this->payload([
+            'answers' => ['domaine' => 'Informatique', 'statut' => 'Autre'],
+        ]))->assertStatus(422);
+
+        // Réponses valides → enregistrées.
+        $this->postJson('/api/event-signup/lancement', $this->payload([
+            'answers' => ['domaine' => 'Informatique', 'statut' => 'Étudiant'],
+        ]))->assertOk();
+
+        $participant = EventParticipant::first();
+        $this->assertSame('Informatique', $participant->answers['domaine']);
+        $this->assertSame('Étudiant', $participant->answers['statut']);
+    }
+
+    public function test_l_export_inclut_les_colonnes_des_champs_personnalises(): void
+    {
+        $token = $this->adminToken();
+        $event = RegistrationEvent::create([
+            'title' => 'Lancement',
+            'slug' => 'lancement',
+            'fields' => [['key' => 'domaine', 'label' => 'Domaine de formation', 'type' => 'text', 'required' => false]],
+        ]);
+        EventParticipant::create([
+            'registration_event_id' => $event->id, 'prenom' => 'Jean', 'nom' => 'Kouassi',
+            'telephone' => '0102030405', 'answers' => ['domaine' => 'Agriculture'],
+        ]);
+
+        $export = $this->withToken($token)->getJson('/api/admin/export/participants?event='.$event->id)
+            ->assertOk()->json();
+
+        $this->assertContains('Domaine de formation', $export['columns']);
+        $this->assertContains('Agriculture', $export['rows'][0]);
+    }
+
     public function test_un_membre_ne_peut_pas_gerer_les_evenements(): void
     {
         $plain = Str::random(60);

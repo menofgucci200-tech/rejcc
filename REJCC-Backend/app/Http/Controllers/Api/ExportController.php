@@ -119,16 +119,35 @@ class ExportController extends Controller
         $query = EventParticipant::with('event:id,title')->orderBy('created_at');
 
         // Filtre optionnel sur un événement précis (bouton « Exporter » d'un événement).
-        if ($eventId && ($event = RegistrationEvent::find($eventId))) {
+        $event = $eventId ? RegistrationEvent::find($eventId) : null;
+        if ($event) {
             $query->where('registration_event_id', $event->id);
         }
 
+        // Colonnes des champs personnalisés (uniquement pour un export ciblé).
+        $fields = $event?->fields ?? [];
+        $columns = array_merge(
+            ['Événement', 'Prénom', 'Nom', 'Téléphone', 'Email', 'Membre', 'Inscrit le'],
+            array_map(fn ($f) => $f['label'], $fields),
+        );
+
         return [
-            'columns' => ['Événement', 'Prénom', 'Nom', 'Téléphone', 'Email', 'Membre', 'Inscrit le'],
-            'rows' => $query->get()->map(fn (EventParticipant $p) => [
-                $p->event?->title, $p->prenom, $p->nom, $p->telephone, $p->email,
-                $p->is_member ? 'Oui' : 'Non', $p->created_at?->format('d/m/Y H:i'),
-            ])->all(),
+            'columns' => $columns,
+            'rows' => $query->get()->map(function (EventParticipant $p) use ($fields) {
+                $row = [
+                    $p->event?->title, $p->prenom, $p->nom, $p->telephone, $p->email,
+                    $p->is_member ? 'Oui' : 'Non', $p->created_at?->format('d/m/Y H:i'),
+                ];
+                foreach ($fields as $f) {
+                    $v = $p->answers[$f['key']] ?? '';
+                    if ($f['type'] === 'checkbox') {
+                        $v = $v === true ? 'Oui' : ($v === false ? 'Non' : '');
+                    }
+                    $row[] = is_array($v) ? implode(', ', $v) : (string) $v;
+                }
+
+                return $row;
+            })->all(),
         ];
     }
 
