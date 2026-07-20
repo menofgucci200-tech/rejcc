@@ -21,6 +21,7 @@
             'items' => [
                 ['label' => 'Formations', 'icon' => 'graduation-cap', 'route' => 'admin.formations'],
                 ['label' => 'Événements', 'icon' => 'calendar-days', 'route' => 'admin.evenements'],
+                ['label' => 'Inscriptions (QR)', 'icon' => 'qr-code', 'route' => 'admin.inscriptions'],
                 ['label' => 'Projets & Incubateur', 'icon' => 'nav-incubator', 'route' => 'admin.projets'],
                 ['label' => 'Marketplace', 'icon' => 'store', 'route' => 'admin.marketplace'],
                 ['label' => 'Ressources', 'icon' => 'nav-library', 'route' => 'admin.ressources'],

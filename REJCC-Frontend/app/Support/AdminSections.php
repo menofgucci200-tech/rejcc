@@ -38,6 +38,7 @@ class AdminSections
         'admin.inscription' => 'membres',
         'admin.formations' => 'formations',
         'admin.evenements' => 'evenements',
+        'admin.inscriptions' => 'evenements',
         'admin.projets' => 'projets',
         'admin.marketplace' => 'communaute',
         'admin.ressources' => 'ressources',

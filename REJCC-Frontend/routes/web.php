@@ -56,6 +56,7 @@ Route::get('/actualites/{slug}', [NewsController::class, 'show']);
 
 Route::view('/partenaires', 'pages.partenaires');
 Route::get('/carte/{code}', [\App\Http\Controllers\CardController::class, 'show'])->name('carte');
+Route::get('/participer/{slug}', \App\Livewire\EventSignup::class)->name('event.signup');
 Route::get('/adhesion', \App\Livewire\AdhesionApplicationForm::class)->name('adhesion');
 Route::get('/suivre-ma-candidature', \App\Livewire\AdhesionStatusCheck::class)->name('adhesion.status');
 Route::redirect('/inscription', '/adhesion');
@@ -106,6 +107,7 @@ Route::middleware(['api.auth', 'admin.web'])->prefix('admin')->name('admin.')->g
     Route::get('/mentors', AdminMentors::class)->name('mentors');
     Route::get('/formations', AdminFormations::class)->name('formations');
     Route::get('/evenements', AdminEvenements::class)->name('evenements');
+    Route::get('/inscriptions', \App\Livewire\Admin\Inscriptions::class)->name('inscriptions');
     Route::get('/projets', AdminProjets::class)->name('projets');
     Route::get('/marketplace', AdminMarketplace::class)->name('marketplace');
     Route::redirect('/communaute', '/admin/marketplace');

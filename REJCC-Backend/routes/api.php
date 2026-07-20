@@ -41,6 +41,12 @@ Route::get('/public-events/{slug}', [EventController::class, 'publicShow']);
 Route::get('/member-card/{code}', [\App\Http\Controllers\Api\MemberCardController::class, 'show'])
     ->middleware('throttle:30,1');
 
+// Inscription publique à un événement (cible des QR codes de lancement/événements)
+Route::get('/event-signup/{slug}', [\App\Http\Controllers\Api\EventSignupController::class, 'show'])
+    ->middleware('throttle:60,1');
+Route::post('/event-signup/{slug}', [\App\Http\Controllers\Api\EventSignupController::class, 'register'])
+    ->middleware('throttle:20,1');
+
 // Formulaires publics (throttle anti-spam, par IP)
 Route::middleware('throttle:10,1')->group(function () {
     Route::post('/adhesion', [AdhesionController::class, 'store']);
@@ -167,6 +173,14 @@ Route::middleware(['auth.token', 'audit.log'])->prefix('admin')->group(function 
         Route::post('/events', [EventController::class, 'store']);
         Route::put('/events/{id}', [EventController::class, 'update']);
         Route::delete('/events/{id}', [EventController::class, 'destroy']);
+
+        // Événements à inscription publique (module « Inscriptions »)
+        Route::get('/registration-events', [\App\Http\Controllers\Api\RegistrationEventController::class, 'index']);
+        Route::post('/registration-events', [\App\Http\Controllers\Api\RegistrationEventController::class, 'store']);
+        Route::put('/registration-events/{id}', [\App\Http\Controllers\Api\RegistrationEventController::class, 'update']);
+        Route::post('/registration-events/{id}/toggle', [\App\Http\Controllers\Api\RegistrationEventController::class, 'toggle']);
+        Route::delete('/registration-events/{id}', [\App\Http\Controllers\Api\RegistrationEventController::class, 'destroy']);
+        Route::get('/registration-events/{id}/participants', [\App\Http\Controllers\Api\RegistrationEventController::class, 'participants']);
     });
 
     Route::middleware('auth.admin:actualites')->group(function () {

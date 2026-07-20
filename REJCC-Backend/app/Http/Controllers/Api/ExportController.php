@@ -7,9 +7,12 @@ use App\Models\Contact;
 use App\Models\Event;
 use App\Models\Formation;
 use App\Models\MembershipApplication;
+use App\Models\EventParticipant;
 use App\Models\NewsletterSubscriber;
 use App\Models\Opportunity;
+use App\Models\RegistrationEvent;
 use App\Models\User;
+use Illuminate\Http\Request;
 
 /**
  * Export des jeux de données de la base sous forme de tableau
@@ -17,7 +20,7 @@ use App\Models\User;
  */
 class ExportController extends Controller
 {
-    public function data(string $dataset)
+    public function data(Request $request, string $dataset)
     {
         $export = match ($dataset) {
             'members' => $this->members(),
@@ -27,6 +30,7 @@ class ExportController extends Controller
             'formations' => $this->formations(),
             'evenements' => $this->evenements(),
             'opportunites' => $this->opportunites(),
+            'participants' => $this->participants($request->query('event')),
             default => null,
         };
 
@@ -106,6 +110,24 @@ class ExportController extends Controller
             'columns' => ['Titre', 'Catégorie', 'Date', 'Lieu', 'Inscrits'],
             'rows' => Event::withCount('registrations')->orderByDesc('starts_at')->get()->map(fn (Event $e) => [
                 $e->title, $e->category, $e->starts_at?->format('d/m/Y H:i'), $e->location, $e->registrations_count,
+            ])->all(),
+        ];
+    }
+
+    private function participants(?string $eventId): array
+    {
+        $query = EventParticipant::with('event:id,title')->orderBy('created_at');
+
+        // Filtre optionnel sur un événement précis (bouton « Exporter » d'un événement).
+        if ($eventId && ($event = RegistrationEvent::find($eventId))) {
+            $query->where('registration_event_id', $event->id);
+        }
+
+        return [
+            'columns' => ['Événement', 'Prénom', 'Nom', 'Téléphone', 'Email', 'Membre', 'Inscrit le'],
+            'rows' => $query->get()->map(fn (EventParticipant $p) => [
+                $p->event?->title, $p->prenom, $p->nom, $p->telephone, $p->email,
+                $p->is_member ? 'Oui' : 'Non', $p->created_at?->format('d/m/Y H:i'),
             ])->all(),
         ];
     }
