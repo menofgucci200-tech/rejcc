@@ -96,6 +96,28 @@ class EventSignupTest extends TestCase
         $this->assertSame(1, EventParticipant::count());
     }
 
+    public function test_inscription_refusee_apres_la_date_limite(): void
+    {
+        $event = RegistrationEvent::create([
+            'title' => 'Forum',
+            'slug' => 'forum',
+            'registration_deadline' => now()->subDay(), // hier
+        ]);
+
+        $this->postJson('/api/event-signup/forum', $this->payload())
+            ->assertStatus(422)->assertJsonPath('ok', false);
+        $this->assertSame(0, EventParticipant::count());
+
+        // La page publique signale que la date limite est dépassée.
+        $this->getJson('/api/event-signup/forum')
+            ->assertOk()->assertJsonPath('event.is_past_deadline', true)
+            ->assertJsonPath('event.accepts', false);
+
+        // Avant la date limite, l'inscription passe.
+        $event->update(['registration_deadline' => now()->addWeek()]);
+        $this->postJson('/api/event-signup/forum', $this->payload())->assertOk();
+    }
+
     public function test_inscription_refusee_si_fermee(): void
     {
         RegistrationEvent::create(['title' => 'Gala', 'slug' => 'gala', 'is_open' => false]);

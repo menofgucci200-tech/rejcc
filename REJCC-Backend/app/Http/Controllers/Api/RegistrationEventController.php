@@ -115,6 +115,7 @@ class RegistrationEventController extends Controller
             'poster' => 'nullable|url|max:500',
             'location' => 'nullable|string|max:200',
             'starts_at' => 'nullable|date',
+            'registration_deadline' => 'nullable|date',
             'capacity' => 'nullable|integer|min:1|max:1000000',
             'is_open' => 'nullable|boolean',
             // Champs personnalisés du formulaire d'inscription.
@@ -134,6 +135,7 @@ class RegistrationEventController extends Controller
 
         $data = $validator->validated();
         $data['poster'] = $data['poster'] ?? null;
+        $data['registration_deadline'] = $data['registration_deadline'] ?? null;
         $data['fields'] = $this->normalizeFields($data['fields'] ?? []);
 
         return $data;
@@ -199,11 +201,13 @@ class RegistrationEventController extends Controller
             'fields' => $event->fields ?? [],
             'location' => $event->location,
             'starts_at' => $event->starts_at?->toIso8601String(),
+            'registration_deadline' => $event->registration_deadline?->toIso8601String(),
             'capacity' => $event->capacity,
             'count' => $count,
             'remaining' => $event->capacity !== null ? max(0, $event->capacity - $count) : null,
             'is_open' => $event->is_open,
             'is_full' => $event->capacity !== null && $count >= $event->capacity,
+            'is_past_deadline' => $event->isPastDeadline(),
             'created_at' => $event->created_at?->toIso8601String(),
         ];
     }

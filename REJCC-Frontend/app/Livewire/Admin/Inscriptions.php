@@ -28,6 +28,8 @@ class Inscriptions extends Component
 
     public string $date = '';
 
+    public string $deadline = '';
+
     public string $location = '';
 
     public string $description = '';
@@ -60,7 +62,7 @@ class Inscriptions extends Component
 
     public function openCreate(): void
     {
-        $this->reset(['editingId', 'title', 'date', 'location', 'description', 'capacity', 'fields']);
+        $this->reset(['editingId', 'title', 'date', 'deadline', 'location', 'description', 'capacity', 'fields']);
         $this->is_open = true;
         $this->clearMedia();
         $this->resetValidation();
@@ -77,6 +79,7 @@ class Inscriptions extends Component
         $this->editingId = $id;
         $this->title = $e['title'];
         $this->date = ($e['starts_at'] ?? null) ? Carbon::parse($e['starts_at'])->format('Y-m-d\TH:i') : '';
+        $this->deadline = ($e['registration_deadline'] ?? null) ? Carbon::parse($e['registration_deadline'])->format('Y-m-d\TH:i') : '';
         $this->location = $e['location'] ?? '';
         $this->description = $e['description'] ?? '';
         $this->capacity = $e['capacity'] ?? null;
@@ -115,6 +118,7 @@ class Inscriptions extends Component
         $this->validate([
             'title' => 'required|string|min:3|max:160',
             'date' => 'nullable|date',
+            'deadline' => 'nullable|date',
             'location' => 'nullable|string|max:200',
             'description' => 'nullable|string|max:2000',
             'capacity' => 'nullable|integer|min:1|max:1000000',
@@ -149,6 +153,7 @@ class Inscriptions extends Component
             'poster' => $this->mediaUrl ?: null,
             'location' => $this->location ?: null,
             'starts_at' => $this->date ?: null,
+            'registration_deadline' => $this->deadline ?: null,
             'capacity' => $this->capacity ?: null,
             'is_open' => $this->is_open,
             'fields' => $fieldsPayload,
@@ -223,6 +228,9 @@ class Inscriptions extends Component
         $events = $this->events()->map(function (array $e) {
             $e['date_label'] = ($e['starts_at'] ?? null)
                 ? Carbon::parse($e['starts_at'])->locale('fr')->translatedFormat('j F Y · H\hi')
+                : null;
+            $e['deadline_label'] = ($e['registration_deadline'] ?? null)
+                ? Carbon::parse($e['registration_deadline'])->locale('fr')->translatedFormat('j F Y · H\hi')
                 : null;
             $e['url'] = url('/participer/'.$e['slug']);
             $e['percent'] = ($e['capacity'] ?? null) ? min(100, (int) round(($e['count'] / $e['capacity']) * 100)) : null;

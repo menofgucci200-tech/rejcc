@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class RegistrationEvent extends Model
 {
-    protected $fillable = ['title', 'slug', 'description', 'poster', 'fields', 'location', 'starts_at', 'capacity', 'is_open'];
+    protected $fillable = ['title', 'slug', 'description', 'poster', 'fields', 'location', 'starts_at', 'registration_deadline', 'capacity', 'is_open'];
 
     // Inscriptions ouvertes par défaut (aligné sur la valeur par défaut en base),
     // pour que le modèle fraîchement créé le reflète sans refresh().
@@ -15,6 +15,7 @@ class RegistrationEvent extends Model
 
     protected $casts = [
         'starts_at' => 'datetime',
+        'registration_deadline' => 'datetime',
         'capacity' => 'integer',
         'is_open' => 'boolean',
         'fields' => 'array',
@@ -41,9 +42,15 @@ class RegistrationEvent extends Model
         return $this->capacity !== null && $this->participants()->count() >= $this->capacity;
     }
 
-    /** Les inscriptions sont-elles ouvertes ? (ouvertes ET non pleines) */
+    /** La date limite d'inscription est-elle dépassée ? */
+    public function isPastDeadline(): bool
+    {
+        return $this->registration_deadline !== null && $this->registration_deadline->isPast();
+    }
+
+    /** Les inscriptions sont-elles ouvertes ? (ouvertes, non pleines, avant la date limite) */
     public function acceptsRegistrations(): bool
     {
-        return $this->is_open && ! $this->isFull();
+        return $this->is_open && ! $this->isFull() && ! $this->isPastDeadline();
     }
 }

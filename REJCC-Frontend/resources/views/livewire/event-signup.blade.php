@@ -7,6 +7,8 @@
     $remaining = $event['remaining'] ?? null;
     $capacity = $event['capacity'] ?? null;
     $date = ($event['starts_at'] ?? null) ? Carbon::parse($event['starts_at']) : null;
+    $deadline = ($event['registration_deadline'] ?? null) ? Carbon::parse($event['registration_deadline']) : null;
+    $isPastDeadline = $event['is_past_deadline'] ?? false;
     $fields = $event['fields'] ?? [];
     $inputClass = 'w-full rounded-xl border border-brand/15 bg-white px-3.5 py-2.5 text-sm text-brand outline-none focus:border-azure focus:ring-2 focus:ring-accent/15';
 @endphp
@@ -53,6 +55,16 @@
                         <p class="max-w-sm text-sm text-ink/70">Merci {{ $prenom }}, votre place est réservée pour <strong>{{ $event['title'] ?? 'l\'événement' }}</strong>. Nous avons hâte de vous accueillir. Pensez à noter la date.</p>
                     </div>
 
+                {{-- ══════════ Date limite dépassée ══════════ --}}
+                @elseif ($isPastDeadline)
+                    <div class="flex flex-col items-center gap-3 py-4 text-center">
+                        <span class="flex size-14 items-center justify-center rounded-full bg-[#9AA6B8]/10 text-[#5B677A]">
+                            <x-ui.icon name="clock" class="size-7" />
+                        </span>
+                        <p class="text-lg font-bold text-brand">Inscriptions terminées</p>
+                        <p class="max-w-sm text-sm text-ink/70">La date limite d'inscription est dépassée. Merci de votre intérêt — à très bientôt pour un prochain événement !</p>
+                    </div>
+
                 {{-- ══════════ Inscriptions fermées ══════════ --}}
                 @elseif (! $isOpen)
                     <div class="flex flex-col items-center gap-3 py-4 text-center">
@@ -78,6 +90,12 @@
                     @if ($remaining !== null && $remaining <= 30)
                         <p class="mb-4 inline-flex items-center gap-1.5 rounded-full bg-accent/10 px-3.5 py-1.5 text-xs font-bold text-accent">
                             <x-ui.icon name="flame" class="size-3.5" /> Plus que {{ $remaining }} place{{ $remaining > 1 ? 's' : '' }} !
+                        </p>
+                    @endif
+
+                    @if ($deadline)
+                        <p class="mb-4 inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#5B677A]">
+                            <x-ui.icon name="clock" class="size-3.5 text-azure" /> Inscriptions jusqu'au {{ $deadline->locale('fr')->translatedFormat('j F Y \à H\hi') }}
                         </p>
                     @endif
 

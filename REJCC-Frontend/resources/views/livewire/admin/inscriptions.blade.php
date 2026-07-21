@@ -36,6 +36,12 @@
                     <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Lieu</label>
                     <input wire:model="location" type="text" placeholder="Ex : Abidjan, Cocody" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
                 </div>
+                <div>
+                    <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Date limite d'inscription (optionnel)</label>
+                    <input wire:model="deadline" type="datetime-local" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
+                    @error('deadline') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                    <p class="mt-1 text-[11px] text-[#9AA6B8]">Passé cette date, les inscriptions se ferment automatiquement.</p>
+                </div>
                 <div class="sm:col-span-2">
                     <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Description (optionnel)</label>
                     <textarea wire:model="description" rows="2" placeholder="Programme, informations pratiques…" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure"></textarea>
@@ -107,7 +113,9 @@
                         <div class="min-w-[220px] flex-1">
                             <div class="flex flex-wrap items-center gap-2">
                                 <p class="text-[15px] font-bold text-brand">{{ $e['title'] }}</p>
-                                @if ($e['is_open'] && ! $e['is_full'])
+                                @if ($e['is_past_deadline'] ?? false)
+                                    <span class="rounded-full bg-[#9AA6B8]/15 px-2.5 py-0.5 text-[10.5px] font-bold text-[#5B677A]">Clôturé (date limite)</span>
+                                @elseif ($e['is_open'] && ! $e['is_full'])
                                     <span class="rounded-full bg-[#22A85A]/10 px-2.5 py-0.5 text-[10.5px] font-bold text-[#1C8F4C]">Ouvert</span>
                                 @elseif ($e['is_full'])
                                     <span class="rounded-full bg-accent/10 px-2.5 py-0.5 text-[10.5px] font-bold text-accent">Complet</span>
@@ -118,6 +126,7 @@
                             <p class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11.5px] font-semibold text-[#5B677A]">
                                 @if ($e['date_label']) <span class="inline-flex items-center gap-1"><x-ui.icon name="calendar" class="size-3 text-azure" /> {{ $e['date_label'] }}</span> @endif
                                 @if ($e['location']) <span class="inline-flex items-center gap-1"><x-ui.icon name="map-pin" class="size-3 text-azure" /> {{ $e['location'] }}</span> @endif
+                                @if ($e['deadline_label']) <span class="inline-flex items-center gap-1 {{ ($e['is_past_deadline'] ?? false) ? 'text-accent' : '' }}"><x-ui.icon name="clock" class="size-3" /> Limite : {{ $e['deadline_label'] }}</span> @endif
                             </p>
                         </div>
 

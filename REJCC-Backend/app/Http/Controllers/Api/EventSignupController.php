@@ -41,6 +41,10 @@ class EventSignupController extends Controller
             return response()->json(['ok' => false, 'message' => 'Les inscriptions pour cet événement sont fermées.'], 422);
         }
 
+        if ($event->isPastDeadline()) {
+            return response()->json(['ok' => false, 'message' => 'La date limite d\'inscription est dépassée.'], 422);
+        }
+
         if ($event->isFull()) {
             return response()->json(['ok' => false, 'message' => 'Toutes les places ont été réservées. Les inscriptions sont complètes.'], 422);
         }
@@ -154,11 +158,13 @@ class EventSignupController extends Controller
             'fields' => $event->fields ?? [],
             'location' => $event->location,
             'starts_at' => $event->starts_at?->toIso8601String(),
+            'registration_deadline' => $event->registration_deadline?->toIso8601String(),
             'capacity' => $event->capacity,
             'count' => $count,
             'remaining' => $event->capacity !== null ? max(0, $event->capacity - $count) : null,
             'is_open' => $event->is_open,
             'is_full' => $event->isFull(),
+            'is_past_deadline' => $event->isPastDeadline(),
             'accepts' => $event->acceptsRegistrations(),
         ];
     }
