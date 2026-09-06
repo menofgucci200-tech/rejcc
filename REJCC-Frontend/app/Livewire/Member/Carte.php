@@ -61,6 +61,10 @@ class Carte extends Component
     {
         $user = Api::user();
 
+        if (! ($user->subscription_active ?? false)) {
+            return view('livewire.member.carte', ['locked' => true]);
+        }
+
         return view('livewire.member.carte', [
             'name' => trim(($user->prenom ?? '').' '.($user->nom ?? '')) ?: ($user->email ?? 'Membre'),
             'roleLabel' => $user->role_label ?? 'Membre officiel',

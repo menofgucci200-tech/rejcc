@@ -128,6 +128,7 @@
                                                 'Téléphone' => $d['telephone'], 'Genre' => $d['genre'], 'Ville' => $d['ville'],
                                                 'Paroisse' => $d['paroisse'], 'Secteur' => $d['secteur'], 'Profil' => $d['profil'],
                                                 'Organisation' => $d['organisation'], 'Date de naissance' => $d['date_naissance'], "Date d'adhésion" => $d['date_adhesion'],
+                                                'Abonnement' => $d['abonnement_actif'] ? 'Actif'.($d['abonnement_expire_le'] ? ' jusqu\'au '.\Carbon\Carbon::parse($d['abonnement_expire_le'])->translatedFormat('d/m/Y') : '') : 'Non actif',
                                             ] as $label => $value)
                                                 @if (! empty($value))
                                                     <div>

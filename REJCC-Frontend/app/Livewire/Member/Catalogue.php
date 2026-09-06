@@ -41,6 +41,7 @@ class Catalogue extends Component
                     'gratuit' => (bool) $f['is_free'],
                     'certifiante' => (bool) $f['is_certifying'],
                     'inscrit' => (bool) $f['enrolled'],
+                    'has_modules' => (bool) ($f['has_modules'] ?? false),
                     'media' => $f['media_url'] ?? null,
                 ];
             })

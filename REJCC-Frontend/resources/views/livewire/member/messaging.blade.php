@@ -3,6 +3,9 @@
 <div>
     <x-member-light.topbar title="Messagerie" />
 
+    @if ($this->locked())
+        <x-member-light.paywall description="La messagerie privée entre membres est réservée aux membres à jour de leur abonnement annuel (10 000 F)." />
+    @else
     <div class="mx-auto max-w-[1280px] px-8 py-8">
         <div class="mb-5">
             <h1 class="mb-1 text-[17px] font-bold text-brand">Messagerie</h1>
@@ -94,4 +97,5 @@
             </section>
         </div>
     </div>
+    @endif
 </div>

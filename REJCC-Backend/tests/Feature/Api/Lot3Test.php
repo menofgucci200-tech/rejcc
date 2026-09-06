@@ -6,7 +6,6 @@ use App\Models\ApiToken;
 use App\Models\Formation;
 use App\Models\FormationEnrollment;
 use App\Models\Project;
-use App\Models\Resource;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -31,41 +30,6 @@ class Lot3Test extends TestCase
     private function adminToken(): string
     {
         return $this->tokenFor(User::factory()->create(['role' => 'admin']));
-    }
-
-    // ------------------------------------------------------------ Ressources
-
-    public function test_l_admin_gere_les_ressources_et_le_membre_les_telecharge(): void
-    {
-        $admin = $this->adminToken();
-
-        $resource = $this->withToken($admin)->postJson('/api/admin/resources', [
-            'title' => 'Guide business plan',
-            'type' => 'Ebook',
-            'url' => 'https://exemple.org/guide.pdf',
-            'size' => '2 Mo',
-        ])->assertOk()->json('resource');
-
-        $member = $this->tokenFor(User::factory()->create());
-
-        // Le membre voit la ressource et la télécharge (compteur incrémenté).
-        $this->withToken($member)->getJson('/api/resources')->assertOk()
-            ->assertJsonPath('resources.0.title', 'Guide business plan');
-        $this->withToken($member)->postJson("/api/resources/{$resource['id']}/download")
-            ->assertOk()->assertJsonPath('url', 'https://exemple.org/guide.pdf');
-        $this->assertSame(1, Resource::find($resource['id'])->downloads);
-
-        // Dépubliée, elle disparaît côté membre.
-        $this->withToken($admin)->putJson("/api/admin/resources/{$resource['id']}", [
-            'title' => 'Guide business plan',
-            'type' => 'Ebook',
-            'url' => 'https://exemple.org/guide.pdf',
-            'is_published' => false,
-        ])->assertOk();
-        $this->assertSame([], $this->withToken($member)->getJson('/api/resources')->json('resources'));
-
-        $this->withToken($admin)->deleteJson("/api/admin/resources/{$resource['id']}")->assertOk();
-        $this->assertNull(Resource::find($resource['id']));
     }
 
     // ------------------------------------------------------------ Certificats
@@ -97,7 +61,7 @@ class Lot3Test extends TestCase
 
     public function test_un_membre_propose_un_projet_qui_entre_en_evaluation(): void
     {
-        $token = $this->tokenFor(User::factory()->create());
+        $token = $this->tokenFor(User::factory()->abonne()->create());
 
         $project = $this->withToken($token)->postJson('/api/projects', [
             'title' => 'Coopérative agricole jeunesse',
@@ -106,44 +70,40 @@ class Lot3Test extends TestCase
         ])->assertStatus(201)->json('project');
 
         $this->assertSame('En évaluation', $project['status']);
-        $this->assertCount(4, $project['milestones']);
 
         $liste = $this->withToken($token)->getJson('/api/projects')->assertOk()->json('projects');
         $this->assertTrue($liste[0]['mine']);
     }
 
-    public function test_l_admin_valide_un_projet_et_le_suit_dans_l_incubateur(): void
+    public function test_un_membre_sans_abonnement_ne_peut_pas_proposer_de_projet(): void
     {
-        $member = User::factory()->create();
+        $token = $this->tokenFor(User::factory()->create()); // pas d'abonnement
+
+        $this->withToken($token)->postJson('/api/projects', [
+            'title' => 'Coopérative agricole jeunesse',
+            'description' => 'Structurer un circuit court de vente de produits maraîchers.',
+            'members_count' => 6,
+        ])->assertStatus(402);
+    }
+
+    public function test_l_admin_fait_evoluer_le_statut_d_un_projet(): void
+    {
+        $member = User::factory()->abonne()->create();
         $project = Project::create([
             'user_id' => $member->id,
             'title' => 'Atelier couture solidaire',
             'description' => 'Formation de jeunes femmes à la couture avec insertion professionnelle.',
-            'milestones' => Project::defaultMilestones(),
         ]);
 
         $admin = $this->adminToken();
-        $milestones = Project::defaultMilestones();
-        $milestones[0]['done'] = true;
-        $milestones[1]['done'] = true;
 
         $this->withToken($admin)->putJson("/api/admin/projects/{$project->id}", [
             'title' => $project->title,
             'description' => $project->description,
-            'status' => 'Financement en cours',
-            'in_incubator' => true,
-            'funding_goal' => 5000000,
-            'funding_raised' => 3200000,
-            'milestones' => $milestones,
-        ])->assertOk();
+            'status' => 'Lancé',
+        ])->assertOk()->assertJsonPath('project.status', 'Lancé');
 
-        // Le projet apparaît dans l'incubateur avec financement et jalons.
-        $incub = $this->withToken($this->tokenFor($member))->getJson('/api/incubator')
-            ->assertOk()->json('projects');
-        $this->assertCount(1, $incub);
-        $this->assertSame(3200000, $incub[0]['funding_raised']);
-        $this->assertTrue($incub[0]['milestones'][0]['done']);
-        $this->assertFalse($incub[0]['milestones'][2]['done']);
+        $this->assertSame('Lancé', $project->fresh()->status);
     }
 
     public function test_l_admin_supprime_un_projet(): void
@@ -163,7 +123,6 @@ class Lot3Test extends TestCase
     {
         $token = $this->tokenFor(User::factory()->create(['role' => 'member']));
 
-        $this->withToken($token)->postJson('/api/admin/resources', [])->assertStatus(403);
         $this->withToken($token)->getJson('/api/admin/certificates')->assertStatus(403);
         $this->withToken($token)->putJson('/api/admin/projects/1', [])->assertStatus(403);
     }

@@ -131,6 +131,49 @@
                     </div>
                     <button wire:click="saveBannereAnnonce" wire:loading.attr="disabled" class="btn-tap mt-4 w-fit rounded-[9px] bg-brand px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-brand/90 hover:shadow-md disabled:opacity-60">Publier</button>
                 </section>
+
+                {{-- Paiement — Abonnement --}}
+                <section class="rounded-[18px] border border-brand/10 bg-white p-[22px] shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                    <div class="mb-1 flex items-center justify-between">
+                        <p class="text-sm font-bold text-brand">Paiement — Abonnement (CinetPay)</p>
+                        @if ($savedCard === 'paiement')
+                            <span class="panel-enter inline-flex items-center gap-1 text-[11.5px] font-bold text-[#22A85A]"><x-ui.icon name="check-circle" class="size-3.5" /> Enregistré</span>
+                        @endif
+                    </div>
+                    <p class="mb-4 text-[11.5px] text-[#9AA6B8]">
+                        Identifiants de votre compte marchand <span class="font-semibold">CinetPay</span> (Wave, Orange Money, MTN, Moov, carte bancaire), nécessaires pour encaisser l'abonnement annuel des membres (10 000 F). Créez un compte sur cinetpay.com puis collez ci-dessous la clé API et l'ID de site indiqués dans votre tableau de bord CinetPay.
+                    </p>
+                    <div class="flex flex-col gap-3" x-data="{ show: false }">
+                        <label class="flex flex-col gap-1 text-xs font-semibold text-[#5B677A]">Clé API (apikey)
+                            <div class="relative">
+                                <input
+                                    wire:model="cinetpayApiKey"
+                                    :type="show ? 'text' : 'password'"
+                                    autocomplete="off"
+                                    placeholder="Clé API CinetPay"
+                                    class="w-full rounded-[9px] border border-brand/15 px-3 py-2 pr-10 text-sm font-normal outline-none focus:border-azure"
+                                />
+                                <button type="button" @click="show = !show" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9AA6B8] hover:text-brand" :aria-label="show ? 'Masquer' : 'Afficher'">
+                                    <x-ui.icon name="eye" class="size-4" />
+                                </button>
+                            </div>
+                            @error('cinetpayApiKey') <span class="font-medium text-accent">{{ $message }}</span> @enderror
+                        </label>
+                        <label class="flex flex-col gap-1 text-xs font-semibold text-[#5B677A]">ID de site (site_id)
+                            <div class="relative">
+                                <input
+                                    wire:model="cinetpaySiteId"
+                                    :type="show ? 'text' : 'password'"
+                                    autocomplete="off"
+                                    placeholder="Site ID CinetPay"
+                                    class="w-full rounded-[9px] border border-brand/15 px-3 py-2 pr-10 text-sm font-normal outline-none focus:border-azure"
+                                />
+                            </div>
+                            @error('cinetpaySiteId') <span class="font-medium text-accent">{{ $message }}</span> @enderror
+                        </label>
+                    </div>
+                    <button wire:click="savePaiement" wire:loading.attr="disabled" class="btn-tap mt-4 w-fit rounded-[9px] bg-brand px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-brand/90 hover:shadow-md disabled:opacity-60">Enregistrer</button>
+                </section>
             </div>
         </div>
     </div>

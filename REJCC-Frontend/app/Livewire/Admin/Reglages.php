@@ -58,6 +58,11 @@ class Reglages extends Component
 
     public string $bannerLabel = '';
 
+    // Paiement (abonnement annuel via CinetPay)
+    public string $cinetpayApiKey = '';
+
+    public string $cinetpaySiteId = '';
+
     public ?string $savedCard = null;
 
     public function mount(): void
@@ -86,6 +91,12 @@ class Reglages extends Component
         $this->bannerText = (string) SiteRemote::setting('banner.text', '');
         $this->bannerLink = (string) SiteRemote::setting('banner.link', '');
         $this->bannerLabel = (string) SiteRemote::setting('banner.label', '');
+
+        // Réglages sensibles : jamais exposés par l'API publique, on les
+        // récupère via l'endpoint admin dédié.
+        $admin = Api::get('/admin/site-settings', [], Api::token())['settings'] ?? [];
+        $this->cinetpayApiKey = (string) ($admin['payment.cinetpay_api_key'] ?? '');
+        $this->cinetpaySiteId = (string) ($admin['payment.cinetpay_site_id'] ?? '');
     }
 
     public function saveIdentite(): void
@@ -165,7 +176,20 @@ class Reglages extends Component
         ]);
     }
 
-    private function push(string $card, array $settings): void
+    public function savePaiement(): void
+    {
+        $this->validate([
+            'cinetpayApiKey' => 'nullable|string|max:200',
+            'cinetpaySiteId' => 'nullable|string|max:100',
+        ]);
+
+        $this->push('paiement', [
+            'payment.cinetpay_api_key' => $this->cinetpayApiKey,
+            'payment.cinetpay_site_id' => $this->cinetpaySiteId,
+        ], 'cinetpayApiKey');
+    }
+
+    private function push(string $card, array $settings, string $errorField = 'slogan'): void
     {
         $result = Api::put('/admin/site-settings', ['settings' => $settings], Api::token());
 
@@ -173,7 +197,7 @@ class Reglages extends Component
             SiteRemote::clear();
             $this->savedCard = $card;
         } else {
-            $this->addError('slogan', $result['message'] ?? 'Une erreur est survenue.');
+            $this->addError($errorField, $result['message'] ?? 'Une erreur est survenue.');
         }
     }
 

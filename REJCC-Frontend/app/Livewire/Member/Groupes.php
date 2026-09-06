@@ -9,17 +9,51 @@ use Livewire\Component;
 /**
  * Groupes sectoriels : pôles qui regroupent les membres par domaine
  * d'activité pour des échanges ciblés et des synergies. Adhésion libre et
- * multiple (on peut suivre plusieurs pôles ou formations en parallèle).
+ * multiple (on peut suivre plusieurs pôles ou formations en parallèle),
+ * en décrivant sa spécialité dans le domaine à l'adhésion.
  */
 #[Layout('layouts.member-light')]
 class Groupes extends Component
 {
     public ?string $message = null;
 
-    public function rejoindre(int $id): void
+    /** Groupe pour lequel le formulaire d'adhésion/modification est ouvert. */
+    public ?int $formGroupId = null;
+
+    public string $specialite = '';
+
+    public function ouvrirFormulaire(int $id, ?string $specialiteActuelle = null): void
     {
-        $result = Api::post("/groups/{$id}/join", [], Api::token());
-        $this->message = ($result['ok'] ?? false) ? 'Vous avez rejoint le groupe !' : ($result['message'] ?? 'Une erreur est survenue.');
+        $this->formGroupId = $id;
+        $this->specialite = $specialiteActuelle ?? '';
+        $this->resetValidation();
+    }
+
+    public function fermerFormulaire(): void
+    {
+        $this->formGroupId = null;
+        $this->specialite = '';
+    }
+
+    public function confirmerAdhesion(): void
+    {
+        $this->validate([
+            'specialite' => 'required|string|min:10|max:600',
+        ], [
+            'specialite.required' => 'Décrivez votre spécialité dans ce domaine pour rejoindre le groupe.',
+            'specialite.min' => 'Décrivez votre spécialité en quelques mots de plus (10 caractères minimum).',
+        ]);
+
+        $result = Api::post("/groups/{$this->formGroupId}/join", ['specialite' => $this->specialite], Api::token());
+
+        if (! ($result['ok'] ?? false)) {
+            $this->addError('specialite', $result['message'] ?? 'Une erreur est survenue.');
+
+            return;
+        }
+
+        $this->message = 'Votre fiche a bien été enregistrée dans le groupe.';
+        $this->fermerFormulaire();
     }
 
     public function quitter(int $id): void

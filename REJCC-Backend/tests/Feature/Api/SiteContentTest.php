@@ -112,7 +112,7 @@ class SiteContentTest extends TestCase
 
         $this->assertArrayHasKey('formations', $stats);
         $this->assertArrayHasKey('certificats', $stats);
-        $this->assertArrayHasKey('fonds_incubateur', $stats);
+        $this->assertArrayHasKey('projets', $stats);
         $this->assertCount(12, $stats['croissance']);
     }
 }

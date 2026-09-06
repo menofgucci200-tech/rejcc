@@ -8,6 +8,7 @@ use App\Models\ApiToken;
 use App\Models\MemberNotification;
 use App\Models\User;
 use App\Support\Mailer;
+use App\Support\MemberProfile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -43,6 +44,8 @@ class AuthController extends Controller
             'date_naissance' => $u->date_naissance?->toDateString(),
             'preferences' => $u->preferences ?? $u->defaultPreferences(),
             'date_adhesion' => $u->created_at?->toDateString(),
+            'subscription_active' => $u->hasActiveSubscription(),
+            'subscription_expires_at' => $u->subscription_expires_at?->toDateString(),
         ];
     }
 
@@ -312,5 +315,17 @@ class AuthController extends Controller
                 'per_page' => $page->perPage(),
             ],
         ]);
+    }
+
+    /** Fiche détaillée d'un membre (clic depuis l'annuaire ou le trombinoscope d'un groupe). */
+    public function show(int $id)
+    {
+        $user = User::where('role', 'member')->find($id);
+
+        if (! $user) {
+            return response()->json(['ok' => false, 'message' => 'Membre introuvable.'], 404);
+        }
+
+        return response()->json(['ok' => true, 'member' => MemberProfile::payload($user)]);
     }
 }

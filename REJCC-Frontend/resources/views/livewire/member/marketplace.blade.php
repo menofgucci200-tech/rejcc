@@ -14,9 +14,15 @@
             <div>
                 <h1 class="mb-1 text-[17px] font-bold text-brand">Marketplace du réseau</h1>
                 <div class="h-[3px] w-9 rounded bg-accent"></div>
-                <p class="mt-3 max-w-xl text-[13px] text-[#5B677A]">Services et produits proposés par les membres. Vendez vos compétences, trouvez un prestataire de confiance au sein du réseau.</p>
+                <p class="mt-3 max-w-xl text-[13px] text-[#5B677A]">Services et produits proposés par les membres. Trouvez un prestataire de confiance au sein du réseau.</p>
             </div>
-            <button wire:click="openForm" class="btn-tap rounded-full bg-accent px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-accent-600 hover:shadow-md">+ Proposer un service / produit</button>
+            @if ($abonnementActif)
+                <button wire:click="openForm" class="btn-tap rounded-full bg-accent px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-accent-600 hover:shadow-md">+ Proposer un service / produit</button>
+            @else
+                <a href="{{ route('espace-membre.abonnement') }}" wire:navigate class="btn-tap inline-flex items-center gap-1.5 rounded-full border border-[#F5A623]/40 bg-[#F5A623]/10 px-4 py-2.5 text-xs font-bold text-[#B27007] hover:bg-[#F5A623]/20">
+                    <x-ui.icon name="shield" class="size-3.5" /> Abonnement requis pour vendre
+                </a>
+            @endif
         </div>
 
         @if ($message)
@@ -157,7 +163,9 @@
             @endif
         @else
             {{-- Mes annonces --}}
-            @if ($mesAnnonces->isEmpty())
+            @if (! $abonnementActif)
+                <x-member-light.paywall description="Pour publier vos propres services ou produits sur la Marketplace, un abonnement annuel actif (10 000 F) est nécessaire. La consultation du catalogue reste libre pour tous les membres." />
+            @elseif ($mesAnnonces->isEmpty())
                 <p class="rounded-[16px] border border-brand/10 bg-white py-10 text-center text-sm text-[#5B677A]">Vous n'avez pas encore d'annonce. Cliquez sur « Proposer un service / produit » pour vendre sur la Marketplace.</p>
             @else
                 <div class="space-y-3">

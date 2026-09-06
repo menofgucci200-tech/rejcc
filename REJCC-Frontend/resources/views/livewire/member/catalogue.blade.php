@@ -36,7 +36,11 @@
                         </div>
                         <div class="flex items-center justify-between">
                             <span class="text-xs font-bold {{ $c['gratuit'] ? 'text-[#22A85A]' : 'text-brand' }}">{{ $c['gratuit'] ? 'Gratuit' : 'Sur adhésion' }}</span>
-                            @if ($c['inscrit'])
+                            @if ($c['inscrit'] && $c['has_modules'])
+                                <a href="{{ route('espace-membre.formations.detail', $c['id']) }}" wire:navigate class="inline-flex items-center gap-1.5 rounded-full bg-[#22A85A]/10 px-3.5 py-1.5 text-xs font-semibold text-[#22A85A] hover:bg-[#22A85A]/20">
+                                    <x-ui.icon name="check" class="size-3.5" /> Voir les modules
+                                </a>
+                            @elseif ($c['inscrit'])
                                 <span class="inline-flex items-center gap-1.5 rounded-full bg-[#22A85A]/10 px-3.5 py-1.5 text-xs font-semibold text-[#22A85A]">
                                     <x-ui.icon name="check" class="size-3.5" /> Inscrit
                                 </span>

@@ -67,6 +67,10 @@ class Marketplace extends Component
 
     public function openForm(): void
     {
+        if (! (Api::user()->subscription_active ?? false)) {
+            return;
+        }
+
         $this->reset(['type', 'title', 'category', 'description', 'price']);
         $this->type = 'service';
         $this->contact = Api::user()->telephone ?? '';
@@ -83,6 +87,12 @@ class Marketplace extends Component
 
     public function soumettre(): void
     {
+        if (! (Api::user()->subscription_active ?? false)) {
+            $this->addError('title', 'Un abonnement annuel actif est nécessaire pour publier une annonce.');
+
+            return;
+        }
+
         $this->validate([
             'type' => 'required|in:service,produit',
             'title' => 'required|string|min:3|max:120',
@@ -128,6 +138,7 @@ class Marketplace extends Component
 
     public function render()
     {
+        $abonnementActif = (bool) (Api::user()->subscription_active ?? false);
         $me = Api::user()->id;
 
         $data = Api::get('/marketplace', [], Api::token());
@@ -154,7 +165,7 @@ class Marketplace extends Component
         // Catégories effectivement présentes (pour le filtre)
         $categoriesActives = collect($data['listings'] ?? [])->pluck('category')->unique()->sort()->values();
 
-        $mesAnnonces = $this->onglet === 'mes-annonces'
+        $mesAnnonces = ($this->onglet === 'mes-annonces' && $abonnementActif)
             ? collect(Api::get('/marketplace/mine', [], Api::token())['listings'] ?? [])
             : collect();
 
@@ -164,6 +175,7 @@ class Marketplace extends Component
             'categoriesActives' => $categoriesActives,
             'mesAnnonces' => $mesAnnonces,
             'me' => $me,
+            'abonnementActif' => $abonnementActif,
         ]);
     }
 }

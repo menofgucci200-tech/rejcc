@@ -35,4 +35,15 @@ return [
         ],
     ],
 
+    /*
+    | Passerelle de paiement pour l'abonnement annuel (10 000 F XOF) :
+    | agrège Wave / Orange Money / MTN / Moov / carte bancaire derrière
+    | une seule API. Compte marchand à créer sur cinetpay.com.
+    */
+    'cinetpay' => [
+        'base_url' => env('CINETPAY_BASE_URL', 'https://api-checkout.cinetpay.com'),
+        'api_key' => env('CINETPAY_API_KEY'),
+        'site_id' => env('CINETPAY_SITE_ID'),
+    ],
+
 ];

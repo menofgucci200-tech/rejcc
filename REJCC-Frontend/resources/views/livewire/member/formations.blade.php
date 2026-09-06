@@ -21,9 +21,15 @@
                     <div class="h-2 rounded-full bg-white" style="width: {{ $enCours['pct'] }}%"></div>
                 </div>
                 <p class="mb-4 text-xs font-semibold text-white/80">{{ $enCours['pct'] }}% complété</p>
-                <button wire:click="validerModule({{ $enCours['id'] }})" wire:loading.attr="disabled" class="group btn-tap inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-xs font-bold text-brand disabled:opacity-60">
-                    Valider le module en cours <x-ui.icon name="arrow-right" class="nudge-x size-3.5" />
-                </button>
+                @if ($enCours['has_modules'])
+                    <a href="{{ route('espace-membre.formations.detail', $enCours['id']) }}" wire:navigate class="group btn-tap inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-xs font-bold text-brand">
+                        Continuer la formation <x-ui.icon name="arrow-right" class="nudge-x size-3.5" />
+                    </a>
+                @else
+                    <button wire:click="validerModule({{ $enCours['id'] }})" wire:loading.attr="disabled" class="group btn-tap inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-xs font-bold text-brand disabled:opacity-60">
+                        Valider le module en cours <x-ui.icon name="arrow-right" class="nudge-x size-3.5" />
+                    </button>
+                @endif
             </div>
         @endif
 
@@ -53,6 +59,8 @@
                         <span class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#22A85A]/10 px-3 py-1.5 text-xs font-semibold text-[#22A85A]">
                             <x-ui.icon name="check" class="size-3.5" /> Terminée
                         </span>
+                    @elseif ($c['has_modules'])
+                        <a href="{{ route('espace-membre.formations.detail', $c['id']) }}" wire:navigate class="btn-tap shrink-0 rounded-full border border-azure/25 bg-azure/10 px-3.5 py-1.5 text-xs font-semibold text-azure hover:bg-azure/20">Voir les modules</a>
                     @else
                         <button wire:click="validerModule({{ $c['id'] }})" wire:loading.attr="disabled" class="btn-tap shrink-0 rounded-full border border-azure/25 bg-azure/10 px-3.5 py-1.5 text-xs font-semibold text-azure hover:bg-azure/20 disabled:opacity-60">Valider le module</button>
                     @endif

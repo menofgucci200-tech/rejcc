@@ -1,6 +1,9 @@
 <div>
     <x-member-light.topbar title="Projets" />
 
+    @if ($locked ?? false)
+        <x-member-light.paywall description="La soumission de projets est réservée aux membres à jour de leur abonnement annuel (10 000 F)." />
+    @else
     <div class="mx-auto max-w-[1280px] px-8 py-8">
         <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
             <div>
@@ -29,10 +32,6 @@
                 <div>
                     <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Nombre de membres impliqués</label>
                     <input wire:model="membersCount" type="number" min="1" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
-                </div>
-                <div>
-                    <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Besoin de financement en FCFA (optionnel)</label>
-                    <input wire:model="fundingGoal" type="number" min="0" step="100000" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
                 </div>
                 <div class="sm:col-span-2">
                     <button wire:click="proposer" wire:loading.attr="disabled" class="btn-tap rounded-[9px] bg-brand px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-brand/90 hover:shadow-md disabled:opacity-60">Soumettre à l'évaluation</button>
@@ -65,4 +64,5 @@
             <p class="rounded-[16px] border border-brand/10 bg-white py-10 text-center text-sm text-[#5B677A]">Aucun projet pour le moment — proposez le vôtre !</p>
         @endif
     </div>
+    @endif
 </div>

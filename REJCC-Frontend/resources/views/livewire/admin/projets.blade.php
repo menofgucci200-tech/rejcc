@@ -1,11 +1,11 @@
 <div>
-    <x-admin-light.topbar title="Projets & Incubateur" />
+    <x-admin-light.topbar title="Projets" />
 
     <div class="mx-auto max-w-[1280px] px-8 py-8">
         <div class="mb-4">
             <h2 class="mb-1 text-[17px] font-bold text-brand">Projets du réseau</h2>
             <div class="h-[3px] w-9 rounded bg-accent"></div>
-            <p class="mt-3 max-w-2xl text-[13px] text-[#5B677A]">Validez les projets proposés par les membres, faites-les entrer dans l'incubateur et suivez leur financement et leurs jalons.</p>
+            <p class="mt-3 max-w-2xl text-[13px] text-[#5B677A]">Suivez les projets proposés par les membres et faites évoluer leur statut.</p>
         </div>
 
         @if ($showForm)
@@ -36,29 +36,6 @@
                     <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Membres impliqués</label>
                     <input wire:model="membersCount" type="number" min="1" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
                 </div>
-                <div class="flex items-end pb-1.5">
-                    <label class="inline-flex items-center gap-2 text-xs font-semibold text-[#5B677A]">
-                        <input wire:model="inIncubator" type="checkbox" class="size-4 rounded border-brand/20 text-brand" /> Suivi par l'incubateur
-                    </label>
-                </div>
-                <div>
-                    <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Objectif de financement (FCFA)</label>
-                    <input wire:model="fundingGoal" type="number" min="0" step="100000" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
-                </div>
-                <div>
-                    <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Montant levé (FCFA)</label>
-                    <input wire:model="fundingRaised" type="number" min="0" step="100000" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
-                </div>
-                <div class="sm:col-span-2">
-                    <p class="mb-2 text-xs font-semibold text-[#5B677A]">Jalons du parcours</p>
-                    <div class="flex flex-wrap gap-4">
-                        @foreach ($jalons as $i => $j)
-                            <label class="inline-flex items-center gap-2 text-xs font-semibold text-[#5B677A]">
-                                <input wire:model="jalons.{{ $i }}.done" type="checkbox" class="size-4 rounded border-brand/20 text-brand" /> {{ $j['label'] }}
-                            </label>
-                        @endforeach
-                    </div>
-                </div>
                 <button wire:click="save" wire:loading.attr="disabled" class="btn-tap rounded-[9px] bg-brand px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-brand/90 hover:shadow-md disabled:opacity-60 sm:col-span-2 sm:w-fit">Enregistrer</button>
             </div>
         @endif
@@ -70,14 +47,9 @@
                         <x-ui.icon name="nav-projects" class="size-4" />
                     </span>
                     <div class="min-w-[220px] flex-1">
-                        <div class="flex flex-wrap items-center gap-2">
-                            <p class="text-[13.5px] font-bold text-brand">{{ $p['titre'] }}</p>
-                            @if ($p['incube'])
-                                <span class="rounded-full bg-[#F5A623]/15 px-2 py-0.5 text-[9.5px] font-bold text-[#B87A0D]">INCUBATEUR</span>
-                            @endif
-                        </div>
+                        <p class="text-[13.5px] font-bold text-brand">{{ $p['titre'] }}</p>
                         <p class="mt-0.5 line-clamp-1 text-xs text-[#5B677A]">{{ $p['description'] }}</p>
-                        <p class="mt-1 text-[11px] text-[#9AA6B8]">Par {{ $p['porteur'] }} · {{ $p['membres'] }} membre{{ $p['membres'] > 1 ? 's' : '' }}@if ($p['objectif']) · {{ number_format($p['leve'], 0, ',', ' ') }} / {{ number_format($p['objectif'], 0, ',', ' ') }} FCFA @endif</p>
+                        <p class="mt-1 text-[11px] text-[#9AA6B8]">Par {{ $p['porteur'] }} · {{ $p['membres'] }} membre{{ $p['membres'] > 1 ? 's' : '' }}</p>
                     </div>
                     <span class="shrink-0 rounded-full px-2.5 py-1 text-[10.5px] font-bold" style="background: {{ $p['statutColor'] }}1A; color: {{ $p['statutColor'] }}">{{ $p['statut'] }}</span>
                     <div class="flex shrink-0 items-center gap-1.5">

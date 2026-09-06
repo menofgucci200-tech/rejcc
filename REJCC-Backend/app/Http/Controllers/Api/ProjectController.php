@@ -16,7 +16,7 @@ class ProjectController extends Controller
             ->orderByDesc('created_at')
             ->get()
             ->map(fn (Project $p) => [
-                ...$p->only(['id', 'title', 'description', 'members_count', 'status', 'in_incubator']),
+                ...$p->only(['id', 'title', 'description', 'members_count', 'status']),
                 'porteur' => $p->porteur ? trim($p->porteur->prenom.' '.$p->porteur->nom) : null,
                 'mine' => $p->user_id === $request->user()->id,
             ]);
@@ -31,7 +31,6 @@ class ProjectController extends Controller
             'title' => 'required|string|min:4|max:160',
             'description' => 'required|string|min:20|max:3000',
             'members_count' => 'nullable|integer|min:1|max:500',
-            'funding_goal' => 'nullable|integer|min:0',
         ]);
 
         if ($validator->fails()) {
@@ -42,24 +41,9 @@ class ProjectController extends Controller
             ...$validator->validated(),
             'user_id' => $request->user()->id,
             'status' => 'En évaluation',
-            'milestones' => Project::defaultMilestones(),
         ]);
 
         return response()->json(['ok' => true, 'project' => $project], 201);
-    }
-
-    /** Les projets suivis par l'incubateur (financement + jalons). */
-    public function incubator()
-    {
-        $projects = Project::where('in_incubator', true)
-            ->orderByDesc('created_at')
-            ->get()
-            ->map(fn (Project $p) => [
-                ...$p->only(['id', 'title', 'status', 'funding_goal', 'funding_raised']),
-                'milestones' => $p->milestones ?? Project::defaultMilestones(),
-            ]);
-
-        return response()->json(['ok' => true, 'projects' => $projects]);
     }
 
     // ------------------------------------------------------------------
@@ -72,11 +56,7 @@ class ProjectController extends Controller
             ->orderByDesc('created_at')
             ->get()
             ->map(fn (Project $p) => [
-                ...$p->only([
-                    'id', 'title', 'description', 'members_count', 'status',
-                    'in_incubator', 'funding_goal', 'funding_raised',
-                ]),
-                'milestones' => $p->milestones ?? Project::defaultMilestones(),
+                ...$p->only(['id', 'title', 'description', 'members_count', 'status']),
                 'porteur' => $p->porteur ? trim($p->porteur->prenom.' '.$p->porteur->nom) : null,
                 'created_at' => $p->created_at,
             ]);
@@ -96,12 +76,6 @@ class ProjectController extends Controller
             'description' => 'required|string|min:20|max:3000',
             'members_count' => 'nullable|integer|min:1|max:500',
             'status' => 'required|string|min:2|max:60',
-            'in_incubator' => 'boolean',
-            'funding_goal' => 'nullable|integer|min:0',
-            'funding_raised' => 'nullable|integer|min:0',
-            'milestones' => 'nullable|array|max:8',
-            'milestones.*.label' => 'required|string|max:80',
-            'milestones.*.done' => 'required|boolean',
         ]);
 
         if ($validator->fails()) {

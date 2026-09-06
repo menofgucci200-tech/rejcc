@@ -1,6 +1,9 @@
 <div>
     <x-member-light.topbar title="Ma carte membre" />
 
+    @if ($locked ?? false)
+        <x-member-light.paywall description="Votre carte de membre officielle (avec QR code) n'est délivrée qu'aux membres à jour de leur abonnement annuel (10 000 F)." />
+    @else
     <div class="mx-auto max-w-[1120px] px-8 py-8">
         <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
             <div>
@@ -44,6 +47,7 @@
             <span wire:loading wire:target="photoUpload" class="text-xs font-semibold text-[#9AA6B8]">Envoi de la photo…</span>
         </div>
     </div>
+    @endif
 
     {{-- Impression / export PDF : n'imprimer que la carte, en conservant les
          couleurs de fond (par défaut les navigateurs les suppriment). --}}

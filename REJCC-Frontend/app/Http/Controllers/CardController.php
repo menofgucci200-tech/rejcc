@@ -16,7 +16,7 @@ class CardController extends Controller
         }
 
         $card = (object) $result['card'];
-        $card->membre_depuis = $card->membre_depuis ? Carbon::parse($card->membre_depuis)->translatedFormat('d F Y') : null;
+        $card->membre_depuis = ($card->membre_depuis ?? null) ? Carbon::parse($card->membre_depuis)->translatedFormat('d F Y') : null;
 
         return view('pages.carte', ['card' => $card]);
     }

@@ -18,6 +18,21 @@
         $email = $card->email ?? null;
     @endphp
 
+    @if ($card->locked ?? false)
+        <section class="bg-cloud py-20">
+            <div class="mx-auto max-w-[520px] px-5 text-center">
+                <div class="rounded-3xl border border-brand/10 bg-white p-10 shadow-[0_30px_80px_-50px_rgba(3,29,89,0.45)]">
+                    <div class="mx-auto flex size-14 items-center justify-center rounded-2xl bg-[#F5A623]/10">
+                        <x-ui.icon name="shield" class="size-6 text-[#B27007]" />
+                    </div>
+                    <h1 class="mt-5 text-lg font-extrabold text-brand">{{ trim(($card->prenom ?? '').' '.($card->nom ?? '')) ?: 'Ce membre' }}</h1>
+                    <p class="mt-2 text-[13.5px] leading-relaxed text-[#5B677A]">
+                        La carte de membre officielle n'est délivrée qu'aux membres à jour de leur abonnement annuel REJCC. Elle n'est pas encore disponible pour ce profil.
+                    </p>
+                </div>
+            </div>
+        </section>
+    @else
     <section class="bg-cloud py-14 sm:py-20">
         <div class="mx-auto max-w-[880px] px-5">
 
@@ -130,4 +145,5 @@
             <p class="mt-6 text-center text-[12px] text-[#9AA6B8]">Profil membre vérifié sur rejcc.site — {{ now()->translatedFormat('j F Y') }}</p>
         </div>
     </section>
+    @endif
 </x-site-layout>

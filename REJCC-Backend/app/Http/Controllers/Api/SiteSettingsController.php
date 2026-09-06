@@ -16,15 +16,42 @@ use Illuminate\Support\Facades\Validator;
 class SiteSettingsController extends Controller
 {
     /** Préfixes de clés autorisés à l'écriture (garde-fou). */
-    private const KEY_PREFIXES = ['identity.', 'contact.', 'social.', 'banner.', 'seo.'];
+    private const KEY_PREFIXES = ['identity.', 'contact.', 'social.', 'banner.', 'seo.', 'payment.'];
 
+    /** Préfixes jamais exposés par la route publique (identifiants sensibles). */
+    private const PRIVATE_PREFIXES = ['payment.'];
+
+    /** GET /site-settings — public, utilisé par la vitrine. Exclut les réglages sensibles. */
     public function index()
+    {
+        $settings = SiteSetting::pluck('value', 'key')
+            ->reject(fn ($value, string $key) => $this->isPrivateKey($key));
+
+        return response()->json([
+            'ok' => true,
+            'settings' => $settings,
+            'sections' => PageSection::all(['page', 'section', 'content', 'visible']),
+        ]);
+    }
+
+    /** GET /admin/site-settings — admin, tous les réglages (y compris sensibles). */
+    public function adminIndex()
     {
         return response()->json([
             'ok' => true,
             'settings' => SiteSetting::pluck('value', 'key'),
-            'sections' => PageSection::all(['page', 'section', 'content', 'visible']),
         ]);
+    }
+
+    private function isPrivateKey(string $key): bool
+    {
+        foreach (self::PRIVATE_PREFIXES as $prefix) {
+            if (str_starts_with($key, $prefix)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** PUT /admin/site-settings — upsert en masse {settings: {clé: valeur}}. */

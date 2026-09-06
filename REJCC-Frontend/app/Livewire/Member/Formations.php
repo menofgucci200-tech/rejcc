@@ -42,9 +42,12 @@ class Formations extends Component
                     'etat' => $termine ? 'termine' : 'encours',
                     'from' => $palette['from'],
                     'to' => $palette['to'],
+                    'has_modules' => (bool) ($f['has_modules'] ?? false),
                     'detail' => $termine
                         ? 'Terminée le '.Carbon::parse($f['completed_at'] ?? now())->translatedFormat('j F Y')
-                        : "Module {$moduleCourant} sur {$modules}".($f['duration'] ? " · {$f['duration']}" : ''),
+                        : ($f['module_courant'] ?? null
+                            ? "Module en cours : {$f['module_courant']}"
+                            : "Module {$moduleCourant} sur {$modules}".($f['duration'] ? " · {$f['duration']}" : '')),
                 ];
             });
     }

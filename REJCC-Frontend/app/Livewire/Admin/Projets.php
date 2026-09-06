@@ -23,14 +23,6 @@ class Projets extends Component
 
     public string $status = 'En évaluation';
 
-    public bool $inIncubator = false;
-
-    public ?int $fundingGoal = null;
-
-    public ?int $fundingRaised = null;
-
-    public array $jalons = [];
-
     protected function rules(): array
     {
         return [
@@ -38,9 +30,6 @@ class Projets extends Component
             'description' => 'required|string|min:20|max:3000',
             'membersCount' => 'required|integer|min:1|max:500',
             'status' => 'required|string|max:60',
-            'inIncubator' => 'boolean',
-            'fundingGoal' => 'nullable|integer|min:0',
-            'fundingRaised' => 'nullable|integer|min:0',
         ];
     }
 
@@ -61,10 +50,6 @@ class Projets extends Component
         $this->description = $p['description'];
         $this->membersCount = (int) $p['members_count'];
         $this->status = $p['status'];
-        $this->inIncubator = (bool) $p['in_incubator'];
-        $this->fundingGoal = $p['funding_goal'];
-        $this->fundingRaised = (int) $p['funding_raised'];
-        $this->jalons = $p['milestones'];
         $this->resetValidation();
         $this->showForm = true;
     }
@@ -84,13 +69,6 @@ class Projets extends Component
             'description' => $this->description,
             'members_count' => $this->membersCount,
             'status' => $this->status,
-            'in_incubator' => $this->inIncubator,
-            'funding_goal' => $this->fundingGoal,
-            'funding_raised' => $this->fundingRaised ?? 0,
-            'milestones' => array_map(fn (array $j) => [
-                'label' => $j['label'],
-                'done' => (bool) ($j['done'] ?? false),
-            ], $this->jalons),
         ], Api::token());
 
         $this->closeForm();
@@ -110,10 +88,7 @@ class Projets extends Component
             'membres' => (int) $p['members_count'],
             'statut' => $p['status'],
             'statutColor' => ProjectStatus::color($p['status']),
-            'incube' => (bool) $p['in_incubator'],
             'porteur' => $p['porteur'] ?? 'REJCC',
-            'objectif' => $p['funding_goal'],
-            'leve' => (int) $p['funding_raised'],
         ]);
 
         return view('livewire.admin.projets', [

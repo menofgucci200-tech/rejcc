@@ -25,4 +25,18 @@ class Formation extends Model
     {
         return $this->hasMany(FormationEnrollment::class);
     }
+
+    public function modules(): HasMany
+    {
+        return $this->hasMany(FormationModule::class)->orderBy('ordre')->orderBy('id');
+    }
+
+    /** Recalcule modules_count à partir des modules réels (si la formation en a). */
+    public function syncModulesCount(): void
+    {
+        $count = $this->modules()->count();
+        if ($count > 0) {
+            $this->update(['modules_count' => $count]);
+        }
+    }
 }

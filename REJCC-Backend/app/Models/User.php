@@ -42,6 +42,7 @@ class User extends Authenticatable
         'permissions',
         'reference',
         'is_active',
+        'subscription_expires_at',
     ];
 
     public function tokens(): HasMany
@@ -53,6 +54,19 @@ class User extends Authenticatable
     public function groups(): BelongsToMany
     {
         return $this->belongsToMany(Group::class)->withTimestamps();
+    }
+
+    /** Historique des paiements (adhésion + abonnements annuels). */
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    /** Abonnement annuel (10 000 F) à jour : donne accès aux fonctionnalités premium. */
+    public function hasActiveSubscription(): bool
+    {
+        return $this->role === 'admin'
+            || ($this->subscription_expires_at !== null && $this->subscription_expires_at->isFuture());
     }
 
     /**
@@ -79,6 +93,7 @@ class User extends Authenticatable
             'preferences' => 'array',
             'permissions' => 'array',
             'is_active' => 'boolean',
+            'subscription_expires_at' => 'datetime',
         ];
     }
 

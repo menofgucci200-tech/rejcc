@@ -26,6 +26,14 @@ class MemberManagementTest extends TestCase
         return $plain;
     }
 
+    private function tokenFor(User $u): string
+    {
+        $plain = Str::random(60);
+        ApiToken::create(['user_id' => $u->id, 'token' => hash('sha256', $plain), 'name' => 'test']);
+
+        return $plain;
+    }
+
     public function test_le_dossier_membre_regroupe_profil_candidature_et_formations(): void
     {
         $membre = User::factory()->create([
@@ -76,7 +84,7 @@ class MemberManagementTest extends TestCase
 
     public function test_la_carte_membre_publique_repond_au_code_a_4_chiffres(): void
     {
-        $membre = User::factory()->create(['prenom' => 'Marie', 'nom' => 'Aka', 'ville' => 'Abidjan']);
+        $membre = User::factory()->abonne()->create(['prenom' => 'Marie', 'nom' => 'Aka', 'ville' => 'Abidjan']);
         $code = str_pad((string) $membre->id, 4, '0', STR_PAD_LEFT);
 
         $card = $this->getJson("/api/member-card/{$code}")->assertOk()->json('card');
@@ -100,7 +108,7 @@ class MemberManagementTest extends TestCase
 
     public function test_le_contact_est_masque_si_le_profil_n_est_pas_visible(): void
     {
-        $membre = User::factory()->create([
+        $membre = User::factory()->abonne()->create([
             'bio' => 'Entrepreneur dans l\'agro-transformation.',
             'preferences' => ['visibilite_profil' => false],
         ]);
@@ -115,7 +123,7 @@ class MemberManagementTest extends TestCase
 
     public function test_le_libelle_de_role_varie_selon_le_statut(): void
     {
-        $mentor = User::factory()->create(['role' => 'mentor']);
+        $mentor = User::factory()->abonne()->create(['role' => 'mentor']);
         $admin = User::factory()->create(['role' => 'admin']);
 
         $this->assertSame('Mentor', $this->getJson('/api/member-card/'.$mentor->id)->json('card.role_label'));
@@ -126,5 +134,44 @@ class MemberManagementTest extends TestCase
     {
         $this->getJson('/api/member-card/9999')->assertStatus(404);
         $this->getJson('/api/member-card/abcd')->assertStatus(404);
+    }
+
+    public function test_la_carte_membre_est_verrouillee_sans_abonnement_actif(): void
+    {
+        $membre = User::factory()->create(['prenom' => 'Awa', 'nom' => 'Traoré']);
+        $code = str_pad((string) $membre->id, 4, '0', STR_PAD_LEFT);
+
+        $card = $this->getJson("/api/member-card/{$code}")->assertOk()->json('card');
+
+        $this->assertTrue($card['locked']);
+        $this->assertSame('Awa', $card['prenom']);
+        $this->assertArrayNotHasKey('email', $card);
+        $this->assertArrayNotHasKey('role', $card);
+    }
+
+    public function test_la_fiche_detaillee_d_un_membre_est_reservee_aux_abonnes(): void
+    {
+        $viewer = User::factory()->create(); // pas d'abonnement
+        $cible = User::factory()->create();
+
+        $this->withToken($this->tokenFor($viewer))->getJson("/api/members/{$cible->id}")
+            ->assertStatus(402);
+    }
+
+    public function test_la_fiche_detaillee_d_un_membre_expose_le_profil_complet(): void
+    {
+        $viewer = User::factory()->abonne()->create();
+        $cible = User::factory()->create([
+            'prenom' => 'Awa', 'nom' => 'Koffi', 'bio' => 'Plombier depuis 8 ans.',
+            'ville' => 'Abidjan', 'secteur' => 'BTP', 'organisation' => 'Awa Plomberie',
+        ]);
+
+        $fiche = $this->withToken($this->tokenFor($viewer))->getJson("/api/members/{$cible->id}")
+            ->assertOk()->json('member');
+
+        $this->assertSame('Awa', $fiche['prenom']);
+        $this->assertSame('Plombier depuis 8 ans.', $fiche['bio']);
+        $this->assertSame('Awa Plomberie', $fiche['organisation']);
+        $this->assertSame($cible->telephone, $fiche['telephone']);
     }
 }

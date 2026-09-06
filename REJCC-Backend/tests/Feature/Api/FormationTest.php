@@ -161,4 +161,69 @@ class FormationTest extends TestCase
             'category' => 'Test',
         ])->assertStatus(403);
     }
+
+    // ------------------------------------------------------------ Modules réels
+
+    public function test_un_admin_cree_des_modules_et_le_compteur_se_synchronise(): void
+    {
+        $formation = $this->formation(['modules_count' => 1]);
+        $token = $this->tokenFor(User::factory()->create(['role' => 'admin']));
+
+        $this->withToken($token)->postJson("/api/admin/formations/{$formation->id}/modules", [
+            'titre' => 'Introduction', 'description' => 'Les bases.', 'ordre' => 1,
+        ])->assertOk();
+        $this->withToken($token)->postJson("/api/admin/formations/{$formation->id}/modules", [
+            'titre' => 'Aller plus loin', 'video_url' => 'https://youtube.com/x', 'ordre' => 2,
+        ])->assertOk();
+
+        $this->assertSame(2, $formation->fresh()->modules_count);
+        $this->assertSame(2, $formation->modules()->count());
+    }
+
+    public function test_le_contenu_des_modules_exige_d_etre_inscrit(): void
+    {
+        $formation = $this->formation();
+        $formation->modules()->create(['titre' => 'Module 1', 'ordre' => 1]);
+        $token = $this->tokenFor(User::factory()->create());
+
+        $this->withToken($token)->getJson("/api/formations/{$formation->id}/modules")->assertStatus(404);
+    }
+
+    public function test_les_modules_se_debloquent_dans_l_ordre(): void
+    {
+        $formation = $this->formation();
+        $m1 = $formation->modules()->create(['titre' => 'Module 1', 'ordre' => 1]);
+        $m2 = $formation->modules()->create(['titre' => 'Module 2', 'ordre' => 2]);
+        $user = User::factory()->create();
+        FormationEnrollment::create(['formation_id' => $formation->id, 'user_id' => $user->id]);
+        $token = $this->tokenFor($user);
+
+        $liste = $this->withToken($token)->getJson("/api/formations/{$formation->id}/modules")
+            ->assertOk()->json('modules');
+
+        $this->assertFalse($liste[0]['verrouille']);
+        $this->assertTrue($liste[1]['verrouille']);
+
+        // Impossible de valider le module 2 avant le module 1.
+        $this->withToken($token)->postJson("/api/formations/{$formation->id}/modules/{$m2->id}/complete")
+            ->assertStatus(422);
+
+        // Le module 1 se valide, puis le module 2 devient accessible.
+        $this->withToken($token)->postJson("/api/formations/{$formation->id}/modules/{$m1->id}/complete")
+            ->assertOk()->assertJsonPath('progress', 50)->assertJsonPath('completed', false);
+
+        $this->withToken($token)->postJson("/api/formations/{$formation->id}/modules/{$m2->id}/complete")
+            ->assertOk()->assertJsonPath('progress', 100)->assertJsonPath('completed', true);
+    }
+
+    public function test_l_ancien_compteur_est_desactive_des_qu_il_y_a_des_modules_reels(): void
+    {
+        $formation = $this->formation();
+        $formation->modules()->create(['titre' => 'Module 1', 'ordre' => 1]);
+        $user = User::factory()->create();
+        FormationEnrollment::create(['formation_id' => $formation->id, 'user_id' => $user->id]);
+
+        $this->withToken($this->tokenFor($user))->postJson("/api/formations/{$formation->id}/complete-module")
+            ->assertStatus(422);
+    }
 }

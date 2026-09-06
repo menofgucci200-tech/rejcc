@@ -30,16 +30,11 @@ class Dashboard extends Component
             'h' => max(4, round($d['v'] / $max * 130)),
         ], $croissance);
 
-        $fonds = (int) ($stats['fonds_incubateur'] ?? 0);
-        $fondsLabel = $fonds >= 1_000_000
-            ? number_format($fonds / 1_000_000, 1, ',', ' ').' M'
-            : number_format($fonds, 0, ',', ' ');
-
         $cards = [
             ['icon' => 'users', 'label' => 'Membres', 'value' => $stats['membres'] ?? 0, 'sub' => ($stats['mentors'] ?? 0).' mentor(s)', 'subColor' => '#4F6FBF'],
             ['icon' => 'graduation-cap', 'label' => 'Formations publiées', 'value' => $stats['formations'] ?? 0, 'sub' => 'au catalogue', 'subColor' => '#4F6FBF'],
             ['icon' => 'award', 'label' => 'Certificats délivrés', 'value' => $stats['certificats'] ?? 0, 'sub' => 'formations certifiantes', 'subColor' => '#22A85A'],
-            ['icon' => 'gem', 'label' => 'Fonds levés (incubateur)', 'value' => $fondsLabel, 'sub' => 'FCFA cumulés', 'subColor' => '#5B677A'],
+            ['icon' => 'nav-projects', 'label' => 'Projets proposés', 'value' => $stats['projets'] ?? 0, 'sub' => 'toutes formes confondues', 'subColor' => '#5B677A'],
         ];
 
         $enAttente = array_values(array_filter([

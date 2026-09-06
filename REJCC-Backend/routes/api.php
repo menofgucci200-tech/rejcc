@@ -47,6 +47,10 @@ Route::get('/event-signup/{slug}', [\App\Http\Controllers\Api\EventSignupControl
 Route::post('/event-signup/{slug}', [\App\Http\Controllers\Api\EventSignupController::class, 'register'])
     ->middleware('throttle:20,1');
 
+// Webhook CinetPay (notification serveur à serveur du paiement d'abonnement)
+Route::post('/subscription/notify', [\App\Http\Controllers\Api\SubscriptionController::class, 'notify'])
+    ->middleware('throttle:60,1');
+
 // Formulaires publics (throttle anti-spam, par IP)
 Route::middleware('throttle:10,1')->group(function () {
     Route::post('/adhesion', [AdhesionController::class, 'store']);
@@ -72,12 +76,21 @@ Route::middleware('auth.token')->group(function () {
     Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
     Route::put('/auth/password', [AuthController::class, 'updatePassword']);
     Route::put('/auth/preferences', [AuthController::class, 'updatePreferences']);
-    Route::get('/members', [AuthController::class, 'directory']);
 
-    // Messagerie
-    Route::get('/messages', [MessageController::class, 'conversations']);
-    Route::get('/messages/{userId}', [MessageController::class, 'thread']);
-    Route::post('/messages', [MessageController::class, 'send']);
+    // Abonnement annuel (10 000 F) — statut consultable par tout membre connecté
+    Route::get('/subscription/status', [\App\Http\Controllers\Api\SubscriptionController::class, 'status']);
+    Route::post('/subscription/pay', [\App\Http\Controllers\Api\SubscriptionController::class, 'initiate']);
+
+    // Annuaire & messagerie — réservés aux abonnés à jour
+    Route::middleware('sub.active')->group(function () {
+        Route::get('/members', [AuthController::class, 'directory']);
+        Route::get('/members/{id}', [AuthController::class, 'show']);
+
+        // Messagerie
+        Route::get('/messages', [MessageController::class, 'conversations']);
+        Route::get('/messages/{userId}', [MessageController::class, 'thread']);
+        Route::post('/messages', [MessageController::class, 'send']);
+    });
 
     // Notifications
     Route::get('/notifications', [NotificationController::class, 'index']);
@@ -96,36 +109,47 @@ Route::middleware('auth.token')->group(function () {
     Route::get('/my-formations', [FormationController::class, 'mine']);
     Route::post('/formations/{id}/enroll', [FormationController::class, 'enroll']);
     Route::post('/formations/{id}/complete-module', [FormationController::class, 'completeModule']);
+    Route::get('/formations/{id}/modules', [FormationController::class, 'modules']);
+    Route::post('/formations/{id}/modules/{moduleId}/complete', [FormationController::class, 'completeFormationModule']);
+
+    // Parcours guidés (séquences de formations à déblocage progressif)
+    Route::get('/paths', [\App\Http\Controllers\Api\PathController::class, 'index']);
+    Route::get('/paths/{id}', [\App\Http\Controllers\Api\PathController::class, 'show']);
 
     // Fil d'activité du tableau de bord
     Route::get('/my-activity', [ActivityFeedController::class, 'mine']);
 
-    // Ressources
-    Route::get('/resources', [\App\Http\Controllers\Api\ResourceController::class, 'index']);
-    Route::post('/resources/{id}/download', [\App\Http\Controllers\Api\ResourceController::class, 'download']);
-
     // Certificats (émis automatiquement pour les formations certifiantes terminées)
     Route::get('/my-certificates', [\App\Http\Controllers\Api\CertificateController::class, 'mine']);
 
-    // Projets & incubateur
-    Route::get('/projects', [\App\Http\Controllers\Api\ProjectController::class, 'index']);
-    Route::post('/projects', [\App\Http\Controllers\Api\ProjectController::class, 'store']);
-    Route::get('/incubator', [\App\Http\Controllers\Api\ProjectController::class, 'incubator']);
+    // Projets — réservés aux abonnés à jour
+    Route::middleware('sub.active')->group(function () {
+        Route::get('/projects', [\App\Http\Controllers\Api\ProjectController::class, 'index']);
+        Route::post('/projects', [\App\Http\Controllers\Api\ProjectController::class, 'store']);
+    });
 
     // Opportunités & annonces
     Route::get('/opportunities', [OpportunityController::class, 'index']);
     Route::post('/opportunities', [OpportunityController::class, 'store']);
 
-    // Groupes sectoriels (adhésion libre, multiple)
+    // Groupes sectoriels (adhésion libre, multiple, gratuite)
     Route::get('/groups', [\App\Http\Controllers\Api\GroupController::class, 'index']);
     Route::post('/groups/{id}/join', [\App\Http\Controllers\Api\GroupController::class, 'join']);
     Route::post('/groups/{id}/leave', [\App\Http\Controllers\Api\GroupController::class, 'leave']);
 
-    // Marketplace (annonces validées par l'administration avant publication)
+    // Trombinoscope d'un groupe (fiche + coordonnées des membres) — réservé aux abonnés à jour
+    Route::middleware('sub.active')->group(function () {
+        Route::get('/groups/{id}/members', [\App\Http\Controllers\Api\GroupController::class, 'members']);
+    });
+
+    // Marketplace : consultation libre pour tout membre connecté, publication réservée aux abonnés à jour
     Route::get('/marketplace', [\App\Http\Controllers\Api\MarketplaceController::class, 'index']);
-    Route::get('/marketplace/mine', [\App\Http\Controllers\Api\MarketplaceController::class, 'mine']);
-    Route::post('/marketplace', [\App\Http\Controllers\Api\MarketplaceController::class, 'store']);
-    Route::delete('/marketplace/{id}', [\App\Http\Controllers\Api\MarketplaceController::class, 'destroy']);
+
+    Route::middleware('sub.active')->group(function () {
+        Route::get('/marketplace/mine', [\App\Http\Controllers\Api\MarketplaceController::class, 'mine']);
+        Route::post('/marketplace', [\App\Http\Controllers\Api\MarketplaceController::class, 'store']);
+        Route::delete('/marketplace/{id}', [\App\Http\Controllers\Api\MarketplaceController::class, 'destroy']);
+    });
 });
 
 // Administration. Chaque section porte son slug de permission : un admin dont
@@ -166,6 +190,19 @@ Route::middleware(['auth.token', 'audit.log'])->prefix('admin')->group(function 
         Route::post('/formations', [FormationController::class, 'store']);
         Route::put('/formations/{id}', [FormationController::class, 'update']);
         Route::delete('/formations/{id}', [FormationController::class, 'destroy']);
+
+        Route::get('/formations/{id}/modules', [FormationController::class, 'adminModules']);
+        Route::post('/formations/{id}/modules', [FormationController::class, 'storeModule']);
+        Route::put('/formations/{id}/modules/{moduleId}', [FormationController::class, 'updateModule']);
+        Route::delete('/formations/{id}/modules/{moduleId}', [FormationController::class, 'destroyModule']);
+
+        // Parcours guidés — gérés dans la même section admin que les formations
+        Route::get('/paths', [\App\Http\Controllers\Api\PathController::class, 'adminIndex']);
+        Route::get('/paths/{id}', [\App\Http\Controllers\Api\PathController::class, 'adminShow']);
+        Route::post('/paths', [\App\Http\Controllers\Api\PathController::class, 'store']);
+        Route::put('/paths/{id}', [\App\Http\Controllers\Api\PathController::class, 'update']);
+        Route::put('/paths/{id}/formations', [\App\Http\Controllers\Api\PathController::class, 'updateFormations']);
+        Route::delete('/paths/{id}', [\App\Http\Controllers\Api\PathController::class, 'destroy']);
     });
 
     Route::middleware('auth.admin:evenements')->group(function () {
@@ -194,13 +231,6 @@ Route::middleware(['auth.token', 'audit.log'])->prefix('admin')->group(function 
         Route::get('/opportunities', [OpportunityController::class, 'index']);
         Route::put('/opportunities/{id}', [OpportunityController::class, 'adminUpdate']);
         Route::delete('/opportunities/{id}', [OpportunityController::class, 'adminDestroy']);
-    });
-
-    Route::middleware('auth.admin:ressources')->group(function () {
-        Route::get('/resources', [\App\Http\Controllers\Api\ResourceController::class, 'adminIndex']);
-        Route::post('/resources', [\App\Http\Controllers\Api\ResourceController::class, 'store']);
-        Route::put('/resources/{id}', [\App\Http\Controllers\Api\ResourceController::class, 'update']);
-        Route::delete('/resources/{id}', [\App\Http\Controllers\Api\ResourceController::class, 'destroy']);
     });
 
     Route::get('/certificates', [\App\Http\Controllers\Api\CertificateController::class, 'adminIndex'])
@@ -232,6 +262,7 @@ Route::middleware(['auth.token', 'audit.log'])->prefix('admin')->group(function 
         Route::post('/site-content/{type}', [\App\Http\Controllers\Api\SiteContentController::class, 'store']);
         Route::put('/site-content/{type}/{id}', [\App\Http\Controllers\Api\SiteContentController::class, 'update']);
         Route::delete('/site-content/{type}/{id}', [\App\Http\Controllers\Api\SiteContentController::class, 'destroy']);
+        Route::get('/site-settings', [\App\Http\Controllers\Api\SiteSettingsController::class, 'adminIndex']);
         Route::put('/site-settings', [\App\Http\Controllers\Api\SiteSettingsController::class, 'update']);
         Route::put('/page-sections/{page}/{section}', [\App\Http\Controllers\Api\SiteSettingsController::class, 'updateSection']);
     });

@@ -1,22 +1,22 @@
 @props(['withClose' => false])
 
 @php
+    $abonnementActif = \App\Support\Api::user()->subscription_active ?? false;
+
     $navItems = [
         ['label' => 'Accueil', 'icon' => 'nav-home', 'route' => 'espace-membre.dashboard'],
-        ['label' => 'Ma carte membre', 'icon' => 'qr-code', 'route' => 'espace-membre.carte'],
+        ['label' => 'Ma carte membre', 'icon' => 'qr-code', 'route' => 'espace-membre.carte', 'locked' => true],
         ['label' => 'Mes formations', 'icon' => 'graduation-cap', 'route' => 'espace-membre.formations'],
         ['label' => 'Catalogue', 'icon' => 'nav-compass', 'route' => 'espace-membre.catalogue'],
         ['label' => 'Mes parcours', 'icon' => 'nav-route', 'route' => 'espace-membre.parcours'],
         ['label' => 'Mentorat', 'icon' => 'nav-mentor', 'route' => 'espace-membre.mentorat'],
-        ['label' => 'Annuaire', 'icon' => 'users', 'route' => 'espace-membre.directory'],
+        ['label' => 'Annuaire', 'icon' => 'users', 'route' => 'espace-membre.directory', 'locked' => true],
         ['label' => 'Groupes sectoriels', 'icon' => 'network', 'route' => 'espace-membre.groupes'],
-        ['label' => 'Messagerie', 'icon' => 'message-circle', 'route' => 'espace-membre.messaging'],
+        ['label' => 'Messagerie', 'icon' => 'message-circle', 'route' => 'espace-membre.messaging', 'locked' => true],
         ['label' => 'Marketplace', 'icon' => 'store', 'route' => 'espace-membre.marketplace'],
         ['label' => 'Événements', 'icon' => 'calendar-days', 'route' => 'espace-membre.evenements'],
-        ['label' => 'Projets', 'icon' => 'nav-projects', 'route' => 'espace-membre.projets'],
-        ['label' => 'Incubateur', 'icon' => 'nav-incubator', 'route' => 'espace-membre.incubateur'],
+        ['label' => 'Projets', 'icon' => 'nav-projects', 'route' => 'espace-membre.projets', 'locked' => true],
         ['label' => 'Emploi & Stage', 'icon' => 'nav-briefcase', 'route' => 'espace-membre.emplois'],
-        ['label' => 'Ressources', 'icon' => 'nav-library', 'route' => 'espace-membre.ressources'],
         ['label' => 'Documents', 'icon' => 'folder-open', 'route' => 'espace-membre.documents'],
         ['label' => 'Certificats', 'icon' => 'award', 'route' => 'espace-membre.certificats'],
     ];
@@ -63,7 +63,7 @@
             x-bind:style="`top:${top}px; height:${height}px; opacity:${visible ? 1 : 0}`"
         ></div>
         @foreach ($navItems as $item)
-            @php $active = $isActive($item); @endphp
+            @php $active = $isActive($item); $verrouille = ($item['locked'] ?? false) && ! $abonnementActif; @endphp
             <a
                 href="{{ $itemHref($item) }}"
                 wire:navigate
@@ -71,9 +71,22 @@
                 class="group relative flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-sm font-medium transition-all duration-200 ease-out active:scale-[0.98] {{ $active ? 'bg-white/[.07] text-white shadow-[inset_2px_0_0_var(--color-accent)]' : 'text-[#C4D0EC] hover:text-white' }}"
             >
                 <x-ui.icon :name="$item['icon']" class="size-[18px] shrink-0 transition-transform duration-200 group-hover:scale-110" />
-                {{ $item['label'] }}
+                <span class="flex-1">{{ $item['label'] }}</span>
+                @if ($verrouille)
+                    <x-ui.icon name="shield" class="size-[13px] shrink-0 text-[#F5A623]" />
+                @endif
             </a>
         @endforeach
+
+        <a
+            href="{{ route('espace-membre.abonnement') }}"
+            wire:navigate
+            @mouseenter="place($el)"
+            class="group relative mt-1 flex items-center gap-3 rounded-[10px] border border-white/10 px-3 py-2.5 text-sm font-medium transition-all duration-200 ease-out active:scale-[0.98] {{ request()->routeIs('espace-membre.abonnement') ? 'bg-white/[.07] text-white shadow-[inset_2px_0_0_var(--color-accent)]' : ($abonnementActif ? 'text-[#C4D0EC] hover:text-white' : 'text-[#F5A623] hover:text-white') }}"
+        >
+            <x-ui.icon :name="$abonnementActif ? 'shield-check' : 'shield'" class="size-[18px] shrink-0 transition-transform duration-200 group-hover:scale-110" />
+            Mon abonnement
+        </a>
     </nav>
 
     <div class="border-t border-white/10 p-3">

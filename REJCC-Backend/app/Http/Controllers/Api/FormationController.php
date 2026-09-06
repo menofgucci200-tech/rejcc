@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Formation;
 use App\Models\FormationEnrollment;
+use App\Models\FormationModule;
+use App\Models\FormationModuleCompletion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -18,6 +20,7 @@ class FormationController extends Controller
             ->keyBy('formation_id');
 
         $formations = Formation::where('is_published', true)
+            ->withCount(['modules as modules_reelles_count'])
             ->orderBy('category')->orderBy('title')
             ->get()
             ->map(function (Formation $f) use ($enrollments) {
@@ -28,6 +31,7 @@ class FormationController extends Controller
                         'id', 'title', 'category', 'description', 'duration',
                         'level', 'is_free', 'is_certifying', 'modules_count', 'media_url', 'media_name',
                     ]),
+                    'has_modules' => $f->modules_reelles_count > 0,
                     'enrolled' => (bool) $e,
                     'progress' => $e?->progress,
                 ];
@@ -39,20 +43,28 @@ class FormationController extends Controller
     /** Les formations auxquelles le membre courant est inscrit. */
     public function mine(Request $request)
     {
-        $formations = FormationEnrollment::with('formation')
+        $formations = FormationEnrollment::with(['formation', 'moduleCompletions'])
             ->where('user_id', $request->user()->id)
             ->latest()
             ->get()
             ->filter(fn (FormationEnrollment $e) => $e->formation !== null)
             ->values()
-            ->map(fn (FormationEnrollment $e) => [
-                ...$e->formation->only([
-                    'id', 'title', 'category', 'duration', 'level', 'modules_count', 'is_certifying',
-                ]),
-                'progress' => $e->progress,
-                'completed' => $e->completed_at !== null,
-                'completed_at' => $e->completed_at?->toDateString(),
-            ]);
+            ->map(function (FormationEnrollment $e) {
+                $modules = $e->formation->modules()->get(['id', 'titre', 'ordre']);
+                $completedIds = $e->moduleCompletions->pluck('formation_module_id')->all();
+                $prochain = $modules->first(fn ($m) => ! in_array($m->id, $completedIds, true));
+
+                return [
+                    ...$e->formation->only([
+                        'id', 'title', 'category', 'duration', 'level', 'modules_count', 'is_certifying',
+                    ]),
+                    'has_modules' => $modules->isNotEmpty(),
+                    'progress' => $e->progress,
+                    'completed' => $e->completed_at !== null,
+                    'completed_at' => $e->completed_at?->toDateString(),
+                    'module_courant' => $prochain?->titre,
+                ];
+            });
 
         return response()->json(['ok' => true, 'formations' => $formations]);
     }
@@ -73,7 +85,99 @@ class FormationController extends Controller
         return response()->json(['ok' => true]);
     }
 
-    /** Valide le module en cours : avance la progression d'un module. */
+    /**
+     * Sommaire des modules d'une formation pour le membre inscrit : contenu,
+     * état de complétion et verrouillage (un module ne se débloque qu'une
+     * fois le précédent validé).
+     */
+    public function modules(Request $request, int $id)
+    {
+        $enrollment = FormationEnrollment::with('formation')
+            ->where('formation_id', $id)
+            ->where('user_id', $request->user()->id)
+            ->first();
+
+        if (! $enrollment || ! $enrollment->formation) {
+            return response()->json(['ok' => false, 'message' => "Vous n'êtes pas inscrit à cette formation."], 404);
+        }
+
+        $modules = $enrollment->formation->modules;
+        $completedIds = $enrollment->moduleCompletions->pluck('formation_module_id')->all();
+
+        $debloque = true;
+        $liste = $modules->map(function (FormationModule $m) use ($completedIds, &$debloque) {
+            $fait = in_array($m->id, $completedIds, true);
+            $item = [
+                'id' => $m->id,
+                'titre' => $m->titre,
+                'description' => $m->description,
+                'video_url' => $m->video_url,
+                'document_url' => $m->document_url,
+                'duree' => $m->duree,
+                'termine' => $fait,
+                'verrouille' => ! $debloque,
+            ];
+            if (! $fait) {
+                $debloque = false;
+            }
+
+            return $item;
+        });
+
+        return response()->json([
+            'ok' => true,
+            'formation' => $enrollment->formation->only(['id', 'title', 'category', 'description', 'is_certifying']),
+            'modules' => $liste,
+            'progress' => $enrollment->progress,
+            'completed' => $enrollment->completed_at !== null,
+        ]);
+    }
+
+    /** Valide un module précis (formations avec contenu réel) — doit être le prochain débloqué. */
+    public function completeFormationModule(Request $request, int $id, int $moduleId)
+    {
+        $enrollment = FormationEnrollment::with('formation')
+            ->where('formation_id', $id)
+            ->where('user_id', $request->user()->id)
+            ->first();
+
+        if (! $enrollment || ! $enrollment->formation) {
+            return response()->json(['ok' => false, 'message' => 'Inscription introuvable.'], 404);
+        }
+
+        $modules = $enrollment->formation->modules;
+        $module = $modules->firstWhere('id', $moduleId);
+        if (! $module) {
+            return response()->json(['ok' => false, 'message' => 'Module introuvable.'], 404);
+        }
+
+        $completedIds = $enrollment->moduleCompletions->pluck('formation_module_id')->all();
+        $prochain = $modules->first(fn ($m) => ! in_array($m->id, $completedIds, true));
+
+        if ($prochain && $prochain->id !== $moduleId) {
+            return response()->json(['ok' => false, 'message' => 'Validez les modules dans l\'ordre.'], 422);
+        }
+
+        FormationModuleCompletion::firstOrCreate([
+            'formation_enrollment_id' => $enrollment->id,
+            'formation_module_id' => $moduleId,
+        ]);
+
+        $total = $modules->count();
+        $fait = count($completedIds) + ($prochain ? 1 : 0);
+        $enrollment->update([
+            'progress' => $total > 0 ? (int) round($fait * 100 / $total) : $enrollment->progress,
+            'completed_at' => $fait >= $total ? now() : null,
+        ]);
+
+        return response()->json([
+            'ok' => true,
+            'progress' => $enrollment->progress,
+            'completed' => $enrollment->completed_at !== null,
+        ]);
+    }
+
+    /** Valide le module en cours (formations « legacy » sans contenu réel — simple compteur). */
     public function completeModule(Request $request, int $id)
     {
         $enrollment = FormationEnrollment::with('formation')
@@ -83,6 +187,10 @@ class FormationController extends Controller
 
         if (! $enrollment || ! $enrollment->formation) {
             return response()->json(['ok' => false, 'message' => 'Inscription introuvable.'], 404);
+        }
+
+        if ($enrollment->formation->modules()->exists()) {
+            return response()->json(['ok' => false, 'message' => 'Cette formation utilise désormais des modules détaillés.'], 422);
         }
 
         if ($enrollment->completed_at === null) {
@@ -160,5 +268,71 @@ class FormationController extends Controller
         $formation->fill($validator->validated())->save();
 
         return response()->json(['ok' => true, 'formation' => $formation]);
+    }
+
+    /** GET /admin/formations/{id}/modules — liste complète (admin). */
+    public function adminModules(int $id)
+    {
+        $formation = Formation::find($id);
+        if (! $formation) {
+            return response()->json(['ok' => false, 'message' => 'Formation introuvable.'], 404);
+        }
+
+        return response()->json(['ok' => true, 'modules' => $formation->modules]);
+    }
+
+    public function storeModule(Request $request, int $id)
+    {
+        $formation = Formation::find($id);
+        if (! $formation) {
+            return response()->json(['ok' => false, 'message' => 'Formation introuvable.'], 404);
+        }
+
+        return $this->persistModule($request, new FormationModule(['formation_id' => $formation->id]), $formation);
+    }
+
+    public function updateModule(Request $request, int $id, int $moduleId)
+    {
+        $formation = Formation::find($id);
+        $module = FormationModule::where('formation_id', $id)->find($moduleId);
+        if (! $formation || ! $module) {
+            return response()->json(['ok' => false, 'message' => 'Module introuvable.'], 404);
+        }
+
+        return $this->persistModule($request, $module, $formation);
+    }
+
+    public function destroyModule(int $id, int $moduleId)
+    {
+        $formation = Formation::find($id);
+        if (! $formation) {
+            return response()->json(['ok' => false, 'message' => 'Formation introuvable.'], 404);
+        }
+
+        FormationModule::where('formation_id', $id)->where('id', $moduleId)->delete();
+        $formation->syncModulesCount();
+
+        return response()->json(['ok' => true]);
+    }
+
+    private function persistModule(Request $request, FormationModule $module, Formation $formation)
+    {
+        $validator = Validator::make($request->all(), [
+            'titre' => 'required|string|min:2|max:200',
+            'description' => 'nullable|string|max:2000',
+            'video_url' => 'nullable|url|max:500',
+            'document_url' => 'nullable|url|max:500',
+            'duree' => 'nullable|string|max:50',
+            'ordre' => 'nullable|integer|min:0|max:1000',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['ok' => false, 'message' => $validator->errors()->first()], 422);
+        }
+
+        $module->fill($validator->validated())->save();
+        $formation->syncModulesCount();
+
+        return response()->json(['ok' => true, 'module' => $module]);
     }
 }

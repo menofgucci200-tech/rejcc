@@ -22,7 +22,7 @@ class PaginationTest extends TestCase
 
     public function test_l_annuaire_membre_est_pagine_et_exclut_soi_meme(): void
     {
-        $me = User::factory()->create(['role' => 'member']);
+        $me = User::factory()->abonne()->create(['role' => 'member']);
         User::factory()->count(30)->create(['role' => 'member']);
         $token = $this->tokenFor($me);
 
@@ -42,7 +42,7 @@ class PaginationTest extends TestCase
 
     public function test_l_annuaire_filtre_par_recherche_et_par_profil(): void
     {
-        $me = User::factory()->create(['role' => 'member']);
+        $me = User::factory()->abonne()->create(['role' => 'member']);
         User::factory()->create(['role' => 'member', 'prenom' => 'Zacharie', 'nom' => 'Konan', 'secteur' => 'Agriculture', 'profil' => 'entrepreneur']);
         User::factory()->count(5)->create(['role' => 'member', 'profil' => 'etudiant']);
         $token = $this->tokenFor($me);
@@ -53,6 +53,16 @@ class PaginationTest extends TestCase
 
         $parProfil = $this->withToken($token)->getJson('/api/members?profil=etudiant')->json();
         $this->assertSame(5, $parProfil['meta']['total']);
+    }
+
+    public function test_l_annuaire_est_refuse_sans_abonnement_actif(): void
+    {
+        $me = User::factory()->create(['role' => 'member']); // pas d'abonnement
+        $token = $this->tokenFor($me);
+
+        $this->withToken($token)->getJson('/api/members')
+            ->assertStatus(402)
+            ->assertJsonPath('code', 'subscription_required');
     }
 
     public function test_liste_admin_membres_paginee_filtree_et_triee(): void

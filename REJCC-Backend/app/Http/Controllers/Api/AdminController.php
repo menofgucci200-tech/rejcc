@@ -50,7 +50,7 @@ class AdminController extends Controller
                 'certificats' => FormationEnrollment::whereNotNull('completed_at')
                     ->whereHas('formation', fn ($q) => $q->where('is_certifying', true))
                     ->count(),
-                'fonds_incubateur' => (int) \App\Models\Project::where('in_incubator', true)->sum('funding_raised'),
+                'projets' => \App\Models\Project::count(),
                 'croissance' => $croissance,
             ],
         ]);
@@ -121,6 +121,7 @@ class AdminController extends Controller
         $page = $query->paginate(30, [
             'id', 'prenom', 'nom', 'email', 'telephone',
             'ville', 'profil', 'secteur', 'role', 'permissions', 'is_active', 'created_at',
+            'subscription_expires_at',
         ]);
 
         // Domaine de formation : issu du formulaire d'adhésion (une seule requête
@@ -139,6 +140,8 @@ class AdminController extends Controller
                 'code' => $u->cardCode(),
                 'domaines_formation' => $domaines[$u->email] ?? null,
                 'created_at' => $u->created_at,
+                'abonnement_actif' => $u->hasActiveSubscription(),
+                'abonnement_expire_le' => $u->subscription_expires_at?->toDateString(),
             ];
         });
 
@@ -221,6 +224,8 @@ class AdminController extends Controller
                 'role_label' => $user->roleLabel(),
                 'date_naissance' => $user->date_naissance?->toDateString(),
                 'date_adhesion' => $user->created_at?->toDateString(),
+                'abonnement_actif' => $user->hasActiveSubscription(),
+                'abonnement_expire_le' => $user->subscription_expires_at?->toDateString(),
             ],
             'application' => $application,
             'formations' => $formations,

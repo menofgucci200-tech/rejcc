@@ -1,6 +1,9 @@
 <div>
     <x-member-light.topbar title="Annuaire des membres" />
 
+    @if ($locked ?? false)
+        <x-member-light.paywall description="L'annuaire des membres est réservé aux membres à jour de leur abonnement annuel (10 000 F)." />
+    @else
     <div class="mx-auto max-w-[1280px] px-8 py-8">
         <div class="mb-5 flex flex-wrap items-end justify-between gap-4">
             <div>
@@ -30,7 +33,7 @@
         @else
             <div class="grid gap-4" style="grid-template-columns: repeat(auto-fill, minmax(240px, 1fr))" wire:key="dir-page-{{ $meta['current_page'] ?? 1 }}">
                 @foreach ($members as $m)
-                    <article class="card-hover rounded-[16px] border border-brand/10 bg-white p-[18px] shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                    <article wire:click="voirProfil({{ $m->id }})" class="card-hover cursor-pointer rounded-[16px] border border-brand/10 bg-white p-[18px] shadow-[0_2px_8px_rgba(3,29,89,.05)]">
                         <div class="flex items-center gap-3">
                             <span class="flex size-11 shrink-0 items-center justify-center rounded-xl text-sm font-bold text-white" style="background: linear-gradient(135deg, #4F6FBF, #AC0100)">
                                 {{ mb_substr($m->prenom, 0, 1) }}{{ mb_substr($m->nom, 0, 1) }}
@@ -53,6 +56,7 @@
                         <a
                             href="{{ route('espace-membre.messaging', ['to' => $m->id]) }}"
                             wire:navigate
+                            onclick="event.stopPropagation()"
                             class="btn-tap mt-3.5 flex items-center justify-center gap-1.5 rounded-[9px] border border-azure/25 bg-azure/10 py-2 text-[12.5px] font-semibold text-azure hover:bg-azure/20"
                         >
                             <x-ui.icon name="message-circle" class="size-[13px]" /> Envoyer un message
@@ -64,4 +68,7 @@
             <x-ui.pager :meta="$meta" />
         @endif
     </div>
+
+    <x-member-light.profile-modal :member="$detail" />
+    @endif
 </div>

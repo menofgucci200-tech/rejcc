@@ -17,9 +17,22 @@ class Directory extends Component
 
     public int $page = 1;
 
+    public ?array $detail = null;
+
     public function updatedQuery(): void
     {
         $this->page = 1;
+    }
+
+    public function voirProfil(int $id): void
+    {
+        $result = Api::get("/members/{$id}", [], Api::token());
+        $this->detail = ($result['ok'] ?? false) ? $result['member'] : null;
+    }
+
+    public function fermerProfil(): void
+    {
+        $this->detail = null;
     }
 
     public function setFiltre(string $filtre): void
@@ -35,6 +48,10 @@ class Directory extends Component
 
     public function render()
     {
+        if (! (Api::user()->subscription_active ?? false)) {
+            return view('livewire.member.directory', ['locked' => true, 'members' => collect(), 'meta' => [], 'profiles' => MembershipContent::profiles()]);
+        }
+
         // Recherche, filtre et pagination côté serveur (l'annuaire peut
         // compter plusieurs milliers de membres).
         $params = ['page' => $this->page];

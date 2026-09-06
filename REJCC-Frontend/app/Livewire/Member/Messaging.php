@@ -19,6 +19,10 @@ class Messaging extends Component
 
     public function mount(): void
     {
+        if ($this->locked()) {
+            return;
+        }
+
         $to = request()->integer('to');
 
         if ($to) {
@@ -26,8 +30,17 @@ class Messaging extends Component
         }
     }
 
+    public function locked(): bool
+    {
+        return ! (Api::user()->subscription_active ?? false);
+    }
+
     public function getConversationsProperty()
     {
+        if ($this->locked()) {
+            return [];
+        }
+
         $result = Api::get('/messages', [], Api::token());
 
         return $result['conversations'] ?? [];

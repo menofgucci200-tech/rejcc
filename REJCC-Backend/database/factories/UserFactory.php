@@ -42,4 +42,12 @@ class UserFactory extends Factory
             'email_verified_at' => null,
         ]);
     }
+
+    /** Membre à jour de son abonnement annuel (accès aux fonctionnalités premium). */
+    public function abonne(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'subscription_expires_at' => now()->addYear(),
+        ]);
+    }
 }
