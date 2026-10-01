@@ -1,6 +1,7 @@
 import './bootstrap';
 import Lenis from 'lenis';
 import QRCode from 'qrcode';
+import { initHomeMotion } from './home-motion';
 
 // Génération de QR codes côté client (cartes membres de l'admin).
 window.QRCode = QRCode;
@@ -124,6 +125,7 @@ function boot() {
     initReveal();
     initCounters();
     dismissLoader();
+    initHomeMotion();
 }
 
 document.addEventListener('DOMContentLoaded', boot);

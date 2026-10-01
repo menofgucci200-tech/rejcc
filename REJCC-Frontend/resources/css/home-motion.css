@@ -1,0 +1,427 @@
+/* ============================================================
+   REJCC — Motion design de l'accueil (intro + hero)
+   Charte : bleu #031d59 dominant, rouge #ac0100 en accent, gris #f4f6f8.
+   Le logo n'est jamais déformé, pivoté, recoloré ni « effecté » : les
+   pièces officielles glissent jusqu'à leur place exacte.
+   Toutes les animations sont en CSS (pilotées par des classes posées par
+   resources/js/home-motion.js) et désactivées si l'utilisateur demande
+   moins d'animations.
+   ============================================================ */
+
+/* ---------- Intro (plein écran, une fois par session) ---------- */
+html.rj-intro-on,
+html.rj-intro-on body {
+  overflow: hidden;
+}
+
+.rj-intro {
+  --navy: #031d59;
+  --red: #ac0100;
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  display: none; /* affichée seulement si le script l'a décidé (sans JS : jamais) */
+  place-items: center;
+  overflow: hidden;
+  background: #f4f6f8;
+  color: var(--navy);
+  font-family: var(--font-sans);
+  /* Filet de sécurité CSS : jamais bloquant plus de 9 s. */
+  animation: rj-intro-out 0.01s linear 9s forwards;
+}
+html.rj-intro-on .rj-intro {
+  display: grid;
+}
+.rj-intro:not(.is-playing) > :not(.rj-intro__wipe) {
+  opacity: 0;
+}
+.rj-intro.is-playing {
+  animation: rj-intro-out 0.3s ease 5.85s forwards;
+}
+@keyframes rj-intro-out {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+/* Repères de construction (coins, mentions) */
+.rj-intro__corner {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border-color: color-mix(in srgb, var(--navy) 35%, transparent);
+  border-style: solid;
+  border-width: 0;
+}
+.rj-intro__corner--tl { top: 22px; left: 22px; border-top-width: 1px; border-left-width: 1px; }
+.rj-intro__corner--tr { top: 22px; right: 22px; border-top-width: 1px; border-right-width: 1px; }
+.rj-intro__corner--bl { bottom: 22px; left: 22px; border-bottom-width: 1px; border-left-width: 1px; }
+.rj-intro__corner--br { bottom: 22px; right: 22px; border-bottom-width: 1px; border-right-width: 1px; }
+
+.rj-intro__meta {
+  position: absolute;
+  margin: 0;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--navy) 60%, transparent);
+}
+.rj-intro__meta--tl { top: 30px; left: 60px; }
+.rj-intro__meta--bl { bottom: 30px; left: 60px; }
+
+.rj-intro.is-playing .rj-intro__corner,
+.rj-intro.is-playing .rj-intro__meta {
+  animation:
+    rj-fade-in 0.6s ease 0.1s both,
+    rj-fade-out 0.4s ease 4.9s forwards;
+}
+
+/* Acte 1 — positionnement */
+.rj-intro__words {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+.rj-intro__word {
+  grid-area: 1 / 1;
+  overflow: hidden;
+  padding: 0.05em 0.04em 0.02em;
+  font-family: var(--font-display);
+  font-size: clamp(3.2rem, 12vw, 11rem);
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.rj-intro__word > span {
+  display: block;
+  transform: translateY(112%);
+}
+.rj-intro__word b,
+.rj-intro__slogan b {
+  font-weight: inherit;
+  color: var(--red);
+}
+.rj-intro.is-playing .rj-intro__word > span {
+  animation: rj-word 0.68s linear calc(0.12s + var(--i) * 0.4s) both;
+}
+@keyframes rj-word {
+  /* « push » : le mot sortant et le mot entrant partagent la même courbe */
+  0% {
+    transform: translateY(112%);
+    animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+  }
+  41% {
+    transform: translateY(0);
+  }
+  59% {
+    transform: translateY(0);
+    animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+  }
+  100% {
+    transform: translateY(-112%);
+  }
+}
+
+/* Actes 2-3 — construction du logo */
+.rj-intro__stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.rj-intro__logo {
+  display: block;
+  height: min(64vh, 118vw);
+  width: auto;
+  overflow: visible;
+}
+.rj-intro .rj-guides {
+  stroke: #4f6fbf;
+  stroke-width: 1.3;
+  opacity: 0.5;
+  stroke-dasharray: 1 1;
+  stroke-dashoffset: 1;
+}
+.rj-intro .rj-navy,
+.rj-intro .rj-ink { fill: var(--navy); }
+.rj-intro .rj-red { fill: var(--red); }
+.rj-intro .rj-ink use {
+  stroke: var(--navy);
+  stroke-width: 3;
+}
+
+.rj-intro.is-playing .rj-guides {
+  animation:
+    rj-stroke 0.9s cubic-bezier(0.65, 0, 0.35, 1) 1.3s both,
+    rj-fade-out 0.4s ease 3.75s forwards;
+}
+.rj-intro.is-playing .rj-draw {
+  stroke-dasharray: 1 1;
+  animation:
+    rj-stroke 1s cubic-bezier(0.65, 0, 0.35, 1) calc(1.4s + var(--d)) both,
+    rj-fill 0.45s ease calc(2.1s + var(--d) * 0.5) both,
+    rj-stroke-out 0.3s ease 2.9s forwards;
+}
+.rj-intro.is-playing .rj-slide-x {
+  animation: rj-from-left 0.85s cubic-bezier(0.16, 1, 0.3, 1) calc(2.15s + var(--d)) both;
+}
+.rj-intro.is-playing .rj-rise {
+  animation: rj-from-below 1s cubic-bezier(0.16, 1, 0.3, 1) 2.3s both;
+}
+.rj-intro.is-playing .rj-letter {
+  animation: rj-letter 0.65s cubic-bezier(0.16, 1, 0.3, 1) calc(2.95s + var(--i) * 0.06s) both;
+}
+.rj-intro.is-playing .rj-line {
+  animation: rj-unveil 0.75s cubic-bezier(0.65, 0, 0.35, 1) calc(3.2s + var(--i) * 0.12s) both;
+}
+
+@keyframes rj-stroke {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes rj-fill {
+  from { fill-opacity: 0; }
+  to { fill-opacity: 1; }
+}
+@keyframes rj-stroke-out {
+  to { stroke-opacity: 0; }
+}
+@keyframes rj-from-left {
+  from { transform: translateX(-190px); }
+}
+@keyframes rj-from-below {
+  from { transform: translateY(330px); }
+}
+@keyframes rj-letter {
+  from { transform: translateY(112px); }
+}
+@keyframes rj-unveil {
+  from { clip-path: inset(-20% 100% -20% 0); }
+  to { clip-path: inset(-20% -2% -20% 0); }
+}
+@keyframes rj-fade-in {
+  from { opacity: 0; }
+}
+@keyframes rj-fade-out {
+  to { opacity: 0; }
+}
+
+/* Slogan */
+.rj-intro__slogan {
+  margin: clamp(0.8rem, 2.4vh, 1.6rem) 0 0;
+  font-family: var(--font-serif);
+  font-size: clamp(1.25rem, 1.3rem + 1.1vh, 2.3rem);
+  line-height: 1.15;
+  color: var(--navy);
+  white-space: nowrap;
+}
+.rj-intro__slogan > span {
+  display: inline-block;
+  overflow: hidden;
+  padding: 0 0.02em 0.1em;
+  vertical-align: top;
+}
+.rj-intro__slogan > span > span {
+  display: inline-block;
+}
+.rj-intro.is-playing .rj-intro__slogan > span > span {
+  animation: rj-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) calc(3.85s + var(--i) * 0.08s) both;
+}
+
+/* Passer, progression, rideau */
+.rj-intro__skip {
+  position: absolute;
+  right: 60px;
+  bottom: 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--navy) 70%, transparent);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+.rj-intro__skip:hover,
+.rj-intro__skip:focus-visible {
+  color: var(--red);
+}
+.rj-intro__skip svg {
+  width: 14px;
+  height: 14px;
+}
+.rj-intro.is-playing .rj-intro__skip {
+  animation:
+    rj-fade-in 0.5s ease 0.6s both,
+    rj-fade-out 0.3s ease 4.95s forwards;
+}
+
+.rj-intro__progress {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--red);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+.rj-intro.is-playing .rj-intro__progress {
+  animation: rj-progress 5.1s linear both;
+}
+@keyframes rj-progress {
+  to { transform: scaleX(1); }
+}
+
+.rj-intro__wipe {
+  position: absolute;
+  inset: 0;
+  background: var(--navy);
+  clip-path: circle(0 at var(--wx, 50%) var(--wy, 50%));
+  pointer-events: none;
+}
+.rj-intro.is-playing .rj-intro__wipe {
+  animation: rj-wipe 0.8s cubic-bezier(0.7, 0, 0.2, 1) 5.1s both;
+}
+@keyframes rj-wipe {
+  from { clip-path: circle(0 at var(--wx, 50%) var(--wy, 50%)); }
+  to { clip-path: circle(150vmax at var(--wx, 50%) var(--wy, 50%)); }
+}
+
+@media (max-width: 640px) {
+  .rj-intro__corner--tl { top: 14px; left: 14px; }
+  .rj-intro__corner--tr { top: 14px; right: 14px; }
+  .rj-intro__corner--bl { bottom: 14px; left: 14px; }
+  .rj-intro__corner--br { bottom: 14px; right: 14px; }
+  .rj-intro__meta--tl { top: 22px; left: 50px; }
+  .rj-intro__meta--bl { bottom: 22px; left: 50px; }
+  .rj-intro__skip { right: 50px; bottom: 13px; }
+}
+
+/* ---------- Hero ---------- */
+.rj-hero {
+  --o: 0s; /* décalage : durée de l'intro quand elle joue */
+}
+.rj-mask {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  padding-top: 0.04em;
+}
+.rj-net {
+  color: rgb(255 255 255 / 0.13);
+  stroke-width: 1;
+}
+.rj-net .rj-chord {
+  stroke: rgb(255 255 255 / 0.07);
+}
+.rj-node__ring {
+  fill: var(--color-brand);
+  stroke: rgb(255 255 255 / 0.35);
+}
+.rj-node__dot {
+  fill: rgb(255 255 255 / 0.85);
+}
+.rj-pulse {
+  fill: var(--color-accent);
+  opacity: 0;
+}
+.rj-mark use {
+  fill: #fff;
+}
+
+/* État initial (avant lancement) — uniquement si les animations sont permises */
+html.rj-motion .rj-hero:not(.is-live) .rj-anim {
+  opacity: 0;
+}
+
+html.rj-motion .rj-hero.is-live .rj-up {
+  animation: rj-up 0.95s cubic-bezier(0.16, 1, 0.3, 1) calc(var(--o) + var(--d)) both;
+}
+html.rj-motion .rj-hero.is-live .rj-rule {
+  transform-origin: left;
+  animation: rj-rule 0.7s cubic-bezier(0.65, 0, 0.35, 1) calc(var(--o) + var(--d)) both;
+}
+html.rj-motion .rj-hero.is-live .rj-soft {
+  animation: rj-soft 0.9s cubic-bezier(0.16, 1, 0.3, 1) calc(var(--o) + var(--d)) both;
+}
+html.rj-motion .rj-hero.is-live .rj-fade {
+  animation: rj-fade-in 1.2s ease calc(var(--o) + var(--d)) both;
+}
+html.rj-motion .rj-hero.is-live .rj-draw-line {
+  stroke-dasharray: 1 1;
+  animation: rj-stroke 1.3s cubic-bezier(0.65, 0, 0.35, 1) calc(var(--o) + var(--d)) both;
+}
+html.rj-motion .rj-hero.is-live .rj-node {
+  animation: rj-node 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) calc(var(--o) + var(--d)) both;
+}
+html.rj-motion .rj-hero.is-live .rj-converge {
+  animation: rj-converge 1.1s cubic-bezier(0.16, 1, 0.3, 1) calc(var(--o) + var(--d)) both;
+}
+html.rj-motion .rj-hero.is-live .rj-pop {
+  animation: rj-pop 0.8s cubic-bezier(0.16, 1, 0.3, 1) calc(var(--o) + var(--d)) both;
+}
+html.rj-motion .rj-hero.is-live .rj-pulse {
+  animation: rj-pulse 3.3s cubic-bezier(0.45, 0, 0.55, 1) calc(var(--o) + var(--d)) infinite both;
+}
+html.rj-motion .rj-hero.is-live .rj-marquee {
+  animation: marquee 60s linear infinite;
+}
+
+@keyframes rj-up {
+  from { transform: translateY(108%); }
+}
+@keyframes rj-rule {
+  from { transform: scaleX(0); }
+}
+@keyframes rj-soft {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+}
+@keyframes rj-node {
+  from {
+    opacity: 0;
+    transform: scale(0);
+  }
+}
+@keyframes rj-converge {
+  from {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy));
+  }
+}
+@keyframes rj-pop {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.94);
+  }
+}
+@keyframes rj-pulse {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0);
+  }
+  12%,
+  82% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--tx), var(--ty));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rj-intro {
+    display: none !important;
+  }
+}

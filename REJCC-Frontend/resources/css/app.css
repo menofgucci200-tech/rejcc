@@ -1,6 +1,7 @@
 /* build: rejcc-css-v1 */
 @import "tailwindcss";
 @import "./fonts.css";
+@import "./home-motion.css";
 @plugin "@tailwindcss/forms";
 
 /* ============================================================

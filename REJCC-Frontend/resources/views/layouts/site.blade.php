@@ -63,6 +63,9 @@
             <x-ui.logo-mark kind="mono-white" class="h-14 animate-pulse" />
         </div>
 
+        {{-- Intro animée propre à certaines pages (accueil) --}}
+        {{ $intro ?? '' }}
+
         <div id="scroll-progress-bar" class="fixed inset-x-0 top-0 z-[90] h-[3px] bg-accent" style="width: 0%"></div>
 
         <x-site-banner />

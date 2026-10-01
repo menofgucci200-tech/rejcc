@@ -1,6 +1,8 @@
 @php use App\Support\Content\SiteRemote; @endphp
 
 <x-site-layout>
+    <x-slot:intro><x-sections.intro /></x-slot:intro>
+
     <x-sections.hero />
     @if (SiteRemote::visible('home', 'about')) <x-sections.about /> @endif
     @if (SiteRemote::visible('home', 'video')) <x-sections.video-embed /> @endif
