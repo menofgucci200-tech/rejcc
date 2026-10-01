@@ -13,3 +13,10 @@ Pour le régénérer, il faut d'abord recréer le dossier `assets/` (non version
 
 Puis `node cap.js video frames 30 0 60` et assemblage avec ffmpeg :
 `ffmpeg -framerate 30 -i frames/f%05d.jpg -c:v libx264 -crf 18 -pix_fmt yuv420p film.mp4`.
+
+## Voix off
+
+`voix-off-script.json` donne le texte et l'instant de départ (en secondes) de chaque phrase.
+`voix-off-gen.py` les synthétise avec sherpa-onnx et la voix Piper `fr_FR-siwis-medium`
+(CC-BY 4.0, téléchargeable sur les releases GitHub de k2-fsa/sherpa-onnx, « tts-models »).
+Le film parlé dure 61,5 s (la carte de fin est tenue jusqu'à la fin de la dernière phrase).

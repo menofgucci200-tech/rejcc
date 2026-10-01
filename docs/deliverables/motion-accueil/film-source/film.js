@@ -154,12 +154,12 @@ function render(t) {
 
   // S2 — manifeste
   vis($('s2'), t >= 5.9 && t < 14.8);
-  pushY($('w1').firstChild, t, 6.05, 7.45);
-  pushY($('w2').firstChild, t, 7.45, 8.85);
-  pushY($('w3').firstChild, t, 8.85, 10.3);
-  rule($('visRule'), t, 10.45, 13.5);
-  maskY($('visK'), t, 10.55, 13.5);
-  ['v1', 'v2', 'v3'].forEach((id, i) => maskY($(id), t, 10.7 + i * 0.15, 13.55 + i * 0.06, 1.1));
+  pushY($('w1').firstChild, t, 6.55, 7.95);
+  pushY($('w2').firstChild, t, 7.95, 9.3);
+  pushY($('w3').firstChild, t, 9.3, 10.55);
+  rule($('visRule'), t, 10.6, 13.5);
+  maskY($('visK'), t, 10.7, 13.5);
+  ['v1', 'v2', 'v3'].forEach((id, i) => maskY($(id), t, 10.85 + i * 0.15, 13.55 + i * 0.06, 1.1));
 
   // Fond gris : entre (14.0), sort (24.7), revient (35.8)
   let top = 100, bottom = 0;
