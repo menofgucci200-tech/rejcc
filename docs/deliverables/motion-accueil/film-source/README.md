@@ -21,3 +21,10 @@ k2-fsa/sherpa-onnx « tts-models »), place chaque phrase avec ses respirations 
 les repères qui recalent les animations du film sur la voix (le film dure alors 1 min 13).
 Pour une vraie voix enregistrée, remplacer les clips synthétisés par les prises réelles et relancer
 le script : le film se recale sur leurs durées.
+
+## Version verticale 9:16 (réseaux sociaux)
+
+`vertical.html` reprend le même film (60 s, sans voix off) en 1080×1920 : mise en page
+empilée (texte en haut, appareils en bas), textes importants dans la zone centrale
+(hors bandeaux des applis). Il utilise en plus `assets/seq_intro_v/` (intro du site
+capturée en 540×960 @2x). Rendu : `PAGE=vertical.html VW=1080 VH=1920 node cap.js video frames_vert 30 0 60`.

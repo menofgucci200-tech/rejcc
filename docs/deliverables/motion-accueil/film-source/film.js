@@ -50,7 +50,10 @@ const pad = (n) => String(n).padStart(4, '0');
 /* ---------- Constellation (fond bleu) ---------- */
 const NS = 'http://www.w3.org/2000/svg';
 const net = $('net');
-const C = { x: 1460, y: 540 };
+// Format : paysage 1920×1080 (index.html) ou vertical 1080×1920 (vertical.html, window.VERTICAL).
+const VERT = !!window.VERTICAL;
+const SW = VERT ? 1080 : 1920, SH = VERT ? 1920 : 1080;
+const C = VERT ? { x: 540, y: 1330 } : { x: 1460, y: 540 };
 const orbits = [230, 340, 450, 560];
 const nodes = [];
 [[230, [-150, -40, 60, 170]], [340, [-112, -8, 96, 142, 212]], [450, [-74, 22, 122, 188, 248]], [560, [-30, 80, 160, 230]]].forEach(([r, angs]) =>
@@ -124,9 +127,9 @@ const s6 = values.map(([word, bg, fg], i) => {
   const panel = document.createElement('div'); panel.className = 'layer'; panel.style.background = bg; panel.style.color = fg;
   if (word) {
     const two = word.includes('<br>');
-    panel.innerHTML = `<div class="abs" style="left:0;right:0;top:${two ? 250 : 330}px;text-align:center">
+    panel.innerHTML = `<div class="abs" style="left:0;right:0;top:${VERT ? (two ? 640 : 720) : (two ? 250 : 330)}px;text-align:center">
       <div class="kicker" style="justify-content:center;opacity:.8"><span class="mask"><span>Valeur 0${i + 1} / 05</span></span></div>
-      <div class="anton" style="font-size:${two ? 250 : 330}px;margin-top:30px;line-height:.98">${word.split('<br>').map((w, k) => `<span class="mask"><span>${w}${k === word.split('<br>').length - 1 ? `<b style="color:${bg === '#ac0100' ? '#fff' : '#ac0100'}">.</b>` : ''}</span></span>`).join('')}</div></div>`;
+      <div class="anton" style="font-size:${VERT ? (two ? 170 : 190) : (two ? 250 : 330)}px;margin-top:30px;line-height:.98">${word.split('<br>').map((w, k) => `<span class="mask"><span>${w}${k === word.split('<br>').length - 1 ? `<b style="color:${bg === '#ac0100' ? '#fff' : '#ac0100'}">.</b>` : ''}</span></span>`).join('')}</div></div>`;
   }
   $('s6').appendChild(panel);
   return { panel, inners: [...panel.querySelectorAll('.mask > span')] };
@@ -146,7 +149,7 @@ const endPieces = window.LOGO.map((p, i) => {
 function render(t) {
   // S1 — intro réelle du site
   vis($('s1'), t < 5.9);
-  if (t < 5.9) setSrc($('introImg'), `assets/seq_intro/${pad(Math.min(177, Math.floor(t * 30)))}.jpg`);
+  if (t < 5.9) setSrc($('introImg'), `${VERT ? 'assets/seq_intro_v' : 'assets/seq_intro'}/${pad(Math.min(177, Math.floor(t * 30)))}.jpg`);
 
   // Fond bleu + constellation
   renderNet(t);
@@ -159,7 +162,7 @@ function render(t) {
   pushY($('w3').firstChild, t, 9.3, 10.55);
   rule($('visRule'), t, 10.6, 13.5);
   maskY($('visK'), t, 10.7, 13.5);
-  ['v1', 'v2', 'v3'].forEach((id, i) => maskY($(id), t, 10.85 + i * 0.15, 13.55 + i * 0.06, 1.1));
+  ['v1', 'v2', 'v3', 'v4', 'v5'].filter((id) => $(id)).forEach((id, i) => maskY($(id), t, 10.85 + i * 0.15, 13.55 + i * 0.06, 1.1));
 
   // Fond gris : entre (14.0), sort (24.7), revient (35.8)
   let top = 100, bottom = 0;
@@ -180,8 +183,8 @@ function render(t) {
     else if (t >= 19.3) frame = 176 + Math.floor((t - 19.3) * 30);
     setSrc($('lap1seq'), `assets/seq_d/${pad(clamp(frame, 0, 236))}.jpg`);
     const full = t >= 21.3;
-    vis($('lap1full'), full);
-    $('lap1full').style.transform = `translateY(${-P(t, 21.7, 2.8, E.io) * 2170}px)`;
+    $('lap1full').style.display = full ? 'block' : 'none';
+    $('lap1full').style.transform = `translateY(${-P(t, 21.7, 2.8, E.io) * 2170 * ($('lap1full').parentNode.clientWidth / 960)}px)`;
     rule($('s3rule'), t, 14.9, 24.5); maskY($('s3k'), t, 15.0, 24.5);
     maskY($('s3a1'), t, 15.1, 20.9); maskY($('s3a2'), t, 15.22, 20.96);
     maskY($('s3b1'), t, 21.3, 24.5); maskY($('s3b2'), t, 21.42, 24.56);
@@ -237,7 +240,7 @@ function render(t) {
       const ti = S6T(i);
       const p = P(t, ti, 0.6, E.io4);
       panel.style.clipPath = `inset(${100 * (1 - p)}% 0 0 0)`;
-      vis(panel, p > 0);
+      panel.style.display = p > 0 ? 'block' : 'none';
       inners.forEach((el, k) => maskY(el, t, ti + 0.15 + k * 0.08, Infinity, 0.9));
     });
   }
@@ -257,7 +260,7 @@ function render(t) {
   const on8 = t >= 56.2;
   vis($('s8'), on8);
   if (on8) {
-    $('s8').style.clipPath = `circle(${P(t, 56.2, 0.85, E.io4) * 1250}px at 960px 540px)`;
+    $('s8').style.clipPath = `circle(${P(t, 56.2, 0.85, E.io4) * 1300}px at ${SW / 2}px ${SH / 2}px)`;
     endPieces.forEach(({ u, off, d }) => {
       const p = P(t, 56.65 + d, 1.2);
       u.setAttribute('transform', `translate(${off[0] * (1 - p)} ${off[1] * (1 - p)})`);
@@ -275,7 +278,7 @@ function render(t) {
   $('hud').style.color = light ? '#031d59' : '#fff';
   const chapters = [[5.9, '01 — Le réseau'], [14.35, '02 — Sur ordinateur'], [25.0, '03 — Sur mobile'], [36.15, '04 — Tout le réseau'], [45.4, '05 — Nos valeurs'], [53.0, '06 — En chiffres']];
   $('chap').textContent = chapters.filter(([a]) => t >= a).pop()?.[1] ?? '';
-  $('bar').style.transform = `scaleX(${t / 61.9})`;
+  $('bar').style.transform = `scaleX(${t / (window.FILM_END ? 61.9 : DUR)})`;
 }
 
 // Calage sur la voix off : temps du film (sortie) → temps des animations,
@@ -303,7 +306,7 @@ window.renderAt = async (t) => {
 
 // Aperçu temps réel (sauf en capture)
 function fit() {
-  const s = Math.min(innerWidth / 1920, innerHeight / 1080);
+  const s = Math.min(innerWidth / SW, innerHeight / SH);
   $('stage').style.transform = `scale(${s})`;
 }
 if (!location.search.includes('capture')) {

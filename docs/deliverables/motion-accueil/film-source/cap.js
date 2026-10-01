@@ -4,9 +4,10 @@ const path=require('path'), fs=require('fs');
 (async()=>{
  const [mode,a,b,c,d]=process.argv.slice(2);
  const br=await chromium.launch({executablePath:'/opt/pw-browsers/chromium',args:['--no-sandbox','--allow-file-access-from-files','--force-color-profile=srgb']});
- const p=await br.newPage({viewport:{width:1920,height:1080}});
+ const PAGE=process.env.PAGE||'index.html'; const VW=+(process.env.VW||1920), VH=+(process.env.VH||1080);
+ const p=await br.newPage({viewport:{width:VW,height:VH}});
  p.on('pageerror',e=>console.log('pageerror',e.message)); p.on('console',m=>{if(m.type()==='error')console.log('console',m.text())});
- await p.goto('file://'+path.resolve('index.html')+'?capture=1',{waitUntil:'load'});
+ await p.goto('file://'+path.resolve(PAGE)+'?capture=1',{waitUntil:'load'});
  await p.evaluate(()=>document.fonts.ready);
  if(mode==='stills'){ for(const t of a.split(',').map(Number)){ await p.evaluate(t=>window.renderAt(t),t); await p.screenshot({path:`${b}_${t.toFixed(1).padStart(4,'0')}.png`}); } }
  else { fs.mkdirSync(a,{recursive:true}); const fps=+b, from=+(c||0), to=+(d||60);
