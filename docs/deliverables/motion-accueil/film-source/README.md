@@ -16,7 +16,8 @@ Puis `node cap.js video frames 30 0 60` et assemblage avec ffmpeg :
 
 ## Voix off
 
-`voix-off-script.json` donne le texte et l'instant de départ (en secondes) de chaque phrase.
-`voix-off-gen.py` les synthétise avec sherpa-onnx et la voix Piper `fr_FR-siwis-medium`
-(CC-BY 4.0, téléchargeable sur les releases GitHub de k2-fsa/sherpa-onnx, « tts-models »).
-Le film parlé dure 61,5 s (la carte de fin est tenue jusqu'à la fin de la dernière phrase).
+`voix-off-build.py` synthétise la piste guide (voix Piper `fr_FR-tom-medium`, releases GitHub
+k2-fsa/sherpa-onnx « tts-models »), place chaque phrase avec ses respirations et écrit `anchors.js` :
+les repères qui recalent les animations du film sur la voix (le film dure alors 1 min 13).
+Pour une vraie voix enregistrée, remplacer les clips synthétisés par les prises réelles et relancer
+le script : le film se recale sur leurs durées.

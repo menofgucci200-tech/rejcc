@@ -275,12 +275,28 @@ function render(t) {
   $('hud').style.color = light ? '#031d59' : '#fff';
   const chapters = [[5.9, '01 — Le réseau'], [14.35, '02 — Sur ordinateur'], [25.0, '03 — Sur mobile'], [36.15, '04 — Tout le réseau'], [45.4, '05 — Nos valeurs'], [53.0, '06 — En chiffres']];
   $('chap').textContent = chapters.filter(([a]) => t >= a).pop()?.[1] ?? '';
-  $('bar').style.transform = `scaleX(${t / DUR})`;
+  $('bar').style.transform = `scaleX(${t / 61.9})`;
 }
+
+// Calage sur la voix off : temps du film (sortie) → temps des animations,
+// interpolation linéaire entre les repères de anchors.js (s'il est chargé).
+function remap(t) {
+  const A = window.ANCHORS;
+  if (!A) return t;
+  if (t <= A[0][0]) return A[0][1];
+  for (let i = 1; i < A.length; i++) {
+    if (t <= A[i][0]) {
+      const [o0, r0] = A[i - 1], [o1, r1] = A[i];
+      return r0 + ((t - o0) / (o1 - o0)) * (r1 - r0);
+    }
+  }
+  return A[A.length - 1][1];
+}
+const OUT_DUR = window.FILM_END || DUR;
 
 window.renderAt = async (t) => {
   pending.length = 0;
-  render(t);
+  render(remap(t));
   await Promise.all(pending);
   await document.fonts.ready;
 };
@@ -293,7 +309,7 @@ function fit() {
 if (!location.search.includes('capture')) {
   fit(); addEventListener('resize', fit);
   const start = performance.now();
-  const loop = (now) => { render(((now - start) / 1000) % DUR); requestAnimationFrame(loop); };
+  const loop = (now) => { render(remap(((now - start) / 1000) % OUT_DUR)); requestAnimationFrame(loop); };
   requestAnimationFrame(loop);
 } else {
   render(0);
