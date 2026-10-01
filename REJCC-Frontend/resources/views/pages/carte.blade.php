@@ -1,4 +1,4 @@
-<x-site-layout :title="'Profil membre — '.trim(($card->prenom ?? '').' '.($card->nom ?? ''))" description="Profil professionnel vérifié d'un membre du REJCC — Réseau Entrepreneurial des Jeunes Catholiques de Côte d'Ivoire.">
+<x-site-layout :title="'Profil membre — '.trim(($card->prenom ?? '').' '.($card->nom ?? ''))" description="Profil professionnel vérifié d'un membre du REJCC — Réseau Entrepreneurial des Jeunes Chrétiens Catholiques.">
     @php
         $fullName = trim(($card->prenom ?? '').' '.($card->nom ?? '')) ?: ($card->name ?? 'Membre');
         $accent = match ($card->role ?? 'member') {

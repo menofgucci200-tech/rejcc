@@ -23,7 +23,7 @@
                 </a>
                 <div class="min-w-0 pt-0.5">
                     <h1 class="text-[19px] font-extrabold leading-tight text-brand">Formulaire d'adhésion</h1>
-                    <p class="mt-0.5 text-[11px] font-bold uppercase tracking-[0.06em] text-[#9AA6B8]">Réseau Entrepreneurial des Jeunes Catholiques de Côte d'Ivoire</p>
+                    <p class="mt-0.5 text-[11px] font-bold uppercase tracking-[0.06em] text-[#9AA6B8]">Réseau Entrepreneurial des Jeunes Chrétiens Catholiques</p>
                     <p class="mt-1.5 text-[13px] font-bold text-brand">Étape {{ $step + 1 }} sur 8 · {{ $stepTitles[$step] }}</p>
                 </div>
             </div>

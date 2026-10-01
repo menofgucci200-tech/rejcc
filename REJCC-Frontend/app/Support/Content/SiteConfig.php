@@ -8,7 +8,7 @@ class SiteConfig
     {
         return [
             'name' => 'REJCC',
-            'fullName' => "Réseau Entrepreneurial des Jeunes Catholiques de Côte d'Ivoire",
+            'fullName' => "Réseau Entrepreneurial des Jeunes Chrétiens Catholiques",
             'slogan' => SiteRemote::setting('identity.slogan', "Ensemble pour l'excellence."),
             'promise' => SiteRemote::setting('identity.promise', 'Accéder à un réseau de qualité.'),
             'positioning' => SiteRemote::setting('identity.positioning', "Le réseau de référence des jeunes entrepreneurs et porteurs de projets catholiques, alliant foi, innovation et entrepreneuriat pour bâtir des entreprises à impact durable."),
