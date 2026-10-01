@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>REJCC — Film de présentation (60 s)</title>
+<style>
+  @font-face { font-family: 'Anton'; src: url('fonts/anton-latin-400-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'Manrope'; font-weight: 500; src: url('fonts/manrope-latin-500-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'Manrope'; font-weight: 700; src: url('fonts/manrope-latin-700-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'Manrope'; font-weight: 800; src: url('fonts/manrope-latin-800-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'Caslon'; src: url('fonts/libre-caslon-display-latin-400-normal.woff2') format('woff2'); }
+
+  :root { --navy:#031d59; --navy7:#0a2c6e; --navy9:#021541; --azure:#4f6fbf; --red:#ac0100; --cloud:#f4f6f8; --ink:#333; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #000; overflow: hidden; }
+  #stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: var(--navy);
+           font-family: 'Manrope', sans-serif; color: #fff; transform-origin: 0 0; }
+  .layer { position: absolute; inset: 0; overflow: hidden; }
+  .abs { position: absolute; }
+  .mask { display: block; overflow: hidden; }
+  .mask > span { display: block; will-change: transform; }
+  .anton .mask { padding-top: .24em; margin-top: -.24em; }
+  .anton { font-family: 'Anton', sans-serif; text-transform: uppercase; line-height: .95; letter-spacing: -.005em; }
+  .caslon { font-family: 'Caslon', serif; }
+  .red { color: var(--red); }
+  .kicker { display: flex; align-items: center; gap: 18px; font-weight: 800; font-size: 20px; letter-spacing: .26em; text-transform: uppercase; }
+  .kicker i { display: block; width: 56px; height: 2px; background: var(--red); transform-origin: left; }
+
+  /* HUD */
+  #hud { pointer-events: none; z-index: 50; }
+  #hud .c { position: absolute; width: 34px; height: 34px; border: 0 solid currentColor; opacity: .45; }
+  #hud .tl { top: 34px; left: 34px; border-top-width: 1.5px; border-left-width: 1.5px; }
+  #hud .tr { top: 34px; right: 34px; border-top-width: 1.5px; border-right-width: 1.5px; }
+  #hud .bl { bottom: 34px; left: 34px; border-bottom-width: 1.5px; border-left-width: 1.5px; }
+  #hud .br { bottom: 34px; right: 34px; border-bottom-width: 1.5px; border-right-width: 1.5px; }
+  #hud .m { position: absolute; font-size: 15px; font-weight: 800; letter-spacing: .24em; text-transform: uppercase; opacity: .7; white-space: nowrap; }
+  #hud .m1 { top: 44px; left: 90px; } #hud .m2 { top: 44px; right: 90px; text-align: right; }
+  #hud .m3 { bottom: 44px; left: 90px; font-family: 'Caslon', serif; text-transform: none; letter-spacing: 0; font-weight: 400; font-size: 22px; }
+  #hud .m4 { bottom: 44px; right: 90px; }
+  #hud .bar { position: absolute; left: 0; bottom: 0; height: 4px; width: 100%; background: var(--red); transform-origin: left; }
+
+  /* Devices */
+  .laptop { position: absolute; }
+  .laptop .lid { position: relative; padding: 18px 18px 30px; border-radius: 26px; background: #0d1426; border: 1.5px solid #2c3754;
+                 box-shadow: 0 70px 120px -50px rgba(3,29,89,.55), 0 30px 60px -30px rgba(0,0,0,.35); }
+  .laptop .lid::after { content: ''; position: absolute; left: 50%; bottom: 11px; width: 8px; height: 8px; margin-left: -4px; border-radius: 50%; background: #26314d; }
+  .laptop .base { position: relative; height: 26px; margin: 0 -8%; border-radius: 0 0 22px 22px; background: linear-gradient(#e6eaf1, #b5bdcb); box-shadow: 0 24px 40px -18px rgba(3,29,89,.45); }
+  .laptop .base::before { content: ''; position: absolute; left: 50%; top: 0; width: 16%; height: 9px; margin-left: -8%; border-radius: 0 0 12px 12px; background: #9aa4b6; }
+  .screen { position: relative; overflow: hidden; background: #000; }
+  .laptop .screen { border-radius: 6px; }
+  .screen img { position: absolute; left: 0; top: 0; width: 100%; display: block; }
+  .phone { position: absolute; padding: 13px; border-radius: 64px; background: #0a0e18; border: 2px solid #343c52;
+           box-shadow: 0 60px 100px -40px rgba(0,0,0,.6), inset 0 0 0 2px #1a2030; }
+  .phone .screen { border-radius: 51px; }
+  .phone .island { position: absolute; top: 28px; left: 50%; width: 112px; height: 32px; margin-left: -56px; border-radius: 20px; background: #000; z-index: 3; }
+</style>
+</head>
+<body>
+<div id="stage">
+
+  <!-- S2 / S4 / S7 : fond bleu + constellation -->
+  <div class="layer" id="bgNavy" style="background:var(--navy)">
+    <svg id="net" class="abs" width="1920" height="1080" viewBox="0 0 1920 1080" fill="none"></svg>
+  </div>
+
+  <!-- S1 : intro du site (images de la vraie animation) -->
+  <div class="layer" id="s1"><img id="introImg" class="abs" style="left:0;top:0;width:1920px;height:1080px" alt=""></div>
+
+  <!-- S2 : manifeste -->
+  <div class="layer" id="s2">
+    <div class="abs" style="left:0;right:0;top:380px;text-align:center">
+      <div class="anton" style="font-size:250px;position:relative;height:250px">
+        <span class="mask abs" style="left:0;right:0;top:0" id="w1"><span>Un réseau<b class="red">.</b></span></span>
+        <span class="mask abs" style="left:0;right:0;top:0" id="w2"><span>Des talents<b class="red">.</b></span></span>
+        <span class="mask abs" style="left:0;right:0;top:0" id="w3"><span>Une même foi<b class="red">.</b></span></span>
+      </div>
+    </div>
+    <div class="abs" style="left:200px;top:330px;width:1500px" id="vision">
+      <div class="kicker" style="color:rgba(255,255,255,.75)"><i id="visRule"></i><span class="mask"><span id="visK">Notre vision</span></span></div>
+      <div class="caslon" style="font-size:84px;line-height:1.16;margin-top:40px">
+        <span class="mask" style="padding-bottom:.06em"><span id="v1">Être le premier incubateur de talents</span></span>
+        <span class="mask" style="padding-bottom:.06em"><span id="v2">et d'entreprises au service de l'Église</span></span>
+        <span class="mask" style="padding-bottom:.06em"><span id="v3">et de la société en <span style="color:#8fa6e6">Côte d'Ivoire</span><b class="red">.</b></span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- fond gris (S3 / S5) -->
+  <div class="layer" id="bgCloud" style="background:var(--cloud)"></div>
+
+  <!-- S3 : ordinateur -->
+  <div class="layer" id="s3" style="color:var(--navy)">
+    <div class="abs" style="left:150px;top:300px;width:640px">
+      <div class="kicker" style="color:var(--navy)"><i id="s3rule"></i><span class="mask"><span id="s3k">Sur ordinateur</span></span></div>
+      <div class="anton" style="font-size:112px;margin-top:34px;position:relative;height:230px">
+        <div class="abs" style="left:0;top:0"><span class="mask"><span id="s3a1">Une entrée</span></span><span class="mask"><span id="s3a2">qui marque<b class="red">.</b></span></span></div>
+        <div class="abs" style="left:0;top:0"><span class="mask"><span id="s3b1">Une vitrine</span></span><span class="mask"><span id="s3b2">limpide<b class="red">.</b></span></span></div>
+      </div>
+      <div style="position:relative;margin-top:36px;height:150px;font-size:29px;line-height:1.5;color:var(--ink);font-weight:500">
+        <p class="abs" id="s3pa" style="left:0;top:0;width:600px">Le logo se construit sous vos yeux : l'accueil raconte le réseau en quelques secondes.</p>
+        <p class="abs" id="s3pb" style="left:0;top:0;width:600px">Mission, valeurs, 33 domaines, adhésion en ligne : l'essentiel, en un défilement.</p>
+      </div>
+    </div>
+    <div class="laptop" id="lap1" style="left:790px;top:190px;width:996px">
+      <div class="lid"><div class="screen" style="width:960px;height:600px">
+        <img id="lap1seq" alt=""><img id="lap1full" src="assets/shots/d_home_full.jpg" alt="">
+      </div></div>
+      <div class="base"></div>
+    </div>
+  </div>
+
+  <!-- S4 : mobile -->
+  <div class="layer" id="s4">
+    <div class="abs" style="left:150px;top:330px;width:600px">
+      <div class="kicker" style="color:rgba(255,255,255,.8)"><i id="s4rule"></i><span class="mask"><span id="s4k">Sur mobile</span></span></div>
+      <div class="anton" style="font-size:112px;margin-top:34px"><span class="mask"><span id="s4a1">Pensé pour</span></span><span class="mask"><span id="s4a2">le mobile<b class="red">.</b></span></span></div>
+      <p id="s4p" style="margin-top:36px;font-size:29px;line-height:1.5;color:rgba(255,255,255,.78);font-weight:500;width:560px">La même exigence sur chaque écran : fluide, lisible, et installable comme une application.</p>
+    </div>
+    <div class="phone" id="phL" style="left:760px;top:150px"><div class="island"></div><div class="screen" style="width:330px;height:714px"><img id="phLimg" src="assets/shots/m_activites_full.jpg" alt=""></div></div>
+    <div class="phone" id="phR" style="left:1490px;top:150px"><div class="island"></div><div class="screen" style="width:330px;height:714px"><img id="phRimg" src="assets/shots/m_domaines_full.jpg" alt=""></div></div>
+    <div class="phone" id="phC" style="left:1110px;top:96px"><div class="island"></div><div class="screen" style="width:372px;height:805px"><img id="phCimg" alt=""></div></div>
+  </div>
+
+  <!-- S5 : tout le réseau -->
+  <div class="layer" id="s5" style="color:var(--navy)">
+    <div class="abs" style="left:150px;top:330px;width:760px">
+      <div class="kicker"><i id="s5rule"></i><span class="mask"><span id="s5k">Explorez</span></span></div>
+      <div class="anton" style="font-size:130px;margin-top:58px;position:relative;height:135px;clip-path:inset(-8px -400px 0 0)" id="s5labels"></div>
+      <div style="position:relative;margin-top:30px;height:60px;font-size:29px;color:var(--ink);font-weight:500" id="s5descs"></div>
+      <div id="s5dots" style="display:flex;gap:12px;margin-top:40px"></div>
+    </div>
+    <div class="laptop" id="lap2" style="left:920px;top:220px;width:836px">
+      <div class="lid" style="padding:14px 14px 24px;border-radius:22px"><div class="screen" style="width:805px;height:503px" id="lap2screen"></div></div>
+      <div class="base" style="height:20px"></div>
+    </div>
+    <div class="phone" id="ph2" style="left:1590px;top:400px;padding:9px;border-radius:44px"><div class="island" style="top:18px;width:74px;height:22px;margin-left:-37px"></div><div class="screen" style="width:230px;height:498px;border-radius:36px" id="ph2screen"></div></div>
+  </div>
+
+  <!-- S6 : valeurs -->
+  <div class="layer" id="s6"></div>
+
+  <!-- S7 : chiffres -->
+  <div class="layer" id="s7">
+    <div class="abs" style="left:0;right:0;top:250px;display:flex;justify-content:center;gap:220px;text-align:center">
+      <div><div class="anton" style="font-size:300px;line-height:1"><span class="mask"><span id="n1">350+</span></span></div>
+        <div class="kicker" style="justify-content:center;margin-top:24px;color:rgba(255,255,255,.8)"><span class="mask"><span id="n1l">Membres engagés</span></span></div></div>
+      <div><div class="anton" style="font-size:300px;line-height:1"><span class="mask"><span id="n2">33</span></span></div>
+        <div class="kicker" style="justify-content:center;margin-top:24px;color:rgba(255,255,255,.8)"><span class="mask"><span id="n2l">Domaines d'activité</span></span></div></div>
+    </div>
+    <div class="abs caslon" style="left:0;right:0;top:800px;text-align:center;font-size:64px"><span class="mask" style="padding-bottom:.08em"><span id="n3">Et si le prochain, c'était vous<b class="red"> ?</b></span></span></div>
+  </div>
+
+  <!-- S8 : signature finale -->
+  <div class="layer" id="s8" style="background:var(--cloud);color:var(--navy)">
+    <svg id="endLogo" class="abs" viewBox="236 28 538 950" style="left:810px;top:96px;height:560px;width:317px;overflow:visible"></svg>
+    <div class="abs caslon" style="left:0;right:0;top:700px;text-align:center;font-size:58px"><span class="mask" style="padding-bottom:.08em"><span id="e1">Ensemble pour l'excellence<b class="red">.</b></span></span></div>
+    <div class="abs" style="left:0;right:0;top:830px;display:flex;justify-content:center">
+      <div id="cta" style="display:flex;align-items:center;gap:22px;background:var(--red);color:#fff;border-radius:999px;padding:24px 42px;font-weight:800;font-size:30px;box-shadow:0 26px 50px -22px rgba(172,1,0,.7)">
+        Rejoignez le réseau <span style="opacity:.6">·</span> rejcc.site
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- rideaux de transition -->
+  <div class="layer" id="wipe" style="z-index:40;pointer-events:none"></div>
+
+  <div class="layer" id="hud">
+    <span class="c tl"></span><span class="c tr"></span><span class="c bl"></span><span class="c br"></span>
+    <span class="m m1">Réseau Entrepreneurial des Jeunes Chrétiens Catholiques</span>
+    <span class="m m2" id="chap"></span>
+    <span class="m m3">Ensemble pour l'excellence.</span>
+    <span class="m m4">rejcc.site</span>
+    <span class="bar" id="bar"></span>
+  </div>
+</div>
+
+<script src="logo.js"></script>
+<script src="film.js"></script>
+</body>
+</html>
