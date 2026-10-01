@@ -4,11 +4,12 @@
 ])
 
 @php
+    // Logos officiels (charte 2026), vectoriels : nets à toutes les tailles.
     $sources = [
-        'lockup-color' => ['src' => '/brand/rejcc-logo-color.png', 'w' => 649, 'h' => 1213],
-        'lockup-white' => ['src' => '/brand/rejcc-logo-white.png', 'w' => 649, 'h' => 1213],
-        'mono-color' => ['src' => '/brand/rejcc-monogram-color.png', 'w' => 649, 'h' => 837],
-        'mono-white' => ['src' => '/brand/rejcc-monogram-white.png', 'w' => 649, 'h' => 837],
+        'lockup-color' => ['src' => '/brand/rejcc-logo-color.svg', 'w' => 501, 'h' => 917],
+        'lockup-white' => ['src' => '/brand/rejcc-logo-white.svg', 'w' => 501, 'h' => 917],
+        'mono-color' => ['src' => '/brand/rejcc-monogram-color.svg', 'w' => 428, 'h' => 646],
+        'mono-white' => ['src' => '/brand/rejcc-monogram-white.svg', 'w' => 428, 'h' => 646],
     ];
     $source = $sources[$kind] ?? $sources['mono-color'];
 @endphp
