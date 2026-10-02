@@ -64,8 +64,8 @@
         <p class="absolute inset-x-[8cqw] top-[70.5cqh] text-center text-[1.8cqw] font-bold uppercase tracking-[0.4em]" style="color: {{ $accent }}">{{ $roleLabel }}</p>
 
         {{-- Organisation --}}
-        <p class="absolute inset-x-[4cqw] top-[83.5cqh] text-center text-[1.9cqw] font-bold uppercase tracking-[0.18em] text-white">Réseau Entrepreneurial des Jeunes Catholiques</p>
-        <p class="absolute inset-x-[4cqw] top-[89.5cqh] text-center text-[1.8cqw] font-bold uppercase tracking-[0.3em]" style="color: {{ $accent }}">de Côte d'Ivoire</p>
+        <p class="absolute inset-x-[4cqw] top-[83.5cqh] text-center text-[1.9cqw] font-bold uppercase tracking-[0.1em] text-white">Réseau Entrepreneurial des Jeunes Chrétiens Catholiques</p>
+        <p class="absolute inset-x-[4cqw] top-[89.5cqh] text-center text-[1.8cqw] font-bold uppercase tracking-[0.3em]" style="color: {{ $accent }}">Côte d'Ivoire</p>
     </div>
 
     {{-- ═══════════════ VERSO ═══════════════ --}}
