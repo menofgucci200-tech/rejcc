@@ -101,7 +101,14 @@ class AdhesionApplicationForm extends Component
             return;
         }
 
-        $this->validate($this->rulesFor($this->step));
+        // Certaines étapes n'ont aucune règle selon les réponses (ex. étape
+        // « Projet futur » quand le candidat a déjà une activité). Appeler
+        // validate([]) ferait chercher à Livewire une propriété $rules
+        // inexistante (MissingRulesException → erreur 500) : on l'évite.
+        $rules = $this->rulesFor($this->step);
+        if ($rules !== []) {
+            $this->validate($rules);
+        }
 
         // « Nom et prénoms » saisi en un seul champ : on le scinde (premier mot
         // = prénom, le reste = nom) pour alimenter l'API qui les attend séparés.
