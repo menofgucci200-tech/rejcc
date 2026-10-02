@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>REJCC — Film explicatif (60 s)</title>
+<style>
+  @font-face { font-family: 'Anton'; src: url('fonts/anton-latin-400-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'Manrope'; font-weight: 500; src: url('fonts/manrope-latin-500-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'Manrope'; font-weight: 700; src: url('fonts/manrope-latin-700-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'Manrope'; font-weight: 800; src: url('fonts/manrope-latin-800-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'Caslon'; src: url('fonts/libre-caslon-display-latin-400-normal.woff2') format('woff2'); }
+  :root { --navy:#031d59; --navy7:#0a2c6e; --azure:#4f6fbf; --red:#ac0100; --cloud:#f4f6f8; --ink:#333; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #000; overflow: hidden; }
+  #stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: var(--navy);
+           font-family: 'Manrope', sans-serif; color: #fff; transform-origin: 0 0; }
+  .layer { position: absolute; inset: 0; overflow: hidden; visibility: hidden; }
+  .navy { background: var(--navy); color: #fff; }
+  .cloud { background: var(--cloud); color: var(--navy); }
+  .abs { position: absolute; }
+  .mask { display: block; overflow: hidden; }
+  .mask > span { display: block; will-change: transform; }
+  .anton { font-family: 'Anton', sans-serif; text-transform: uppercase; line-height: .98; }
+  .anton .mask { padding-top: .24em; margin-top: -.24em; }
+  .caslon { font-family: 'Caslon', serif; line-height: 1.16; }
+  .caslon .mask { padding-bottom: .08em; }
+  .red { color: var(--red); }
+  .kicker { display: flex; align-items: center; gap: 18px; font-weight: 800; font-size: 20px; letter-spacing: .26em; text-transform: uppercase; }
+  .kicker i { display: block; width: 56px; height: 2px; background: var(--red); transform-origin: left; }
+  .center { left: 0; right: 0; text-align: center; }
+  .kicker.c { justify-content: center; }
+  svg.ico { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; overflow: visible; }
+
+  .card { position: absolute; width: 500px; height: 236px; padding: 34px 36px; border-radius: 26px;
+          background: rgba(255,255,255,.055); border: 1.5px solid rgba(255,255,255,.12); }
+  .card h3 { font-weight: 800; font-size: 31px; margin-top: 22px; letter-spacing: -.01em; }
+  .card p { font-weight: 500; font-size: 22px; line-height: 1.4; color: rgba(255,255,255,.72); margin-top: 8px; }
+  .card .ic { width: 64px; height: 64px; border-radius: 18px; border: 1.5px solid rgba(255,255,255,.25); display: grid; place-items: center; position: relative; }
+  .card .ic::after { content: ''; position: absolute; top: -4px; right: -4px; width: 12px; height: 12px; border-radius: 50%; background: var(--red); }
+  .tile { position: absolute; width: 300px; height: 150px; padding: 24px 24px; border-radius: 20px;
+          background: rgba(255,255,255,.06); border: 1.5px solid rgba(255,255,255,.12); }
+  .tile b { display: block; font-weight: 800; font-size: 22px; line-height: 1.25; margin-top: 14px; }
+  .pill { position: absolute; display: flex; align-items: center; gap: 14px; padding: 18px 26px; border-radius: 999px;
+          background: #fff; border: 1.5px solid rgba(3,29,89,.14); box-shadow: 0 20px 40px -24px rgba(3,29,89,.45);
+          font-weight: 800; font-size: 25px; color: var(--navy); white-space: nowrap; }
+  .pill i { width: 12px; height: 12px; border-radius: 50%; background: var(--red); display: block; }
+
+  #hud { z-index: 60; pointer-events: none; visibility: visible; overflow: visible; }
+  #hud .c { position: absolute; width: 34px; height: 34px; border: 0 solid currentColor; opacity: .45; }
+  #hud .tl { top: 34px; left: 34px; border-top-width: 1.5px; border-left-width: 1.5px; }
+  #hud .tr { top: 34px; right: 34px; border-top-width: 1.5px; border-right-width: 1.5px; }
+  #hud .bl { bottom: 34px; left: 34px; border-bottom-width: 1.5px; border-left-width: 1.5px; }
+  #hud .br { bottom: 34px; right: 34px; border-bottom-width: 1.5px; border-right-width: 1.5px; }
+  #hud .m { position: absolute; font-size: 15px; font-weight: 800; letter-spacing: .24em; text-transform: uppercase; opacity: .7; white-space: nowrap; }
+  #hud .m1 { top: 44px; left: 90px; } #hud .m2 { top: 44px; right: 90px; }
+  #hud .m3 { bottom: 44px; left: 90px; } #hud .m4 { bottom: 44px; right: 90px; }
+  #hud .bar { position: absolute; left: 0; bottom: 0; height: 4px; width: 100%; background: var(--red); transform-origin: left; }
+</style>
+</head>
+<body>
+<div id="stage">
+
+  <!-- ===== A : constat + proverbe + logo (0 – 13 s) ===== -->
+  <div class="layer navy" id="A">
+    <svg id="pts" class="abs" width="1920" height="1080" viewBox="0 0 1920 1080"></svg>
+    <div class="abs center" style="top:395px">
+      <div class="anton" style="font-size:150px"><span class="mask"><span id="a1">Des jeunes talents<b class="red">.</b></span></span></div>
+      <div class="caslon" style="font-size:54px;margin-top:22px;color:rgba(255,255,255,.82)"><span class="mask"><span id="a2">Des idées, de l'énergie, de l'ambition.</span></span></div>
+    </div>
+    <div class="abs center" style="top:430px">
+      <div class="anton" style="font-size:150px"><span class="mask"><span id="b1">Seul, on va plus vite<b class="red">.</b></span></span></div>
+    </div>
+    <div class="abs center" style="top:400px">
+      <div class="anton" style="font-size:150px"><span class="mask"><span id="b2">Ensemble, on va plus loin<b class="red">.</b></span></span></div>
+      <div class="caslon" style="font-size:40px;margin-top:22px;color:rgba(255,255,255,.7)"><span class="mask"><span id="b3">— Proverbe africain</span></span></div>
+    </div>
+    <svg id="mark" class="abs" viewBox="280 44 442 660" style="left:739px;top:290px;width:442px;height:500px;overflow:visible"></svg>
+    <div class="abs" style="left:900px;top:330px;width:900px" id="nameBlock">
+      <div class="kicker" style="color:rgba(255,255,255,.8)"><i id="nk0"></i><span class="mask"><span id="nk">C'est l'esprit du</span></span></div>
+      <div class="anton" style="font-size:230px;margin-top:20px;letter-spacing:.04em"><span class="mask"><span id="n1">REJCC</span></span></div>
+      <div style="font-weight:800;font-size:40px;line-height:1.25;margin-top:18px">
+        <span class="mask"><span id="n2">Réseau Entrepreneurial des</span></span>
+        <span class="mask"><span id="n3">Jeunes Chrétiens Catholiques</span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== B : ADN (Venn) + mission (13 – 25,5 s) ===== -->
+  <div class="layer cloud" id="B">
+    <div class="abs center" style="top:150px" id="adnHead">
+      <div class="kicker c"><i id="bk0"></i><span class="mask"><span id="bk">Notre ADN</span></span></div>
+      <div class="caslon" style="font-size:58px;margin-top:20px"><span class="mask"><span id="bt">Trois forces, une seule identité.</span></span></div>
+    </div>
+    <svg id="venn" class="abs" width="1920" height="1080" viewBox="0 0 1920 1080" style="overflow:visible"></svg>
+    <div class="abs center caslon" style="top:925px;font-size:42px"><span class="mask"><span id="vcap">Le REJCC naît au croisement des trois.</span></span></div>
+    <div class="abs" style="left:150px;top:300px;width:700px" id="mission">
+      <div class="kicker"><i id="mk0"></i><span class="mask"><span id="mk">Notre mission</span></span></div>
+      <div class="caslon" style="font-size:64px;margin-top:30px">
+        <span class="mask"><span id="m1">Connecter les jeunes</span></span>
+        <span class="mask"><span id="m2">entrepreneurs catholiques</span></span>
+      </div>
+      <p id="m3" style="font-size:30px;line-height:1.5;font-weight:500;color:var(--ink);margin-top:30px;width:640px">pour co-créer, partager leurs expériences et bâtir ensemble des solutions technologiques et commerciales durables.</p>
+    </div>
+  </div>
+
+  <!-- ===== C : offre (25,5 – 33 s) ===== -->
+  <div class="layer navy" id="C">
+    <div class="abs" style="left:170px;top:140px">
+      <div class="kicker" style="color:rgba(255,255,255,.8)"><i id="ck0"></i><span class="mask"><span id="ck">Ce que nous offrons</span></span></div>
+      <div style="display:flex;align-items:baseline;gap:28px;margin-top:22px">
+        <div class="anton" style="font-size:100px"><span class="mask"><span id="c1">Concrètement<b class="red">,</b></span></span></div>
+        <div class="caslon" style="font-size:52px;color:rgba(255,255,255,.85)"><span class="mask"><span id="c2">le REJCC vous accompagne à chaque étape.</span></span></div>
+      </div>
+    </div>
+    <div id="cards"></div>
+  </div>
+
+  <!-- ===== D : pour qui (33 – 39 s) ===== -->
+  <div class="layer cloud" id="D">
+    <div class="abs" style="left:150px;top:140px">
+      <div class="kicker"><i id="dk0"></i><span class="mask"><span id="dk">Pour qui ?</span></span></div>
+      <div class="anton" style="font-size:96px;margin-top:22px"><span class="mask"><span id="d1">Quel que soit votre stade<b class="red">.</b></span></span></div>
+      <div class="caslon" style="font-size:38px;margin-top:16px;color:var(--ink)"><span class="mask"><span id="d2">Un réseau d'excellence pour entreprendre, grandir et réussir ensemble.</span></span></div>
+    </div>
+    <svg id="stairs" class="abs" width="1920" height="1080" viewBox="0 0 1920 1080" style="overflow:visible"></svg>
+    <div id="steps"></div>
+  </div>
+
+  <!-- ===== E : domaines (39 – 44,5 s) ===== -->
+  <div class="layer navy" id="E">
+    <div class="abs" style="left:150px;top:250px;width:640px">
+      <div class="kicker" style="color:rgba(255,255,255,.8)"><i id="ek0"></i><span class="mask"><span id="ek">Nos domaines</span></span></div>
+      <div class="anton" style="font-size:330px;line-height:1;margin-top:10px"><span class="mask"><span id="e1">33</span></span></div>
+      <div style="font-weight:800;font-size:40px;letter-spacing:.06em;text-transform:uppercase"><span class="mask"><span id="e2">Domaines d'activité</span></span></div>
+      <div class="caslon" style="font-size:46px;margin-top:14px;color:rgba(255,255,255,.8)"><span class="mask"><span id="e3">réunis en 9 pôles.</span></span></div>
+    </div>
+    <div id="tiles"></div>
+  </div>
+
+  <!-- ===== F : valeurs (44,5 – 49,5 s) ===== -->
+  <div class="layer cloud" id="F">
+    <div class="abs center" style="top:170px">
+      <div class="kicker c"><i id="fk0"></i><span class="mask"><span id="fk">Nos valeurs</span></span></div>
+      <div class="caslon" style="font-size:58px;margin-top:20px"><span class="mask"><span id="f1">Cinq valeurs guident chaque membre.</span></span></div>
+    </div>
+    <svg id="vals" class="abs" width="1920" height="1080" viewBox="0 0 1920 1080" style="overflow:visible"></svg>
+    <div id="valLabels"></div>
+  </div>
+
+  <!-- ===== G : vision (49,5 – 55 s) ===== -->
+  <div class="layer navy" id="G">
+    <svg id="map" class="abs" width="1920" height="1080" viewBox="0 0 1920 1080" style="overflow:visible"></svg>
+    <div class="abs" style="left:1050px;top:300px;width:800px">
+      <div class="kicker" style="color:rgba(255,255,255,.8)"><i id="gk0"></i><span class="mask"><span id="gk">Notre vision</span></span></div>
+      <div class="caslon" style="font-size:64px;margin-top:30px">
+        <span class="mask"><span id="g1">Être le premier incubateur</span></span>
+        <span class="mask"><span id="g2">de talents et d'entreprises</span></span>
+        <span class="mask"><span id="g3">au service de l'Église</span></span>
+        <span class="mask"><span id="g4">et de la société</span></span>
+        <span class="mask"><span id="g5">en <span style="color:#8fa6e6">Côte d'Ivoire</span><b class="red">.</b></span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== H : signature (55 – 60 s) ===== -->
+  <div class="layer cloud" id="H">
+    <svg id="endLogo" class="abs" viewBox="236 28 538 950" style="left:810px;top:96px;height:560px;width:317px;overflow:visible"></svg>
+    <div class="abs center caslon" style="top:700px;font-size:58px"><span class="mask"><span id="h1">Ensemble pour l'excellence<b class="red">.</b></span></span></div>
+    <div class="abs center" style="top:830px;display:flex;justify-content:center">
+      <div id="cta" style="display:flex;align-items:center;gap:22px;background:var(--red);color:#fff;border-radius:999px;padding:24px 42px;font-weight:800;font-size:30px;box-shadow:0 26px 50px -22px rgba(172,1,0,.7)">
+        Rejoignez le réseau <span style="opacity:.6">·</span> rejcc.site
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="layer" id="hud">
+    <span class="c tl"></span><span class="c tr"></span><span class="c bl"></span><span class="c br"></span>
+    <span class="m m1">REJCC</span>
+    <span class="m m2" id="chap"></span>
+    <span class="m m3">Réseau Entrepreneurial des Jeunes Chrétiens Catholiques</span>
+    <span class="m m4">rejcc.site</span>
+    <span class="bar" id="bar"></span>
+  </div>
+</div>
+<script src="logo.js"></script>
+<script src="data.js"></script>
+<script src="explainer.js"></script>
+</body>
+</html>
