@@ -1,6 +1,31 @@
 // REJCC — film explicatif « Qu'est-ce que le REJCC ? » — 60 s, 1920×1080.
 // Tout est une fonction pure du temps : render(t). Capture image par image via window.renderAt(t).
 const DUR = 60;
+const VERT = !!window.VERTICAL;
+const SW = VERT ? 1080 : 1920, SH = VERT ? 1920 : 1080;
+const CFG = VERT ? {
+  home: [80, 920, 220, 1480], clampX: [60, 1020], clampY: [180, 1700], net: [540, 900, 430, 640],
+  ring: [540, 760, 300], shift: [0, -280],
+  pillars: [[540, 560, 430, 832, 352, 790], [540, 930, 650, 832, 728, 790], [540, 1300, 540, 1022, 540, 1110]],
+  rRow: 176, rV: 182, inter: [540, 895], HUB: [400, 1100], nodeA: [118, 12.4], nodeR: 225, pillR: 225, pillDx: 30,
+  card: (i) => [80 + (i % 2) * 480, 640 + Math.floor(i / 2) * 270],
+  stairs: 'M80 1520 H400 V1270 H700 V1020 H990 V880', arrow: 'M970 902 L990 880 L1010 902',
+  steps: [[100, 1405], [420, 1155], [720, 905]], stepFont: 52,
+  tile: (i) => [85 + (i % 3) * 310, 930 + Math.floor(i / 3) * 170],
+  val: (i) => [250, 600 + i * 210], valLab: (i) => [370, 600 + i * 210 - 52], valLine: [250, 600, 250, 1440], valAlign: 'left',
+  mapOff: [-20, 140],
+} : {
+  home: [140, 1780, 150, 930], clampX: [80, 1840], clampY: [100, 980], net: [960, 520, 820, 420],
+  ring: [960, 540, 300], shift: [-440, 0],
+  pillars: [[520, 600, 835, 492, 748, 440], [960, 600, 1085, 492, 1172, 440], [1400, 600, 960, 708, 960, 808]],
+  rRow: 200, rV: 196, inter: [960, 564], HUB: [1190, 560], nodeA: [112, 13.6], nodeR: 255, pillR: 250, pillDx: 50,
+  card: (i) => [170 + (i % 3) * 540, 400 + Math.floor(i / 3) * 276],
+  stairs: 'M150 930 H640 V780 H1130 V630 H1620 V500', arrow: 'M1600 522 L1620 500 L1640 522',
+  steps: [[180, 815], [670, 665], [1160, 515]], stepFont: 66,
+  tile: (i) => [870 + (i % 3) * 326, 289 + Math.floor(i / 3) * 176],
+  val: (i) => [960 + (i - 2) * 330, 560], valLab: (i) => [960 + (i - 2) * 330 - 160, 690], valLine: [300, 560, 1620, 560], valAlign: 'center',
+  mapOff: [0, 0],
+};
 const $ = (id) => document.getElementById(id);
 const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
 const lerp = (a, b, p) => a + (b - a) * p;
@@ -59,12 +84,12 @@ const pts = $('pts');
 const N = 44;
 const dots = [];
 for (let i = 0; i < N; i++) {
-  const home = [140 + rnd() * 1640, 150 + rnd() * 780];
-  const d1 = [clamp(home[0] + (rnd() - 0.5) * 520, 80, 1840), clamp(home[1] + (rnd() - 0.5) * 360, 100, 980)];
-  const d2 = [clamp(d1[0] + (rnd() - 0.5) * 520, 80, 1840), clamp(d1[1] + (rnd() - 0.5) * 360, 100, 980)];
+  const home = [CFG.home[0] + rnd() * (CFG.home[1] - CFG.home[0]), CFG.home[2] + rnd() * (CFG.home[3] - CFG.home[2])];
+  const d1 = [clamp(home[0] + (rnd() - 0.5) * 520, ...CFG.clampX), clamp(home[1] + (rnd() - 0.5) * 360, ...CFG.clampY)];
+  const d2 = [clamp(d1[0] + (rnd() - 0.5) * 520, ...CFG.clampX), clamp(d1[1] + (rnd() - 0.5) * 360, ...CFG.clampY)];
   // réseau : ellipse autour du centre, en évitant la bande de texte
   const ang = (i / N) * Math.PI * 2 + rnd() * 0.3, rr = 0.55 + rnd() * 0.45;
-  const net = [960 + Math.cos(ang) * 820 * rr, 520 + Math.sin(ang) * 420 * rr];
+  const net = [CFG.net[0] + Math.cos(ang) * CFG.net[2] * rr, CFG.net[1] + Math.sin(ang) * CFG.net[3] * rr];
   const ringA = (i / N) * Math.PI * 2;
   dots.push({ home, d1, d2, net, ringA, r: 3.5 + rnd() * 3.5, dart: 3.0 + (i % 9) * 0.22, el: S('circle', { r: 4, fill: '#fff' }, pts) });
 }
@@ -90,7 +115,7 @@ function sceneA(t) {
   maskY($('b2'), t, 5.5, 8.0); maskY($('b3'), t, 6.0, 8.05);
   // Points
   const conv = P(t, 8.2, 1.2, E.io4);
-  const shift = P(t, 10.1, 0.9, E.io4) * -440;
+  const sh = P(t, 10.1, 0.9, E.io4), shX = sh * CFG.shift[0], shY = sh * CFG.shift[1];
   const spin = t * 0.06;
   dots.forEach((d, i) => {
     const app = P(t, 0.1 + i * 0.035, 0.6, E.back);
@@ -99,8 +124,8 @@ function sceneA(t) {
     x = lerp(lerp(x, d.d1[0], k1), d.d2[0], k2); y = lerp(lerp(y, d.d1[1], k1), d.d2[1], k2);
     const kn = P(t, 5.3 + (i % 11) * 0.04, 1.2, E.io4);
     x = lerp(x, d.net[0], kn); y = lerp(y, d.net[1], kn);
-    const ra = d.ringA + spin, R = 300 + (i % 3) * 14;
-    x = lerp(x, 960 + Math.cos(ra) * R, conv) + shift; y = lerp(y, 540 + Math.sin(ra) * R, conv);
+    const ra = d.ringA + spin, R = CFG.ring[2] + (i % 3) * 14;
+    x = lerp(x, CFG.ring[0] + Math.cos(ra) * R, conv) + shX; y = lerp(y, CFG.ring[1] + Math.sin(ra) * R, conv) + shY;
     d.el.setAttribute('cx', x); d.el.setAttribute('cy', y);
     // seul : gris isolé ; ensemble : blanc ; anneau : plus fin
     const lone = P(t, 2.9, 0.4) * (1 - P(t, 5.3, 0.6));
@@ -121,18 +146,19 @@ function sceneA(t) {
     el.setAttribute('transform', `translate(${off[0] * (1 - p)} ${off[1] * (1 - p)})`);
     el.setAttribute('opacity', clamp(p * 1.7));
   });
-  $('mark').style.transform = `translateX(${shift}px)`;
+  $('mark').style.transform = `translate(${shX}px, ${shY}px)`;
   kicker('nk', t, 10.55, Infinity); maskY($('n1'), t, 10.7); maskY($('n2'), t, 10.95); maskY($('n3'), t, 11.08);
 }
 
 /* =================== B : ADN (Venn) → mission =================== */
 const venn = $('venn');
 const pillars = [
-  { label: 'Foi', icon: 'flame', desc: ['Des valeurs chrétiennes', 'comme boussole.'], row: [520, 600], v: [835, 492], lab: [748, 440] },
-  { label: 'Innovation', icon: 'sparkles', desc: ['Des solutions', 'technologiques durables.'], row: [960, 600], v: [1085, 492], lab: [1172, 440] },
-  { label: 'Entrepreneuriat', icon: 'rocket', desc: ['Créer, développer', 'et réussir.'], row: [1400, 600], v: [960, 708], lab: [960, 808] },
+  { label: 'Foi', icon: 'flame', desc: ['Des valeurs chrétiennes', 'comme boussole.'] },
+  { label: 'Innovation', icon: 'sparkles', desc: ['Des solutions', 'technologiques durables.'] },
+  { label: 'Entrepreneuriat', icon: 'rocket', desc: ['Créer, développer', 'et réussir.'] },
 ];
-const HUB = [1190, 560];
+pillars.forEach((p, i) => { const c = CFG.pillars[i]; p.row = [c[0], c[1]]; p.v = [c[2], c[3]]; p.lab = [c[4], c[5]]; });
+const HUB = CFG.HUB;
 pillars.forEach((p) => {
   p.g = S('g', {}, venn);
   p.c = S('circle', { r: 200, fill: 'rgba(3,29,89,.05)', stroke: '#031d59', 'stroke-width': 3, pathLength: 1 }, p.g);
@@ -140,15 +166,15 @@ pillars.forEach((p) => {
   p.lg = S('g', {}, venn);
   p.lt = S('text', { 'text-anchor': 'middle', 'font-family': 'Anton', 'font-size': 46, fill: '#031d59' }, p.lg);
   p.lt.textContent = p.label.toUpperCase();
-  p.dt = S('text', { 'text-anchor': 'middle', 'font-family': 'Manrope', 'font-weight': 500, 'font-size': 24, fill: '#333' }, venn);
-  p.desc.forEach((line, k) => { const ts = S('tspan', { x: 0, dy: k ? 32 : 0 }, p.dt); ts.textContent = line; });
+  p.dt = S('text', { 'text-anchor': 'middle', 'font-family': 'Manrope', 'font-weight': 500, 'font-size': VERT ? 21 : 24, fill: '#333' }, venn);
+  p.desc.forEach((line, k) => { const ts = S('tspan', { x: 0, dy: k ? (VERT ? 28 : 32) : 0 }, p.dt); ts.textContent = line; });
 });
 const hubLogo = S('g', {}, venn);
 window.LOGO.filter((p) => SYM.includes(p.id)).forEach((p) => S('path', { d: p.d, fill: p.c === 'red' ? '#ac0100' : '#031d59' }, hubLogo));
 // réseau de la mission
 const mNodes = [];
 for (let i = 0; i < 11; i++) {
-  const a = ((112 + i * 13.6) * Math.PI) / 180, R = 255 + (i % 2) * 30;
+  const a = ((CFG.nodeA[0] + i * CFG.nodeA[1]) * Math.PI) / 180, R = CFG.nodeR + (i % 2) * 30;
   const x = HUB[0] + Math.cos(a) * R, y = HUB[1] + Math.sin(a) * R;
   const ex = HUB[0] + Math.cos(a) * 168, ey = HUB[1] + Math.sin(a) * 168;
   const line = S('line', { x1: x, y1: y, x2: ex, y2: ey, stroke: 'rgba(3,29,89,.25)', 'stroke-width': 2, pathLength: 1 }, venn);
@@ -162,8 +188,8 @@ venn.appendChild(hubLogo);
 pillars.forEach((p) => { venn.appendChild(p.lg); venn.appendChild(p.dt); });
 const outcomes = [['Co-création', 'users', -42], ["Partage d'expériences", 'message-circle', 0], ['Solutions durables', 'leaf', 42]];
 const pills = outcomes.map(([txt, ic, deg], i) => {
-  const a = (deg * Math.PI) / 180, R = 250;
-  const x = HUB[0] + Math.cos(a) * R + 50, y = HUB[1] + Math.sin(a) * R * 1.05;
+  const a = (deg * Math.PI) / 180, R = CFG.pillR;
+  const x = HUB[0] + Math.cos(a) * R + CFG.pillDx, y = HUB[1] + Math.sin(a) * R * 1.05;
   const conn = S('line', { x1: HUB[0] + Math.cos(a) * 168, y1: HUB[1] + Math.sin(a) * 168, x2: x, y2: y, stroke: '#ac0100', 'stroke-width': 2.5, pathLength: 1 }, venn);
   const el = H(`<div class="pill" style="left:${x}px;top:${y - 34}px"><i></i>${txt}</div>`, $('B'));
   return { el, conn, d: i * 0.4 };
@@ -175,7 +201,7 @@ function sceneB(t) {
   pillars.forEach((p, i) => {
     const di = i * 0.15;
     const cx = lerp(lerp(p.row[0], p.v[0], toV), HUB[0], toH), cy = lerp(lerp(p.row[1], p.v[1], toV), HUB[1], toH);
-    const r = lerp(lerp(200, 196, toV), 160, toH);
+    const r = lerp(lerp(CFG.rRow, CFG.rV, toV), 160, toH);
     p.c.setAttribute('cx', cx); p.c.setAttribute('cy', cy); p.c.setAttribute('r', r);
     draw(p.c, P(t, 13.6 + di, 1.1, E.io));
     p.c.setAttribute('fill', `rgba(3,29,89,${0.05 * (1 - toH)})`);
@@ -194,7 +220,7 @@ function sceneB(t) {
   });
   // monogramme au croisement, puis au centre du réseau
   const lp = P(t, 17.2, 0.9, E.back);
-  const lx = lerp(960, HUB[0], toH), ly = lerp(564, HUB[1], toH), sc = lerp(0.19, 0.3, toH) * clamp(lp);
+  const lx = lerp(CFG.inter[0], HUB[0], toH), ly = lerp(CFG.inter[1], HUB[1], toH), sc = lerp(0.19, 0.3, toH) * clamp(lp);
   hubLogo.setAttribute('transform', `translate(${lx} ${ly}) scale(${sc}) translate(-501 -373)`);
   hubLogo.setAttribute('opacity', clamp(lp));
   maskY($('vcap'), t, 17.5, 18.55);
@@ -229,7 +255,7 @@ const offers = [
   ['rocket', 'Accélération de projets', "Opportunités d'affaires, appels à projets, financements."],
 ];
 const cards = offers.map(([ic, title, text], i) => {
-  const x = 170 + (i % 3) * 540, y = 400 + Math.floor(i / 3) * 276;
+  const [x, y] = CFG.card(i);
   const el = H(`<div class="card" style="left:${x}px;top:${y}px"><div class="ic"></div><h3>${title}</h3><p>${text}</p></div>`, $('cards'));
   const svg = icon(ic, 36, el.querySelector('.ic'), { color: '#fff', sw: 1.7 });
   return { el, svg, d: i * 0.2 };
@@ -247,12 +273,12 @@ function sceneC(t) {
 
 /* =================== D : pour qui =================== */
 const stairs = $('stairs');
-const stairPath = S('path', { d: 'M150 930 H640 V780 H1130 V630 H1620 V500', fill: 'none', stroke: '#031d59', 'stroke-width': 5, 'stroke-linejoin': 'round', pathLength: 1 }, stairs);
-const arrow = S('path', { d: 'M1600 522 L1620 500 L1640 522', fill: 'none', stroke: '#031d59', 'stroke-width': 5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, stairs);
+const stairPath = S('path', { d: CFG.stairs, fill: 'none', stroke: '#031d59', 'stroke-width': 5, 'stroke-linejoin': 'round', pathLength: 1 }, stairs);
+const arrow = S('path', { d: CFG.arrow, fill: 'none', stroke: '#031d59', 'stroke-width': 5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, stairs);
 const climber = S('circle', { r: 15, fill: '#ac0100' }, stairs);
 const ring = S('circle', { r: 15, fill: 'none', stroke: '#ac0100', 'stroke-width': 3 }, stairs);
-const stepsData = [['Entreprendre', 'Étudiants & jeunes diplômés', 180, 815], ['Grandir', 'Entrepreneurs débutants', 670, 665], ['Réussir', 'Entrepreneurs confirmés', 1160, 515]];
-const steps = stepsData.map(([v, who, x, y]) => H(`<div class="abs" style="left:${x}px;top:${y - 30}px;color:var(--navy)"><div class="anton" style="font-size:66px">${v}<b class="red">.</b></div><div style="font-weight:700;font-size:25px;color:#333;margin-top:6px">${who}</div></div>`, $('steps')));
+const stepsData = [['Entreprendre', 'Étudiants & jeunes diplômés'], ['Grandir', 'Entrepreneurs débutants'], ['Réussir', 'Entrepreneurs confirmés']].map((s, i) => [...s, ...CFG.steps[i]]);
+const steps = stepsData.map(([v, who, x, y]) => H(`<div class="abs" style="left:${x}px;top:${y - (VERT ? 60 : 30)}px;${VERT ? 'width:270px;' : ''}color:var(--navy)"><div class="anton" style="font-size:${CFG.stepFont}px">${v}<b class="red">.</b></div><div style="font-weight:700;font-size:25px;color:#333;margin-top:6px">${who}</div></div>`, $('steps')));
 function sceneD(t) {
   kicker('dk', t, 33.1, 38.4); maskY($('d1'), t, 33.25, 38.45); maskY($('d2'), t, 33.55, 38.5);
   draw(stairPath, P(t, 33.9, 1.5, E.io));
@@ -270,7 +296,7 @@ function sceneD(t) {
 /* =================== E : domaines =================== */
 const poles = [['sprout', 'Agriculture & Agro'], ['cpu', 'Tech & Numérique'], ['megaphone', 'Communication & Création'], ['landmark', 'Finance & Services'], ['heart-pulse', 'Éducation & Santé'], ['building-2', 'Immobilier & BTP'], ['shopping-bag', 'Commerce & Mobilité'], ['scissors', 'Artisanat & Mode'], ['leaf', 'Impact & Énergie']];
 const tiles = poles.map(([ic, name], i) => {
-  const x = 870 + (i % 3) * 326, y = 289 + Math.floor(i / 3) * 176;
+  const [x, y] = CFG.tile(i);
   const el = H(`<div class="tile" style="left:${x}px;top:${y}px"><span></span><b>${name}</b></div>`, $('tiles'));
   const svg = icon(ic, 38, el.querySelector('span'), { color: '#fff', sw: 1.7 });
   return { el, svg };
@@ -285,12 +311,12 @@ function sceneE(t) {
 /* =================== F : valeurs =================== */
 const vals = $('vals');
 const values = [['flame', 'Foi', 'Des valeurs chrétiennes'], ['award', 'Excellence', 'Qualité et professionnalisme'], ['heart-handshake', 'Solidarité', 'Avancer ensemble'], ['target', 'Impact', "Servir l'Église et la société"], ['gem', 'Création<br>de richesse', 'Des entreprises viables']];
-const vLine = S('line', { x1: 300, y1: 560, x2: 1620, y2: 560, stroke: '#ac0100', 'stroke-width': 3, pathLength: 1 }, vals);
+const vLine = S('line', { x1: CFG.valLine[0], y1: CFG.valLine[1], x2: CFG.valLine[2], y2: CFG.valLine[3], stroke: '#ac0100', 'stroke-width': 3, pathLength: 1 }, vals);
 const vItems = values.map(([ic, name, desc], i) => {
-  const cx = 960 + (i - 2) * 330, cy = 560;
+  const [cx, cy] = CFG.val(i); const [lx, ly] = CFG.valLab(i);
   const c = S('circle', { cx, cy, r: 92, fill: '#f4f6f8', stroke: '#031d59', 'stroke-width': 3, pathLength: 1 }, vals);
   const svg = icon(ic, 70, vals, { x: cx - 35, y: cy - 35, color: '#031d59', sw: 1.5 });
-  const lab = H(`<div class="abs" style="left:${cx - 160}px;top:690px;width:320px;text-align:center;color:var(--navy)"><div class="anton" style="font-size:42px;line-height:1.02">${name}</div><div style="font-weight:600;font-size:21px;color:#333;margin-top:10px">${desc}</div></div>`, $('valLabels'));
+  const lab = H(`<div class="abs" style="left:${lx}px;top:${ly}px;width:${VERT ? 640 : 320}px;text-align:${CFG.valAlign};color:var(--navy)"><div class="anton" style="font-size:${VERT ? 50 : 42}px;line-height:1.02">${VERT ? name.replace('<br>', ' ') : name}</div><div style="font-weight:600;font-size:21px;color:#333;margin-top:10px">${desc}</div></div>`, $('valLabels'));
   return { c, svg, lab };
 });
 function sceneF(t) {
@@ -309,6 +335,7 @@ function sceneF(t) {
 
 /* =================== G : vision =================== */
 const map = $('map');
+map.setAttribute('viewBox', `${-CFG.mapOff[0]} ${-CFG.mapOff[1]} ${SW} ${SH}`);
 const civ = S('path', { d: window.MAP.d, fill: 'rgba(10,44,110,0)', stroke: '#fff', 'stroke-width': 2.5, 'stroke-linejoin': 'round', pathLength: 1 }, map);
 const cities = Object.entries(window.MAP.cities);
 const abj = window.MAP.cities['Abidjan'];
@@ -369,7 +396,7 @@ function sceneH(t) {
 const edge = H('<div class="abs" style="left:0;right:0;height:10px;background:var(--red);z-index:55;visibility:hidden"></div>', $('stage'));
 const LAYERS = [
   { id: 'A', from: 0, to: 13.5 },
-  { id: 'B', from: 12.6, to: 25.8, circle: [520, 540] },
+  { id: 'B', from: 12.6, to: 25.8, circle: [CFG.ring[0] + CFG.shift[0], CFG.ring[1] + CFG.shift[1]] },
   { id: 'C', from: 25.0, to: 33.4 },
   { id: 'D', from: 32.6, to: 39.4 },
   { id: 'E', from: 38.6, to: 44.9 },
@@ -377,7 +404,7 @@ const LAYERS = [
   { id: 'G', from: 49.1, to: 55.4 },
   { id: 'H', from: 54.6, to: 61, circle: null },
 ];
-LAYERS[7].circle = window.MAP.cities['Abidjan'];
+LAYERS[7].circle = [window.MAP.cities['Abidjan'][0] + CFG.mapOff[0], window.MAP.cities['Abidjan'][1] + CFG.mapOff[1]];
 const scenes = { A: sceneA, B: sceneB, C: sceneC, D: sceneD, E: sceneE, F: sceneF, G: sceneG, H: sceneH };
 const light = { A: false, B: true, C: false, D: true, E: false, F: true, G: false, H: true };
 const chapters = [[0, '01 · Le constat'], [5.4, '02 · Notre réponse'], [12.9, '03 · Notre ADN'], [18.7, '04 · Notre mission'], [25.3, '05 · Notre offre'], [32.9, '06 · Pour qui ?'], [38.9, '07 · Nos domaines'], [44.4, '08 · Nos valeurs'], [49.4, '09 · Notre vision']];
@@ -393,7 +420,7 @@ function render(t) {
     if (L.id !== 'A') {
       const p = P(t, L.from, L.circle ? 0.85 : 0.7, E.io4);
       if (L.circle) el.style.clipPath = `circle(${p * 2300}px at ${L.circle[0]}px ${L.circle[1]}px)`;
-      else { el.style.clipPath = `inset(${100 * (1 - p)}% 0 0 0)`; if (p > 0 && p < 1) edgeY = 1080 * (1 - p); }
+      else { el.style.clipPath = `inset(${100 * (1 - p)}% 0 0 0)`; if (p > 0 && p < 1) edgeY = SH * (1 - p); }
       if (p > 0.5) top = L.id;
     }
     scenes[L.id](t);
@@ -408,7 +435,7 @@ function render(t) {
 }
 
 window.renderAt = async (t) => { render(t); await document.fonts.ready; };
-function fit() { const s = Math.min(innerWidth / 1920, innerHeight / 1080); $('stage').style.transform = `scale(${s})`; }
+function fit() { const s = Math.min(innerWidth / SW, innerHeight / SH); $('stage').style.transform = `scale(${s})`; }
 if (!location.search.includes('capture')) {
   fit(); addEventListener('resize', fit);
   const start = performance.now();

@@ -14,3 +14,10 @@ Rendu : `node cap.js video frames 30 0 60`, puis
 
 Contenus repris de la charte (vision, mission, positionnement, valeurs, publics) et du site
 (activités, avantages, 33 domaines en 9 pôles).
+
+## Version verticale 9:16
+
+`vertical.html` (1080×1920) réutilise `explainer.js` avec `window.VERTICAL = true` : chaque
+chapitre est recomposé pour l'écran du téléphone (cercles empilés puis Venn, cartes sur deux
+colonnes, escalier resserré, valeurs en colonne, carte au-dessus du texte).
+Rendu : `PAGE=vertical.html VW=1080 VH=1920 node cap.js video frames_v 30 0 60`.
