@@ -2,6 +2,7 @@ import './bootstrap';
 import Lenis from 'lenis';
 import QRCode from 'qrcode';
 import { initHomeMotion } from './home-motion';
+import { initTourPlayer } from './tour-player';
 
 // Génération de QR codes côté client (cartes membres de l'admin).
 window.QRCode = QRCode;
@@ -126,6 +127,7 @@ function boot() {
     initCounters();
     dismissLoader();
     initHomeMotion();
+    initTourPlayer();
 }
 
 document.addEventListener('DOMContentLoaded', boot);

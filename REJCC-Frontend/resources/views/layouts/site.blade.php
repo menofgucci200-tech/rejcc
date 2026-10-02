@@ -77,6 +77,11 @@
 
         <x-footer />
 
+        {{-- Bouton flottant : film du parcours d'adhésion (masqué sur le formulaire lui-même) --}}
+        @unless (request()->is('adhesion'))
+            <x-ui.tour-button />
+        @endunless
+
         @livewireScripts
     </body>
 </html>

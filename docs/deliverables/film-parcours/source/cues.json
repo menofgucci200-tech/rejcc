@@ -1,0 +1,145 @@
+{
+ "cues": [
+  {
+   "i": 0,
+   "sec": "intro",
+   "start": 2.4,
+   "end": 5.25,
+   "text": "Vous avez une idée, un projet, une ambition ?"
+  },
+  {
+   "i": 1,
+   "sec": "intro",
+   "start": 6.0,
+   "end": 9.29,
+   "text": "Le Rèje vous ouvre ses portes, et tout commence en ligne."
+  },
+  {
+   "i": 2,
+   "sec": "plateforme",
+   "start": 10.89,
+   "end": 18.89,
+   "text": "Voici la plateforme du Rèje : un site pour découvrir le réseau, un espace membre pour y grandir, et des outils pour faire vivre la communauté."
+  },
+  {
+   "i": 3,
+   "sec": "plateforme",
+   "start": 19.64,
+   "end": 24.58,
+   "text": "Sur ordinateur comme sur mobile, tout est pensé pour être simple, rapide et accessible."
+  },
+  {
+   "i": 4,
+   "sec": "parcours",
+   "start": 26.78,
+   "end": 36.31,
+   "text": "Rejoindre le réseau se fait en six étapes : découvrir, candidater, suivre sa demande, être validé, activer son abonnement… et profiter de tout le réseau."
+  },
+  {
+   "i": 5,
+   "sec": "decouvrir",
+   "start": 38.31,
+   "end": 44.36,
+   "text": "Tout commence sur la page d'accueil. Un clic sur le bouton Adhérer, et votre parcours commence."
+  },
+  {
+   "i": 6,
+   "sec": "form",
+   "start": 45.96,
+   "end": 53.72,
+   "text": "Le formulaire d'adhésion vous guide étape par étape, huit au total, avec une barre de progression pour savoir où vous en êtes."
+  },
+  {
+   "i": 7,
+   "sec": "form1",
+   "start": 54.47,
+   "end": 61.96,
+   "text": "D'abord, vos informations générales : votre nom, vos coordonnées, votre ville, et le mot de passe de votre futur espace."
+  },
+  {
+   "i": 8,
+   "sec": "form2",
+   "start": 62.71,
+   "end": 67.62,
+   "text": "Puis votre diocèse et votre paroisse, votre profil, et vos compétences."
+  },
+  {
+   "i": 9,
+   "sec": "form5",
+   "start": 68.37,
+   "end": 74.63,
+   "text": "Vous avez déjà une activité ? Dites-le : le formulaire s'adapte à votre situation et à votre projet."
+  },
+  {
+   "i": 10,
+   "sec": "form7",
+   "start": 75.38,
+   "end": 81.32,
+   "text": "Enfin, vos attentes envers le réseau. Un récapitulatif vous permet de tout vérifier avant d'envoyer."
+  },
+  {
+   "i": 11,
+   "sec": "merci",
+   "start": 83.52,
+   "end": 87.3,
+   "text": "Votre demande est enregistrée. C'est aussi simple que ça."
+  },
+  {
+   "i": 12,
+   "sec": "suivi",
+   "start": 89.3,
+   "end": 93.95,
+   "text": "À tout moment, suivez l'état de votre candidature avec votre adresse e-mail."
+  },
+  {
+   "i": 13,
+   "sec": "validation",
+   "start": 95.55,
+   "end": 103.28,
+   "text": "Le bureau du Rèje étudie chaque demande. Une fois approuvée, votre compte membre est créé, et un message de bienvenue vous est envoyé."
+  },
+  {
+   "i": 14,
+   "sec": "connexion",
+   "start": 104.88,
+   "end": 110.0,
+   "text": "Connectez-vous : votre espace membre vous attend, sur ordinateur comme sur votre téléphone."
+  },
+  {
+   "i": 15,
+   "sec": "abonnement",
+   "start": 111.6,
+   "end": 120.09,
+   "text": "Pour tout débloquer, activez l'abonnement annuel de dix mille francs CFA, payable en toute sécurité par Mobile Money ou carte bancaire."
+  },
+  {
+   "i": 16,
+   "sec": "carte",
+   "start": 121.69,
+   "end": 126.36,
+   "text": "Votre carte de membre numérique, avec son QR code, est prête."
+  },
+  {
+   "i": 17,
+   "sec": "services",
+   "start": 127.96,
+   "end": 136.12,
+   "text": "Annuaire, messagerie, formations, événements, groupes sectoriels, marketplace et offres d'emploi : tout le réseau est désormais à portée de main."
+  },
+  {
+   "i": 18,
+   "sec": "fin",
+   "start": 138.92,
+   "end": 141.8,
+   "text": "Le Rèje. Ensemble, pour l'excellence."
+  },
+  {
+   "i": 19,
+   "sec": "fin",
+   "start": 142.55,
+   "end": 145.65,
+   "text": "Rejoignez-nous dès aujourd'hui sur Rèje point site."
+  }
+ ],
+ "end": 149.65
+}
