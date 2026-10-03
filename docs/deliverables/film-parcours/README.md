@@ -6,7 +6,10 @@ sous-titres `parcours-adhesion.fr.vtt`. Sur le site, le bouton flottant circulan
 
 ## Voix off (piste guide)
 
-Voix de synthèse masculine provisoire (Piper « fr_FR-tom-medium »). REJCC se dit « Rèje ». Pour la version
+Voix de synthèse masculine provisoire : Piper « fr_FR-upmc-medium », locuteur « pierre » (licence CC BY-SA 4.0),
+lecture posée (vitesse 0,8) avec une prosodie naturelle. Chaque phrase est générée plusieurs fois et la prise
+la plus intelligible (vérifiée par reconnaissance vocale Whisper) est conservée ; traitement léger, sans
+accentuation des aigus, pour éviter le timbre « métallique ». REJCC se dit « Rèje ». Pour la version
 définitive, faire enregistrer ce texte (idéalement par un jeune homme ivoirien) en respectant les repères :
 le film se recale sur les durées réelles (voir `source/`).
 
@@ -42,5 +45,5 @@ kalimba, marimba, nappe, basse et percussions légères ; la musique s'efface au
 
 - `source/index.html` + `source/tour.js` (+ `vertical.html`) : le film, fonction du temps, calé sur `cues.json` ;
 - `source/adhesion.js`, `journey*.js` : captures automatiques du vrai parcours (local) ;
-- `source/voix-off-gen.py`, `source/music.py` : génération de la voix guide et de la musique ;
+- `source/voix-off-gen.py`, `source/music.py`, `source/mix.py` : génération de la voix guide, de la musique et mixage ;
 - `source/cap.js` : rendu image par image (Playwright), assemblage ffmpeg.
