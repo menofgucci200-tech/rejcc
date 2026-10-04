@@ -259,6 +259,13 @@ html.lenis body {
   border-radius: 4px;
 }
 
+/* Champ de recherche de l'espace membre : le focus est porté par son cadre. */
+.rj-search-input:focus,
+.rj-search-input:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
 h1,
 h2,
 h3,

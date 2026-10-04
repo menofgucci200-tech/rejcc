@@ -293,13 +293,15 @@ class AuthController extends Controller
             $query->where('profil', $profil);
         }
 
-        if ($q !== '') {
-            $query->where(function ($qb) use ($q) {
-                $qb->where('prenom', 'like', "%{$q}%")
-                    ->orWhere('nom', 'like', "%{$q}%")
-                    ->orWhere('secteur', 'like', "%{$q}%")
-                    ->orWhere('ville', 'like', "%{$q}%")
-                    ->orWhere('organisation', 'like', "%{$q}%");
+        // Chaque mot doit se retrouver dans au moins un champ : « Koffi Yao »
+        // trouve le membre dont le prénom est Koffi et le nom Yao.
+        foreach (preg_split('/\s+/', $q, -1, PREG_SPLIT_NO_EMPTY) as $mot) {
+            $query->where(function ($qb) use ($mot) {
+                $qb->where('prenom', 'like', "%{$mot}%")
+                    ->orWhere('nom', 'like', "%{$mot}%")
+                    ->orWhere('secteur', 'like', "%{$mot}%")
+                    ->orWhere('ville', 'like', "%{$mot}%")
+                    ->orWhere('organisation', 'like', "%{$mot}%");
             });
         }
 

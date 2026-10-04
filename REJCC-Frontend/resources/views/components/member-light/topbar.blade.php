@@ -9,10 +9,7 @@
 
     <div class="flex-1"></div>
 
-    <div class="hidden w-[280px] shrink items-center gap-2.5 rounded-[10px] border border-brand/10 bg-cloud px-3.5 py-2.5 md:flex">
-        <x-ui.icon name="search" class="size-4 shrink-0 text-[#5B677A]" />
-        <input type="text" placeholder="Rechercher une formation, un mentor…" class="w-full min-w-0 border-none bg-transparent text-[13px] text-ink outline-none placeholder:text-[#9AA6B8]" />
-    </div>
+    <livewire:member.global-search />
 
     <livewire:member.notification-bell />
 

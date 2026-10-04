@@ -7,11 +7,16 @@ use App\Support\CategoryPalette;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 #[Layout('layouts.member-light')]
 class Evenements extends Component
 {
+    /** Événement à mettre en avant (lien depuis l'accueil ou la recherche). */
+    #[Url(as: 'evenement', except: null)]
+    public ?int $focus = null;
+
     public function toggleInscription(int $id): void
     {
         Api::post("/events/{$id}/register", [], Api::token());
@@ -33,7 +38,8 @@ class Evenements extends Component
         $all = $this->evenements();
 
         $upcoming = $all
-            ->filter(fn (array $e) => $e['starts_at']->isFuture())
+            // L'événement ciblé par un lien reste affiché même s'il est passé.
+            ->filter(fn (array $e) => $e['starts_at']->isFuture() || $e['id'] === $this->focus)
             ->sortBy('starts_at')
             ->values()
             ->map(function (array $e) {
@@ -48,6 +54,7 @@ class Evenements extends Component
                     'titre' => $e['title'],
                     'detail' => trim($heure.($e['location'] ? ' · '.$e['location'] : '')),
                     'inscrit' => (bool) $e['registered'],
+                    'passe' => $e['starts_at']->isPast(),
                 ];
             });
 
@@ -65,6 +72,7 @@ class Evenements extends Component
 
         return view('livewire.member.evenements', [
             'evenements' => $upcoming,
+            'focus' => $this->focus,
             'cells' => $cells,
             'eventDays' => $eventDays,
             'today' => $now->day,

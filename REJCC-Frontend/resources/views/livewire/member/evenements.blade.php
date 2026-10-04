@@ -12,7 +12,9 @@
                 <h2 class="mb-4 text-sm font-bold text-brand">À venir</h2>
                 <div class="space-y-3">
                     @forelse ($evenements as $e)
-                        <article class="card-hover flex flex-wrap items-center gap-4 rounded-[16px] border border-brand/10 bg-white p-4 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                        <article id="evenement-{{ $e['id'] }}" wire:key="ev-{{ $e['id'] }}"
+                            @if ($focus === $e['id']) data-test="evenement-cible" x-data x-init="$el.scrollIntoView({ block: 'center', behavior: 'smooth' })" @endif
+                            class="card-hover flex scroll-mt-24 flex-wrap items-center gap-4 rounded-[16px] border bg-white p-4 shadow-[0_2px_8px_rgba(3,29,89,.05)] {{ $focus === $e['id'] ? 'border-azure ring-2 ring-azure/30' : 'border-brand/10' }}">
                             <div class="flex size-12 shrink-0 flex-col items-center justify-center rounded-xl bg-cloud text-brand">
                                 <span class="text-sm font-bold leading-none">{{ $e['jour'] }}</span>
                             </div>
@@ -21,7 +23,9 @@
                                 <p class="text-[13.5px] font-bold text-brand">{{ $e['titre'] }}</p>
                                 <p class="mt-0.5 text-xs text-[#9AA6B8]">{{ $e['date'] }} · {{ $e['detail'] }}</p>
                             </div>
-                            @if ($e['inscrit'])
+                            @if ($e['passe'])
+                                <span class="shrink-0 rounded-full bg-cloud px-3.5 py-1.5 text-xs font-semibold text-[#9AA6B8]">Terminé</span>
+                            @elseif ($e['inscrit'])
                                 <button wire:click="toggleInscription({{ $e['id'] }})" wire:confirm="Annuler votre inscription à « {{ $e['titre'] }} » ?" class="btn-tap inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#22A85A]/10 px-3.5 py-1.5 text-xs font-semibold text-[#22A85A]">
                                     <x-ui.icon name="check" class="size-3.5" /> Inscrit
                                 </button>

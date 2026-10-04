@@ -6,11 +6,13 @@ use App\Support\Api;
 use App\Support\Content\MembershipContent;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 #[Layout('layouts.member-light')]
 class Directory extends Component
 {
+    #[Url(as: 'q', except: '')]
     public string $query = '';
 
     public string $filtre = 'tous';

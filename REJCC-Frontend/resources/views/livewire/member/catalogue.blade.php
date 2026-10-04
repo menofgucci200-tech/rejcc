@@ -14,6 +14,16 @@
             </div>
         </div>
 
+        @if (trim($q) !== '')
+            <div data-test="filtre-recherche" class="mb-4 flex flex-wrap items-center gap-2 text-[13px] text-[#5B677A]">
+                <x-ui.icon name="search" class="size-4" />
+                {{ $cours->count() }} résultat{{ $cours->count() > 1 ? 's' : '' }} pour <strong class="text-brand">« {{ $q }} »</strong>
+                <button type="button" wire:click="effacerRecherche" class="ml-1 inline-flex items-center gap-1 rounded-full border border-brand/10 bg-white px-2.5 py-1 text-xs font-semibold text-brand hover:bg-cloud">
+                    <x-ui.icon name="x" class="size-3" /> Tout afficher
+                </button>
+            </div>
+        @endif
+
         <div class="grid gap-4" style="grid-template-columns: repeat(auto-fill, minmax(260px, 1fr))">
             @foreach ($cours as $c)
                 <article class="card-hover overflow-hidden rounded-[16px] border border-brand/10 bg-white shadow-[0_2px_8px_rgba(3,29,89,.05)]">

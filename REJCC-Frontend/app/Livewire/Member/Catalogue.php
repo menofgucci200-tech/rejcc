@@ -5,13 +5,24 @@ namespace App\Livewire\Member;
 use App\Support\Api;
 use App\Support\CategoryPalette;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 #[Layout('layouts.member-light')]
 class Catalogue extends Component
 {
     public string $filtre = 'toutes';
+
+    /** Recherche reçue de la barre du haut (?q=). */
+    #[Url(except: '')]
+    public string $q = '';
+
+    public function effacerRecherche(): void
+    {
+        $this->q = '';
+    }
 
     public function setFiltre(string $filtre): void
     {
@@ -47,6 +58,11 @@ class Catalogue extends Component
             })
             ->when($this->filtre === 'gratuit', fn ($c) => $c->where('gratuit', true))
             ->when($this->filtre === 'certifiante', fn ($c) => $c->where('certifiante', true))
+            ->when(trim($this->q) !== '', function ($c) {
+                $q = Str::lower(Str::ascii(trim($this->q)));
+
+                return $c->filter(fn ($f) => str_contains(Str::lower(Str::ascii($f['titre'].' '.$f['tag'])), $q));
+            })
             ->values();
 
         return view('livewire.member.catalogue', ['cours' => $cours]);
