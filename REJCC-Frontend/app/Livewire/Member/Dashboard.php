@@ -65,8 +65,16 @@ class Dashboard extends Component
         $conversations = Collection::make($abonnementActif ? (Api::get('/messages', [], $token)['conversations'] ?? []) : []);
         $unreadMessages = $conversations->sum('unread');
 
+        // Les 4 derniers documents mis en ligne (l'API les trie par catégorie).
         $docs = Collection::make(Api::get('/documents', [], $token)['documents'] ?? [])
-            ->take(4)->map(fn ($d) => (object) $d);
+            ->sortByDesc(fn ($d) => $d['created_at'] ?? '')
+            ->take(4)
+            ->map(function ($d) {
+                $d['ajoute'] = ! empty($d['created_at']) ? Carbon::parse($d['created_at']) : null;
+
+                return (object) $d;
+            })
+            ->values();
 
         $members = Collection::make($abonnementActif ? (Api::get('/members', [], $token)['members'] ?? []) : [])
             ->reject(fn ($m) => $m['id'] === $user->id)

@@ -11,7 +11,7 @@ class DocumentController extends Controller
     public function index(Request $request)
     {
         $documents = Document::orderBy('category')->orderBy('title')
-            ->get(['id', 'title', 'description', 'category', 'url', 'size']);
+            ->get(['id', 'title', 'description', 'category', 'url', 'size', 'created_at']);
 
         return response()->json(['ok' => true, 'documents' => $documents]);
     }
