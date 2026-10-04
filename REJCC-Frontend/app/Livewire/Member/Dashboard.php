@@ -109,7 +109,14 @@ class Dashboard extends Component
                     'titre' => $f['title'],
                     'categorie' => $f['category'],
                     'pct' => (int) $f['progress'],
-                    'module' => "Module {$moduleCourant} sur {$modules}",
+                    // Nom réel du prochain module quand la formation a un contenu détaillé.
+                    'module' => ! empty($f['module_courant'])
+                        ? "Prochain module : {$f['module_courant']} ({$moduleCourant} sur {$modules})"
+                        : "Module {$moduleCourant} sur {$modules}",
+                    // Ouvre directement la formation (ses modules) ; sinon la page « Mes formations ».
+                    'url' => ! empty($f['has_modules'])
+                        ? route('espace-membre.formations.detail', $f['id'])
+                        : route('espace-membre.formations'),
                 ];
             })
             ->first();

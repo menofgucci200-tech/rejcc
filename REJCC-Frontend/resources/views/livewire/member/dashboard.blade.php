@@ -32,8 +32,9 @@
                 <h1 class="mb-2 text-[28px] font-extrabold tracking-tight text-brand">Bonjour {{ $user->prenom }} 👋</h1>
                 <p class="max-w-lg font-serif text-[15px] italic text-[#5B677A]">« Tout ce que vous faites, faites-le de bon cœur, comme pour le Seigneur. » — Colossiens 3:23</p>
             </div>
-            <a href="{{ route('espace-membre.formations') }}" wire:navigate class="group inline-flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-[22px] py-3 text-sm font-bold text-white shadow-[0_6px_16px_rgba(172,1,0,.25)] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-accent-600 hover:shadow-[0_10px_22px_rgba(172,1,0,.32)] active:scale-95 sm:w-fit">
-                Reprendre ma formation
+            {{-- Reprend la formation en cours ; sans formation en cours, invite au catalogue. --}}
+            <a href="{{ $continuer['url'] ?? route('espace-membre.catalogue') }}" wire:navigate data-test="cta-principal" class="group inline-flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-[22px] py-3 text-sm font-bold text-white shadow-[0_6px_16px_rgba(172,1,0,.25)] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-accent-600 hover:shadow-[0_10px_22px_rgba(172,1,0,.32)] active:scale-95 sm:w-fit">
+                {{ $continuer ? 'Reprendre ma formation' : 'Découvrir les formations' }}
                 <x-ui.icon name="arrow-right" class="nudge-x size-4" />
             </a>
         </section>
@@ -90,7 +91,7 @@
                                         <div class="h-full rounded-md" style="width: {{ $continuer['pct'] }}%; background: linear-gradient(90deg,#031D59,#4F6FBF)"></div>
                                     </div>
                                     <span class="text-[13px] font-bold text-brand">{{ $continuer['pct'] }} %</span>
-                                    <a href="{{ route('espace-membre.formations') }}" wire:navigate class="rounded-[10px] bg-brand px-5 py-2.5 text-[13px] font-bold text-white transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-accent hover:shadow-md active:scale-95">Continuer</a>
+                                    <a href="{{ $continuer['url'] }}" wire:navigate data-test="continuer" class="rounded-[10px] bg-brand px-5 py-2.5 text-[13px] font-bold text-white transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-accent hover:shadow-md active:scale-95">Continuer</a>
                                 </div>
                             </div>
                         </div>
