@@ -1,3 +1,5 @@
+{{-- La vraie valeur est rendue côté serveur (lisible sans JS, et intacte quand
+     Livewire rafraîchit la page) ; le JS la remet à 0 puis l'anime une seule fois. --}}
 @props([
     'value',
     'suffix' => '',
@@ -10,4 +12,4 @@
     data-counter-suffix="{{ $suffix }}"
     data-counter-duration="{{ $duration }}"
     {{ $attributes }}
->0{{ $suffix }}</span>
+>{{ number_format((float) $value, 0, ',', ' ') }}{{ $suffix }}</span>

@@ -70,10 +70,15 @@ function initReveal() {
     document.querySelectorAll('[data-reveal]:not(.is-visible)').forEach((el) => observer.observe(el));
 }
 
+// Compteurs déjà animés (une seule animation par élément, même après un
+// rafraîchissement Livewire qui conserve les nœuds).
+const animatedCounters = new WeakSet();
+
 function initCounters() {
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     const animate = (el) => {
+        animatedCounters.add(el);
         const target = parseFloat(el.dataset.counterValue || '0');
         const suffix = el.dataset.counterSuffix || '';
 
@@ -106,7 +111,11 @@ function initCounters() {
         { rootMargin: '0px 0px -60px 0px', threshold: 0.1 },
     );
 
-    document.querySelectorAll('[data-counter]').forEach((el) => observer.observe(el));
+    document.querySelectorAll('[data-counter]').forEach((el) => {
+        if (animatedCounters.has(el)) return;
+        if (!reduceMotion) el.textContent = '0' + (el.dataset.counterSuffix || '');
+        observer.observe(el);
+    });
 }
 
 function dismissLoader() {

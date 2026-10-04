@@ -2,10 +2,11 @@
     $user = \App\Support\Api::user();
 @endphp
 
-<div>
+{{-- Se met à jour seul toutes les 60 s quand l'onglet est visible (nouveaux messages, événements, progression…). --}}
+<div wire:poll.visible.60s>
     <x-member-light.topbar title="Tableau de bord" />
 
-    <div class="mx-auto max-w-[1280px] px-8 py-8">
+    <div class="mx-auto max-w-[1280px] px-4 py-6 sm:px-8 sm:py-8">
         @if (! $abonnementActif)
             <section data-test="abonnement-inactif" class="mb-6 flex flex-wrap items-center gap-4 rounded-[18px] border border-[#F5A623]/40 bg-[#FFF8EC] px-6 py-5">
                 <span class="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#F5A623]/15 text-[#B97400]">
@@ -39,7 +40,7 @@
             </a>
         </section>
 
-        <section class="relative mb-6 grid grid-cols-1 gap-8 overflow-hidden rounded-[20px] px-8 py-7 text-white shadow-[0_12px_32px_rgba(3,29,89,.22)] lg:grid-cols-[1.2fr_1fr]" style="background: linear-gradient(120deg,#031D59 0%,#0B2E7A 60%,#1A3D8F 100%)">
+        <section class="relative mb-6 grid grid-cols-1 gap-6 overflow-hidden rounded-[20px] px-5 py-6 text-white sm:gap-8 sm:px-8 sm:py-7 shadow-[0_12px_32px_rgba(3,29,89,.22)] lg:grid-cols-[1.2fr_1fr]" style="background: linear-gradient(120deg,#031D59 0%,#0B2E7A 60%,#1A3D8F 100%)">
             <div class="relative">
                 <p class="mb-2.5 text-xs font-semibold tracking-[0.12em] text-[#8FA3D9]">PROGRESSION GÉNÉRALE</p>
                 <div class="flex items-baseline gap-2">
@@ -52,21 +53,23 @@
                 <p class="mt-3.5 text-[13px] text-[#C4D0EC]">
                     @if ($continuer)
                         Continuez <strong class="text-white">{{ $continuer['titre'] }}</strong> — {{ $continuer['module'] }}.
+                    @elseif ($formationsTerminees > 0)
+                        Bravo, toutes vos formations sont terminées ! Choisissez la suivante dans le catalogue.
                     @else
                         Inscrivez-vous à une formation du catalogue pour démarrer votre progression.
                     @endif
                 </p>
             </div>
-            <div class="grid grid-cols-3 gap-3 max-[480px]:grid-cols-1">
+            <div data-test="compteurs" class="grid grid-cols-3 gap-2 sm:gap-3">
                 @foreach ([
                     ['icon' => 'graduation-cap', 'value' => $formationsTerminees, 'label' => 'Formations terminées'],
                     ['icon' => 'award', 'value' => $certificatsObtenus, 'label' => 'Certificats obtenus'],
                     ['icon' => 'check-circle', 'value' => $modulesValides, 'label' => 'Modules validés'],
                 ] as $stat)
-                    <div class="rounded-[14px] border border-white/10 bg-white/[.08] px-3.5 py-4">
-                        <x-ui.icon :name="$stat['icon']" class="size-5 text-[#8FB0FF]" />
-                        <p class="mt-2 text-[26px] font-extrabold leading-none"><x-ui.counter :value="$stat['value']" :suffix="$stat['suffix'] ?? ''" /></p>
-                        <p class="mt-1 text-xs text-[#C4D0EC]">{{ $stat['label'] }}</p>
+                    <div class="rounded-[14px] border border-white/10 bg-white/[.08] px-2.5 py-3 sm:px-3.5 sm:py-4">
+                        <x-ui.icon :name="$stat['icon']" class="size-4 text-[#8FB0FF] sm:size-5" />
+                        <p class="mt-1.5 text-[22px] font-extrabold leading-none sm:mt-2 sm:text-[26px]"><x-ui.counter :value="$stat['value']" :suffix="$stat['suffix'] ?? ''" /></p>
+                        <p class="mt-1 text-[11px] leading-tight text-[#C4D0EC] sm:text-xs">{{ $stat['label'] }}</p>
                     </div>
                 @endforeach
             </div>
@@ -118,6 +121,94 @@
                         </div>
                     </section>
                 @endif
+
+                <section>
+                    <div class="mb-3.5 flex items-end justify-between">
+                        <div>
+                            <h2 class="text-[17px] font-bold text-brand">Événements à venir</h2>
+                            <p class="mt-0.5 text-[13px] text-[#5B677A]">Restez connecté à l'agenda du réseau</p>
+                        </div>
+                        <a href="{{ route('espace-membre.evenements') }}" wire:navigate data-test="tous-evenements" class="group inline-flex items-center gap-1.5 rounded-lg border border-azure/25 bg-azure/10 px-3 py-1.5 text-[12.5px] font-semibold text-azure transition-all duration-200 ease-out hover:bg-azure/20 active:scale-95">
+                            Tous les événements <x-ui.icon name="arrow-right" class="nudge-x size-3" />
+                        </a>
+                    </div>
+                    <div class="rounded-[18px] border border-brand/10 bg-white shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                        @if ($upcomingEvents->isEmpty())
+                            <div class="px-6 py-8 text-center"><p class="text-[13px] text-[#5B677A]">Aucun événement à venir.</p></div>
+                        @else
+                            <ul class="list-none py-2">
+                                @foreach ($upcomingEvents as $ev)
+                                    <li>
+                                        <a href="{{ route('espace-membre.evenements', ['evenement' => $ev->id]) }}" wire:navigate data-test="evenement-accueil" class="group flex items-start gap-3.5 px-[18px] py-3 transition-colors duration-200 hover:bg-cloud/50">
+                                            <div class="mt-1.5 size-2 shrink-0 rounded-full bg-azure"></div>
+                                            <div class="min-w-0 flex-1">
+                                                <div class="mb-1 flex items-center gap-2">
+                                                    <span class="rounded-full bg-azure/15 px-2 py-0.5 text-[10.5px] font-semibold text-azure">{{ $ev->category }}</span>
+                                                    <span class="text-[11px] text-[#9AA6B8]">{{ $ev->starts_at->locale('fr')->translatedFormat('d M') }}</span>
+                                                    @if (! empty($ev->registered))
+                                                        <span class="inline-flex items-center gap-1 rounded-full bg-[#22A85A]/10 px-2 py-0.5 text-[10.5px] font-semibold text-[#22A85A]"><x-ui.icon name="check" class="size-3" /> Inscrit</span>
+                                                    @endif
+                                                </div>
+                                                <p class="mb-0.5 text-[13.5px] font-semibold text-brand group-hover:underline">{{ $ev->title }}</p>
+                                                @if ($ev->location)
+                                                    <p class="text-xs text-[#9AA6B8]">📍 {{ $ev->location }}</p>
+                                                @endif
+                                            </div>
+                                            <x-ui.icon name="chevron-right" class="mt-2 size-4 shrink-0 text-[#C9D3E6] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-azure" />
+                                        </a>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        @endif
+                    </div>
+                </section>
+
+                <section>
+                    <div class="mb-3.5 flex items-end justify-between">
+                        <div>
+                            <h2 class="text-[17px] font-bold text-brand">Membres du réseau</h2>
+                            <p class="mt-0.5 text-[13px] text-[#5B677A]">Connectez-vous avec vos pairs</p>
+                        </div>
+                        <a href="{{ route('espace-membre.directory') }}" wire:navigate class="group inline-flex items-center gap-1.5 rounded-lg border border-azure/25 bg-azure/10 px-3 py-1.5 text-[12.5px] font-semibold text-azure transition-all duration-200 ease-out hover:bg-azure/20 active:scale-95">
+                            Voir l'annuaire <x-ui.icon name="arrow-right" class="nudge-x size-3" />
+                        </a>
+                    </div>
+                    <div class="rounded-[18px] border border-brand/10 bg-white shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                        @if (! $abonnementActif)
+                            <div data-test="annuaire-verrouille" class="flex flex-col items-center gap-2.5 px-6 py-8 text-center">
+                                <span class="flex size-10 items-center justify-center rounded-full bg-[#F5A623]/15 text-[#B97400]"><x-ui.icon name="shield" class="size-[18px]" /></span>
+                                <p class="text-[13.5px] font-semibold text-brand">L'annuaire est réservé aux membres abonnés</p>
+                                <p class="max-w-xs text-[12.5px] text-[#5B677A]">Activez votre abonnement pour découvrir les membres du réseau et leur écrire.</p>
+                                <a href="{{ route('espace-membre.abonnement') }}" wire:navigate class="mt-1 text-[12.5px] font-bold text-azure hover:underline">Activer mon abonnement →</a>
+                            </div>
+                        @elseif ($members->isEmpty())
+                            <div class="px-6 py-8 text-center"><p class="text-[13px] text-[#5B677A]">Aucun membre trouvé</p></div>
+                        @else
+                            <ul class="list-none p-0">
+                                @foreach ($members as $i => $m)
+                                    <li class="flex items-center gap-3 px-[18px] py-3.5 transition-colors duration-200 hover:bg-cloud/50 {{ $i < $members->count() - 1 ? 'border-b border-cloud-200' : '' }}">
+                                        @if ($m->photo ?? null)
+                                            <img src="{{ $m->photo }}" alt="Photo de {{ $m->prenom }} {{ $m->nom }}" loading="lazy" data-test="photo-membre" class="size-10 shrink-0 rounded-full object-cover ring-1 ring-brand/10">
+                                        @else
+                                            <div class="flex size-10 shrink-0 items-center justify-center rounded-full text-[13px] font-bold text-white" style="background: linear-gradient(135deg, #4F6FBF, #AC0100)">
+                                                {{ mb_substr($m->prenom, 0, 1) }}{{ mb_substr($m->nom, 0, 1) }}
+                                            </div>
+                                        @endif
+                                        <div class="min-w-0 flex-1">
+                                            <p class="truncate text-[13.5px] font-semibold text-brand">{{ $m->prenom }} {{ $m->nom }}</p>
+                                            @if ($m->secteur || $m->ville)
+                                                <p class="mt-0.5 truncate text-xs text-[#9AA6B8]">{{ collect([$m->secteur, $m->ville])->filter()->join(' · ') }}</p>
+                                            @endif
+                                        </div>
+                                        <a href="{{ route('espace-membre.messaging', ['to' => $m->id]) }}" wire:navigate title="Envoyer un message" class="flex size-[30px] shrink-0 items-center justify-center rounded-lg border border-brand/10 bg-cloud text-[#5B677A] transition-all duration-200 ease-out hover:scale-110 hover:border-azure/30 hover:text-azure active:scale-95">
+                                            <x-ui.icon name="message-circle" class="size-[13px]" />
+                                        </a>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        @endif
+                    </div>
+                </section>
             </div>
 
             <div class="flex min-w-0 flex-col gap-6">
@@ -184,92 +275,6 @@
                 </section>
             </div>
         </div>
-
-        <section class="mb-8 grid grid-cols-1 gap-5 lg:grid-cols-2">
-            <div>
-                <div class="mb-3.5 flex items-end justify-between">
-                    <div>
-                        <h2 class="text-[17px] font-bold text-brand">Membres du réseau</h2>
-                        <p class="mt-0.5 text-[13px] text-[#5B677A]">Connectez-vous avec vos pairs</p>
-                    </div>
-                    <a href="{{ route('espace-membre.directory') }}" wire:navigate class="group inline-flex items-center gap-1.5 rounded-lg border border-azure/25 bg-azure/10 px-3 py-1.5 text-[12.5px] font-semibold text-azure transition-all duration-200 ease-out hover:bg-azure/20 active:scale-95">
-                        Voir l'annuaire <x-ui.icon name="arrow-right" class="nudge-x size-3" />
-                    </a>
-                </div>
-                <div class="rounded-[18px] border border-brand/10 bg-white shadow-[0_2px_8px_rgba(3,29,89,.05)]">
-                    @if (! $abonnementActif)
-                        <div data-test="annuaire-verrouille" class="flex flex-col items-center gap-2.5 px-6 py-8 text-center">
-                            <span class="flex size-10 items-center justify-center rounded-full bg-[#F5A623]/15 text-[#B97400]"><x-ui.icon name="shield" class="size-[18px]" /></span>
-                            <p class="text-[13.5px] font-semibold text-brand">L'annuaire est réservé aux membres abonnés</p>
-                            <p class="max-w-xs text-[12.5px] text-[#5B677A]">Activez votre abonnement pour découvrir les membres du réseau et leur écrire.</p>
-                            <a href="{{ route('espace-membre.abonnement') }}" wire:navigate class="mt-1 text-[12.5px] font-bold text-azure hover:underline">Activer mon abonnement →</a>
-                        </div>
-                    @elseif ($members->isEmpty())
-                        <div class="px-6 py-8 text-center"><p class="text-[13px] text-[#5B677A]">Aucun membre trouvé</p></div>
-                    @else
-                        <ul class="list-none p-0">
-                            @foreach ($members as $i => $m)
-                                <li class="flex items-center gap-3 px-[18px] py-3.5 transition-colors duration-200 hover:bg-cloud/50 {{ $i < $members->count() - 1 ? 'border-b border-cloud-200' : '' }}">
-                                    <div class="flex size-10 shrink-0 items-center justify-center rounded-full text-[13px] font-bold text-white" style="background: linear-gradient(135deg, #4F6FBF, #AC0100)">
-                                        {{ mb_substr($m->prenom, 0, 1) }}{{ mb_substr($m->nom, 0, 1) }}
-                                    </div>
-                                    <div class="min-w-0 flex-1">
-                                        <p class="truncate text-[13.5px] font-semibold text-brand">{{ $m->prenom }} {{ $m->nom }}</p>
-                                        @if ($m->secteur || $m->ville)
-                                            <p class="mt-0.5 truncate text-xs text-[#9AA6B8]">{{ collect([$m->secteur, $m->ville])->filter()->join(' · ') }}</p>
-                                        @endif
-                                    </div>
-                                    <a href="{{ route('espace-membre.messaging', ['to' => $m->id]) }}" wire:navigate title="Envoyer un message" class="flex size-[30px] shrink-0 items-center justify-center rounded-lg border border-brand/10 bg-cloud text-[#5B677A] transition-all duration-200 ease-out hover:scale-110 hover:border-azure/30 hover:text-azure active:scale-95">
-                                        <x-ui.icon name="message-circle" class="size-[13px]" />
-                                    </a>
-                                </li>
-                            @endforeach
-                        </ul>
-                    @endif
-                </div>
-            </div>
-
-            <div>
-                <div class="mb-3.5 flex items-end justify-between">
-                    <div>
-                        <h2 class="text-[17px] font-bold text-brand">Événements à venir</h2>
-                        <p class="mt-0.5 text-[13px] text-[#5B677A]">Restez connecté à l'agenda du réseau</p>
-                    </div>
-                    <a href="{{ route('espace-membre.evenements') }}" wire:navigate data-test="tous-evenements" class="group inline-flex items-center gap-1.5 rounded-lg border border-azure/25 bg-azure/10 px-3 py-1.5 text-[12.5px] font-semibold text-azure transition-all duration-200 ease-out hover:bg-azure/20 active:scale-95">
-                        Tous les événements <x-ui.icon name="arrow-right" class="nudge-x size-3" />
-                    </a>
-                </div>
-                <div class="rounded-[18px] border border-brand/10 bg-white shadow-[0_2px_8px_rgba(3,29,89,.05)]">
-                    @if ($upcomingEvents->isEmpty())
-                        <div class="px-6 py-8 text-center"><p class="text-[13px] text-[#5B677A]">Aucun événement à venir.</p></div>
-                    @else
-                        <ul class="list-none py-2">
-                            @foreach ($upcomingEvents as $ev)
-                                <li>
-                                    <a href="{{ route('espace-membre.evenements', ['evenement' => $ev->id]) }}" wire:navigate data-test="evenement-accueil" class="group flex items-start gap-3.5 px-[18px] py-3 transition-colors duration-200 hover:bg-cloud/50">
-                                        <div class="mt-1.5 size-2 shrink-0 rounded-full bg-azure"></div>
-                                        <div class="min-w-0 flex-1">
-                                            <div class="mb-1 flex items-center gap-2">
-                                                <span class="rounded-full bg-azure/15 px-2 py-0.5 text-[10.5px] font-semibold text-azure">{{ $ev->category }}</span>
-                                                <span class="text-[11px] text-[#9AA6B8]">{{ $ev->starts_at->locale('fr')->translatedFormat('d M') }}</span>
-                                                @if (! empty($ev->registered))
-                                                    <span class="inline-flex items-center gap-1 rounded-full bg-[#22A85A]/10 px-2 py-0.5 text-[10.5px] font-semibold text-[#22A85A]"><x-ui.icon name="check" class="size-3" /> Inscrit</span>
-                                                @endif
-                                            </div>
-                                            <p class="mb-0.5 text-[13.5px] font-semibold text-brand group-hover:underline">{{ $ev->title }}</p>
-                                            @if ($ev->location)
-                                                <p class="text-xs text-[#9AA6B8]">📍 {{ $ev->location }}</p>
-                                            @endif
-                                        </div>
-                                        <x-ui.icon name="chevron-right" class="mt-2 size-4 shrink-0 text-[#C9D3E6] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-azure" />
-                                    </a>
-                                </li>
-                            @endforeach
-                        </ul>
-                    @endif
-                </div>
-            </div>
-        </section>
 
         @if ($docs->isNotEmpty())
             <section class="mb-8">
