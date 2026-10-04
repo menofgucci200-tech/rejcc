@@ -43,13 +43,13 @@
                     <div class="mb-4 rounded-[12px] border border-brand/10 bg-cloud/50 p-3.5">
                         <div class="mb-1.5 flex items-center justify-between">
                             <span class="text-[12px] font-bold text-brand">Complétion du profil</span>
-                            <span class="text-[12px] font-bold text-azure">{{ $completion }}%</span>
+                            <span data-test="completion" class="text-[12px] font-bold text-azure">{{ $completion }}%</span>
                         </div>
                         <div class="h-2 overflow-hidden rounded-full bg-white">
                             <div class="h-full rounded-full transition-all" style="width: {{ $completion }}%; background: linear-gradient(90deg,#4F6FBF,#22A85A)"></div>
                         </div>
                         @if ($completion < 100)
-                            <p class="mt-2 text-[11px] text-[#9AA6B8]">Complétez vos informations pour améliorer votre visibilité dans le réseau.</p>
+                            <p class="mt-2 text-[11px] text-[#9AA6B8]">Il manque : {{ implode(', ', $champsManquants) }}.</p>
                         @endif
                     </div>
 

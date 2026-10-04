@@ -3,6 +3,7 @@
 namespace App\Livewire\Member;
 
 use App\Support\Api;
+use App\Support\ProfileCompletion;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
@@ -11,14 +12,6 @@ use Livewire\Component;
 #[Layout('layouts.member-light')]
 class Dashboard extends Component
 {
-    protected function profileCompletion(object $user): int
-    {
-        $fields = [$user->prenom, $user->nom, $user->email, $user->telephone, $user->ville, $user->secteur, $user->profil, $user->bio ?? null];
-        $filled = count(array_filter($fields));
-
-        return (int) round(($filled / count($fields)) * 100);
-    }
-
     /**
      * Défis calculés depuis les vraies actions du membre — plus de cases à
      * cocher factices : chaque défi se valide tout seul quand l'action est faite.
@@ -60,7 +53,8 @@ class Dashboard extends Component
             session(['api_user' => $me['user']]);
         }
         $user = Api::user();
-        $completion = $this->profileCompletion($user);
+        $completion = ProfileCompletion::percent($user);
+        $champsManquants = ProfileCompletion::missing($user);
 
         $abonnementActif = (bool) ($user->subscription_active ?? false);
         $expireLe = ! empty($user->subscription_expires_at) ? Carbon::parse($user->subscription_expires_at) : null;
@@ -172,6 +166,7 @@ class Dashboard extends Component
 
         return view('livewire.member.dashboard', [
             'completion' => $completion,
+            'champsManquants' => $champsManquants,
             'abonnementActif' => $abonnementActif,
             'expireLe' => $expireLe,
             'expireBientot' => $expireBientot,

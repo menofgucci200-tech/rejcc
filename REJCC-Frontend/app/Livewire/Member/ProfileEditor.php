@@ -3,6 +3,7 @@
 namespace App\Livewire\Member;
 
 use App\Support\Api;
+use App\Support\ProfileCompletion;
 use App\Support\Content\MembershipContent;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
@@ -140,13 +141,16 @@ class ProfileEditor extends Component
         }
     }
 
-    /** Complétion du profil (indicateur d'amélioration). */
+    /** Complétion du profil (calcul partagé avec le tableau de bord). */
     protected function completion(): int
     {
-        $fields = [$this->prenom, $this->nom, $this->telephone, $this->ville, $this->secteur, $this->profil, $this->bio, $this->photo, $this->genre, $this->paroisse];
-        $filled = count(array_filter($fields, fn ($v) => trim((string) $v) !== ''));
+        return ProfileCompletion::percent($this->completionFields());
+    }
 
-        return (int) round($filled / count($fields) * 100);
+    /** Valeurs en cours de saisie, pour que l'indicateur suive le formulaire. */
+    protected function completionFields(): array
+    {
+        return array_map(fn (string $key) => $this->{$key}, array_combine(array_keys(ProfileCompletion::FIELDS), array_keys(ProfileCompletion::FIELDS)));
     }
 
     public function save(): void
@@ -231,6 +235,7 @@ class ProfileEditor extends Component
             'profiles' => MembershipContent::profiles(),
             'preferenceRows' => $preferences,
             'completion' => $this->completion(),
+            'champsManquants' => ProfileCompletion::missing($this->completionFields()),
         ]);
     }
 }

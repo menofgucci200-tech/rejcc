@@ -289,11 +289,11 @@
             </section>
         @endif
 
-        @if ($completion < 80)
+        @if ($completion < 100)
             <div class="flex flex-wrap items-center justify-between gap-5 rounded-[20px] border border-brand/10 px-8 py-6" style="background: linear-gradient(135deg, rgba(79,111,191,.10), rgba(172,1,0,.06)), #fff">
                 <div>
                     <h3 class="mb-1.5 font-serif text-lg italic text-brand">Complétez votre profil</h3>
-                    <p class="text-[13.5px] text-[#5B677A]">Votre profil est complété à {{ $completion }}%. Ajoutez vos informations pour améliorer votre visibilité dans le réseau.</p>
+                    <p data-test="completion-accueil" class="text-[13.5px] text-[#5B677A]">Votre profil est complété à {{ $completion }} %. Il manque : {{ implode(', ', $champsManquants) }}.</p>
                 </div>
                 <a href="{{ route('espace-membre.profile') }}" wire:navigate class="group inline-flex shrink-0 items-center gap-2 rounded-xl bg-brand px-5 py-2.5 text-[13.5px] font-bold text-white transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-accent hover:shadow-md active:scale-95">
                     Compléter mon profil <x-ui.icon name="arrow-right" class="nudge-x size-3.5" />
