@@ -109,7 +109,7 @@
                             </div>
                             <div class="flex flex-col gap-2.5">
                                 @foreach ($recommandations as $r)
-                                    <a href="{{ route($r['route']) }}" wire:navigate class="block rounded-xl border border-white/10 bg-white/[.08] px-3.5 py-3 transition-all duration-200 ease-out hover:translate-x-1 hover:bg-white/[.16] active:scale-[0.98]">
+                                    <a href="{{ $r['url'] }}" wire:navigate data-test="recommandation" class="block rounded-xl border border-white/10 bg-white/[.08] px-3.5 py-3 transition-all duration-200 ease-out hover:translate-x-1 hover:bg-white/[.16] active:scale-[0.98]">
                                         <p class="text-[13px] font-bold">{{ $r['type'] }} · {{ $r['titre'] }}</p>
                                         <p class="mt-0.5 text-[11.5px] text-[#C4D0EC]">{{ $r['detail'] }}</p>
                                     </a>
@@ -233,7 +233,7 @@
                         <h2 class="text-[17px] font-bold text-brand">Événements à venir</h2>
                         <p class="mt-0.5 text-[13px] text-[#5B677A]">Restez connecté à l'agenda du réseau</p>
                     </div>
-                    <a href="{{ url('/evenements') }}" class="group inline-flex items-center gap-1.5 rounded-lg border border-azure/25 bg-azure/10 px-3 py-1.5 text-[12.5px] font-semibold text-azure transition-all duration-200 ease-out hover:bg-azure/20 active:scale-95">
+                    <a href="{{ route('espace-membre.evenements') }}" wire:navigate data-test="tous-evenements" class="group inline-flex items-center gap-1.5 rounded-lg border border-azure/25 bg-azure/10 px-3 py-1.5 text-[12.5px] font-semibold text-azure transition-all duration-200 ease-out hover:bg-azure/20 active:scale-95">
                         Tous les événements <x-ui.icon name="arrow-right" class="nudge-x size-3" />
                     </a>
                 </div>
@@ -243,16 +243,24 @@
                     @else
                         <ul class="list-none py-2">
                             @foreach ($upcomingEvents as $ev)
-                                <li class="flex items-start gap-3.5 px-[18px] py-3 transition-colors duration-200 hover:bg-cloud/50">
-                                    <div class="mt-1.5 size-2 shrink-0 rounded-full bg-azure"></div>
-                                    <div class="min-w-0 flex-1">
-                                        <div class="mb-1 flex items-center gap-2">
-                                            <span class="rounded-full bg-azure/15 px-2 py-0.5 text-[10.5px] font-semibold text-azure">{{ $ev->category }}</span>
-                                            <span class="text-[11px] text-[#9AA6B8]">{{ $ev->starts_at->locale('fr')->translatedFormat('d M') }}</span>
+                                <li>
+                                    <a href="{{ route('espace-membre.evenements', ['evenement' => $ev->id]) }}" wire:navigate data-test="evenement-accueil" class="group flex items-start gap-3.5 px-[18px] py-3 transition-colors duration-200 hover:bg-cloud/50">
+                                        <div class="mt-1.5 size-2 shrink-0 rounded-full bg-azure"></div>
+                                        <div class="min-w-0 flex-1">
+                                            <div class="mb-1 flex items-center gap-2">
+                                                <span class="rounded-full bg-azure/15 px-2 py-0.5 text-[10.5px] font-semibold text-azure">{{ $ev->category }}</span>
+                                                <span class="text-[11px] text-[#9AA6B8]">{{ $ev->starts_at->locale('fr')->translatedFormat('d M') }}</span>
+                                                @if (! empty($ev->registered))
+                                                    <span class="inline-flex items-center gap-1 rounded-full bg-[#22A85A]/10 px-2 py-0.5 text-[10.5px] font-semibold text-[#22A85A]"><x-ui.icon name="check" class="size-3" /> Inscrit</span>
+                                                @endif
+                                            </div>
+                                            <p class="mb-0.5 text-[13.5px] font-semibold text-brand group-hover:underline">{{ $ev->title }}</p>
+                                            @if ($ev->location)
+                                                <p class="text-xs text-[#9AA6B8]">📍 {{ $ev->location }}</p>
+                                            @endif
                                         </div>
-                                        <p class="mb-0.5 text-[13.5px] font-semibold text-brand">{{ $ev->title }}</p>
-                                        <p class="text-xs text-[#9AA6B8]">📍 {{ $ev->location }}</p>
-                                    </div>
+                                        <x-ui.icon name="chevron-right" class="mt-2 size-4 shrink-0 text-[#C9D3E6] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-azure" />
+                                    </a>
                                 </li>
                             @endforeach
                         </ul>

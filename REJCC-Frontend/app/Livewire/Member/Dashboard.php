@@ -123,7 +123,7 @@ class Dashboard extends Component
                 'type' => 'Formation',
                 'titre' => $f['title'],
                 'detail' => $f['category'].($f['is_certifying'] ? ' · certifiante' : ''),
-                'route' => 'espace-membre.catalogue',
+                'url' => route('espace-membre.catalogue', ['q' => $f['title']]),
             ]);
         $recommandations = $catalogue->all();
         if ($upcomingEvents->isNotEmpty()) {
@@ -132,7 +132,7 @@ class Dashboard extends Component
                 'type' => 'Événement',
                 'titre' => $prochain->title,
                 'detail' => $prochain->starts_at->translatedFormat('l j F').($prochain->location ? ' · '.$prochain->location : ''),
-                'route' => 'espace-membre.evenements',
+                'url' => route('espace-membre.evenements', ['evenement' => $prochain->id]),
             ];
         }
 
