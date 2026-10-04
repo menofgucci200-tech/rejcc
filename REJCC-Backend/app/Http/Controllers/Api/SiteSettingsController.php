@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Validator;
 class SiteSettingsController extends Controller
 {
     /** Préfixes de clés autorisés à l'écriture (garde-fou). */
-    private const KEY_PREFIXES = ['identity.', 'contact.', 'social.', 'banner.', 'seo.', 'payment.'];
+    private const KEY_PREFIXES = ['identity.', 'contact.', 'social.', 'banner.', 'seo.', 'payment.', 'spirit.'];
 
     /** Préfixes jamais exposés par la route publique (identifiants sensibles). */
     private const PRIVATE_PREFIXES = ['payment.'];

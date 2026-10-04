@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin;
 
 use App\Support\Api;
+use App\Support\Content\DailyWord;
 use App\Support\Content\SiteConfig;
 use App\Support\Content\SiteRemote;
 use Livewire\Attributes\Layout;
@@ -63,6 +64,9 @@ class Reglages extends Component
 
     public string $cinetpaySiteId = '';
 
+    // Parole & prière du jour (espace membre)
+    public array $paroles = [];
+
     public ?string $savedCard = null;
 
     public function mount(): void
@@ -91,6 +95,11 @@ class Reglages extends Component
         $this->bannerText = (string) SiteRemote::setting('banner.text', '');
         $this->bannerLink = (string) SiteRemote::setting('banner.link', '');
         $this->bannerLabel = (string) SiteRemote::setting('banner.label', '');
+
+        $this->paroles = array_map(
+            fn (array $p) => ['verset' => (string) ($p['verset'] ?? ''), 'reference' => (string) ($p['reference'] ?? ''), 'intention' => (string) ($p['intention'] ?? '')],
+            DailyWord::all(),
+        );
 
         // Réglages sensibles : jamais exposés par l'API publique, on les
         // récupère via l'endpoint admin dédié.
@@ -176,6 +185,34 @@ class Reglages extends Component
         ]);
     }
 
+    public function ajouterParole(): void
+    {
+        $this->paroles[] = ['verset' => '', 'reference' => '', 'intention' => ''];
+    }
+
+    public function retirerParole(int $i): void
+    {
+        unset($this->paroles[$i]);
+        $this->paroles = array_values($this->paroles);
+    }
+
+    public function saveParoles(): void
+    {
+        $this->validate([
+            'paroles' => 'required|array|min:1|max:60',
+            'paroles.*.verset' => 'required|string|max:400',
+            'paroles.*.reference' => 'required|string|max:60',
+            'paroles.*.intention' => 'nullable|string|max:300',
+        ], [
+            'paroles.required' => 'Gardez au moins un verset.',
+            'paroles.min' => 'Gardez au moins un verset.',
+            'paroles.*.verset.required' => 'Chaque ligne doit contenir un verset.',
+            'paroles.*.reference.required' => 'Indiquez la référence de chaque verset (ex : Proverbes 16:3).',
+        ]);
+
+        $this->push('paroles', [DailyWord::SETTING => array_values($this->paroles)], 'paroles');
+    }
+
     public function savePaiement(): void
     {
         $this->validate([
@@ -203,6 +240,8 @@ class Reglages extends Component
 
     public function render()
     {
-        return view('livewire.admin.reglages');
+        return view('livewire.admin.reglages', [
+            'paroleDuJour' => DailyWord::indexFor(count($this->paroles)),
+        ]);
     }
 }

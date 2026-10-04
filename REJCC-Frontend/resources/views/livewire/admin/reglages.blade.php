@@ -176,5 +176,44 @@
                 </section>
             </div>
         </div>
+
+            {{-- Parole & prière du jour (espace membre) --}}
+            <section data-test="carte-paroles" class="rounded-[18px] border border-brand/10 bg-white p-[22px] shadow-[0_2px_8px_rgba(3,29,89,.05)] mt-6">
+                <div class="mb-1 flex items-center justify-between">
+                    <p class="text-sm font-bold text-brand">Parole &amp; prière du jour (espace membre)</p>
+                    @if ($savedCard === 'paroles')
+                        <span class="panel-enter inline-flex items-center gap-1 text-[11.5px] font-bold text-[#22A85A]"><x-ui.icon name="check-circle" class="size-3.5" /> Publié</span>
+                    @endif
+                </div>
+                <p class="mb-4 text-[11.5px] text-[#9AA6B8]">Affichée sur le tableau de bord des membres. Un verset différent chaque jour, dans l'ordre de la liste, puis on recommence. Le verset marqué « Aujourd'hui » est celui que voient les membres en ce moment.</p>
+                @error('paroles') <p class="mb-3 text-xs font-medium text-accent">{{ $message }}</p> @enderror
+                <div class="flex flex-col gap-3">
+                    @foreach ($paroles as $i => $p)
+                        <div wire:key="parole-{{ $i }}" class="rounded-[12px] border p-3.5 {{ $i === $paroleDuJour ? 'border-azure/50 bg-azure/[.04]' : 'border-brand/10' }}">
+                            <div class="mb-2 flex items-center justify-between gap-2">
+                                <span class="text-[11px] font-bold text-[#9AA6B8]">N° {{ $i + 1 }}
+                                    @if ($i === $paroleDuJour)
+                                        <span class="ml-1.5 rounded-full bg-azure px-2 py-0.5 text-[10px] text-white">Aujourd'hui</span>
+                                    @endif
+                                </span>
+                                @if (count($paroles) > 1)
+                                    <button type="button" wire:click="retirerParole({{ $i }})" class="text-[11.5px] font-semibold text-accent hover:underline">Retirer</button>
+                                @endif
+                            </div>
+                            <div class="grid gap-2.5 md:grid-cols-[1fr_180px]">
+                                <textarea wire:model="paroles.{{ $i }}.verset" rows="2" placeholder="Texte du verset" class="resize-y rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure"></textarea>
+                                <input wire:model="paroles.{{ $i }}.reference" type="text" placeholder="Proverbes 16:3" class="h-fit rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
+                            </div>
+                            <input wire:model="paroles.{{ $i }}.intention" type="text" placeholder="Intention de prière (optionnel) : Prions pour…" class="mt-2.5 w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
+                            @error("paroles.{$i}.verset") <p class="mt-1 text-xs font-medium text-accent">{{ $message }}</p> @enderror
+                            @error("paroles.{$i}.reference") <p class="mt-1 text-xs font-medium text-accent">{{ $message }}</p> @enderror
+                        </div>
+                    @endforeach
+                </div>
+                <div class="mt-4 flex flex-wrap gap-2.5">
+                    <button type="button" wire:click="ajouterParole" class="btn-tap inline-flex items-center gap-1.5 rounded-[9px] border border-brand/15 px-4 py-2.5 text-sm font-semibold text-brand hover:bg-cloud"><x-ui.icon name="plus" class="size-4" /> Ajouter un verset</button>
+                    <button wire:click="saveParoles" wire:loading.attr="disabled" class="btn-tap rounded-[9px] bg-brand px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-brand/90 hover:shadow-md disabled:opacity-60">Publier</button>
+                </div>
+            </section>
     </div>
 </div>

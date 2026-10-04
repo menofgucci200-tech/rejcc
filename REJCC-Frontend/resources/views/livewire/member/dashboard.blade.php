@@ -127,8 +127,10 @@
                     <div class="flex gap-3.5 rounded-[14px] border border-l-[3px] border-brand/10 border-l-accent bg-white p-5 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
                         <x-ui.icon name="book-open" class="mt-0.5 size-[22px] shrink-0 text-accent" />
                         <div>
-                            <p class="font-serif text-[13.5px] italic leading-relaxed text-ink">« Confie à l'Éternel tes œuvres, et tes projets réussiront. » — Proverbes 16:3</p>
-                            <p class="mt-2.5 text-xs leading-relaxed text-[#5B677A]">Intention du jour : prions pour les membres qui présentent un projet à un investisseur cette semaine.</p>
+                            <p data-test="verset" class="font-serif text-[13.5px] italic leading-relaxed text-ink">« {{ $parole['verset'] }} » — {{ $parole['reference'] }}</p>
+                            @if (filled($parole['intention']))
+                                <p data-test="intention" class="mt-2.5 text-xs leading-relaxed text-[#5B677A]">Intention du jour : {{ \Illuminate\Support\Str::lcfirst($parole['intention']) }}</p>
+                            @endif
                         </div>
                     </div>
                 </section>

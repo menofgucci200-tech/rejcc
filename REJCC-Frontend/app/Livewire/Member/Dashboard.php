@@ -3,6 +3,7 @@
 namespace App\Livewire\Member;
 
 use App\Support\Api;
+use App\Support\Content\DailyWord;
 use App\Support\ProfileCompletion;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -174,6 +175,7 @@ class Dashboard extends Component
 
         return view('livewire.member.dashboard', [
             'completion' => $completion,
+            'parole' => DailyWord::today(),
             'champsManquants' => $champsManquants,
             'abonnementActif' => $abonnementActif,
             'expireLe' => $expireLe,
