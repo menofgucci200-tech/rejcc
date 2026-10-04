@@ -52,16 +52,29 @@ class Dashboard extends Component
     public function render()
     {
         $token = Api::token();
+
+        // L'utilisateur en session date de la connexion : on le relit pour que
+        // l'état de l'abonnement (et donc le menu verrouillé) soit toujours juste.
+        $me = Api::get('/auth/me', [], $token);
+        if ($me['ok'] ?? false) {
+            session(['api_user' => $me['user']]);
+        }
         $user = Api::user();
         $completion = $this->profileCompletion($user);
 
-        $conversations = Collection::make(Api::get('/messages', [], $token)['conversations'] ?? []);
+        $abonnementActif = (bool) ($user->subscription_active ?? false);
+        $expireLe = ! empty($user->subscription_expires_at) ? Carbon::parse($user->subscription_expires_at) : null;
+        // Rappel de renouvellement dans les 30 derniers jours.
+        $expireBientot = $abonnementActif && $expireLe && $expireLe->isFuture() && $expireLe->lte(now()->addDays(30));
+
+        // Annuaire et messagerie sont réservés aux abonnés (402 sinon) : inutile de les appeler.
+        $conversations = Collection::make($abonnementActif ? (Api::get('/messages', [], $token)['conversations'] ?? []) : []);
         $unreadMessages = $conversations->sum('unread');
 
         $docs = Collection::make(Api::get('/documents', [], $token)['documents'] ?? [])
             ->take(4)->map(fn ($d) => (object) $d);
 
-        $members = Collection::make(Api::get('/members', [], $token)['members'] ?? [])
+        $members = Collection::make($abonnementActif ? (Api::get('/members', [], $token)['members'] ?? []) : [])
             ->reject(fn ($m) => $m['id'] === $user->id)
             ->take(4)->map(fn ($m) => (object) $m);
 
@@ -152,6 +165,9 @@ class Dashboard extends Component
 
         return view('livewire.member.dashboard', [
             'completion' => $completion,
+            'abonnementActif' => $abonnementActif,
+            'expireLe' => $expireLe,
+            'expireBientot' => $expireBientot,
             'unreadMessages' => $unreadMessages,
             'docs' => $docs,
             'members' => $members,

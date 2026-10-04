@@ -6,6 +6,27 @@
     <x-member-light.topbar title="Tableau de bord" />
 
     <div class="mx-auto max-w-[1280px] px-8 py-8">
+        @if (! $abonnementActif)
+            <section data-test="abonnement-inactif" class="mb-6 flex flex-wrap items-center gap-4 rounded-[18px] border border-[#F5A623]/40 bg-[#FFF8EC] px-6 py-5">
+                <span class="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#F5A623]/15 text-[#B97400]">
+                    <x-ui.icon name="shield" class="size-5" />
+                </span>
+                <div class="min-w-[220px] flex-1">
+                    <p class="text-[15px] font-bold text-brand">Votre abonnement annuel n'est pas actif</p>
+                    <p class="mt-0.5 text-[13px] text-[#5B677A]">La carte membre, l'annuaire, la messagerie et les projets sont verrouillés. Activez votre abonnement (10 000 F / an) pour profiter de tout le réseau.</p>
+                </div>
+                <a href="{{ route('espace-membre.abonnement') }}" wire:navigate class="group inline-flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-5 py-2.5 text-[13.5px] font-bold text-white transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-accent-600 hover:shadow-md active:scale-95 sm:w-fit">
+                    Activer mon abonnement <x-ui.icon name="arrow-right" class="nudge-x size-3.5" />
+                </a>
+            </section>
+        @elseif ($expireBientot)
+            <section data-test="abonnement-expire" class="mb-6 flex flex-wrap items-center gap-4 rounded-[18px] border border-azure/25 bg-azure/[.06] px-6 py-4">
+                <x-ui.icon name="clock" class="size-5 shrink-0 text-azure" />
+                <p class="min-w-[220px] flex-1 text-[13.5px] text-brand">Votre abonnement expire le <strong>{{ $expireLe->translatedFormat('j F Y') }}</strong>. Pensez à le renouveler pour garder l'accès à tout le réseau.</p>
+                <a href="{{ route('espace-membre.abonnement') }}" wire:navigate class="text-[13px] font-bold text-azure hover:underline">Renouveler</a>
+            </section>
+        @endif
+
         <section class="mb-6 flex flex-wrap items-end justify-between gap-4">
             <div>
                 <h1 class="mb-2 text-[28px] font-extrabold tracking-tight text-brand">Bonjour {{ $user->prenom }} 👋</h1>
@@ -173,7 +194,14 @@
                     </a>
                 </div>
                 <div class="rounded-[18px] border border-brand/10 bg-white shadow-[0_2px_8px_rgba(3,29,89,.05)]">
-                    @if ($members->isEmpty())
+                    @if (! $abonnementActif)
+                        <div data-test="annuaire-verrouille" class="flex flex-col items-center gap-2.5 px-6 py-8 text-center">
+                            <span class="flex size-10 items-center justify-center rounded-full bg-[#F5A623]/15 text-[#B97400]"><x-ui.icon name="shield" class="size-[18px]" /></span>
+                            <p class="text-[13.5px] font-semibold text-brand">L'annuaire est réservé aux membres abonnés</p>
+                            <p class="max-w-xs text-[12.5px] text-[#5B677A]">Activez votre abonnement pour découvrir les membres du réseau et leur écrire.</p>
+                            <a href="{{ route('espace-membre.abonnement') }}" wire:navigate class="mt-1 text-[12.5px] font-bold text-azure hover:underline">Activer mon abonnement →</a>
+                        </div>
+                    @elseif ($members->isEmpty())
                         <div class="px-6 py-8 text-center"><p class="text-[13px] text-[#5B677A]">Aucun membre trouvé</p></div>
                     @else
                         <ul class="list-none p-0">
