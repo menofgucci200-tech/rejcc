@@ -63,6 +63,11 @@ class FormationController extends Controller
                     'completed' => $e->completed_at !== null,
                     'completed_at' => $e->completed_at?->toDateString(),
                     'module_courant' => $prochain?->titre,
+                    // Modules réellement validés (ou, pour une formation sans modules
+                    // détaillés, la part de modules correspondant à la progression).
+                    'modules_done' => $modules->isNotEmpty()
+                        ? count(array_intersect($modules->pluck('id')->all(), $completedIds))
+                        : ($e->completed_at ? (int) $e->formation->modules_count : intdiv((int) $e->progress * (int) $e->formation->modules_count, 100)),
                 ];
             });
 

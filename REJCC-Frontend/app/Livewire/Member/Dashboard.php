@@ -190,7 +190,7 @@ class Dashboard extends Component
             'progression' => $progressionMoyenne,
             'formationsTerminees' => $terminees,
             'certificatsObtenus' => $certificats,
-            'heuresApprentissage' => $terminees * 6, // estimation : ~6 h par formation terminée
+            'modulesValides' => (int) $formations->sum(fn ($f) => (int) ($f['modules_done'] ?? 0)),
             'continuer' => $continuer,
             'recommandations' => $recommandations,
         ]);

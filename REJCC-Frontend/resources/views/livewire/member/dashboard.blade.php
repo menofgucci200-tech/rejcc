@@ -61,7 +61,7 @@
                 @foreach ([
                     ['icon' => 'graduation-cap', 'value' => $formationsTerminees, 'label' => 'Formations terminées'],
                     ['icon' => 'award', 'value' => $certificatsObtenus, 'label' => 'Certificats obtenus'],
-                    ['icon' => 'clock', 'value' => $heuresApprentissage, 'label' => "Heures d'apprentissage", 'suffix' => 'h'],
+                    ['icon' => 'check-circle', 'value' => $modulesValides, 'label' => 'Modules validés'],
                 ] as $stat)
                     <div class="rounded-[14px] border border-white/10 bg-white/[.08] px-3.5 py-4">
                         <x-ui.icon :name="$stat['icon']" class="size-5 text-[#8FB0FF]" />
