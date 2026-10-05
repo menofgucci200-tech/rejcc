@@ -129,7 +129,7 @@
                 <div class="flex flex-wrap gap-2">
                     @foreach ($mesGroupes as $g)
                         <a href="{{ route('espace-membre.groupes.membres', $g['id']) }}" wire:navigate class="inline-flex items-center gap-1.5 rounded-full bg-brand/[.06] px-3 py-1.5 text-[12px] font-semibold text-brand transition-colors hover:bg-brand hover:text-white">
-                            <x-ui.icon :name="$g['icone']" class="size-3.5" /> {{ $g['name'] }}
+                            <x-ui.icon :name="$g['icone']" class="size-3.5" /> {{ $g['name'] }}@if (($g['discussion']['non_lus'] ?? 0) > 0) <span class="rounded-full bg-accent px-1.5 text-[10px] font-bold leading-4 text-white">{{ $g['discussion']['non_lus'] }}</span>@endif
                         </a>
                     @endforeach
                 </div>
@@ -184,6 +184,12 @@
 
                     @if ($g['joined'] && $g['ma_specialite'])
                         <p class="mt-2 rounded-[10px] bg-cloud/60 px-3 py-2 text-[11.5px] italic leading-relaxed text-[#5B677A]">« {{ $g['ma_specialite'] }} »</p>
+                    @endif
+
+                    @if ($g['joined'] && ($g['discussion']['non_lus'] ?? 0) > 0)
+                        <a href="{{ route('espace-membre.groupes.membres', ['groupId' => $g['id'], 'vue' => 'discussion']) }}" wire:navigate data-test="carte-discussion-non-lus" class="mt-2.5 inline-flex items-center gap-1.5 self-start rounded-full bg-accent/10 px-2.5 py-1 text-[11.5px] font-bold text-accent hover:bg-accent/15">
+                            <x-ui.icon name="message-circle" class="size-3.5" /> {{ $g['discussion']['non_lus'] }} nouveau{{ $g['discussion']['non_lus'] > 1 ? 'x' : '' }} message{{ $g['discussion']['non_lus'] > 1 ? 's' : '' }} dans la discussion
+                        </a>
                     @endif
 
                     @if ($g['referent'] ?? null)

@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Group;
+use App\Models\GroupMessage;
 use App\Models\MemberReview;
 use App\Models\User;
 use App\Support\RechercheMots;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 /**
@@ -57,8 +59,7 @@ class GroupController extends Controller
 
     /**
      * Identité d'un groupe : icône, couleur, référent, annonce épinglée et
-     * lien WhatsApp — ce dernier seulement pour les membres du groupe à jour
-     * de leur abonnement.
+     * état de sa discussion (accès, messages non lus).
      */
     private function identite(Group $g, User $moi, bool $membre): array
     {
@@ -72,8 +73,127 @@ class GroupController extends Controller
             'referent' => $r ? ['id' => $r->id, 'prenom' => $r->prenom, 'nom' => $r->nom, 'photo' => $r->photo, 'role' => $r->role] : null,
             'annonce' => $g->annonce,
             'annonce_at' => $g->annonce_at?->toIso8601String(),
-            'whatsapp' => $g->whatsapp_url ? ($membre && $moi->hasActiveSubscription() ? $g->whatsapp_url : 'verrouille') : null,
+            // Discussion du groupe sur la plateforme : membres du groupe à jour de leur abonnement.
+            'discussion' => [
+                'acces' => $membre && $moi->hasActiveSubscription(),
+                'non_lus' => $membre ? $this->nonLus($g->id, $moi->id) : 0,
+                'messages' => $g->messages()->count(),
+            ],
         ];
+    }
+
+    /** Messages de la discussion du groupe que le membre n'a pas encore lus. */
+    private function nonLus(int $groupId, int $userId): int
+    {
+        $lu = (int) DB::table('group_user')->where('group_id', $groupId)->where('user_id', $userId)->value('discussion_lu_jusqua');
+
+        return GroupMessage::where('group_id', $groupId)->where('id', '>', $lu)->where('user_id', '!=', $userId)->count();
+    }
+
+    /** Accès à la discussion : membre du groupe et abonné à jour (ou administrateur). */
+    private function accesDiscussion(Request $request, Group $group)
+    {
+        $moi = $request->user();
+        if ($moi->role === 'admin') {
+            return null;
+        }
+        if (! $moi->groups()->where('groups.id', $group->id)->exists()) {
+            return response()->json(['ok' => false, 'code' => 'pas_membre', 'message' => 'Rejoignez le groupe pour participer à sa discussion.'], 403);
+        }
+        if (! $moi->hasActiveSubscription()) {
+            return response()->json(['ok' => false, 'code' => 'subscription_required', 'message' => 'La discussion des groupes est réservée aux membres à jour de leur abonnement annuel (10 000 F).'], 402);
+        }
+
+        return null;
+    }
+
+    /**
+     * GET /groups/{id}/discussion?after= — messages de la discussion du groupe
+     * (les 60 derniers, ou ceux postérieurs à `after`) ; marque la lecture.
+     */
+    public function discussion(Request $request, int $id)
+    {
+        $group = Group::find($id);
+        if (! $group) {
+            return response()->json(['ok' => false, 'message' => 'Groupe introuvable.'], 404);
+        }
+        if ($refus = $this->accesDiscussion($request, $group)) {
+            return $refus;
+        }
+
+        $moi = $request->user();
+        $after = (int) $request->query('after', 0);
+        $messages = GroupMessage::with('user:id,prenom,nom,photo,role')->where('group_id', $group->id)
+            ->when($after > 0, fn ($q) => $q->where('id', '>', $after), fn ($q) => $q->latest('id')->limit(60))
+            ->get()->sortBy('id')->values();
+
+        $dernier = (int) GroupMessage::where('group_id', $group->id)->max('id');
+        DB::table('group_user')->where('group_id', $group->id)->where('user_id', $moi->id)
+            ->where('discussion_lu_jusqua', '<', $dernier)->update(['discussion_lu_jusqua' => $dernier]);
+
+        $moderateur = $moi->role === 'admin' || $group->referent_id === $moi->id;
+
+        return response()->json([
+            'ok' => true,
+            'messages' => $messages->map(fn (GroupMessage $m) => [
+                'id' => $m->id,
+                'body' => $m->body,
+                'date' => $m->created_at?->toIso8601String(),
+                'auteur' => $m->user ? [
+                    'id' => $m->user->id, 'prenom' => $m->user->prenom, 'nom' => $m->user->nom,
+                    'photo' => $m->user->photo, 'role' => $m->user->role,
+                    'referent' => $m->user->id === $group->referent_id,
+                ] : null,
+                'moi' => $m->user_id === $moi->id,
+                'peut_supprimer' => $m->user_id === $moi->id || $moderateur,
+            ])->values(),
+            'moderateur' => $moderateur,
+        ]);
+    }
+
+    /** POST /groups/{id}/discussion — écrire dans la discussion du groupe. */
+    public function ecrire(Request $request, int $id)
+    {
+        $group = Group::find($id);
+        if (! $group) {
+            return response()->json(['ok' => false, 'message' => 'Groupe introuvable.'], 404);
+        }
+        if ($refus = $this->accesDiscussion($request, $group)) {
+            return $refus;
+        }
+        $body = trim((string) $request->input('body'));
+        if ($body === '') {
+            return response()->json(['ok' => false, 'message' => "Écrivez votre message avant de l'envoyer."], 422);
+        }
+        if (mb_strlen($body) > 2000) {
+            return response()->json(['ok' => false, 'message' => 'Votre message est trop long (2000 caractères maximum).'], 422);
+        }
+        $moi = $request->user();
+        if (GroupMessage::where('user_id', $moi->id)->where('created_at', '>', now()->subMinute())->count() >= 10) {
+            return response()->json(['ok' => false, 'message' => 'Vous écrivez beaucoup de messages : patientez une minute avant de continuer.'], 429);
+        }
+
+        $m = GroupMessage::create(['group_id' => $group->id, 'user_id' => $moi->id, 'body' => $body]);
+        DB::table('group_user')->where('group_id', $group->id)->where('user_id', $moi->id)->update(['discussion_lu_jusqua' => $m->id]);
+
+        return response()->json(['ok' => true, 'id' => $m->id]);
+    }
+
+    /** DELETE /groups/{id}/discussion/{messageId} — par son auteur, le référent du groupe ou un administrateur. */
+    public function supprimerMessage(Request $request, int $id, int $messageId)
+    {
+        $m = GroupMessage::where('group_id', $id)->find($messageId);
+        if (! $m) {
+            return response()->json(['ok' => false, 'message' => 'Message introuvable.'], 404);
+        }
+        $moi = $request->user();
+        $autorise = $m->user_id === $moi->id || $moi->role === 'admin' || $m->group->referent_id === $moi->id;
+        if (! $autorise) {
+            return response()->json(['ok' => false, 'message' => 'Vous ne pouvez pas supprimer ce message.'], 403);
+        }
+        $m->delete();
+
+        return response()->json(['ok' => true]);
     }
 
     /** Fiche professionnelle (colonnes du pivot) sous forme de tableau. */

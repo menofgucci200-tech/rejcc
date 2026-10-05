@@ -11,7 +11,7 @@ use Livewire\Component;
 
 /**
  * Administration des groupes sectoriels : liste ordonnée, création et
- * modification (identité, lien WhatsApp, référent, annonce épinglée),
+ * modification (identité, référent, annonce épinglée),
  * membres de chaque groupe (retrait, export) et modération des avis.
  */
 #[Layout('layouts.admin-light')]
@@ -39,8 +39,6 @@ class Groupes extends Component
 
     public string $couleur = '#031D59';
 
-    public string $whatsappUrl = '';
-
     public ?int $referentId = null;
 
     public string $annonce = '';
@@ -65,7 +63,7 @@ class Groupes extends Component
     public function openCreate(): void
     {
         $this->message = null;
-        $this->reset(['editingId', 'name', 'description', 'whatsappUrl', 'referentId', 'annonce', 'erreur', 'membresForm']);
+        $this->reset(['editingId', 'name', 'description', 'referentId', 'annonce', 'erreur', 'membresForm']);
         $this->icone = 'network';
         $this->couleur = '#031D59';
         $this->notifier = true;
@@ -84,7 +82,6 @@ class Groupes extends Component
         $this->description = (string) ($g['description'] ?? '');
         $this->icone = $g['icone'];
         $this->couleur = $g['couleur'];
-        $this->whatsappUrl = (string) ($g['whatsapp_url'] ?? '');
         $this->referentId = $g['referent']['id'] ?? null;
         $this->annonce = (string) ($g['annonce'] ?? '');
         $this->notifier = true;
@@ -108,7 +105,6 @@ class Groupes extends Component
             'description' => trim($this->description) ?: null,
             'icone' => $this->icone,
             'couleur' => $this->couleur,
-            'whatsapp_url' => trim($this->whatsappUrl) ?: null,
             'referent_id' => $this->referentId ?: null,
             'annonce' => trim($this->annonce) ?: null,
             'notifier' => $this->notifier,

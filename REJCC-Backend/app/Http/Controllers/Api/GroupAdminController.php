@@ -15,7 +15,7 @@ use Illuminate\Validation\Rule;
 
 /**
  * Administration des groupes sectoriels (section « groupes ») : création,
- * modification (identité, lien WhatsApp, référent, annonce épinglée),
+ * modification (identité, référent, annonce épinglée),
  * ordre d'affichage, membres (retrait) et modération des avis.
  */
 class GroupAdminController extends Controller
@@ -42,7 +42,7 @@ class GroupAdminController extends Controller
                 'description' => $g->description,
                 'icone' => $g->icone ?: 'network',
                 'couleur' => $g->couleur ?: '#031D59',
-                'whatsapp_url' => $g->whatsapp_url,
+                'messages' => $g->messages()->count(),
                 'referent' => $g->referent ? ['id' => $g->referent->id, 'nom' => trim($g->referent->prenom.' '.$g->referent->nom)] : null,
                 'annonce' => $g->annonce,
                 'annonce_at' => $g->annonce_at?->toIso8601String(),
@@ -65,7 +65,6 @@ class GroupAdminController extends Controller
             'description' => 'nullable|string|max:500',
             'icone' => ['nullable', Rule::in(self::ICONES)],
             'couleur' => ['nullable', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'whatsapp_url' => ['nullable', 'url', 'max:255', 'regex:#^https://(chat\.whatsapp\.com|wa\.me|whatsapp\.com)/#'],
             'referent_id' => 'nullable|integer|exists:users,id',
             'annonce' => 'nullable|string|max:1000',
             'notifier' => 'boolean',
@@ -76,8 +75,6 @@ class GroupAdminController extends Controller
         'name.required' => 'Le nom du groupe est obligatoire.',
         'name.unique' => 'Un groupe porte déjà ce nom.',
         'couleur.regex' => 'La couleur doit être au format #RRGGBB.',
-        'whatsapp_url.url' => 'Le lien WhatsApp doit être une adresse valide.',
-        'whatsapp_url.regex' => 'Collez le lien d\'invitation du groupe WhatsApp (https://chat.whatsapp.com/…).',
     ];
 
     /** POST /admin/groups */
@@ -101,7 +98,6 @@ class GroupAdminController extends Controller
             'description' => $d['description'] ?? null,
             'icone' => $d['icone'] ?? 'network',
             'couleur' => $d['couleur'] ?? '#031D59',
-            'whatsapp_url' => $d['whatsapp_url'] ?? null,
             'ordre' => (int) Group::max('ordre') + 1,
         ]);
 
@@ -136,7 +132,6 @@ class GroupAdminController extends Controller
             'description' => $d['description'] ?? null,
             'icone' => $d['icone'] ?? $group->icone,
             'couleur' => $d['couleur'] ?? $group->couleur,
-            'whatsapp_url' => $d['whatsapp_url'] ?? null,
             'referent_id' => $referent,
             'annonce' => $annonce,
             'annonce_at' => $annonce === null ? null : ($nouvelleAnnonce ? now() : $group->annonce_at),

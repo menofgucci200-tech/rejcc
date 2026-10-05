@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Group extends Model
 {
-    protected $fillable = ['name', 'slug', 'description', 'ordre', 'icone', 'couleur', 'whatsapp_url', 'referent_id', 'annonce', 'annonce_at'];
+    protected $fillable = ['name', 'slug', 'description', 'ordre', 'icone', 'couleur', 'referent_id', 'annonce', 'annonce_at'];
 
     protected function casts(): array
     {
@@ -45,6 +45,11 @@ class Group extends Model
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class)->withPivot(self::FICHE)->withTimestamps();
+    }
+
+    public function messages(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(GroupMessage::class);
     }
 
     public function referent(): BelongsTo

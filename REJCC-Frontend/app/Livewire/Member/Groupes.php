@@ -23,6 +23,18 @@ class Groupes extends Component
     #[Url(as: 'cherche', except: '')]
     public string $cherche = '';
 
+    /** Lien direct « Rejoindre le groupe » (?rejoindre=ID) : ouvre le formulaire. */
+    #[Url(as: 'rejoindre', except: null)]
+    public ?int $rejoindre = null;
+
+    public function mount(): void
+    {
+        if ($this->rejoindre) {
+            $this->ouvrirFormulaire($this->rejoindre);
+            $this->rejoindre = null;
+        }
+    }
+
     public ?string $message = null;
 
     /** Groupe pour lequel le formulaire d'adhésion/modification est ouvert. */

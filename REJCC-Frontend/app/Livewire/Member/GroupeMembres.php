@@ -31,9 +31,27 @@ class GroupeMembres extends Component
 
     public int $page = 1;
 
+    /** Onglet affiché : membres | discussion. */
+    #[Url(except: 'membres')]
+    public string $vue = 'membres';
+
+    public array $discussion = [];
+
+    public bool $moderateur = false;
+
+    public string $saisie = '';
+
+    public ?string $erreurDiscussion = null;
+
+    /** Refus d'accès à la discussion (pas membre, pas abonné). */
+    public ?array $refusDiscussion = null;
+
     public function mount(int $groupId): void
     {
         $this->groupId = $groupId;
+        if ($this->vue === 'discussion') {
+            $this->chargerDiscussion();
+        }
     }
 
     public function updatedQuery(): void
@@ -44,6 +62,68 @@ class GroupeMembres extends Component
     public function updatedTri(): void
     {
         $this->page = 1;
+    }
+
+    public function updatedVue(): void
+    {
+        if ($this->vue === 'discussion') {
+            $this->chargerDiscussion();
+        }
+    }
+
+    /** Charge la discussion (ou seulement les nouveaux messages). */
+    public function chargerDiscussion(bool $nouveaux = false): void
+    {
+        $dernier = $nouveaux ? (int) (end($this->discussion)['id'] ?? 0) : 0;
+        $result = Api::get("/groups/{$this->groupId}/discussion", $dernier ? ['after' => $dernier] : [], Api::token());
+
+        if (! ($result['ok'] ?? false)) {
+            $this->refusDiscussion = ['code' => $result['code'] ?? null, 'message' => $result['message'] ?? 'Discussion indisponible.'];
+            $this->discussion = [];
+
+            return;
+        }
+        $this->refusDiscussion = null;
+        $this->moderateur = (bool) ($result['moderateur'] ?? false);
+        $this->discussion = $dernier
+            ? array_merge($this->discussion, $result['messages'] ?? [])
+            : ($result['messages'] ?? []);
+        \App\Support\NavCompteurs::oublier();
+    }
+
+    public function rafraichirDiscussion(): void
+    {
+        if ($this->vue === 'discussion' && ! $this->refusDiscussion) {
+            $this->chargerDiscussion(true);
+        }
+    }
+
+    public function ecrire(): void
+    {
+        $this->erreurDiscussion = null;
+        $texte = trim($this->saisie);
+        if ($texte === '') {
+            $this->erreurDiscussion = "Écrivez votre message avant de l'envoyer.";
+
+            return;
+        }
+        $result = Api::post("/groups/{$this->groupId}/discussion", ['body' => $texte], Api::token());
+        if (! ($result['ok'] ?? false)) {
+            $this->erreurDiscussion = $result['message'] ?? "Votre message n'a pas pu être envoyé.";
+
+            return;
+        }
+        $this->saisie = '';
+        $this->chargerDiscussion(true);
+        $this->dispatch('message-envoye');
+    }
+
+    public function supprimerMessage(int $id): void
+    {
+        $result = Api::delete("/groups/{$this->groupId}/discussion/{$id}", Api::token());
+        if ($result['ok'] ?? false) {
+            $this->discussion = array_values(array_filter($this->discussion, fn ($m) => $m['id'] !== $id));
+        }
     }
 
     public function gotoPage(int $p): void

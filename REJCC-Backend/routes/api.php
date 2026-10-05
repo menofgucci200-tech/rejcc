@@ -172,6 +172,9 @@ Route::middleware('auth.token')->group(function () {
     // Groupes sectoriels (adhésion libre, multiple, gratuite)
     Route::get('/groups', [\App\Http\Controllers\Api\GroupController::class, 'index']);
     Route::get('/groups/recherche', [\App\Http\Controllers\Api\GroupController::class, 'recherche']);
+    Route::get('/groups/{id}/discussion', [\App\Http\Controllers\Api\GroupController::class, 'discussion'])->whereNumber('id');
+    Route::post('/groups/{id}/discussion', [\App\Http\Controllers\Api\GroupController::class, 'ecrire'])->whereNumber('id');
+    Route::delete('/groups/{id}/discussion/{messageId}', [\App\Http\Controllers\Api\GroupController::class, 'supprimerMessage'])->whereNumber(['id', 'messageId']);
     Route::get('/groups/{id}/apercu', [\App\Http\Controllers\Api\GroupController::class, 'apercu'])->whereNumber('id');
     Route::post('/groups/{id}/join', [\App\Http\Controllers\Api\GroupController::class, 'join']);
     Route::post('/groups/{id}/leave', [\App\Http\Controllers\Api\GroupController::class, 'leave']);

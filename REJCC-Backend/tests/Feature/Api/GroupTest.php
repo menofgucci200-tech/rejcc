@@ -193,34 +193,42 @@ class GroupTest extends TestCase
         $this->assertSame([['initiales' => 'AT', 'photo' => $visible->photo, 'mentor' => false]], $btp['derniers']);
     }
 
-    public function test_lien_whatsapp_reserve_aux_membres_abonnes_du_groupe(): void
+    public function test_discussion_du_groupe_reservee_aux_membres_abonnes(): void
     {
         \App\Support\SubscriptionMode::set(true);
-        $referent = User::factory()->create(['prenom' => 'Paul']);
-        \App\Models\Group::whereKey(8)->update([
-            'whatsapp_url' => 'https://chat.whatsapp.com/abc123',
-            'referent_id' => $referent->id,
-            'annonce' => 'Réunion du groupe samedi à 10h.',
-            'annonce_at' => now(),
-        ]);
+        $referent = User::factory()->create(['prenom' => 'Paul', 'subscription_expires_at' => now()->addYear()]);
+        $referent->groups()->attach(8, ['specialite' => 'Spécialité de test assez longue']);
+        \App\Models\Group::whereKey(8)->update(['referent_id' => $referent->id]);
 
         $token = $this->memberToken($moi);
-        $voir = fn () => collect($this->withToken($token)->getJson('/api/groups')->json('groups'))->firstWhere('id', 8);
+        // Ni membre du groupe : refus explicite.
+        $this->withToken($token)->getJson('/api/groups/8/discussion')->assertStatus(403)->assertJsonPath('code', 'pas_membre');
 
-        // Ni membre du groupe ni abonné : le lien existe mais reste verrouillé.
-        $this->assertSame('verrouille', $voir()['whatsapp']);
-        $this->assertSame('Paul', $voir()['referent']['prenom']);
-        $this->assertSame('Réunion du groupe samedi à 10h.', $voir()['annonce']);
-
-        // Membre du groupe mais pas abonné : toujours verrouillé.
+        // Membre du groupe mais pas abonné : réservé aux abonnés.
         $moi->groups()->attach(8, ['specialite' => 'Spécialité de test assez longue']);
-        $this->assertSame('verrouille', $voir()['whatsapp']);
+        $this->withToken($token)->postJson('/api/groups/8/discussion', ['body' => 'Bonjour'])->assertStatus(402);
 
-        // Membre du groupe et abonné : le lien est donné.
+        // Abonné : écrit, et les autres membres voient un message non lu.
         $moi->update(['subscription_expires_at' => now()->addYear()]);
-        $this->assertSame('https://chat.whatsapp.com/abc123', $voir()['whatsapp']);
-        $this->withToken($token)->getJson('/api/groups/8/members')->assertOk()
-            ->assertJsonPath('group.whatsapp', 'https://chat.whatsapp.com/abc123')
-            ->assertJsonPath('group.referent.prenom', 'Paul');
+        $this->withToken($token)->postJson('/api/groups/8/discussion', ['body' => '   '])->assertStatus(422);
+        $id = $this->withToken($token)->postJson('/api/groups/8/discussion', ['body' => 'Bonjour à tous les pros du BTP !'])->assertOk()->json('id');
+
+        $tokenRef = $this->tokenFor($referent);
+        $groupe = collect($this->withToken($tokenRef)->getJson('/api/groups')->json('groups'))->firstWhere('id', 8);
+        $this->assertSame(1, $groupe['discussion']['non_lus']);
+        $this->assertTrue($groupe['discussion']['acces']);
+        $this->withToken($tokenRef)->getJson('/api/nav-compteurs')->assertJsonPath('compteurs.groupes', 1);
+
+        $fil = $this->withToken($tokenRef)->getJson('/api/groups/8/discussion')->assertOk()->json();
+        $this->assertSame('Bonjour à tous les pros du BTP !', $fil['messages'][0]['body']);
+        $this->assertTrue($fil['moderateur']);
+        $this->assertSame(0, collect($this->withToken($tokenRef)->getJson('/api/groups')->json('groups'))->firstWhere('id', 8)['discussion']['non_lus']);
+
+        // Un autre membre ne peut pas supprimer le message ; le référent, si.
+        $autre = User::factory()->create(['subscription_expires_at' => now()->addYear()]);
+        $autre->groups()->attach(8, ['specialite' => 'Spécialité de test assez longue']);
+        $this->withToken($this->tokenFor($autre))->deleteJson("/api/groups/8/discussion/{$id}")->assertStatus(403);
+        $this->withToken($tokenRef)->deleteJson("/api/groups/8/discussion/{$id}")->assertOk();
+        $this->assertSame(0, \App\Models\GroupMessage::count());
     }
 }

@@ -6,7 +6,7 @@
             <div>
                 <h2 class="mb-1 text-[17px] font-bold text-brand">Groupes sectoriels</h2>
                 <div class="h-[3px] w-9 rounded bg-accent"></div>
-                <p class="mt-2 max-w-2xl text-xs text-[#9AA6B8]">Les groupes permettent aux membres de trouver un professionnel par domaine. Gérez leur identité, le lien WhatsApp (réservé aux membres abonnés du groupe), le référent, l'annonce épinglée, les membres et les avis.</p>
+                <p class="mt-2 max-w-2xl text-xs text-[#9AA6B8]">Les groupes permettent aux membres de trouver un professionnel par domaine. Gérez leur identité, le référent, l'annonce épinglée, les membres et les avis. Chaque groupe dispose de sa discussion sur la plateforme, réservée à ses membres abonnés.</p>
             </div>
             <div class="flex flex-wrap gap-2">
                 <a href="{{ route('admin.export', 'groupes') }}" class="btn-tap inline-flex items-center gap-1.5 rounded-full border border-brand/15 bg-white px-4 py-1.5 text-xs font-bold text-brand hover:bg-cloud"><x-ui.icon name="download" class="size-3.5" /> Exporter tous les membres</a>
@@ -46,7 +46,7 @@
                                 <span class="inline-flex items-center gap-1"><x-ui.icon name="users" class="size-3.5" /> {{ $g['membres'] }} membre{{ $g['membres'] > 1 ? 's' : '' }}</span>
                                 <span class="inline-flex items-center gap-1"><x-ui.icon name="star" class="size-3.5" /> {{ $g['avis'] }} avis</span>
                                 <span class="inline-flex items-center gap-1 {{ $g['referent'] ? '' : 'text-[#9AA6B8]' }}"><x-ui.icon name="award" class="size-3.5" /> {{ $g['referent']['nom'] ?? 'Pas de référent' }}</span>
-                                <span class="inline-flex items-center gap-1 {{ $g['whatsapp_url'] ? 'text-[#1C8F4C]' : 'text-[#9AA6B8]' }}"><x-ui.icon name="message-circle" class="size-3.5" /> {{ $g['whatsapp_url'] ? 'WhatsApp' : 'Pas de WhatsApp' }}</span>
+                                <span class="inline-flex items-center gap-1"><x-ui.icon name="message-circle" class="size-3.5" /> {{ $g['messages'] }} message{{ $g['messages'] > 1 ? 's' : '' }} dans la discussion</span>
                                 @if ($g['annonce'])<span class="inline-flex items-center gap-1 text-[#8A5A08]"><x-ui.icon name="pin" class="size-3.5" /> Annonce épinglée</span>@endif
                             </div>
                         </div>
@@ -141,10 +141,6 @@
                                     :class="icone === '{{ $i }}' ? 'border-brand bg-brand text-white' : 'border-brand/10 text-[#5B677A] hover:bg-cloud'"><x-ui.icon :name="$i" class="size-4" /></button>
                             @endforeach
                         </div>
-                    </div>
-                    <div class="sm:col-span-2">
-                        <label for="g-whatsapp" class="mb-1 block text-xs font-semibold text-[#5B677A]">Lien d'invitation du groupe WhatsApp <span class="font-normal text-[#9AA6B8]">(visible seulement des membres abonnés du groupe)</span></label>
-                        <input id="g-whatsapp" wire:model="whatsappUrl" type="url" placeholder="https://chat.whatsapp.com/…" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
                     </div>
                     @if ($editingId)
                         <div class="sm:col-span-2">

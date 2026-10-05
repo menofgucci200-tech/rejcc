@@ -57,12 +57,6 @@ class GroupAdminTest extends TestCase
         // Nom en double, couleur ou lien WhatsApp invalides.
         $this->withToken($token)->postJson('/api/admin/groups', ['name' => 'BTP & Construction'])->assertStatus(422);
         $this->withToken($token)->putJson("/api/admin/groups/{$id}", ['name' => 'Mines & Énergie', 'couleur' => 'rouge'])->assertStatus(422);
-        $this->withToken($token)->putJson("/api/admin/groups/{$id}", ['name' => 'Mines & Énergie', 'whatsapp_url' => 'https://exemple.com/x'])
-            ->assertStatus(422)->assertJsonPath('message', "Collez le lien d'invitation du groupe WhatsApp (https://chat.whatsapp.com/…).");
-
-        $this->withToken($token)->putJson("/api/admin/groups/{$id}", ['name' => 'Mines & Énergie', 'whatsapp_url' => 'https://chat.whatsapp.com/Abc'])->assertOk();
-        $this->assertSame('https://chat.whatsapp.com/Abc', $g->fresh()->whatsapp_url);
-
         // Monter d'un cran : il passe devant « Action Sociale & Solidarité ».
         $this->withToken($token)->postJson("/api/admin/groups/{$id}/move", ['direction' => 'up'])->assertOk();
         $this->assertSame(16, $g->fresh()->ordre);

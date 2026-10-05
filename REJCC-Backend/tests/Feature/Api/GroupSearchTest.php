@@ -113,7 +113,7 @@ class GroupSearchTest extends TestCase
         $this->assertSame(3, $apercu['avis']);
         $this->assertEqualsWithDelta(4.3, $apercu['note_moyenne'], 0.01);
         $this->assertContains('Pose de chauffe-eau', $apercu['services']);
-        $this->assertNull($apercu['group']['whatsapp']);
+        $this->assertFalse($apercu['group']['discussion']['acces']);
         $this->assertStringNotContainsString('Esther', json_encode($apercu));
     }
 }

@@ -379,6 +379,11 @@ class MentoratController extends Controller
 
         return response()->json(['ok' => true, 'compteurs' => [
             'messages' => Message::where('recipient_id', $me->id)->whereNull('read_at')->count(),
+            // Messages non lus dans les discussions de ses groupes sectoriels.
+            'groupes' => \App\Models\GroupMessage::query()
+                ->join('group_user', fn ($j) => $j->on('group_user.group_id', '=', 'group_messages.group_id')->where('group_user.user_id', $me->id))
+                ->whereColumn('group_messages.id', '>', 'group_user.discussion_lu_jusqua')
+                ->where('group_messages.user_id', '!=', $me->id)->count(),
             'mentorat' => $mentorat,
         ]]);
     }
