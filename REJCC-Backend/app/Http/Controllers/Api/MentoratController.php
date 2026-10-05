@@ -360,4 +360,26 @@ class MentoratController extends Controller
 
         return response()->json(['ok' => true]);
     }
+
+    /**
+     * GET /nav-compteurs — pastilles du menu de l'espace membre : messages
+     * non lus et actions de mentorat qui attendent l'utilisateur.
+     */
+    public function compteurs(Request $request)
+    {
+        $me = $request->user();
+
+        $mentorat = Mentorship::where('mentor_id', $me->id)->where('statut', 'en_attente')->count()
+            // Séances proposées par l'autre participant, à confirmer.
+            + \App\Models\MentoringSession::where('statut', 'proposee')->where('propose_par', '!=', $me->id)->where('debut_at', '>', now())
+                ->whereHas('mentorship', fn ($q) => $q->where('statut', 'accepte')->where(fn ($w) => $w->where('mentor_id', $me->id)->orWhere('mentore_id', $me->id)))
+                ->count()
+            // Mentorats terminés pas encore évalués.
+            + Mentorship::where('mentore_id', $me->id)->where('statut', 'termine')->whereNull('evalue_at')->count();
+
+        return response()->json(['ok' => true, 'compteurs' => [
+            'messages' => Message::where('recipient_id', $me->id)->whereNull('read_at')->count(),
+            'mentorat' => $mentorat,
+        ]]);
+    }
 }

@@ -4,6 +4,8 @@
     x-data="{ open: false, mobile: false }"
     @click.outside="open = false; mobile = false"
     @keydown.escape.window="open = false; mobile = false"
+    @keydown.window.ctrl.k.prevent="mobile = window.innerWidth < 768; open = true; $nextTick(() => $refs.input.focus())"
+    @keydown.window.meta.k.prevent="mobile = window.innerWidth < 768; open = true; $nextTick(() => $refs.input.focus())"
     class="relative md:w-[300px] md:shrink"
 >
     <button type="button" @click="mobile = true; open = true; $nextTick(() => $refs.input.focus())" aria-label="Rechercher"
@@ -13,7 +15,7 @@
 
     <div
         :class="mobile ? 'fixed inset-x-3 top-[70px] z-[95] flex shadow-[0_24px_60px_-20px_rgba(3,29,89,.35)]' : 'hidden md:flex'"
-        class="items-center gap-2.5 rounded-[10px] border border-brand/10 bg-cloud px-3.5 py-2.5 transition-colors focus-within:border-azure/50 focus-within:bg-white md:relative"
+        class="h-10 items-center gap-2.5 rounded-[10px] border border-brand/10 bg-cloud px-3.5 transition-colors focus-within:border-azure/50 focus-within:bg-white md:relative"
     >
         <x-ui.icon name="search" class="size-4 shrink-0 text-[#5B677A]" />
         <input
@@ -23,12 +25,13 @@
             @focus="open = true"
             @input="open = true"
             @keydown.enter.prevent="$refs.results?.querySelector('a')?.click()"
-            placeholder="Rechercher une formation, un membre, un événement…"
+            placeholder="Rechercher…"
             aria-label="Rechercher dans l'espace membre"
             data-test="recherche"
             class="rj-search-input w-full min-w-0 appearance-none border-none bg-transparent text-[13px] text-ink outline-none placeholder:text-[#9AA6B8] focus:outline-none focus-visible:outline-none [&::-webkit-search-cancel-button]:cursor-pointer"
         />
         <span wire:loading wire:target="q" class="size-3.5 shrink-0 animate-spin rounded-full border-2 border-azure/30 border-t-azure"></span>
+        <kbd wire:loading.remove wire:target="q" class="hidden shrink-0 rounded-[6px] border border-brand/15 bg-white px-1.5 py-0.5 font-sans text-[10.5px] font-semibold text-[#9AA6B8] lg:inline">Ctrl K</kbd>
     </div>
 
     <div

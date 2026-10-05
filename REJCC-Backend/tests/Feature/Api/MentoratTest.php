@@ -288,4 +288,19 @@ class MentoratTest extends TestCase
         $this->assertSame(1, $vue['mentors'][0]['en_cours']);
         $this->assertTrue($vue['relations'][0]['cree_par_admin']);
     }
+
+    public function test_les_compteurs_du_menu(): void
+    {
+        $mentor = User::factory()->create(['role' => 'mentor']);
+        $awa = $this->abonne();
+        Mentorship::create(['mentor_id' => $mentor->id, 'mentore_id' => $awa->id, 'objectif' => 'Demande en attente']);
+        $m = Mentorship::create(['mentor_id' => $mentor->id, 'mentore_id' => $this->abonne()->id, 'statut' => 'accepte', 'objectif' => 'En cours']);
+        $m->seances()->create(['propose_par' => $m->mentore_id, 'debut_at' => now()->addDay(), 'statut' => 'proposee']);
+        \App\Models\Message::create(['sender_id' => $awa->id, 'recipient_id' => $mentor->id, 'body' => 'Bonjour']);
+
+        $this->withToken($this->tokenFor($mentor))->getJson('/api/nav-compteurs')->assertOk()
+            ->assertJsonPath('compteurs.messages', 1)
+            ->assertJsonPath('compteurs.mentorat', 2);
+        $this->withToken($this->tokenFor($awa))->getJson('/api/nav-compteurs')->assertJsonPath('compteurs.mentorat', 0);
+    }
 }

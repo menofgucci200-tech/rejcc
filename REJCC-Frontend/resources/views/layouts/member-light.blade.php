@@ -15,7 +15,7 @@
         <div x-data="{ mobileOpen: false }" class="flex h-screen overflow-hidden">
             <!-- Sidebar (desktop) -->
             <div class="hidden lg:block lg:shrink-0">
-                <x-member-light.sidebar />
+                <x-member-light.sidebar :reductible="true" />
             </div>
 
             <!-- Sidebar (mobile overlay) : tiroir depuis la droite, au-dessus de la

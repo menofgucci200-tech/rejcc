@@ -182,6 +182,7 @@ class Mentorat extends Component
         }
 
         unset($this->reponses[$id]);
+        \App\Support\NavCompteurs::oublier();
         $this->message = $action === 'accepter'
             ? 'Demande acceptée : une notification a été envoyée au membre.'
             : 'Réponse envoyée : une notification a été envoyée au membre.';

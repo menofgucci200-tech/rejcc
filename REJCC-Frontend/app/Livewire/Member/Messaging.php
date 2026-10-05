@@ -51,6 +51,7 @@ class Messaging extends Component
         $this->activeId = $userId;
 
         $result = Api::get("/messages/{$userId}", [], Api::token());
+        \App\Support\NavCompteurs::oublier(); // les messages ouverts sont lus
 
         $this->partner = $result['partner'] ?? null;
         $this->messages = $result['messages'] ?? [];

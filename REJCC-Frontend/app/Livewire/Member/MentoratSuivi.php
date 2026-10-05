@@ -62,6 +62,7 @@ class MentoratSuivi extends Component
 
             return false;
         }
+        \App\Support\NavCompteurs::oublier();
         $this->message = $succes;
 
         return true;
