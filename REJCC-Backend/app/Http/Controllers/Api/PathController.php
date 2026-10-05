@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Formation;
 use App\Models\FormationEnrollment;
 use App\Models\Path;
+use App\Models\PathBadge;
+use App\Support\PathBadges;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -47,20 +49,66 @@ class PathController extends Controller
         });
     }
 
+    /**
+     * Durée totale des étapes disponibles (« 4 semaines » + « 2 semaines »
+     * = « 6 semaines ») ; null si les durées ne sont pas additionnables.
+     */
+    private function dureeTotale($etapes): ?string
+    {
+        $jours = 0;
+        $heures = 0;
+        foreach ($etapes as $e) {
+            if (! preg_match('/(\d+(?:[.,]\d+)?)\s*(mois|semaine|jour|heure|h\b)/iu', (string) $e['duration'], $m)) {
+                return null;
+            }
+            $n = (float) str_replace(',', '.', $m[1]);
+            match (mb_strtolower($m[2])) {
+                'mois' => $jours += $n * 30,
+                'semaine' => $jours += $n * 7,
+                'jour' => $jours += $n,
+                default => $heures += $n,
+            };
+        }
+
+        if ($jours > 0 && $heures > 0) {
+            return null;
+        }
+        if ($heures > 0) {
+            return round($heures).' h';
+        }
+        if ($jours <= 0) {
+            return null;
+        }
+        if (fmod($jours, 30) == 0) {
+            return ($jours / 30).' mois';
+        }
+        if (fmod($jours, 7) == 0) {
+            $s = (int) ($jours / 7);
+
+            return $s.' semaine'.($s > 1 ? 's' : '');
+        }
+
+        return round($jours).' jour'.($jours > 1 ? 's' : '');
+    }
+
     /** Parcours publiés + progression du membre courant. */
     public function index(Request $request)
     {
         $enrollments = FormationEnrollment::where('user_id', $request->user()->id)->get()->keyBy('formation_id');
 
+        PathBadges::attribuer($request->user()->id);
+        $badges = PathBadge::where('user_id', $request->user()->id)->pluck('obtenu_at', 'path_id');
+
         $paths = Path::where('is_published', true)
             ->orderBy('ordre')->orderBy('id')
             ->with('formations')
             ->get()
-            ->map(function (Path $p) use ($enrollments) {
+            ->map(function (Path $p) use ($enrollments, $badges) {
                 $etapes = $this->etapes($p, $enrollments);
                 $disponibles = $etapes->where('disponible', true);
                 $total = $disponibles->count();
                 $termines = $disponibles->where('completed', true)->count();
+                $badge = $badges->get($p->id);
 
                 return [
                     'id' => $p->id,
@@ -73,8 +121,11 @@ class PathController extends Controller
                     'total_formations' => $total,
                     'formations_terminees' => $termines,
                     'a_venir' => $etapes->count() - $total,
-                    'pct' => $total > 0 ? (int) round($termines * 100 / $total) : 0,
-                    'badge_obtenu' => $total > 0 && $termines >= $total,
+                    'pct' => $badge ? 100 : ($total > 0 ? (int) round($termines * 100 / $total) : 0),
+                    'commence' => $disponibles->contains(fn ($e) => $e['enrolled']),
+                    'duree' => $this->dureeTotale($disponibles),
+                    'badge_obtenu' => (bool) $badge,
+                    'badge_obtenu_le' => $badge?->toDateString(),
                 ];
             });
 
@@ -115,16 +166,17 @@ class PathController extends Controller
             return $item;
         });
 
-        $disponibles = $formations->where('disponible', true);
-        $total = $disponibles->count();
-        $termines = $disponibles->where('completed', true)->count();
+        PathBadges::attribuer($request->user()->id);
+        $badge = PathBadge::where('user_id', $request->user()->id)->where('path_id', $path->id)->value('obtenu_at');
 
         return response()->json([
             'ok' => true,
             'path' => [
                 'id' => $path->id, 'title' => $path->title, 'description' => $path->description,
                 'objectif' => $path->objectif, 'badge_icon' => $path->badge_icon, 'badge_couleur' => $path->badge_couleur,
-                'badge_obtenu' => $total > 0 && $termines >= $total,
+                'badge_obtenu' => $badge !== null,
+                'badge_obtenu_le' => $badge ? \Illuminate\Support\Carbon::parse($badge)->toDateString() : null,
+                'duree' => $this->dureeTotale($formations->where('disponible', true)),
             ],
             'formations' => $formations->values(),
         ]);

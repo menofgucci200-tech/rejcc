@@ -18,6 +18,13 @@ class Parcours extends Component
     {
         $paths = Collection::make(Api::get('/paths', [], Api::token())['paths'] ?? []);
 
-        return view('livewire.member.parcours', ['paths' => $paths]);
+        // En cours d'abord (là où le membre a déjà avancé), puis à découvrir, puis réussis.
+        $groupes = collect([
+            'En cours' => $paths->filter(fn ($p) => ! $p['badge_obtenu'] && ($p['commence'] ?? false)),
+            'À découvrir' => $paths->filter(fn ($p) => ! $p['badge_obtenu'] && ! ($p['commence'] ?? false)),
+            'Terminés' => $paths->filter(fn ($p) => $p['badge_obtenu']),
+        ])->filter(fn ($liste) => $liste->isNotEmpty())->map->values();
+
+        return view('livewire.member.parcours', ['paths' => $paths, 'groupes' => $groupes]);
     }
 }

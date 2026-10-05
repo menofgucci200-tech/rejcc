@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Models\EventRegistration;
 use App\Models\FormationEnrollment;
 use App\Models\MarketplaceListing;
+use App\Models\PathBadge;
 use App\Models\Project;
 use App\Models\User;
 
@@ -85,6 +86,17 @@ class MemberProfile
 
             // Données vérifiées par la plateforme (activité réelle dans le réseau)
             'certificats' => $certificats,
+            'badges_parcours' => PathBadge::with('path:id,title,badge_icon,badge_couleur')
+                ->where('user_id', $user->id)
+                ->orderByDesc('obtenu_at')
+                ->get()
+                ->filter(fn (PathBadge $b) => $b->path)
+                ->map(fn (PathBadge $b) => [
+                    'titre' => $b->path->title,
+                    'icon' => $b->path->badge_icon,
+                    'couleur' => $b->path->badge_couleur,
+                    'obtenu_le' => $b->obtenu_at->toDateString(),
+                ])->values(),
             'groupes' => $user->groups()->orderBy('ordre')->get(['groups.name'])
                 ->map(fn ($g) => ['nom' => $g->name, 'specialite' => $g->pivot->specialite])->values(),
             'projets' => Project::where('user_id', $user->id)

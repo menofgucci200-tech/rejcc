@@ -18,6 +18,16 @@ class FormationEnrollment extends Model
         return ['completed_at' => 'datetime', 'examen_reussi_at' => 'datetime', 'examen_bloque_jusqu' => 'datetime'];
     }
 
+    /** Une formation terminée peut compléter un parcours : on attribue alors son badge. */
+    protected static function booted(): void
+    {
+        static::saved(function (FormationEnrollment $e) {
+            if ($e->completed_at && ($e->wasRecentlyCreated || $e->wasChanged('completed_at'))) {
+                \App\Support\PathBadges::attribuer($e->user_id);
+            }
+        });
+    }
+
     /** Tous les modules de la formation sont validés. */
     public function modulesTermines(): bool
     {

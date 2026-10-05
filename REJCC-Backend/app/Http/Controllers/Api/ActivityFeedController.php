@@ -6,13 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\EventRegistration;
 use App\Models\FormationEnrollment;
 use App\Models\Opportunity;
+use App\Models\PathBadge;
 use Illuminate\Http\Request;
 
 class ActivityFeedController extends Controller
 {
     /**
      * Fil d'activité du membre courant : inscriptions aux formations et
-     * événements, progression, annonces publiées — fusionnés par date.
+     * événements, progression, badges de parcours, annonces publiées — fusionnés par date.
      */
     public function mine(Request $request)
     {
@@ -54,6 +55,18 @@ class ActivityFeedController extends Controller
                 'text' => "Inscription confirmée : {$r->event->title}".($r->event->starts_at ? ' du '.$r->event->starts_at->translatedFormat('j F') : ''),
                 'at' => $r->created_at,
                 'color' => '#031D59',
+            ]);
+        }
+
+        foreach (PathBadge::with('path:id,title')->where('user_id', $userId)->get() as $b) {
+            if (! $b->path) {
+                continue;
+            }
+
+            $items->push([
+                'text' => "Badge du parcours « {$b->path->title} » obtenu 🏅",
+                'at' => $b->obtenu_at,
+                'color' => '#F5A623',
             ]);
         }
 

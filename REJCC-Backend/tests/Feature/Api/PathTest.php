@@ -5,7 +5,9 @@ namespace Tests\Feature\Api;
 use App\Models\ApiToken;
 use App\Models\Formation;
 use App\Models\FormationEnrollment;
+use App\Models\MemberNotification;
 use App\Models\Path;
+use App\Models\PathBadge;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -92,6 +94,46 @@ class PathTest extends TestCase
         $liste = $this->withToken($token)->getJson('/api/paths')->assertOk()->json('paths');
         $this->assertTrue($liste[0]['badge_obtenu']);
         $this->assertSame(2, $liste[0]['formations_terminees']);
+    }
+
+    public function test_le_badge_est_enregistre_notifie_et_conserve(): void
+    {
+        $admin = $this->tokenFor(User::factory()->create(['role' => 'admin']));
+        $f1 = $this->formation('Les bases');
+        $f1->update(['duration' => '4 semaines']);
+        $f2 = $this->formation('Aller plus loin');
+        $f2->update(['duration' => '2 semaines']);
+
+        $pathId = $this->withToken($admin)->postJson('/api/admin/paths', ['title' => 'Parcours Test'])->json('path.id');
+        $this->withToken($admin)->putJson("/api/admin/paths/{$pathId}/formations", ['formation_ids' => [$f1->id, $f2->id]]);
+
+        $membre = User::factory()->create();
+        $token = $this->tokenFor($membre);
+
+        $liste = $this->withToken($token)->getJson('/api/paths')->json('paths');
+        $this->assertSame('6 semaines', $liste[0]['duree']);
+        $this->assertFalse($liste[0]['commence']);
+
+        FormationEnrollment::create(['formation_id' => $f1->id, 'user_id' => $membre->id, 'progress' => 100, 'completed_at' => now()]);
+        $this->assertSame(0, PathBadge::count());
+
+        // La 2e formation se termine : le badge est enregistré et le membre notifié, une seule fois.
+        $e = FormationEnrollment::create(['formation_id' => $f2->id, 'user_id' => $membre->id, 'progress' => 50]);
+        $e->update(['progress' => 100, 'completed_at' => now()]);
+        $this->assertSame(1, PathBadge::where('user_id', $membre->id)->count());
+        $this->assertSame(1, MemberNotification::where('user_id', $membre->id)->where('title', 'like', 'Badge%')->count());
+
+        // Le badge reste acquis si une nouvelle formation est ajoutée au parcours.
+        $f3 = $this->formation('Nouveauté');
+        $this->withToken($admin)->putJson("/api/admin/paths/{$pathId}/formations", ['formation_ids' => [$f1->id, $f2->id, $f3->id]]);
+        $liste = $this->withToken($token)->getJson('/api/paths')->json('paths');
+        $this->assertTrue($liste[0]['badge_obtenu']);
+        $this->assertTrue($liste[0]['commence']);
+
+        // Visible sur la page biographique et dans le fil d'activité.
+        $membre->forceFill(['subscription_expires_at' => now()->addYear()])->save();
+        $this->getJson('/api/member-card/'.$membre->id)->assertJsonPath('card.badges_parcours.0.titre', 'Parcours Test');
+        $this->assertStringContainsString('Parcours Test', json_encode($this->withToken($token)->getJson('/api/my-activity')->json('activity')));
     }
 
     public function test_une_etape_sans_contenu_ne_bloque_pas_et_ne_compte_pas(): void

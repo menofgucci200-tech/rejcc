@@ -20,6 +20,9 @@
                     @if ($path['objectif'])
                         <p class="mt-1 text-[13px] text-[#5B677A]">{{ $path['objectif'] }}</p>
                     @endif
+                    @if ($path['duree'] ?? null)
+                        <p class="mt-1.5 inline-flex items-center gap-1 text-[12px] font-semibold text-[#5B677A]"><x-ui.icon name="clock" class="size-3.5" /> Durée estimée : {{ $path['duree'] }}</p>
+                    @endif
                 </div>
             </div>
 
@@ -39,9 +42,13 @@
             @endif
 
             @if ($path['badge_obtenu'])
-                <div class="mb-6 flex items-center gap-3 rounded-[16px] border border-[#22A85A]/20 bg-[#22A85A]/5 p-4">
+                <div data-test="badge-obtenu" class="mb-6 flex items-center gap-3 rounded-[16px] border border-[#22A85A]/20 bg-[#22A85A]/5 p-4">
                     <x-ui.icon name="award" class="size-6 shrink-0 text-[#1C8F4C]" />
-                    <p class="text-[13px] font-bold text-[#1C8F4C]">Bravo, vous avez terminé ce parcours et obtenu le badge !</p>
+                    <p class="text-[13px] font-bold text-[#1C8F4C]">Bravo, vous avez terminé ce parcours et obtenu le badge !
+                        @if ($path['badge_obtenu_le'] ?? null)
+                            <span class="block text-[11.5px] font-semibold text-[#1C8F4C]/80">Obtenu le {{ \Carbon\Carbon::parse($path['badge_obtenu_le'])->translatedFormat('j F Y') }} · visible sur votre tableau de bord et votre page biographique.</span>
+                        @endif
+                    </p>
                 </div>
             @endif
 

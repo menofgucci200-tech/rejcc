@@ -11,35 +11,43 @@
         @if ($paths->isEmpty())
             <p class="rounded-[16px] border border-brand/10 bg-white py-10 text-center text-sm text-[#5B677A]">Aucun parcours disponible pour le moment.</p>
         @else
-            <div class="grid gap-4" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr))">
-                @foreach ($paths as $p)
-                    <a href="{{ route('espace-membre.parcours.detail', $p['id']) }}" wire:navigate class="card-hover flex flex-col rounded-[16px] border border-brand/10 bg-white p-5 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
-                        <div class="mb-3 flex items-start justify-between gap-2">
-                            <span class="flex size-11 shrink-0 items-center justify-center rounded-[12px]" style="background: {{ $p['badge_couleur'] ?? '#4F6FBF' }}1A; color: {{ $p['badge_couleur'] ?? '#4F6FBF' }}">
-                                <x-ui.icon :name="$p['badge_icon'] ?: 'rocket'" class="size-5" />
-                            </span>
-                            @if ($p['badge_obtenu'])
-                                <span class="inline-flex items-center gap-1 rounded-full bg-[#22A85A]/10 px-2.5 py-1 text-[10.5px] font-bold text-[#1C8F4C]">
-                                    <x-ui.icon name="award" class="size-3" /> Badge obtenu
-                                </span>
-                            @endif
-                        </div>
-                        <p class="text-[14px] font-bold leading-snug text-brand">{{ $p['title'] }}</p>
-                        @if ($p['objectif'])
-                            <p class="mt-1.5 flex-1 text-[12px] leading-relaxed text-[#5B677A]">{{ $p['objectif'] }}</p>
-                        @endif
-                        <div class="mt-4">
-                            <div class="h-1.5 w-full rounded-full bg-cloud">
-                                <div class="h-1.5 rounded-full {{ $p['badge_obtenu'] ? 'bg-[#22A85A]' : 'bg-azure' }}" style="width: {{ $p['pct'] }}%"></div>
-                            </div>
-                            <p class="mt-1.5 text-[11.5px] font-semibold text-[#5B677A]">Formations terminées : {{ $p['formations_terminees'] }}/{{ $p['total_formations'] }}</p>
-                            @if ($p['a_venir'] ?? 0)
-                                <p class="mt-0.5 text-[11px] text-[#9AA6B8]">+ {{ $p['a_venir'] }} étape{{ $p['a_venir'] > 1 ? 's' : '' }} bientôt disponible{{ $p['a_venir'] > 1 ? 's' : '' }}</p>
-                            @endif
-                        </div>
-                    </a>
-                @endforeach
-            </div>
+            @foreach ($groupes as $titre => $liste)
+                <section data-test="groupe-parcours" class="mb-8">
+                    <h2 class="mb-3 text-[12px] font-bold uppercase tracking-[0.08em] text-[#9AA6B8]">{{ $titre }} <span class="text-[#C9D3E6]">· {{ $liste->count() }}</span></h2>
+                    <div class="grid gap-4" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr))">
+                        @foreach ($liste as $p)
+                            <a data-test="parcours-carte" href="{{ route('espace-membre.parcours.detail', $p['id']) }}" wire:navigate class="card-hover flex flex-col rounded-[16px] border border-brand/10 bg-white p-5 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                                <div class="mb-3 flex items-start justify-between gap-2">
+                                    <span class="flex size-11 shrink-0 items-center justify-center rounded-[12px]" style="background: {{ $p['badge_couleur'] ?? '#4F6FBF' }}1A; color: {{ $p['badge_couleur'] ?? '#4F6FBF' }}">
+                                        <x-ui.icon :name="$p['badge_icon'] ?: 'rocket'" class="size-5" />
+                                    </span>
+                                    @if ($p['badge_obtenu'])
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-[#22A85A]/10 px-2.5 py-1 text-[10.5px] font-bold text-[#1C8F4C]">
+                                            <x-ui.icon name="award" class="size-3" /> Badge obtenu{{ ($p['badge_obtenu_le'] ?? null) ? ' · '.\Carbon\Carbon::parse($p['badge_obtenu_le'])->translatedFormat('M Y') : '' }}
+                                        </span>
+                                    @endif
+                                </div>
+                                <p class="text-[14px] font-bold leading-snug text-brand">{{ $p['title'] }}</p>
+                                @if ($p['objectif'])
+                                    <p class="mt-1.5 flex-1 text-[12px] leading-relaxed text-[#5B677A]">{{ $p['objectif'] }}</p>
+                                @endif
+                                @if ($p['duree'] ?? null)
+                                    <p class="mt-2 inline-flex items-center gap-1 text-[11.5px] font-semibold text-[#5B677A]"><x-ui.icon name="clock" class="size-3.5" /> Durée estimée : {{ $p['duree'] }}</p>
+                                @endif
+                                <div class="mt-4">
+                                    <div class="h-1.5 w-full rounded-full bg-cloud">
+                                        <div class="h-1.5 rounded-full {{ $p['badge_obtenu'] ? 'bg-[#22A85A]' : 'bg-azure' }}" style="width: {{ $p['pct'] }}%"></div>
+                                    </div>
+                                    <p class="mt-1.5 text-[11.5px] font-semibold text-[#5B677A]">Formations terminées : {{ $p['formations_terminees'] }}/{{ $p['total_formations'] }}</p>
+                                    @if ($p['a_venir'] ?? 0)
+                                        <p class="mt-0.5 text-[11px] text-[#9AA6B8]">+ {{ $p['a_venir'] }} étape{{ $p['a_venir'] > 1 ? 's' : '' }} bientôt disponible{{ $p['a_venir'] > 1 ? 's' : '' }}</p>
+                                    @endif
+                                </div>
+                            </a>
+                        @endforeach
+                    </div>
+                </section>
+            @endforeach
         @endif
     </div>
 </div>

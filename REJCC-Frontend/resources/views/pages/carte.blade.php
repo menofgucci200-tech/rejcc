@@ -19,6 +19,7 @@
         $competences = collect($card->competences ?? []);
         $parcours = collect($card->parcours ?? []);
         $certificats = collect($card->certificats ?? []);
+        $badgesParcours = collect($card->badges_parcours ?? []);
         $groupes = collect($card->groupes ?? []);
         $projets = collect($card->projets ?? []);
         $listings = collect($card->listings ?? []);
@@ -250,6 +251,24 @@
                                         <span class="min-w-0">
                                             <span class="block text-[13px] font-bold text-brand">{{ $ce['titre'] }}</span>
                                             <span class="block text-[11.5px] text-[#9AA6B8]">{{ \Carbon\Carbon::parse($ce['obtenu_le'])->translatedFormat('F Y') }} · {{ $ce['reference'] }}</span>
+                                        </span>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </section>
+                    @endif
+
+                    @if ($badgesParcours->isNotEmpty())
+                        <section data-test="bio-badges" class="rounded-3xl border border-brand/10 bg-white p-6 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                            <h2 class="text-[15px] font-extrabold text-brand">Parcours réussis</h2>
+                            <div class="mb-4 mt-1 h-[3px] w-9 rounded bg-accent"></div>
+                            <ul class="flex flex-col gap-3">
+                                @foreach ($badgesParcours as $b)
+                                    <li class="flex gap-3">
+                                        <span class="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full" style="background: {{ ($b['couleur'] ?? null) ?: '#4F6FBF' }}1A; color: {{ ($b['couleur'] ?? null) ?: '#4F6FBF' }}"><x-ui.icon :name="($b['icon'] ?? null) ?: 'rocket'" class="size-4" /></span>
+                                        <span class="min-w-0">
+                                            <span class="block text-[13px] font-bold text-brand">{{ $b['titre'] }}</span>
+                                            <span class="block text-[11.5px] text-[#9AA6B8]">Badge obtenu en {{ \Carbon\Carbon::parse($b['obtenu_le'])->translatedFormat('F Y') }}</span>
                                         </span>
                                     </li>
                                 @endforeach

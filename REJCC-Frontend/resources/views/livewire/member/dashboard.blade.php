@@ -253,6 +253,26 @@
                     </div>
                 </section>
 
+                @if ($badgesParcours->isNotEmpty())
+                    <section data-test="badges-parcours">
+                        <h2 class="mb-1 text-[17px] font-bold text-brand">Mes badges de parcours</h2>
+                        <div class="mb-4 h-[3px] w-9 rounded bg-accent"></div>
+                        <div class="flex flex-col gap-2 rounded-[18px] border border-brand/10 bg-white p-4 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                            @foreach ($badgesParcours as $b)
+                                <a href="{{ route('espace-membre.parcours.detail', $b['id']) }}" wire:navigate class="flex items-center gap-3 rounded-[12px] p-1.5 transition-colors hover:bg-cloud/70">
+                                    <span class="flex size-10 shrink-0 items-center justify-center rounded-full" style="background: {{ $b['badge_couleur'] ?: '#4F6FBF' }}1A; color: {{ $b['badge_couleur'] ?: '#4F6FBF' }}">
+                                        <x-ui.icon :name="$b['badge_icon'] ?: 'rocket'" class="size-[18px]" />
+                                    </span>
+                                    <span class="min-w-0">
+                                        <span class="block truncate text-[13px] font-bold text-brand">{{ $b['title'] }}</span>
+                                        <span class="block text-[11.5px] text-[#9AA6B8]">Obtenu le {{ \Carbon\Carbon::parse($b['badge_obtenu_le'])->translatedFormat('j F Y') }}</span>
+                                    </span>
+                                </a>
+                            @endforeach
+                        </div>
+                    </section>
+                @endif
+
                 <section>
                     <h2 class="mb-1 text-[17px] font-bold text-brand">Activité récente</h2>
                     <div class="mb-4 h-[3px] w-9 rounded bg-accent"></div>
