@@ -19,11 +19,30 @@ class Mentorship extends Model
         'termine' => 'Terminé',
     ];
 
-    protected $fillable = ['mentor_id', 'mentore_id', 'statut', 'objectif', 'besoin', 'reponse', 'repondu_at', 'termine_at'];
+    protected $fillable = [
+        'mentor_id', 'mentore_id', 'statut', 'objectif', 'besoin', 'reponse', 'repondu_at', 'termine_at',
+        'bilan', 'termine_par', 'note', 'avis', 'evalue_at', 'cree_par_admin',
+    ];
 
     protected function casts(): array
     {
-        return ['repondu_at' => 'datetime', 'termine_at' => 'datetime'];
+        return ['repondu_at' => 'datetime', 'termine_at' => 'datetime', 'evalue_at' => 'datetime', 'note' => 'integer', 'cree_par_admin' => 'boolean'];
+    }
+
+    /**
+     * Statistiques publiques d'un mentor : membres accompagnés (mentorats en
+     * cours ou terminés) et note moyenne laissée par ses mentorés.
+     */
+    public static function statsMentor(int $mentorId): array
+    {
+        $q = static::where('mentor_id', $mentorId)->whereIn('statut', ['accepte', 'termine']);
+        $notes = (clone $q)->whereNotNull('note');
+
+        return [
+            'accompagnes' => (clone $q)->distinct()->count('mentore_id'),
+            'note_moyenne' => $notes->count() ? round((float) $notes->avg('note'), 1) : null,
+            'nb_avis' => $notes->count(),
+        ];
     }
 
     public function mentor(): BelongsTo

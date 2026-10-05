@@ -102,6 +102,8 @@ Route::middleware('auth.token')->group(function () {
     Route::post('/mentorat/{id}/refuser', [\App\Http\Controllers\Api\MentoratController::class, 'refuser'])->whereNumber('id');
     Route::get('/mentorat/prochaine-seance', [\App\Http\Controllers\Api\SeanceController::class, 'prochaine']);
     Route::get('/mentorat/{id}', [\App\Http\Controllers\Api\SeanceController::class, 'show'])->whereNumber('id');
+    Route::post('/mentorat/{id}/terminer', [\App\Http\Controllers\Api\SeanceController::class, 'terminer'])->whereNumber('id');
+    Route::post('/mentorat/{id}/evaluer', [\App\Http\Controllers\Api\SeanceController::class, 'evaluer'])->whereNumber('id');
     Route::post('/mentorat/{id}/seances', [\App\Http\Controllers\Api\SeanceController::class, 'proposer'])->whereNumber('id');
     Route::post('/seances/{id}/confirmer', [\App\Http\Controllers\Api\SeanceController::class, 'confirmer'])->whereNumber('id');
     Route::post('/seances/{id}/annuler', [\App\Http\Controllers\Api\SeanceController::class, 'annuler'])->whereNumber('id');

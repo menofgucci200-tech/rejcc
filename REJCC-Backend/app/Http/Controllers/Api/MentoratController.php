@@ -185,6 +185,8 @@ class MentoratController extends Controller
             'cree_le' => $m->created_at?->toIso8601String(),
             'repondu_le' => $m->repondu_at?->toIso8601String(),
             'termine_le' => $m->termine_at?->toIso8601String(),
+            'a_evaluer' => $m->statut === 'termine' && $m->mentore_id === $me->id && $m->evalue_at === null,
+            'note' => $m->note,
             'je_suis' => $m->mentor_id === $me->id ? 'mentor' : 'mentore',
             'autre' => $autre ? [
                 'id' => $autre->id,

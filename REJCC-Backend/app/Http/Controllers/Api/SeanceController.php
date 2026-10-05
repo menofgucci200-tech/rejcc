@@ -86,6 +86,11 @@ class SeanceController extends Controller
                 'titre' => $autre->titre, 'secteur' => $autre->secteur, 'ville' => $autre->ville,
             ],
             'format_mentor' => $m->mentor->mentor_format,
+            'bilan' => $m->bilan,
+            'termine_par_moi' => $m->termine_par === $me->id,
+            'note' => $m->note,
+            'avis' => $m->avis,
+            'peut_evaluer' => $m->statut === 'termine' && $m->mentore_id === $me->id && $m->evalue_at === null,
             'seances' => $m->seances->map(fn ($s) => $this->seance($s, $me))->values(),
         ]]);
     }
@@ -230,5 +235,60 @@ class SeanceController extends Controller
             'avec' => $this->nomDe($autre),
             'je_suis' => $s->mentorship->mentor_id === $me->id ? 'mentor' : 'mentore',
         ]]);
+    }
+
+    /** POST /mentorat/{id}/terminer — l'un ou l'autre clôt le mentorat (bilan facultatif). */
+    public function terminer(Request $request, int $id)
+    {
+        $m = $this->mentorat($request, $id);
+        if (! $m || $m->statut !== 'accepte') {
+            return response()->json(['ok' => false, 'message' => 'Mentorat introuvable ou déjà terminé.'], 404);
+        }
+        $bilan = trim((string) $request->input('bilan', '')) ?: null;
+        if ($bilan !== null && mb_strlen($bilan) > 2000) {
+            return response()->json(['ok' => false, 'message' => 'Le bilan est trop long (2000 caractères au plus).'], 422);
+        }
+
+        $me = $request->user();
+        $m->update(['statut' => 'termine', 'termine_at' => now(), 'termine_par' => $me->id, 'bilan' => $bilan]);
+        // Les séances encore prévues sont annulées.
+        $m->seances()->whereIn('statut', ['proposee', 'confirmee'])->where('debut_at', '>', now())
+            ->update(['statut' => 'annulee', 'motif_annulation' => 'Mentorat terminé']);
+
+        $estMentor = $m->mentor_id === $me->id;
+        $this->notifier(
+            $estMentor ? $m->mentore_id : $m->mentor_id,
+            'Mentorat terminé',
+            $this->nomDe($me).' a clôturé le mentorat « '.$m->objectif.' ».'.($estMentor ? ' Donnez votre avis sur cet accompagnement.' : ''),
+            $m->id,
+        );
+
+        return response()->json(['ok' => true]);
+    }
+
+    /** POST /mentorat/{id}/evaluer — le mentoré évalue son mentor (une fois). */
+    public function evaluer(Request $request, int $id)
+    {
+        $m = $this->mentorat($request, $id);
+        $me = $request->user();
+        if (! $m || $m->mentore_id !== $me->id || $m->statut !== 'termine') {
+            return response()->json(['ok' => false, 'message' => 'Seul le mentoré peut évaluer un mentorat terminé.'], 403);
+        }
+        if ($m->evalue_at) {
+            return response()->json(['ok' => false, 'message' => 'Vous avez déjà donné votre avis sur ce mentorat.'], 422);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'note' => 'required|integer|min:1|max:5',
+            'avis' => 'nullable|string|max:1500',
+        ], ['note.required' => 'Choisissez une note de 1 à 5 étoiles.']);
+        if ($validator->fails()) {
+            return response()->json(['ok' => false, 'message' => $validator->errors()->first()], 422);
+        }
+
+        $m->update(['note' => (int) $request->input('note'), 'avis' => trim((string) $request->input('avis')) ?: null, 'evalue_at' => now()]);
+        $this->notifier($m->mentor_id, 'Nouvel avis sur votre mentorat', $this->nomDe($me).' a évalué votre accompagnement : '.$m->note.'/5.', $m->id);
+
+        return response()->json(['ok' => true]);
     }
 }

@@ -175,6 +175,54 @@
                 </section>
             @endif
 
+            {{-- Clôture --}}
+            @if ($mentorat['statut'] === 'termine')
+                <section data-test="mentorat-termine" class="mb-8 rounded-[18px] border border-brand/10 bg-white p-5 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                    <h2 class="text-[15px] font-bold text-brand">Mentorat terminé</h2>
+                    <p class="mt-0.5 text-[12px] text-[#9AA6B8]">Le {{ \Carbon\Carbon::parse($mentorat['termine_le'])->translatedFormat('j F Y') }}{{ $mentorat['termine_par_moi'] ? ', par vous' : '' }}</p>
+                    @if ($mentorat['bilan'])
+                        <p class="mt-3 whitespace-pre-line rounded-[12px] bg-cloud/60 px-4 py-3 text-[13px] text-ink"><span class="font-semibold text-brand">Bilan :</span> {{ $mentorat['bilan'] }}</p>
+                    @endif
+
+                    @if ($mentorat['peut_evaluer'])
+                        <div data-test="form-avis" class="mt-4 border-t border-cloud-200 pt-4">
+                            <p class="text-[13.5px] font-bold text-brand">Votre avis sur cet accompagnement</p>
+                            <div class="mt-2 flex gap-1" role="radiogroup" aria-label="Note de 1 à 5 étoiles">
+                                @for ($i = 1; $i <= 5; $i++)
+                                    <button type="button" wire:click="$set('note', {{ $i }})" role="radio" aria-checked="{{ $note === $i ? 'true' : 'false' }}" aria-label="{{ $i }} étoile{{ $i > 1 ? 's' : '' }}" data-test="etoile-{{ $i }}" class="text-[26px] leading-none transition-transform hover:scale-110 {{ $note >= $i ? 'text-[#F5A623]' : 'text-[#D5DCE7]' }}">★</button>
+                                @endfor
+                            </div>
+                            <textarea wire:model="avis" rows="3" maxlength="1500" placeholder="Ce que ce mentorat vous a apporté (facultatif, visible par votre mentor)" class="mt-3 w-full rounded-[10px] border border-brand/15 px-3 py-2 text-[13px] outline-none focus:border-azure"></textarea>
+                            <button wire:click="evaluer" wire:loading.attr="disabled" data-test="envoyer-avis" class="btn-tap mt-2 rounded-full bg-accent px-5 py-2 text-[12.5px] font-bold text-white hover:bg-accent-600 disabled:opacity-60">Envoyer mon avis</button>
+                        </div>
+                    @elseif ($mentorat['note'])
+                        <p data-test="avis-donne" class="mt-3 text-[13px] text-ink">
+                            {{ $estMentor ? 'Avis de votre mentoré·e :' : 'Votre avis :' }}
+                            <span class="text-[#F5A623]">{{ str_repeat('★', $mentorat['note']) }}</span><span class="text-[#D5DCE7]">{{ str_repeat('★', 5 - $mentorat['note']) }}</span>
+                            @if ($mentorat['avis'])
+                                <span class="mt-1 block italic text-[#5B677A]">« {{ $mentorat['avis'] }} »</span>
+                            @endif
+                        </p>
+                    @endif
+                </section>
+            @elseif ($enCours)
+                <section class="mb-8">
+                    @if ($formFin)
+                        <div data-test="form-fin" class="panel-enter rounded-[16px] border border-brand/10 bg-white p-5">
+                            <p class="text-[13.5px] font-bold text-brand">Terminer le mentorat</p>
+                            <p class="mt-0.5 text-[12px] text-[#5B677A]">Les séances encore prévues seront annulées.{{ $estMentor ? ' Votre mentoré·e pourra ensuite donner son avis.' : '' }}</p>
+                            <textarea wire:model="bilan" rows="3" maxlength="2000" placeholder="Bilan : objectifs atteints, suite conseillée… (facultatif)" class="mt-3 w-full rounded-[10px] border border-brand/15 px-3 py-2 text-[13px] outline-none focus:border-azure"></textarea>
+                            <div class="mt-2 flex gap-2">
+                                <button wire:click="terminer" wire:loading.attr="disabled" data-test="confirmer-fin" class="btn-tap rounded-full bg-brand px-4 py-2 text-[12px] font-bold text-white hover:bg-brand/90 disabled:opacity-60">Terminer le mentorat</button>
+                                <button wire:click="$set('formFin', false)" class="btn-tap rounded-full border border-brand/15 bg-white px-4 py-2 text-[12px] font-bold text-brand hover:bg-cloud">Annuler</button>
+                            </div>
+                        </div>
+                    @else
+                        <button wire:click="$set('formFin', true)" data-test="terminer-mentorat" class="text-[12.5px] font-semibold text-[#9AA6B8] hover:text-brand hover:underline">Objectif atteint ? Terminer le mentorat</button>
+                    @endif
+                </section>
+            @endif
+
             @if ($annulees->isNotEmpty())
                 <details class="rounded-[16px] border border-brand/10 bg-white p-4">
                     <summary class="cursor-pointer text-[12.5px] font-bold text-brand">Séances annulées ou non confirmées ({{ $annulees->count() }})</summary>

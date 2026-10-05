@@ -36,6 +36,15 @@ class MentoratSuivi extends Component
 
     public string $prochainesEtapes = '';
 
+    // Clôture et évaluation
+    public bool $formFin = false;
+
+    public string $bilan = '';
+
+    public int $note = 0;
+
+    public string $avis = '';
+
     public ?string $message = null;
 
     public ?string $erreur = null;
@@ -111,6 +120,20 @@ class MentoratSuivi extends Component
 
         if ($ok) {
             $this->reset(['compteRenduPour', 'compteRendu', 'prochainesEtapes']);
+        }
+    }
+
+    public function terminer(): void
+    {
+        if ($this->resultat(Api::post("/mentorat/{$this->mentorshipId}/terminer", ['bilan' => trim($this->bilan) ?: null], Api::token()), 'Mentorat terminé : une notification a été envoyée.')) {
+            $this->reset(['formFin', 'bilan']);
+        }
+    }
+
+    public function evaluer(): void
+    {
+        if ($this->resultat(Api::post("/mentorat/{$this->mentorshipId}/evaluer", ['note' => $this->note ?: null, 'avis' => trim($this->avis) ?: null], Api::token()), 'Merci pour votre avis !')) {
+            $this->reset(['note', 'avis']);
         }
     }
 

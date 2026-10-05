@@ -41,6 +41,7 @@ class MemberProfile
             'format_label' => static::FORMATS_MENTORAT[$user->mentor_format] ?? null,
             'capacite' => (int) $user->mentor_capacite,
             'accepte' => (bool) $user->mentor_accepte,
+            'stats' => \App\Models\Mentorship::statsMentor($user->id),
         ];
     }
 

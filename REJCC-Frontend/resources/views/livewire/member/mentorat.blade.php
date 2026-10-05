@@ -184,6 +184,9 @@
                                 @if ($r['reponse'])
                                     <p class="mt-2 rounded-[10px] bg-cloud/70 px-3 py-2 text-[12.5px] italic text-[#5B677A]">« {{ $r['reponse'] }} »</p>
                                 @endif
+                                @if ($r['a_evaluer'] ?? false)
+                                    <p class="mt-2 text-[12px] font-bold text-[#8A5A00]">★ Mentorat terminé : donnez votre avis depuis le suivi.</p>
+                                @endif
                                 <div class="mt-3 flex flex-wrap gap-2">
                                     @if ($r['statut'] === 'en_attente')
                                         <button wire:click="annuler({{ $r['id'] }})" wire:confirm="Retirer votre demande de mentorat ?" class="btn-tap rounded-full border border-brand/15 px-3.5 py-1.5 text-[12px] font-bold text-brand hover:bg-cloud">Retirer ma demande</button>
@@ -239,6 +242,9 @@
                                             <span class="rounded-full bg-accent/[.06] px-2.5 py-1 text-[11px] font-semibold text-accent">{{ $e }}</span>
                                         @endforeach
                                     </div>
+                                @endif
+                                @if (($m['mentor']['stats']['accompagnes'] ?? 0) > 0)
+                                    <p class="mt-2.5 text-[11.5px] font-semibold text-brand">{{ $m['mentor']['stats']['accompagnes'] }} membre{{ $m['mentor']['stats']['accompagnes'] > 1 ? 's' : '' }} accompagné{{ $m['mentor']['stats']['accompagnes'] > 1 ? 's' : '' }}@if ($m['mentor']['stats']['note_moyenne']) · <span class="text-[#B27007]">★ {{ number_format($m['mentor']['stats']['note_moyenne'], 1, ',', '') }}</span> <span class="font-normal text-[#9AA6B8]">({{ $m['mentor']['stats']['nb_avis'] }} avis)</span>@endif</p>
                                 @endif
                                 <p class="mt-3 flex flex-1 flex-wrap gap-x-3 gap-y-1 text-[11.5px] text-[#5B677A]">
                                     @if ($m['mentor']['format_label'])<span class="inline-flex items-center gap-1"><x-ui.icon name="video" class="size-3.5" /> {{ $m['mentor']['format_label'] }}</span>@endif

@@ -11,6 +11,15 @@
                 {{ ($mentor['accepte'] ?? true) ? 'Accepte de nouveaux mentorés' : 'Complet pour le moment' }}
             </span>
         </div>
+        @php $stats = $mentor['stats'] ?? null; @endphp
+        @if (($stats['accompagnes'] ?? 0) > 0)
+            <p data-test="stats-mentor" class="mt-2 text-[12px] font-semibold text-brand">
+                {{ $stats['accompagnes'] }} membre{{ $stats['accompagnes'] > 1 ? 's' : '' }} accompagné{{ $stats['accompagnes'] > 1 ? 's' : '' }} au sein du REJCC
+                @if ($stats['note_moyenne'])
+                    · <span class="text-[#B27007]">★ {{ number_format($stats['note_moyenne'], 1, ',', '') }}/5</span> <span class="font-normal text-[#9AA6B8]">({{ $stats['nb_avis'] }} avis)</span>
+                @endif
+            </p>
+        @endif
         @if (! empty($mentor['expertises']))
             <div class="mt-2.5 flex flex-wrap gap-1.5">
                 @foreach ($mentor['expertises'] as $e)

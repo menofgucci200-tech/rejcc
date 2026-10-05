@@ -200,4 +200,31 @@ class MentoratTest extends TestCase
         $this->withToken($tAwa)->postJson("/api/seances/{$id2}/annuler", ['motif' => 'Empêchement familial'])->assertOk();
         $this->assertSame('annulee', \App\Models\MentoringSession::find($id2)->statut);
     }
+
+    public function test_le_mentorat_se_termine_et_le_mentore_evalue_son_mentor(): void
+    {
+        $mentor = User::factory()->create(['role' => 'mentor']);
+        $awa = $this->abonne();
+        $m = Mentorship::create(['mentor_id' => $mentor->id, 'mentore_id' => $awa->id, 'statut' => 'accepte', 'objectif' => 'Structurer mes finances', 'repondu_at' => now()]);
+        $seance = $m->seances()->create(['propose_par' => $mentor->id, 'debut_at' => now()->addDays(2), 'statut' => 'confirmee']);
+        $tMentor = $this->tokenFor($mentor);
+        $tAwa = $this->tokenFor($awa);
+
+        // Le mentoré ne peut pas évaluer un mentorat en cours.
+        $this->withToken($tAwa)->postJson("/api/mentorat/{$m->id}/evaluer", ['note' => 5])->assertStatus(403);
+
+        $this->withToken($tMentor)->postJson("/api/mentorat/{$m->id}/terminer", ['bilan' => 'Objectif atteint : prix revus et trésorerie suivie.'])->assertOk();
+        $this->assertSame('termine', $m->fresh()->statut);
+        $this->assertSame('annulee', $seance->fresh()->statut);
+        $this->assertTrue($this->withToken($tAwa)->getJson("/api/mentorat/{$m->id}")->json('mentorat.peut_evaluer'));
+
+        $this->withToken($tMentor)->postJson("/api/mentorat/{$m->id}/evaluer", ['note' => 5])->assertStatus(403);
+        $this->withToken($tAwa)->postJson("/api/mentorat/{$m->id}/evaluer", ['note' => 6])->assertStatus(422);
+        $this->withToken($tAwa)->postJson("/api/mentorat/{$m->id}/evaluer", ['note' => 4, 'avis' => 'Très à l\'écoute.'])->assertOk();
+        $this->withToken($tAwa)->postJson("/api/mentorat/{$m->id}/evaluer", ['note' => 5])->assertStatus(422);
+
+        // Statistiques du mentor sur sa fiche (et sa page bio).
+        $this->assertSame(['accompagnes' => 1, 'note_moyenne' => 4.0, 'nb_avis' => 1], \App\Support\MemberProfile::mentor($mentor->fresh())['stats']);
+        $this->getJson('/api/member-card/'.$mentor->id)->assertJsonPath('card.mentor.stats.accompagnes', 1);
+    }
 }
