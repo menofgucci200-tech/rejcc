@@ -48,6 +48,9 @@
         @error('photoUpload') <p class="mt-4 text-center text-xs font-medium text-accent">{{ $message }}</p> @enderror
 
         <div class="mt-6 flex flex-wrap items-center justify-center gap-3">
+            <button type="button" x-data @click="$dispatch('presenter-carte')" data-test="presenter" class="btn-tap inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-xs font-bold text-white hover:bg-accent-600">
+                <x-ui.icon name="qr-code" class="size-3.5" /> Présenter ma carte
+            </button>
             <label for="card-photo-input" class="btn-tap inline-flex cursor-pointer items-center gap-2 rounded-full bg-brand px-4 py-2 text-xs font-bold text-white hover:bg-brand/90">
                 <x-ui.icon name="image" class="size-3.5" /> {{ $photo ? 'Changer ma photo' : 'Ajouter ma photo' }}
             </label>
@@ -55,6 +58,53 @@
                 <x-ui.icon name="download" class="size-3.5" /> Imprimer / enregistrer en PDF
             </button>
             <span wire:loading wire:target="photoUpload" class="text-xs font-semibold text-[#9AA6B8]">Envoi de la photo…</span>
+        </div>
+
+        {{-- Mode « Présenter » : plein écran, QR en grand pour être scanné
+             facilement depuis l'écran du téléphone ; l'écran reste allumé. --}}
+        <div
+            wire:ignore
+            x-data="{
+                open: false, lock: null,
+                async show() {
+                    this.open = true;
+                    document.documentElement.classList.add('overflow-hidden');
+                    this.$nextTick(() => window.QRCode && window.QRCode.toCanvas(this.$refs.qr, @js(url('/carte/'.$code)), { width: 640, margin: 1, color: { dark: '#1D2556', light: '#ffffff' } }, () => { this.$refs.qr.style.width = ''; this.$refs.qr.style.height = ''; }));
+                    try { this.lock = await navigator.wakeLock?.request('screen'); } catch (e) {}
+                },
+                hide() { this.open = false; document.documentElement.classList.remove('overflow-hidden'); this.lock?.release?.(); this.lock = null; },
+            }"
+            @presenter-carte.window="show()"
+            @keydown.escape.window="open && hide()"
+        >
+            <div x-show="open" x-cloak x-transition.opacity data-test="mode-presenter" role="dialog" aria-modal="true" aria-label="Carte membre à présenter"
+                class="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-5 overflow-y-auto bg-[#1D2556] px-6 py-10 text-center text-white">
+                <button type="button" @click="hide()" aria-label="Fermer" class="absolute right-4 top-4 flex size-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20">
+                    <x-ui.icon name="x" class="size-5" />
+                </button>
+                <img src="{{ asset('brand/carte-logo.png') }}" alt="REJCC" class="w-28">
+                <div class="flex items-center gap-3.5">
+                    @if ($photo)
+                        <img src="{{ $photo }}" alt="" class="size-14 rounded-xl object-cover ring-2 ring-white/20">
+                    @endif
+                    <div class="text-left">
+                        <p class="font-serif text-xl font-bold uppercase tracking-[0.05em]">{{ $name }}</p>
+                        <p class="text-[11px] font-bold uppercase tracking-[0.3em] text-[#E07A7A]">{{ $roleLabel }}</p>
+                    </div>
+                </div>
+                <div class="rounded-3xl bg-white p-4 shadow-2xl">
+                    {{-- taille en classe (la lib QR réécrit les styles en ligne) --}}
+                    <canvas x-ref="qr" class="!block !h-[min(78vw,46vh)] !w-[min(78vw,46vh)]"></canvas>
+                </div>
+                <p class="text-[12px] font-bold uppercase tracking-[0.2em] text-white/80">Scannez pour voir mon profil</p>
+                <div class="text-[13px] leading-relaxed text-white/85">
+                    <p>N° {{ $numero }}</p>
+                    @if ($validite)
+                        <p class="font-bold text-[#7FE0A6]">Valable jusqu'au {{ $validite->translatedFormat('j F Y') }}</p>
+                    @endif
+                </div>
+                <p class="text-[11px] text-white/50">Astuce : augmentez la luminosité de l'écran pour faciliter le scan.</p>
+            </div>
         </div>
     </div>
     @endif
