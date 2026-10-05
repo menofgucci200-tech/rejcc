@@ -73,4 +73,33 @@ class MessagingTest extends TestCase
         $this->assertTrue($conv['last_vu']);
         $this->assertSame(0, $conv['unread']);
     }
+
+    public function test_une_seule_notification_par_conversation_avec_extrait(): void
+    {
+        $awa = $this->abonne(['prenom' => 'Awa', 'nom' => 'Traoré']);
+        $esther = $this->abonne();
+        $tA = $this->tokenFor($awa);
+
+        foreach (['Bonjour Esther', "Êtes-vous\ndisponible samedi ?", 'Merci !'] as $texte) {
+            $this->withToken($tA)->postJson('/api/messages', ['recipient_id' => $esther->id, 'body' => $texte])->assertOk();
+        }
+
+        $notifs = \App\Models\MemberNotification::where('user_id', $esther->id)->where('type', 'message')->get();
+        $this->assertCount(1, $notifs);
+        $this->assertSame('Message de Awa Traoré', $notifs[0]->title);
+        $this->assertSame('« Merci ! » · 3 messages non lus', $notifs[0]->body);
+        $this->assertSame("/espace-membre/messagerie?to={$awa->id}", $notifs[0]->link);
+
+        // Esther ouvre le fil : la notification est lue, et tant que le fil est
+        // ouvert, les nouveaux messages d'Awa ne créent pas de notification.
+        $this->withToken($this->tokenFor($esther))->getJson("/api/messages/{$awa->id}")->assertOk();
+        $this->assertNotNull($notifs[0]->fresh()->read_at);
+        $this->withToken($tA)->postJson('/api/messages', ['recipient_id' => $esther->id, 'body' => 'Encore là ?'])->assertOk();
+        $this->assertSame(0, \App\Models\MemberNotification::where('user_id', $esther->id)->whereNull('read_at')->count());
+
+        // Fil refermé (cache expiré) : nouvelle notification.
+        \Illuminate\Support\Facades\Cache::flush();
+        $this->withToken($tA)->postJson('/api/messages', ['recipient_id' => $esther->id, 'body' => 'Bonne soirée'])->assertOk();
+        $this->assertSame('« Bonne soirée » · 2 messages non lus', \App\Models\MemberNotification::where('user_id', $esther->id)->whereNull('read_at')->value('body'));
+    }
 }

@@ -7,6 +7,8 @@ use App\Models\MemberNotification;
 use App\Models\Message;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
 
 /**
@@ -86,6 +88,11 @@ class MessageController extends Controller
 
         Message::where('sender_id', $userId)->where('recipient_id', $me)
             ->whereNull('read_at')->update(['read_at' => now()]);
+        // La notification de cette conversation est lue elle aussi.
+        MemberNotification::where('user_id', $me)->where('type', 'message')
+            ->where('link', self::lien($userId))->whereNull('read_at')->update(['read_at' => now()]);
+        // Fil ouvert : pas de notification pour les messages qui arrivent pendant la lecture.
+        Cache::put(self::cleFilOuvert($me, $userId), true, now()->addSeconds(15));
 
         $query = Message::where(fn ($q) => $q->where(fn ($w) => $w->where('sender_id', $me)->where('recipient_id', $userId))
             ->orWhere(fn ($w) => $w->where('sender_id', $userId)->where('recipient_id', $me)));
@@ -140,14 +147,50 @@ class MessageController extends Controller
             'body' => $body,
         ]);
 
-        MemberNotification::create([
-            'user_id' => $destinataire->id,
-            'type' => 'message',
-            'title' => 'Nouveau message',
-            'body' => $me->prenom.' '.$me->nom.' vous a écrit.',
-            'link' => '/espace-membre/messagerie',
-        ]);
+        $this->notifier($me, $destinataire, $body);
 
         return response()->json(['ok' => true, 'message' => $message->only(['id', 'sender_id', 'recipient_id', 'body', 'created_at', 'read_at'])]);
+    }
+
+    private static function lien(int $autreId): string
+    {
+        return "/espace-membre/messagerie?to={$autreId}";
+    }
+
+    private static function cleFilOuvert(int $lecteur, int $autre): string
+    {
+        return "messagerie:fil-ouvert:{$lecteur}:{$autre}";
+    }
+
+    /**
+     * Une seule notification par conversation non lue : elle est mise à jour
+     * (extrait du dernier message, nombre de messages non lus) au lieu d'en
+     * créer une par message. Aucune si le destinataire a le fil sous les yeux.
+     */
+    private function notifier(User $expediteur, User $destinataire, string $body): void
+    {
+        if (Cache::has(self::cleFilOuvert($destinataire->id, $expediteur->id))) {
+            return;
+        }
+
+        $nonLus = Message::where('sender_id', $expediteur->id)->where('recipient_id', $destinataire->id)->whereNull('read_at')->count();
+        $extrait = Str::limit(preg_replace('/\s+/', ' ', $body), 90);
+        $donnees = [
+            'title' => 'Message de '.trim($expediteur->prenom.' '.$expediteur->nom),
+            'body' => "« {$extrait} »".($nonLus > 1 ? " · {$nonLus} messages non lus" : ''),
+        ];
+
+        $notif = MemberNotification::where('user_id', $destinataire->id)->where('type', 'message')
+            ->where('link', self::lien($expediteur->id))->whereNull('read_at')->latest('id')->first();
+
+        if ($notif) {
+            $notif->forceFill($donnees + ['created_at' => now()])->save();
+        } else {
+            MemberNotification::create($donnees + [
+                'user_id' => $destinataire->id,
+                'type' => 'message',
+                'link' => self::lien($expediteur->id),
+            ]);
+        }
     }
 }
