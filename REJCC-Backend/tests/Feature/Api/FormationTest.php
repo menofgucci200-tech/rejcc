@@ -222,4 +222,33 @@ class FormationTest extends TestCase
         $this->withToken($this->tokenFor($user))->postJson("/api/formations/{$formation->id}/complete-module")
             ->assertStatus(422);
     }
+
+    public function test_le_contenu_se_suit_sur_la_plateforme_et_les_ressources_sont_reservees_aux_abonnes(): void
+    {
+        \App\Support\SubscriptionMode::set(true);
+        $formation = $this->formation();
+        $formation->modules()->create([
+            'titre' => 'Module 1', 'ordre' => 1, 'contenu' => '## Leçon', 'document_url' => 'https://exemple.ci/support.pdf',
+            'ressources' => [['nom' => 'Modèle.xlsx', 'url' => 'https://exemple.ci/modele.xlsx', 'taille' => '20 Ko']],
+        ]);
+        $formation->modules()->create(['titre' => 'Module 2', 'ordre' => 2, 'contenu' => 'Secret']);
+
+        $nonAbonne = User::factory()->create(['subscription_expires_at' => null]);
+        $abonne = User::factory()->abonne()->create();
+        foreach ([$nonAbonne, $abonne] as $u) {
+            FormationEnrollment::create(['formation_id' => $formation->id, 'user_id' => $u->id]);
+        }
+
+        $vue = $this->withToken($this->tokenFor($nonAbonne))->getJson("/api/formations/{$formation->id}/modules")->assertOk();
+        $this->assertSame('## Leçon', $vue->json('modules.0.contenu'));
+        $this->assertSame('https://exemple.ci/support.pdf', $vue->json('modules.0.document_url')); // consultable
+        $this->assertNull($vue->json('modules.0.ressources.0.url'));                               // pas téléchargeable
+        $this->assertSame('Modèle.xlsx', $vue->json('modules.0.ressources.0.nom'));
+        $this->assertFalse($vue->json('telechargement_autorise'));
+        $this->assertNull($vue->json('modules.1.contenu'));                                         // module verrouillé : rien n'est envoyé
+
+        $vue = $this->withToken($this->tokenFor($abonne))->getJson("/api/formations/{$formation->id}/modules")->assertOk();
+        $this->assertSame('https://exemple.ci/modele.xlsx', $vue->json('modules.0.ressources.0.url'));
+        $this->assertTrue($vue->json('telechargement_autorise'));
+    }
 }

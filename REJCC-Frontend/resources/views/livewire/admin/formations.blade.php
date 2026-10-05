@@ -109,15 +109,48 @@
                                         <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Description / contenu</label>
                                         <textarea wire:model="moduleDescription" rows="2" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure"></textarea>
                                     </div>
-                                    <div>
-                                        <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Lien vidéo (YouTube, etc.)</label>
-                                        <input wire:model="moduleVideoUrl" type="text" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
-                                        @error('moduleVideoUrl') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                                    <div class="sm:col-span-2">
+                                        <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Leçon (texte suivi sur la plateforme)</label>
+                                        <textarea wire:model="moduleContenu" rows="8" data-test="module-contenu" placeholder="## Titre de partie&#10;Votre texte…&#10;- point clé&#10;- autre point" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 font-mono text-[12.5px] outline-none focus:border-azure"></textarea>
+                                        <p class="mt-1 text-[10.5px] text-[#9AA6B8]">Mise en forme : « ## » pour un titre, « - » pour une liste, **gras**, *italique*, [lien](https://…).</p>
                                     </div>
                                     <div>
-                                        <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Lien document (PDF, etc.)</label>
-                                        <input wire:model="moduleDocumentUrl" type="text" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
-                                        @error('moduleDocumentUrl') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                                        <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Vidéo — lien YouTube/Vimeo ou fichier</label>
+                                        <input wire:model="moduleVideoUrl" type="text" placeholder="https://www.youtube.com/watch?v=…" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
+                                        <label class="mt-1.5 inline-flex cursor-pointer items-center gap-1.5 text-[11.5px] font-semibold text-azure hover:underline">
+                                            <x-ui.icon name="video" class="size-3.5" /> Ou envoyer un fichier vidéo (MP4, 100 Mo max)
+                                            <input type="file" wire:model="moduleVideoFile" accept="video/mp4,video/webm,video/quicktime" class="hidden">
+                                        </label>
+                                        <span wire:loading wire:target="moduleVideoFile" class="ml-1 text-[11px] font-semibold text-azure">Envoi…</span>
+                                        @error('moduleVideoUrl') <span class="block text-xs text-accent">{{ $message }}</span> @enderror
+                                        @error('moduleVideoFile') <span class="block text-xs text-accent">{{ $message }}</span> @enderror
+                                    </div>
+                                    <div>
+                                        <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Support du module (PDF consultable en ligne)</label>
+                                        <input wire:model="moduleDocumentUrl" type="text" placeholder="https://…/support.pdf" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
+                                        <label class="mt-1.5 inline-flex cursor-pointer items-center gap-1.5 text-[11.5px] font-semibold text-azure hover:underline">
+                                            <x-ui.icon name="file-text" class="size-3.5" /> Ou envoyer un fichier (PDF, Word, PowerPoint…)
+                                            <input type="file" wire:model="moduleDocumentFile" class="hidden">
+                                        </label>
+                                        <span wire:loading wire:target="moduleDocumentFile" class="ml-1 text-[11px] font-semibold text-azure">Envoi…</span>
+                                        @error('moduleDocumentUrl') <span class="block text-xs text-accent">{{ $message }}</span> @enderror
+                                        @error('moduleDocumentFile') <span class="block text-xs text-accent">{{ $message }}</span> @enderror
+                                    </div>
+                                    <div class="sm:col-span-2">
+                                        <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Ressources téléchargeables (réservées aux abonnés)</label>
+                                        @foreach ($moduleRessources as $i => $r)
+                                            <div wire:key="ress-{{ $i }}" class="mb-1.5 flex items-center gap-2 rounded-[9px] border border-brand/10 bg-cloud/50 px-3 py-1.5">
+                                                <x-ui.icon name="folder-open" class="size-3.5 text-accent" />
+                                                <span class="min-w-0 flex-1 truncate text-[12px] font-semibold text-brand">{{ $r['nom'] }} <span class="font-normal text-[#9AA6B8]">{{ $r['taille'] ?? '' }}</span></span>
+                                                <button type="button" wire:click="retirerRessource({{ $i }})" class="text-[11px] font-semibold text-accent hover:underline">Retirer</button>
+                                            </div>
+                                        @endforeach
+                                        <label class="inline-flex cursor-pointer items-center gap-1.5 rounded-[9px] border border-dashed border-brand/25 px-3 py-2 text-[12px] font-bold text-brand hover:bg-cloud">
+                                            <x-ui.icon name="plus" class="size-3.5" /> Ajouter des fichiers (fiches, modèles, tableurs…)
+                                            <input type="file" wire:model="moduleRessourceFiles" multiple class="hidden">
+                                        </label>
+                                        <span wire:loading wire:target="moduleRessourceFiles" class="ml-1 text-[11px] font-semibold text-azure">Envoi…</span>
+                                        @error('moduleRessourceFiles.*') <span class="block text-xs text-accent">{{ $message }}</span> @enderror
                                     </div>
                                     <div>
                                         <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Durée (ex : 15 min)</label>
@@ -137,8 +170,10 @@
                                     <div class="min-w-0 flex-1">
                                         <p class="truncate text-[12.5px] font-bold text-brand">{{ $m['titre'] }}</p>
                                         <p class="truncate text-[11px] text-[#9AA6B8]">
+                                            @if ($m['contenu'] ?? null) Leçon · @endif
                                             @if ($m['video_url']) Vidéo @endif
                                             @if ($m['document_url']) · Document @endif
+                                            @if (! empty($m['ressources'])) · {{ count($m['ressources']) }} ressource(s) @endif
                                             @if ($m['duree']) · {{ $m['duree'] }} @endif
                                         </p>
                                     </div>

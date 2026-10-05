@@ -53,6 +53,7 @@ class FormationDetail extends Component
             'modules' => $result['modules'] ?? [],
             'progress' => $result['progress'] ?? 0,
             'completed' => $result['completed'] ?? false,
+            'telechargementAutorise' => (bool) ($result['telechargement_autorise'] ?? false),
         ]);
     }
 }

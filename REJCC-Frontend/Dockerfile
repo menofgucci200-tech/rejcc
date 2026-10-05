@@ -17,6 +17,11 @@ RUN apt-get update && apt-get install -y \
     && a2enmod rewrite \
     && rm -rf /var/lib/apt/lists/*
 
+# Envois de fichiers (vidéos et PDF de formation, médias…) : la limite PHP par
+# défaut de l'image (2 Mo) bloquait tout fichier plus lourd.
+RUN printf 'upload_max_filesize=100M\npost_max_size=110M\nmemory_limit=256M\nmax_execution_time=300\nmax_input_time=300\n' \
+        > /usr/local/etc/php/conf.d/rejcc-uploads.ini
+
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app

@@ -6,6 +6,7 @@ use App\Livewire\Concerns\HandlesMedia;
 use App\Support\Api;
 use App\Support\CategoryPalette;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -52,6 +53,63 @@ class Formations extends Component
     public int $moduleOrdre = 0;
 
     public bool $moduleFormOpen = false;
+
+    // Contenu suivi sur la plateforme
+    public string $moduleContenu = '';
+
+    public $moduleVideoFile = null;
+
+    public $moduleDocumentFile = null;
+
+    public array $moduleRessourceFiles = [];
+
+    /** [{nom, url, taille}] */
+    public array $moduleRessources = [];
+
+    public function updatedModuleVideoFile(): void
+    {
+        $this->validate(['moduleVideoFile' => 'file|max:102400|mimes:mp4,webm,mov,m4v'], [
+            'moduleVideoFile.max' => 'La vidéo ne doit pas dépasser 100 Mo (au-delà, publiez-la sur YouTube ou Vimeo et collez le lien).',
+            'moduleVideoFile.mimes' => 'Format vidéo accepté : MP4, WebM ou MOV.',
+        ], ['moduleVideoFile' => 'vidéo']);
+        $this->moduleVideoUrl = Storage::disk('uploads')->url($this->moduleVideoFile->store('formations/videos', 'uploads'));
+        $this->moduleVideoFile = null;
+    }
+
+    public function updatedModuleDocumentFile(): void
+    {
+        $this->validate(['moduleDocumentFile' => 'file|max:51200|mimes:pdf,doc,docx,ppt,pptx,xls,xlsx'], [
+            'moduleDocumentFile.max' => 'Le document ne doit pas dépasser 50 Mo.',
+            'moduleDocumentFile.mimes' => 'Formats acceptés : PDF (consultable en ligne), Word, PowerPoint, Excel.',
+        ], ['moduleDocumentFile' => 'document']);
+        $this->moduleDocumentUrl = Storage::disk('uploads')->url($this->moduleDocumentFile->store('formations/documents', 'uploads'));
+        $this->moduleDocumentFile = null;
+    }
+
+    public function updatedModuleRessourceFiles(): void
+    {
+        $this->validate(['moduleRessourceFiles.*' => 'file|max:51200|mimes:pdf,doc,docx,ppt,pptx,xls,xlsx,csv,txt,zip,jpg,jpeg,png,mp3'], [
+            'moduleRessourceFiles.*.max' => 'Chaque ressource doit faire moins de 50 Mo.',
+            'moduleRessourceFiles.*.mimes' => 'Format non pris en charge pour une ressource.',
+        ]);
+        foreach ($this->moduleRessourceFiles as $file) {
+            if (count($this->moduleRessources) >= 15) {
+                break;
+            }
+            $this->moduleRessources[] = [
+                'nom' => mb_substr($file->getClientOriginalName(), 0, 150),
+                'url' => Storage::disk('uploads')->url($file->store('formations/ressources', 'uploads')),
+                'taille' => $this->humanSize($file->getSize()),
+            ];
+        }
+        $this->moduleRessourceFiles = [];
+    }
+
+    public function retirerRessource(int $i): void
+    {
+        unset($this->moduleRessources[$i]);
+        $this->moduleRessources = array_values($this->moduleRessources);
+    }
 
     protected function rules(): array
     {
@@ -175,7 +233,7 @@ class Formations extends Component
 
     public function openModuleCreate(): void
     {
-        $this->reset(['moduleEditingId', 'moduleTitre', 'moduleDescription', 'moduleVideoUrl', 'moduleDocumentUrl', 'moduleDuree']);
+        $this->reset(['moduleEditingId', 'moduleTitre', 'moduleDescription', 'moduleVideoUrl', 'moduleDocumentUrl', 'moduleDuree', 'moduleContenu', 'moduleRessources']);
         $this->moduleOrdre = $this->modules()->count() + 1;
         $this->resetValidation();
         $this->moduleFormOpen = true;
@@ -193,6 +251,8 @@ class Formations extends Component
         $this->moduleDescription = $m['description'] ?? '';
         $this->moduleVideoUrl = $m['video_url'] ?? '';
         $this->moduleDocumentUrl = $m['document_url'] ?? '';
+        $this->moduleContenu = $m['contenu'] ?? '';
+        $this->moduleRessources = array_values((array) ($m['ressources'] ?? []));
         $this->moduleDuree = $m['duree'] ?? '';
         $this->moduleOrdre = (int) $m['ordre'];
         $this->resetValidation();
@@ -210,6 +270,7 @@ class Formations extends Component
         $this->validate([
             'moduleTitre' => 'required|string|min:2|max:200',
             'moduleDescription' => 'nullable|string|max:2000',
+            'moduleContenu' => 'nullable|string|max:50000',
             'moduleVideoUrl' => 'nullable|url|max:500',
             'moduleDocumentUrl' => 'nullable|url|max:500',
             'moduleDuree' => 'nullable|string|max:50',
@@ -223,6 +284,8 @@ class Formations extends Component
             'description' => $this->moduleDescription ?: null,
             'video_url' => $this->moduleVideoUrl ?: null,
             'document_url' => $this->moduleDocumentUrl ?: null,
+            'contenu' => $this->moduleContenu ?: null,
+            'ressources' => $this->moduleRessources,
             'duree' => $this->moduleDuree ?: null,
             'ordre' => $this->moduleOrdre,
         ];

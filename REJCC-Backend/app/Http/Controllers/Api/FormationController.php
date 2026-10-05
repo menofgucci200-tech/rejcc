@@ -109,15 +109,29 @@ class FormationController extends Controller
         $modules = $enrollment->formation->modules;
         $completedIds = $enrollment->moduleCompletions->pluck('formation_module_id')->all();
 
+        // Téléchargement des ressources : réservé aux abonnés (tout le monde
+        // tant que les abonnements ne sont pas obligatoires). Sans ce droit, les
+        // liens de téléchargement ne sont pas transmis ; le contenu reste
+        // consultable sur la plateforme.
+        $peutTelecharger = $request->user()->hasActiveSubscription();
+
         $debloque = true;
-        $liste = $modules->map(function (FormationModule $m) use ($completedIds, &$debloque) {
+        $liste = $modules->map(function (FormationModule $m) use ($completedIds, &$debloque, $peutTelecharger) {
             $fait = in_array($m->id, $completedIds, true);
+            $accessible = $debloque;
             $item = [
                 'id' => $m->id,
                 'titre' => $m->titre,
                 'description' => $m->description,
-                'video_url' => $m->video_url,
-                'document_url' => $m->document_url,
+                // Le contenu d'un module verrouillé n'est pas envoyé.
+                'contenu' => $accessible ? $m->contenu : null,
+                'video_url' => $accessible ? $m->video_url : null,
+                'document_url' => $accessible ? $m->document_url : null,
+                'ressources' => $accessible ? collect($m->ressources ?? [])->map(fn ($r) => [
+                    'nom' => $r['nom'] ?? 'Ressource',
+                    'taille' => $r['taille'] ?? null,
+                    'url' => $peutTelecharger ? ($r['url'] ?? null) : null,
+                ])->values() : [],
                 'duree' => $m->duree,
                 'termine' => $fait,
                 'verrouille' => ! $debloque,
@@ -135,6 +149,7 @@ class FormationController extends Controller
             'modules' => $liste,
             'progress' => $enrollment->progress,
             'completed' => $enrollment->completed_at !== null,
+            'telechargement_autorise' => $peutTelecharger,
         ]);
     }
 
@@ -313,8 +328,13 @@ class FormationController extends Controller
         $validator = Validator::make($request->all(), [
             'titre' => 'required|string|min:2|max:200',
             'description' => 'nullable|string|max:2000',
+            'contenu' => 'nullable|string|max:50000',
             'video_url' => 'nullable|url|max:500',
             'document_url' => 'nullable|url|max:500',
+            'ressources' => 'nullable|array|max:15',
+            'ressources.*.nom' => 'required|string|max:150',
+            'ressources.*.url' => 'required|url|max:500',
+            'ressources.*.taille' => 'nullable|string|max:20',
             'duree' => 'nullable|string|max:50',
             'ordre' => 'nullable|integer|min:0|max:1000',
         ]);

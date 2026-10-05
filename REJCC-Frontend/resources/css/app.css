@@ -416,3 +416,14 @@ html.app-loaded #page-loader {
   display: none;
 }
 
+
+/* Leçon d'un module de formation (Markdown rendu) */
+.lecon { color: var(--color-ink); font-size: 14px; line-height: 1.7; }
+.lecon > * + * { margin-top: .75em; }
+.lecon h1, .lecon h2, .lecon h3 { color: var(--color-brand); font-weight: 800; line-height: 1.3; margin-top: 1.2em; }
+.lecon h1 { font-size: 18px; } .lecon h2 { font-size: 16px; } .lecon h3 { font-size: 14.5px; }
+.lecon ul { list-style: disc; padding-left: 1.3em; } .lecon ol { list-style: decimal; padding-left: 1.3em; }
+.lecon li + li { margin-top: .25em; }
+.lecon a { color: var(--color-azure); text-decoration: underline; }
+.lecon blockquote { border-left: 3px solid var(--color-accent); padding-left: .9em; color: #5B677A; font-style: italic; }
+.lecon strong { color: var(--color-brand); }
