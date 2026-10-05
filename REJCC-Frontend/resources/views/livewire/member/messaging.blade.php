@@ -13,40 +13,68 @@
         </div>
 
         <div class="grid grid-cols-1 gap-4 rounded-[18px] border border-brand/10 bg-white shadow-[0_2px_8px_rgba(3,29,89,.05)] lg:grid-cols-[320px_1fr]" style="height: calc(100vh - 280px); min-height: 420px" wire:poll.4s="rafraichir">
-            <aside class="overflow-y-auto border-r border-cloud-200 {{ $activeId ? 'hidden lg:block' : 'block' }}">
+            <aside class="flex min-h-0 flex-col border-r border-cloud-200 {{ $activeId ? 'hidden lg:flex' : 'flex' }}">
+                <div class="flex shrink-0 items-center gap-2 border-b border-cloud-200 p-3">
+                    <div class="relative min-w-0 flex-1">
+                        <x-ui.icon name="search" class="pointer-events-none absolute left-3 top-1/2 size-[14px] -translate-y-1/2 text-[#9AA6B8]" />
+                        <input wire:model.live.debounce.300ms="recherche" type="search" data-test="recherche-conversations" aria-label="Rechercher une conversation" placeholder="Rechercher…"
+                            class="w-full rounded-[10px] border border-brand/10 bg-cloud py-2 pl-9 pr-3 text-[13px] text-ink outline-none focus:border-azure" />
+                    </div>
+                    <button type="button" wire:click="ouvrirNouveau" data-test="nouveau-message" title="Nouveau message" aria-label="Nouveau message"
+                        class="btn-tap flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-accent text-white hover:bg-accent-600"><x-ui.icon name="pencil" class="size-4" /></button>
+                </div>
+
+                <div class="min-h-0 flex-1 overflow-y-auto">
                 @if (empty($conversations))
                     <div class="px-6 py-10 text-center">
                         <x-ui.icon name="message-circle" class="mx-auto mb-3 size-8 text-[#9AA6B8]" />
-                        <p class="mb-4 text-[13.5px] text-[#5B677A]">Aucune conversation. Démarrez-en une depuis l'annuaire.</p>
-                        <a href="{{ route('espace-membre.directory') }}" wire:navigate class="btn-tap inline-flex items-center gap-1.5 rounded-[10px] border border-azure/25 bg-azure/10 px-4 py-2 text-[12.5px] font-semibold text-azure hover:bg-azure/20">
-                            <x-ui.icon name="users" class="size-[13px]" /> Voir l'annuaire
-                        </a>
+                        @if (trim($recherche) !== '')
+                            <p class="text-[13.5px] text-[#5B677A]">Aucune conversation avec « {{ trim($recherche) }} ».</p>
+                        @else
+                            <p class="mb-4 text-[13.5px] text-[#5B677A]">Aucune conversation pour l'instant. Écrivez à un membre trouvé dans l'annuaire ou dans un groupe.</p>
+                            <button type="button" wire:click="ouvrirNouveau" class="btn-tap inline-flex items-center gap-1.5 rounded-[10px] border border-azure/25 bg-azure/10 px-4 py-2 text-[12.5px] font-semibold text-azure hover:bg-azure/20">
+                                <x-ui.icon name="pencil" class="size-[13px]" /> Nouveau message
+                            </button>
+                        @endif
                     </div>
                 @else
-                    <ul class="list-none py-2">
+                    <ul class="list-none py-1.5">
                         @foreach ($conversations as $c)
-                            <li>
+                            @php
+                                $date = \Illuminate\Support\Carbon::parse($c['at'])->setTimezone(config('app.timezone'))->locale('fr');
+                                $quand = $date->isToday() ? $date->format('H:i') : ($date->isYesterday() ? 'Hier' : ($date->gt(now()->subDays(6)->startOfDay()) ? $date->isoFormat('ddd') : $date->format('d/m/y')));
+                                $nonLu = $c['unread'] > 0;
+                            @endphp
+                            <li wire:key="conv-{{ $c['user_id'] }}">
                                 <button
                                     wire:click="openThread({{ $c['user_id'] }})"
+                                    data-test="conversation"
                                     class="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors {{ $activeId === $c['user_id'] ? 'bg-cloud' : 'hover:bg-cloud/60' }}"
                                 >
-                                    <span class="flex size-[42px] shrink-0 items-center justify-center rounded-full text-[13px] font-bold text-white" style="background: linear-gradient(135deg, #4F6FBF, #AC0100)">
-                                        {{ mb_substr($c['prenom'], 0, 1) }}{{ mb_substr($c['nom'], 0, 1) }}
-                                    </span>
+                                    <x-messagerie.avatar :personne="$c" />
                                     <span class="min-w-0 flex-1">
-                                        <span class="flex items-center justify-between gap-2">
-                                            <span class="truncate text-[13.5px] font-semibold text-brand">{{ $c['prenom'] }} {{ $c['nom'] }}</span>
-                                            @if ($c['unread'] > 0)
+                                        <span class="flex items-baseline justify-between gap-2">
+                                            <span class="flex min-w-0 items-center gap-1.5">
+                                                <span class="truncate text-[13.5px] text-brand {{ $nonLu ? 'font-extrabold' : 'font-semibold' }}">{{ $c['prenom'] }} {{ $c['nom'] }}</span>
+                                                @if ($c['role'] === 'mentor')<span class="shrink-0 rounded-full bg-accent px-1.5 text-[9px] font-bold uppercase leading-4 tracking-[0.05em] text-white">Mentor</span>@endif
+                                            </span>
+                                            <span data-test="conversation-heure" class="shrink-0 text-[11px] {{ $nonLu ? 'font-bold text-accent' : 'text-[#9AA6B8]' }}">{{ $quand }}</span>
+                                        </span>
+                                        <span class="mt-0.5 flex items-center justify-between gap-2">
+                                            <span data-test="conversation-apercu" class="truncate text-xs {{ $nonLu ? 'font-semibold text-ink' : 'text-[#5B677A]' }}">
+                                                @if ($c['last_moi'])<span class="text-[#9AA6B8]">Vous{{ $c['last_vu'] ? ' (vu)' : '' }} :</span> @endif{{ \Illuminate\Support\Str::limit(str_replace("\n", ' ', $c['last']), 80) }}
+                                            </span>
+                                            @if ($nonLu)
                                                 <span class="flex min-w-5 shrink-0 items-center justify-center rounded-full bg-accent px-1 text-[10.5px] font-bold text-white">{{ $c['unread'] }}</span>
                                             @endif
                                         </span>
-                                        <span class="mt-0.5 block truncate text-xs text-[#5B677A]">{{ $c['last'] }}</span>
                                     </span>
                                 </button>
                             </li>
                         @endforeach
                     </ul>
                 @endif
+                </div>
             </aside>
 
             <section class="flex min-h-0 flex-col {{ $activeId ? 'flex' : 'hidden lg:flex' }}">
@@ -65,9 +93,7 @@
                         <button wire:click="closeThread" class="icon-btn rounded-lg p-1 text-[#5B677A] lg:hidden" aria-label="Retour">
                             <x-ui.icon name="arrow-left" class="size-[18px]" />
                         </button>
-                        <span class="flex size-[38px] shrink-0 items-center justify-center rounded-full text-xs font-bold text-white" style="background: linear-gradient(135deg, #4F6FBF, #AC0100)">
-                            {{ mb_substr($partner['prenom'], 0, 1).mb_substr($partner['nom'], 0, 1) }}
-                        </span>
+                        <x-messagerie.avatar :personne="$partner" taille="size-[38px]" texte="text-xs" />
                         <p data-test="fil-nom" class="text-sm font-bold text-brand">{{ $partner['prenom'].' '.$partner['nom'] }}</p>
                     </div>
 
@@ -132,5 +158,37 @@
             </section>
         </div>
     </div>
+    @endif
+    {{-- Nouveau message : choisir un membre --}}
+    @if ($nouveau)
+        <div class="fixed inset-0 z-[90] flex items-start justify-center bg-brand/40 p-4 pt-[12vh]" wire:click.self="fermerNouveau" x-on:keydown.escape.window="$wire.fermerNouveau()">
+            <div data-test="fenetre-nouveau-message" role="dialog" aria-modal="true" class="panel-enter w-full max-w-[480px] overflow-hidden rounded-[18px] bg-white shadow-2xl">
+                <div class="flex items-center justify-between border-b border-cloud-200 px-5 py-3.5">
+                    <p class="text-[15px] font-bold text-brand">Nouveau message</p>
+                    <button wire:click="fermerNouveau" aria-label="Fermer" class="icon-btn rounded-lg p-1.5 hover:bg-cloud"><x-ui.icon name="x" class="size-4 text-[#5B677A]" /></button>
+                </div>
+                <div class="p-4">
+                    <input wire:model.live.debounce.300ms="rechercheMembre" type="search" autofocus data-test="recherche-destinataire" placeholder="Nom, métier, ville…"
+                        class="w-full rounded-[10px] border border-brand/15 px-3.5 py-2.5 text-sm outline-none focus:border-azure" />
+                    <div class="mt-3 max-h-[50vh] overflow-y-auto">
+                        @if (mb_strlen(trim($rechercheMembre)) < 2)
+                            <p class="py-6 text-center text-[12.5px] text-[#9AA6B8]">Tapez au moins 2 lettres pour trouver un membre.</p>
+                        @else
+                            @forelse ($this->membresTrouves as $mt)
+                                <button type="button" wire:click="ecrireA({{ $mt['id'] }})" wire:key="mt-{{ $mt['id'] }}" data-test="destinataire" class="flex w-full items-center gap-3 rounded-[12px] px-2.5 py-2 text-left hover:bg-cloud">
+                                    <x-messagerie.avatar :personne="$mt" taille="size-9" texte="text-[11px]" />
+                                    <span class="min-w-0">
+                                        <span class="block truncate text-[13px] font-bold text-brand">{{ $mt['prenom'] }} {{ $mt['nom'] }}</span>
+                                        <span class="block truncate text-[11.5px] text-[#5B677A]">{{ collect([$mt['titre'] ?? null, $mt['ville'] ?? null])->filter()->join(' · ') }}</span>
+                                    </span>
+                                </button>
+                            @empty
+                                <p class="py-6 text-center text-[12.5px] text-[#9AA6B8]">Aucun membre trouvé.</p>
+                            @endforelse
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
     @endif
 </div>

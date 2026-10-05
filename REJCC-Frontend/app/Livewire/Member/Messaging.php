@@ -30,6 +30,14 @@ class Messaging extends Component
 
     public ?string $erreur = null;
 
+    /** Recherche dans les conversations (nom de l'interlocuteur). */
+    public string $recherche = '';
+
+    /** Fenêtre « Nouveau message » : recherche d'un membre à qui écrire. */
+    public bool $nouveau = false;
+
+    public string $rechercheMembre = '';
+
     public function mount(): void
     {
         if ($this->locked()) {
@@ -54,7 +62,39 @@ class Messaging extends Component
             return [];
         }
 
-        return Api::get('/messages', [], Api::token())['conversations'] ?? [];
+        $params = trim($this->recherche) !== '' ? ['q' => trim($this->recherche)] : [];
+
+        return Api::get('/messages', $params, Api::token())['conversations'] ?? [];
+    }
+
+    /** Membres proposés dans « Nouveau message » (recherche dans l'annuaire). */
+    public function getMembresTrouvesProperty(): array
+    {
+        $q = trim($this->rechercheMembre);
+        if (! $this->nouveau || mb_strlen($q) < 2) {
+            return [];
+        }
+        $moi = Api::user()->id ?? 0;
+
+        return collect(Api::get('/members', ['q' => $q], Api::token())['members'] ?? [])
+            ->reject(fn ($m) => $m['id'] === $moi)->take(8)->values()->all();
+    }
+
+    public function ouvrirNouveau(): void
+    {
+        $this->nouveau = true;
+        $this->rechercheMembre = '';
+    }
+
+    public function fermerNouveau(): void
+    {
+        $this->nouveau = false;
+    }
+
+    public function ecrireA(int $id): void
+    {
+        $this->nouveau = false;
+        $this->openThread($id);
     }
 
     public function openThread(int $userId): void
@@ -148,8 +188,9 @@ class Messaging extends Component
     {
         $conversations = $this->conversations;
 
-        // Pastilles du menu à jour sans recharger la page.
-        $nonLus = array_sum(array_column($conversations, 'unread'));
+        // Pastilles du menu à jour sans recharger la page (hors recherche,
+        // qui ne renvoie qu'une partie des conversations).
+        $nonLus = trim($this->recherche) === '' ? array_sum(array_column($conversations, 'unread')) : (NavCompteurs::get()['messages'] ?? 0);
         NavCompteurs::fixer('messages', $nonLus);
         $this->dispatch('compteur-messages', n: $nonLus);
 
