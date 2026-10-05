@@ -2,7 +2,60 @@
     <x-member-light.topbar title="Annuaire des membres" />
 
     @if ($locked ?? false)
-        <x-member-light.paywall description="L'annuaire des membres est réservé aux membres à jour de leur abonnement annuel (10 000 F)." />
+        {{-- Aperçu pour les non-abonnés : chiffres réels, cartes décoratives floutées --}}
+        <div class="mx-auto max-w-[1280px] px-8 py-8" data-test="apercu-annuaire">
+            <div class="mb-5">
+                <h1 class="mb-1 text-[17px] font-bold text-brand">Annuaire des membres</h1>
+                <div class="h-[3px] w-9 rounded bg-accent"></div>
+            </div>
+
+            @if ($apercu)
+                <div class="mb-5 grid grid-cols-2 gap-3 md:grid-cols-4">
+                    @foreach ([['Membres', $apercu['membres'], 'users'], ['Mentors', $apercu['mentors'], 'hand-heart'], ['Secteurs', count($apercu['secteurs'] ?? []), 'network'], ['Villes', $apercu['villes'], 'map-pin']] as [$label, $val, $icon])
+                        <div class="flex items-center gap-3 rounded-[16px] border border-brand/10 bg-white p-4 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                            <span class="flex size-10 items-center justify-center rounded-xl bg-brand/[.06] text-brand"><x-ui.icon :name="$icon" class="size-5" /></span>
+                            <div><p class="text-[20px] font-extrabold leading-none text-brand">{{ $val }}</p><p class="mt-1 text-[11.5px] text-[#5B677A]">{{ $label }}</p></div>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+
+            <div class="relative overflow-hidden rounded-[20px]">
+                <div aria-hidden="true" class="pointer-events-none grid select-none gap-4 blur-[6px]" style="grid-template-columns: repeat(auto-fill, minmax(240px, 1fr))">
+                    @foreach (array_slice(array_values(array_unique(array_merge(array_keys($apercu['secteurs'] ?? []), ['Commerce', 'Agriculture', 'Services', 'Éducation', 'Santé', 'Numérique']))), 0, 8) as $i => $secteurDeco)
+                        <div class="rounded-[16px] border border-brand/10 bg-white p-[18px]">
+                            <div class="flex items-center gap-3">
+                                <span class="size-12 rounded-xl" style="background: linear-gradient(135deg, {{ $i % 3 === 0 ? '#AC0100, #D95B5A' : '#4F6FBF, #AC0100' }})"></span>
+                                <div class="flex-1 space-y-1.5">
+                                    <span class="block h-3 w-3/4 rounded bg-brand/20"></span>
+                                    <span class="block text-xs text-[#5B677A]">{{ $secteurDeco }}</span>
+                                </div>
+                            </div>
+                            <div class="mt-3 flex gap-1.5"><span class="h-5 w-16 rounded-full bg-brand/10"></span><span class="h-5 w-20 rounded-full bg-brand/10"></span></div>
+                            <span class="mt-4 block h-8 rounded-[9px] bg-azure/10"></span>
+                        </div>
+                    @endforeach
+                </div>
+                <div class="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-white/30 via-white/70 to-white/90 p-6">
+                    <div class="max-w-[440px] rounded-[20px] border border-brand/10 bg-white p-7 text-center shadow-[0_24px_60px_-20px_rgba(3,29,89,.35)]">
+                        <span class="mx-auto flex size-12 items-center justify-center rounded-2xl bg-[#F5A623]/10 text-[#B27007]"><x-ui.icon name="lock" class="size-6" /></span>
+                        <h2 class="mt-4 text-[16px] font-extrabold text-brand">
+                            {{ ($apercu['membres'] ?? 0) > 1 ? $apercu['membres'].' membres vous attendent' : 'Rejoignez le réseau' }}
+                        </h2>
+                        <p class="mt-2 text-[13px] leading-relaxed text-[#5B677A]">
+                            Trouvez des partenaires, des clients et des mentors parmi les entrepreneurs du REJCC
+                            @if (! empty($apercu['secteurs']))
+                                ({{ implode(', ', array_slice(array_keys($apercu['secteurs']), 0, 3)) }}…)
+                            @endif
+                            et écrivez-leur directement. L'annuaire est réservé aux membres à jour de leur abonnement annuel (10&nbsp;000&nbsp;F).
+                        </p>
+                        <a href="{{ route('espace-membre.abonnement') }}" wire:navigate data-test="debloquer-annuaire" class="btn-tap mt-5 inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-[13px] font-bold text-white hover:bg-accent-600">
+                            <x-ui.icon name="shield-check" class="size-4" /> Débloquer l'annuaire
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
     @else
     <div class="mx-auto max-w-[1280px] px-8 py-8">
         <div class="mb-5">

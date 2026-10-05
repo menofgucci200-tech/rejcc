@@ -83,6 +83,9 @@ Route::middleware('auth.token')->group(function () {
     Route::get('/subscription/status', [\App\Http\Controllers\Api\SubscriptionController::class, 'status']);
     Route::post('/subscription/pay', [\App\Http\Controllers\Api\SubscriptionController::class, 'initiate']);
 
+    // Aperçu chiffré de l'annuaire, ouvert à tout membre connecté
+    Route::get('/members-apercu', [AuthController::class, 'apercuAnnuaire']);
+
     // Annuaire & messagerie — réservés aux abonnés à jour
     Route::middleware('sub.active')->group(function () {
         Route::get('/members', [AuthController::class, 'directory']);

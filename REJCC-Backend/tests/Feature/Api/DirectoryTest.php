@@ -86,4 +86,20 @@ class DirectoryTest extends TestCase
         $this->withToken($tDiscret)->putJson('/api/auth/preferences', ['preferences' => ['apparaitre_annuaire' => true]])->assertOk();
         $this->assertContains('Discret', array_column($this->withToken($token)->getJson('/api/members')->json('members'), 'prenom'));
     }
+
+    public function test_l_apercu_de_l_annuaire_est_ouvert_aux_non_abonnes_sans_donnees_personnelles(): void
+    {
+        \App\Support\SubscriptionMode::set(true);
+        $this->abonne(['secteur' => 'Agro', 'ville' => 'Abidjan']);
+        $this->abonne(['secteur' => 'Agro', 'ville' => 'Bouaké']);
+        User::factory()->create(['role' => 'mentor', 'secteur' => 'Finance']);
+        $nonAbonne = $this->tokenFor(User::factory()->create(['subscription_expires_at' => null]));
+
+        $this->withToken($nonAbonne)->getJson('/api/members')->assertStatus(402);
+        $apercu = $this->withToken($nonAbonne)->getJson('/api/members-apercu')->assertOk()->json('apercu');
+        $this->assertSame(4, $apercu['membres']);
+        $this->assertSame(1, $apercu['mentors']);
+        $this->assertSame(2, $apercu['secteurs']['Agro']);
+        $this->assertArrayNotHasKey('prenom', $apercu);
+    }
 }

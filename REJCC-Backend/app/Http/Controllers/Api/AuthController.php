@@ -410,6 +410,27 @@ class AuthController extends Controller
         ]);
     }
 
+    /**
+     * GET /members-apercu — chiffres de l'annuaire pour les non-abonnés
+     * (aucune donnée personnelle : totaux et principaux secteurs).
+     */
+    public function apercuAnnuaire()
+    {
+        $base = User::whereIn('role', ['member', 'mentor'])->where('is_active', true)
+            ->where(fn ($w) => $w->whereNull('preferences')
+                ->orWhereNull('preferences->apparaitre_annuaire')
+                ->orWhere('preferences->apparaitre_annuaire', true));
+
+        return response()->json(['ok' => true, 'apercu' => [
+            'membres' => (clone $base)->count(),
+            'mentors' => (clone $base)->where('role', 'mentor')->count(),
+            'villes' => (clone $base)->whereNotNull('ville')->where('ville', '!=', '')->distinct()->count('ville'),
+            'secteurs' => (clone $base)->whereNotNull('secteur')->where('secteur', '!=', '')
+                ->selectRaw('secteur, count(*) as nombre')->groupBy('secteur')->orderByDesc('nombre')->limit(6)
+                ->pluck('nombre', 'secteur'),
+        ]]);
+    }
+
     /** Fiche détaillée d'un membre (clic depuis l'annuaire ou le trombinoscope d'un groupe). */
     public function show(int $id)
     {

@@ -72,7 +72,11 @@ class Directory extends Component
     public function render()
     {
         if (! (Api::user()->subscription_active ?? false)) {
-            return view('livewire.member.directory', ['locked' => true, 'members' => collect(), 'meta' => [], 'profiles' => MembershipContent::profiles()]);
+            return view('livewire.member.directory', [
+                'locked' => true,
+                'apercu' => Api::get('/members-apercu', [], Api::token())['apercu'] ?? null,
+                'members' => collect(), 'meta' => [], 'profiles' => MembershipContent::profiles(),
+            ]);
         }
 
         // Recherche, filtre et pagination côté serveur (l'annuaire peut
