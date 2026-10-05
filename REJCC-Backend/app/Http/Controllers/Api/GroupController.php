@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Group;
+use App\Models\MemberReview;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -143,11 +144,15 @@ class GroupController extends Controller
             });
         }
 
-        $page = $query->paginate(24, [
+        // select() puis addSelect() : paginate($colonnes) écraserait les sous-requêtes.
+        $page = $query->select([
             'users.id', 'users.prenom', 'users.nom', 'users.ville', 'users.secteur',
             'users.organisation', 'users.photo', 'users.role', 'users.titre', 'users.created_at',
             'group_user.specialite', 'group_user.services', 'group_user.zone', 'group_user.disponibilites',
-        ]);
+        ])->addSelect([
+            'note_moyenne' => MemberReview::selectRaw('avg(note)')->whereColumn('reviewed_id', 'users.id')->where('masque', false),
+            'nb_avis' => MemberReview::selectRaw('count(*)')->whereColumn('reviewed_id', 'users.id')->where('masque', false),
+        ])->paginate(24);
 
         $members = collect($page->items())->map(fn (User $u) => [
             'id' => $u->id,
@@ -164,6 +169,8 @@ class GroupController extends Controller
             'services' => array_slice(json_decode((string) $u->services, true) ?: [], 0, 4),
             'zone' => $u->zone,
             'disponibilites' => $u->disponibilites,
+            'note_moyenne' => $u->note_moyenne !== null ? round((float) $u->note_moyenne, 1) : null,
+            'nb_avis' => (int) $u->nb_avis,
         ]);
 
         return response()->json([
@@ -203,6 +210,7 @@ class GroupController extends Controller
             'groupe' => ['id' => $group->id, 'nom' => $group->name],
             'membre' => $profil,
             'pro' => $fiche,
+            'avis' => MemberReviewController::avisDe($membre->id, $request->user()->id),
             'autres_groupes' => $membre->groups()->where('groups.id', '!=', $id)->orderBy('ordre')->get()
                 ->map(fn ($g) => ['id' => $g->id, 'nom' => $g->name, 'specialite' => $g->pivot->specialite])->values(),
         ]]);

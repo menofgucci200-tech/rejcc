@@ -81,6 +81,7 @@ class MemberProfile
             'role' => $user->role,
             'role_label' => $user->roleLabel(),
             'mentor' => $user->role === 'mentor' ? static::mentor($user) : null,
+            'avis' => \App\Models\MemberReview::resume($user->id),
             'ville' => $user->ville,
             'secteur' => $user->secteur,
             'is_active' => (bool) $user->is_active,

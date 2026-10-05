@@ -1,4 +1,4 @@
-@props(['fiche'])
+@props(['fiche', 'erreur' => null])
 
 {{-- Fiche professionnelle d'un membre dans un groupe sectoriel : spécialité,
      services, zone, disponibilités, contact, profil et autres groupes. --}}
@@ -28,6 +28,9 @@
                         <p class="text-[18px] font-extrabold leading-tight">{{ $m['prenom'] }} {{ $m['nom'] }}</p>
                         @if ($m['titre'] ?? null)<p class="mt-0.5 text-[13px] text-white/75">{{ $m['titre'] }}</p>@endif
                         <p class="mt-1 text-[11px] font-bold uppercase tracking-[0.08em] {{ $estMentor ? 'text-[#FF9C96]' : 'text-[#8FA3D9]' }}">{{ $m['role_label'] ?? 'Membre officiel' }}</p>
+                        @if ($fiche['avis']['nombre'] ?? 0)
+                            <p data-test="fiche-pro-note" class="mt-1.5 inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-0.5 text-[12px] font-bold"><span class="text-[#F5A623]">★</span> {{ number_format($fiche['avis']['moyenne'], 1, ',', ' ') }} <span class="font-semibold text-white/60">· {{ $fiche['avis']['nombre'] }} avis</span></p>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -81,6 +84,10 @@
                         </div>
                     </section>
                 @endif
+
+                @isset($fiche['avis'])
+                    <x-groupes.avis :avis="$fiche['avis']" :moi="$moi" :prenom="$m['prenom'] ?? ''" :erreur="$erreur" />
+                @endisset
 
                 {{-- Contact --}}
                 <div class="mt-6 flex flex-wrap gap-2 border-t border-cloud-200 pt-5">

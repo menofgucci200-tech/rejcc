@@ -21,6 +21,9 @@
                         @if ($member['titre'] ?? null)
                             <p class="mt-0.5 text-[12.5px] text-[#5B677A]">{{ $member['titre'] }}</p>
                         @endif
+                        @if ($member['avis']['nombre'] ?? 0)
+                            <p data-test="profil-note" class="mt-1 inline-flex items-center gap-1 rounded-full bg-[#F5A623]/12 px-2 py-px text-[11.5px] font-bold text-[#B7790F]">★ {{ number_format($member['avis']['moyenne'], 1, ',', ' ') }} <span class="font-semibold text-[#B7790F]/70">· {{ $member['avis']['nombre'] }} avis des membres</span></p>
+                        @endif
                     </div>
                 </div>
                 <button type="button" wire:click="fermerProfil" class="icon-btn shrink-0 rounded-lg p-1.5 hover:bg-cloud"><x-ui.icon name="x" class="size-4 text-[#5B677A]" /></button>

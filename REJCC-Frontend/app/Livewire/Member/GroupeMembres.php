@@ -49,6 +49,40 @@ class GroupeMembres extends Component
     public function fermerProfil(): void
     {
         $this->detail = null;
+        $this->avisErreur = null;
+    }
+
+    public ?string $avisErreur = null;
+
+    /** Donne ou modifie son avis (note 1-5 + commentaire) sur le membre affiché. */
+    public function noter(int $note, string $commentaire = ''): void
+    {
+        if (! $this->detail) {
+            return;
+        }
+        $result = Api::post("/members/{$this->detail['membre']['id']}/avis", [
+            'note' => $note,
+            'commentaire' => $commentaire,
+            'group_id' => $this->groupId,
+        ], Api::token());
+
+        if ($result['ok'] ?? false) {
+            $this->detail['avis'] = $result['avis'];
+            $this->avisErreur = null;
+        } else {
+            $this->avisErreur = $result['message'] ?? "Impossible d'enregistrer votre avis.";
+        }
+    }
+
+    public function retirerAvis(): void
+    {
+        if (! $this->detail) {
+            return;
+        }
+        $result = Api::delete("/members/{$this->detail['membre']['id']}/avis", Api::token());
+        if ($result['ok'] ?? false) {
+            $this->detail['avis'] = $result['avis'];
+        }
     }
 
     public function render()

@@ -171,6 +171,9 @@ Route::middleware('auth.token')->group(function () {
     Route::middleware('sub.active')->group(function () {
         Route::get('/groups/{id}/members', [\App\Http\Controllers\Api\GroupController::class, 'members']);
         Route::get('/groups/{id}/members/{userId}', [\App\Http\Controllers\Api\GroupController::class, 'fichePro'])->whereNumber(['id', 'userId']);
+        // Avis des membres sur les professionnels du réseau
+        Route::post('/members/{id}/avis', [\App\Http\Controllers\Api\MemberReviewController::class, 'store'])->whereNumber('id');
+        Route::delete('/members/{id}/avis', [\App\Http\Controllers\Api\MemberReviewController::class, 'destroy'])->whereNumber('id');
     });
 
     // Marketplace : consultation libre pour tout membre connecté, publication réservée aux abonnés à jour

@@ -57,6 +57,9 @@
                                 <div class="mt-0.5 flex flex-wrap gap-1">
                                     @if ($estMentor)<span class="rounded-full bg-accent px-2 py-px text-[9.5px] font-bold uppercase tracking-[0.06em] text-white">Mentor</span>@endif
                                     @if ($m['nouveau'] ?? false)<span class="rounded-full bg-[#22A85A]/12 px-2 py-px text-[9.5px] font-bold uppercase tracking-[0.06em] text-[#1C8F4C]">Nouveau</span>@endif
+                                    @if ($m['nb_avis'] ?? 0)
+                                        <span data-test="carte-note" title="{{ $m['nb_avis'] }} avis" class="inline-flex items-center gap-0.5 rounded-full bg-[#F5A623]/12 px-2 py-px text-[10.5px] font-bold text-[#B7790F]">★ {{ number_format($m['note_moyenne'], 1, ',', ' ') }} <span class="font-semibold text-[#B7790F]/70">({{ $m['nb_avis'] }})</span></span>
+                                    @endif
                                 </div>
                                 @if ($m['titre'] ?? null)
                                     <p class="mt-1 line-clamp-1 text-xs text-[#5B677A]">{{ $m['titre'] }}</p>
@@ -105,6 +108,6 @@
         @endif
     </div>
 
-    <x-groupes.fiche-pro :fiche="$detail" />
+    <x-groupes.fiche-pro :fiche="$detail" :erreur="$avisErreur" />
     @endif
 </div>
