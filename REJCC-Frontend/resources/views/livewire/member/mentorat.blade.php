@@ -70,14 +70,143 @@
                 </aside>
             </div>
         @else
-            <div class="flex flex-col items-center justify-center rounded-[18px] border border-brand/10 bg-white px-8 py-16 text-center shadow-[0_2px_8px_rgba(3,29,89,.05)]">
-                <span class="mb-4 flex size-14 items-center justify-center rounded-2xl bg-accent/10 text-accent">
-                    <x-ui.icon name="nav-mentor" class="size-7" />
-                </span>
-                <h2 class="mb-2 text-[17px] font-bold text-brand">Rencontrez les mentors du réseau</h2>
-                <p class="max-w-md text-[13px] leading-relaxed text-[#5B677A]">Découvrez les mentors, leurs domaines d'expertise et leurs disponibilités dans l'annuaire.</p>
-                <a href="{{ route('espace-membre.directory', ['filtre' => 'mentors']) }}" wire:navigate class="btn-tap mt-5 rounded-full bg-accent px-4 py-2 text-xs font-semibold text-white hover:bg-accent-600">Voir les mentors</a>
-            </div>
+            @if ($message)
+                <p data-test="message-mentorat" class="panel-enter mb-5 inline-flex items-center gap-1.5 rounded-full bg-[#22A85A]/10 px-3.5 py-1.5 text-xs font-semibold text-[#1C8F4C]"><x-ui.icon name="check-circle" class="size-3.5" /> {{ $message }}</p>
+            @endif
+
+            {{-- Mes demandes et mentorats --}}
+            @if ($mentorats->isNotEmpty())
+                <section data-test="mes-mentorats" class="mb-8">
+                    <h2 class="mb-3 text-[12px] font-bold uppercase tracking-[0.08em] text-[#9AA6B8]">Mes demandes et mentorats</h2>
+                    <div class="grid gap-3 md:grid-cols-2">
+                        @foreach ($mentorats as $r)
+                            <article data-test="relation" class="rounded-[16px] border border-brand/10 bg-white p-4 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                                <div class="flex items-start gap-3">
+                                    <x-mentorat.avatar :personne="$r['autre']" />
+                                    <div class="min-w-0 flex-1">
+                                        <div class="flex flex-wrap items-center justify-between gap-2">
+                                            <p class="truncate text-[13.5px] font-bold text-brand">{{ $r['autre']['prenom'] }} {{ $r['autre']['nom'] }}</p>
+                                            <x-mentorat.statut :statut="$r['statut']" :label="$r['statut_label']" />
+                                        </div>
+                                        <p class="mt-0.5 text-[11.5px] text-[#9AA6B8]">Demande du {{ \Carbon\Carbon::parse($r['cree_le'])->translatedFormat('j F Y') }}</p>
+                                    </div>
+                                </div>
+                                <p class="mt-3 text-[12.5px] text-ink"><span class="font-semibold text-brand">Objectif :</span> {{ $r['objectif'] }}</p>
+                                @if ($r['reponse'])
+                                    <p class="mt-2 rounded-[10px] bg-cloud/70 px-3 py-2 text-[12.5px] italic text-[#5B677A]">« {{ $r['reponse'] }} »</p>
+                                @endif
+                                <div class="mt-3 flex flex-wrap gap-2">
+                                    @if ($r['statut'] === 'en_attente')
+                                        <button wire:click="annuler({{ $r['id'] }})" wire:confirm="Retirer votre demande de mentorat ?" class="btn-tap rounded-full border border-brand/15 px-3.5 py-1.5 text-[12px] font-bold text-brand hover:bg-cloud">Retirer ma demande</button>
+                                    @endif
+                                    @if ($r['statut'] === 'accepte')
+                                        <a href="{{ route('espace-membre.messaging', ['to' => $r['autre']['id']]) }}" wire:navigate class="btn-tap inline-flex items-center gap-1.5 rounded-full bg-brand px-3.5 py-1.5 text-[12px] font-bold text-white hover:bg-brand/90"><x-ui.icon name="message-circle" class="size-3.5" /> Écrire à mon mentor</a>
+                                    @endif
+                                </div>
+                            </article>
+                        @endforeach
+                    </div>
+                </section>
+            @endif
+
+            {{-- Trouver un mentor --}}
+            <section data-test="trouver-mentor">
+                <h2 class="mb-3 text-[12px] font-bold uppercase tracking-[0.08em] text-[#9AA6B8]">Trouver un mentor</h2>
+                <div class="mb-4 flex flex-wrap items-center gap-3">
+                    <div class="relative w-full max-w-[380px]">
+                        <x-ui.icon name="search" class="pointer-events-none absolute left-3.5 top-1/2 size-[15px] -translate-y-1/2 text-[#9AA6B8]" />
+                        <input wire:model.live.debounce.300ms="recherche" type="search" data-test="recherche-mentor" placeholder="Nom, expertise, secteur, ville…" class="w-full rounded-xl border border-brand/10 bg-white py-2.5 pl-10 pr-4 text-[13.5px] text-ink outline-none focus:border-azure" />
+                    </div>
+                </div>
+                @if ($domaines->isNotEmpty())
+                    <div class="mb-5 flex flex-wrap gap-2">
+                        @foreach ($domaines as $e)
+                            <button wire:click="filtrerExpertise(@js($e))" class="btn-tap rounded-full border px-3 py-1.5 text-[12px] font-semibold transition-colors {{ mb_strtolower($expertise) === mb_strtolower($e) ? 'border-accent bg-accent text-white' : 'border-brand/10 bg-white text-[#5B677A] hover:border-accent/30' }}">{{ $e }}</button>
+                        @endforeach
+                    </div>
+                @endif
+
+                @if ($mentors->isEmpty())
+                    <p class="rounded-[16px] border border-brand/10 bg-white py-10 text-center text-sm text-[#5B677A]">
+                        {{ trim($recherche) !== '' || $expertise !== '' ? 'Aucun mentor ne correspond à votre recherche.' : 'Aucun mentor n\'est encore inscrit : revenez bientôt !' }}
+                    </p>
+                @else
+                    <div class="grid gap-4" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr))">
+                        @foreach ($mentors as $m)
+                            <article data-test="carte-mentor" wire:key="mentor-{{ $m['id'] }}" class="card-hover flex flex-col rounded-[16px] border border-accent/20 bg-white p-5 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                                <div class="flex items-start gap-3">
+                                    <x-mentorat.avatar :personne="$m" size="size-12" />
+                                    <div class="min-w-0">
+                                        <p class="truncate text-[14px] font-bold text-brand">{{ $m['prenom'] }} {{ $m['nom'] }}</p>
+                                        <p class="line-clamp-2 text-[12px] text-[#5B677A]">{{ $m['titre'] ?: $m['secteur'] }}</p>
+                                    </div>
+                                </div>
+                                @if (! empty($m['mentor']['expertises']))
+                                    <div class="mt-3 flex flex-wrap gap-1.5">
+                                        @foreach (array_slice($m['mentor']['expertises'], 0, 4) as $e)
+                                            <span class="rounded-full bg-accent/[.06] px-2.5 py-1 text-[11px] font-semibold text-accent">{{ $e }}</span>
+                                        @endforeach
+                                    </div>
+                                @endif
+                                <p class="mt-3 flex flex-1 flex-wrap gap-x-3 gap-y-1 text-[11.5px] text-[#5B677A]">
+                                    @if ($m['mentor']['format_label'])<span class="inline-flex items-center gap-1"><x-ui.icon name="video" class="size-3.5" /> {{ $m['mentor']['format_label'] }}</span>@endif
+                                    @if ($m['ville'])<span class="inline-flex items-center gap-1"><x-ui.icon name="map-pin" class="size-3.5" /> {{ $m['ville'] }}</span>@endif
+                                </p>
+                                <div class="mt-4 flex items-center justify-between gap-2">
+                                    <span class="text-[11.5px] font-semibold {{ $m['disponible'] ? 'text-[#1C8F4C]' : 'text-[#9AA6B8]' }}">
+                                        {{ $m['disponible'] ? $m['places_restantes'].' place'.($m['places_restantes'] > 1 ? 's' : '').' disponible'.($m['places_restantes'] > 1 ? 's' : '') : 'Complet pour le moment' }}
+                                    </span>
+                                    @php $rel = $m['ma_relation']; @endphp
+                                    @if ($rel && $rel['statut'] === 'accepte')
+                                        <span class="rounded-full bg-[#22A85A]/10 px-3 py-1.5 text-[11.5px] font-bold text-[#1C8F4C]">Votre mentor</span>
+                                    @elseif ($rel)
+                                        <span class="rounded-full bg-[#F5A623]/15 px-3 py-1.5 text-[11.5px] font-bold text-[#8A5A00]">Demande envoyée</span>
+                                    @else
+                                        <button wire:click="ouvrirMentor({{ $m['id'] }})" data-test="voir-mentor" class="btn-tap rounded-full px-4 py-2 text-[12px] font-bold {{ $m['disponible'] ? 'bg-accent text-white hover:bg-accent-600' : 'border border-brand/15 bg-white text-brand hover:bg-cloud' }}">{{ $m['disponible'] ? 'Demander un mentorat' : 'Voir la fiche' }}</button>
+                                    @endif
+                                </div>
+                            </article>
+                        @endforeach
+                    </div>
+                @endif
+            </section>
+
+            {{-- Fiche du mentor + formulaire de demande --}}
+            @if ($mentorFiche)
+                <div class="fixed inset-0 z-[90] flex items-center justify-center bg-brand/40 p-4" wire:click.self="fermerMentor" @keydown.escape.window="$wire.fermerMentor()">
+                    <div data-test="fiche-demande" class="max-h-[90vh] w-full max-w-[580px] overflow-y-auto rounded-[20px] bg-white p-6 shadow-2xl">
+                        <div class="mb-4 flex items-start justify-between gap-3">
+                            <div class="flex min-w-0 items-center gap-3">
+                                <x-mentorat.avatar :personne="$mentorFiche" size="size-14" texte="text-lg" />
+                                <div class="min-w-0">
+                                    <p class="truncate text-[15px] font-bold text-brand">{{ $mentorFiche['prenom'] }} {{ $mentorFiche['nom'] }}</p>
+                                    <p class="text-[12px] text-[#5B677A]">{{ collect([$mentorFiche['titre'], $mentorFiche['organisation']])->filter()->join(' · ') }}</p>
+                                </div>
+                            </div>
+                            <button type="button" wire:click="fermerMentor" aria-label="Fermer" class="icon-btn shrink-0 rounded-lg p-1.5 hover:bg-cloud"><x-ui.icon name="x" class="size-4 text-[#5B677A]" /></button>
+                        </div>
+                        <x-mentorat.profil :mentor="$mentorFiche['mentor']" />
+
+                        @if ($mentorFiche['disponible'])
+                            <div class="mt-5 border-t border-cloud-200 pt-5">
+                                <p class="mb-3 text-[14px] font-bold text-brand">Demander un mentorat</p>
+                                @if (! $peutDemander)
+                                    <p data-test="demande-abonnes" class="rounded-[12px] bg-[#FFF8EC] px-4 py-3 text-[12.5px] text-[#8A5A00]">Le mentorat est réservé aux membres à jour de leur abonnement annuel. <a href="{{ route('espace-membre.abonnement') }}" wire:navigate class="font-bold underline">Activer mon abonnement</a></p>
+                                @else
+                                    <label for="demande-objectif" class="mb-1 block text-xs font-semibold text-[#5B677A]">Votre objectif</label>
+                                    <input id="demande-objectif" wire:model="objectif" type="text" maxlength="200" placeholder="Ex : structurer les finances de mon atelier" class="w-full rounded-[10px] border border-brand/15 px-3 py-2.5 text-sm outline-none focus:border-azure" />
+                                    <label for="demande-besoin" class="mb-1 mt-3 block text-xs font-semibold text-[#5B677A]">Votre situation et vos besoins <span class="font-normal text-[#9AA6B8]">(facultatif)</span></label>
+                                    <textarea id="demande-besoin" wire:model="besoin" rows="4" maxlength="2000" placeholder="Où en est votre projet ? Sur quoi aimeriez-vous être accompagné ?" class="w-full rounded-[10px] border border-brand/15 px-3 py-2.5 text-sm outline-none focus:border-azure"></textarea>
+                                    @if ($erreurDemande)
+                                        <p data-test="erreur-demande" role="alert" class="mt-3 flex items-start gap-2 rounded-[12px] bg-accent/5 px-3.5 py-2.5 text-[12.5px] font-semibold text-accent"><x-ui.icon name="alert-circle" class="mt-px size-4 shrink-0" /> <span>{{ $erreurDemande }} @if ($abonnementRequis)<a href="{{ route('espace-membre.abonnement') }}" wire:navigate class="underline">Voir mon abonnement</a>@endif</span></p>
+                                    @endif
+                                    <button wire:click="demander" wire:loading.attr="disabled" data-test="envoyer-demande" class="btn-tap mt-4 w-full rounded-full bg-accent px-5 py-2.5 text-[13px] font-bold text-white hover:bg-accent-600 disabled:opacity-60">Envoyer ma demande</button>
+                                @endif
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            @endif
         @endif
     </div>
 </div>

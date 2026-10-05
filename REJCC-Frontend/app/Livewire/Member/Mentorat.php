@@ -3,7 +3,9 @@
 namespace App\Livewire\Member;
 
 use App\Support\Api;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 /**
@@ -29,6 +31,26 @@ class Mentorat extends Component
     public ?string $messageProfil = null;
 
     public ?string $erreurProfil = null;
+
+    // ── Trouver un mentor (membres) ──────────────────────────────────────
+    #[Url(as: 'q', except: '')]
+    public string $recherche = '';
+
+    #[Url(as: 'expertise', except: '')]
+    public string $expertise = '';
+
+    /** Mentor dont la fiche / le formulaire de demande est ouvert. */
+    public ?int $mentorOuvert = null;
+
+    public string $objectif = '';
+
+    public string $besoin = '';
+
+    public ?string $erreurDemande = null;
+
+    public bool $abonnementRequis = false;
+
+    public ?string $message = null;
 
     public function mount(): void
     {
@@ -78,11 +100,79 @@ class Mentorat extends Component
         $this->messageProfil = 'Votre fiche de mentor est à jour.';
     }
 
+    public function filtrerExpertise(string $expertise): void
+    {
+        $this->expertise = $this->expertise === $expertise ? '' : $expertise;
+    }
+
+    public function ouvrirMentor(int $id): void
+    {
+        $this->mentorOuvert = $id;
+        $this->objectif = $this->besoin = '';
+        $this->erreurDemande = null;
+        $this->abonnementRequis = false;
+    }
+
+    public function fermerMentor(): void
+    {
+        $this->mentorOuvert = null;
+    }
+
+    public function demander(): void
+    {
+        $this->erreurDemande = null;
+        $this->abonnementRequis = false;
+        if (! $this->mentorOuvert) {
+            return;
+        }
+
+        $result = Api::post("/mentors/{$this->mentorOuvert}/demande", [
+            'objectif' => trim($this->objectif),
+            'besoin' => trim($this->besoin) ?: null,
+        ], Api::token());
+
+        if (! ($result['ok'] ?? false)) {
+            $this->erreurDemande = $result['message'] ?? 'Envoi impossible, réessayez.';
+            $this->abonnementRequis = ($result['code'] ?? null) === 'subscription_required';
+
+            return;
+        }
+
+        $this->mentorOuvert = null;
+        $this->message = 'Demande envoyée à '.($result['mentorship']['autre']['prenom'] ?? 'votre mentor').' : une notification vous préviendra de sa réponse.';
+    }
+
+    public function annuler(int $id): void
+    {
+        $result = Api::post("/mentorat/{$id}/annuler", [], Api::token());
+        $this->message = ($result['ok'] ?? false) ? 'Demande retirée.' : null;
+        $this->erreurDemande = ($result['ok'] ?? false) ? null : ($result['message'] ?? 'Action impossible.');
+    }
+
     public function render()
     {
+        $token = Api::token();
+        $mentorats = Collection::make(Api::get('/mentorat', [], $token)['mentorats'] ?? []);
+        $mentors = collect();
+        $domaines = collect();
+
+        if (! $this->estMentor()) {
+            $result = Api::get('/mentors', array_filter(['q' => trim($this->recherche)]), $token);
+            $domaines = Collection::make($result['expertises'] ?? []);
+            $mentors = Collection::make($result['mentors'] ?? [])
+                ->when($this->expertise !== '', fn ($c) => $c->filter(
+                    fn ($m) => collect($m['mentor']['expertises'] ?? [])->contains(fn ($e) => mb_strtolower($e) === mb_strtolower($this->expertise))
+                ))->values();
+        }
+
         return view('livewire.member.mentorat', [
             'estMentor' => $this->estMentor(),
             'user' => Api::user(),
+            'mentorats' => $mentorats,
+            'mentors' => $mentors,
+            'domaines' => $domaines,
+            'mentorFiche' => $this->mentorOuvert ? $mentors->firstWhere('id', $this->mentorOuvert) : null,
+            'peutDemander' => (bool) (Api::user()->subscription_active ?? false),
         ]);
     }
 }
