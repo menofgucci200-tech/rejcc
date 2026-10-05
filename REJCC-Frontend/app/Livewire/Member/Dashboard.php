@@ -147,6 +147,8 @@ class Dashboard extends Component
 
         $defis = $this->defis($formations, $events, $completion);
 
+        $prochaineSeance = Api::get('/mentorat/prochaine-seance', [], $token)['seance'] ?? null;
+
         $badgesParcours = Collection::make(Api::get('/paths', [], $token)['paths'] ?? [])
             ->where('badge_obtenu', true)
             ->sortByDesc('badge_obtenu_le')
@@ -192,6 +194,7 @@ class Dashboard extends Component
             'defis' => $defis,
             'defisFaits' => collect($defis)->where('fait', true)->count(),
             'badgesParcours' => $badgesParcours,
+            'prochaineSeance' => $prochaineSeance,
             'activites' => $activites,
             'progression' => $progressionMoyenne,
             'formationsTerminees' => $terminees,

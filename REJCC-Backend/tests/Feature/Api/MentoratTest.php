@@ -157,4 +157,47 @@ class MentoratTest extends TestCase
         $this->assertSame('refuse', $d2->fresh()->statut);
         $this->assertSame(1, MemberNotification::where('user_id', $koffi->id)->count());
     }
+
+    public function test_les_seances_se_proposent_se_confirment_et_recoivent_un_compte_rendu(): void
+    {
+        $mentor = User::factory()->create(['role' => 'mentor']);
+        $awa = $this->abonne();
+        $intrus = $this->abonne();
+        $m = Mentorship::create(['mentor_id' => $mentor->id, 'mentore_id' => $awa->id, 'statut' => 'accepte', 'objectif' => 'Structurer mes finances', 'repondu_at' => now()]);
+        $tMentor = $this->tokenFor($mentor);
+        $tAwa = $this->tokenFor($awa);
+
+        $this->withToken($this->tokenFor($intrus))->getJson("/api/mentorat/{$m->id}")->assertStatus(404);
+        $this->withToken($tAwa)->postJson("/api/mentorat/{$m->id}/seances", ['debut' => now()->subDay()->toDateTimeString(), 'duree_minutes' => 60, 'format' => 'visio'])->assertStatus(422);
+
+        $id = $this->withToken($tAwa)->postJson("/api/mentorat/{$m->id}/seances", [
+            'debut' => now()->addDays(3)->setTime(18, 0)->toDateTimeString(), 'duree_minutes' => 60, 'format' => 'visio',
+            'lieu' => 'https://meet.example.com/rejcc', 'ordre_du_jour' => 'Mes prix de vente',
+        ])->assertOk()->assertJsonPath('seance.statut', 'proposee')->json('seance.id');
+        $this->assertSame(1, MemberNotification::where('user_id', $mentor->id)->count());
+
+        // Celle qui propose ne confirme pas elle-même ; le mentor confirme.
+        $this->withToken($tAwa)->postJson("/api/seances/{$id}/confirmer")->assertStatus(422);
+        $this->withToken($tMentor)->postJson("/api/seances/{$id}/confirmer")->assertOk()->assertJsonPath('seance.statut', 'confirmee');
+
+        $prochaine = $this->withToken($tAwa)->getJson('/api/mentorat/prochaine-seance')->json('seance');
+        $this->assertSame($id, $prochaine['id']);
+        $this->assertSame($m->id, $prochaine['mentorship_id']);
+
+        // Compte rendu : pas avant la séance, seulement par le mentor.
+        $this->withToken($tMentor)->postJson("/api/seances/{$id}/compte-rendu", ['compte_rendu' => 'Nous avons revu la grille de prix.'])->assertStatus(422);
+        \App\Models\MentoringSession::whereKey($id)->update(['debut_at' => now()->subHour()]);
+        $this->withToken($tAwa)->postJson("/api/seances/{$id}/compte-rendu", ['compte_rendu' => 'Nous avons revu la grille de prix.'])->assertStatus(403);
+        $this->withToken($tMentor)->postJson("/api/seances/{$id}/compte-rendu", ['compte_rendu' => 'Nous avons revu la grille de prix.', 'prochaines_etapes' => 'Tester les nouveaux prix une semaine.'])
+            ->assertOk()->assertJsonPath('seance.statut', 'realisee');
+
+        $suivi = $this->withToken($tAwa)->getJson("/api/mentorat/{$m->id}")->assertOk()->json('mentorat');
+        $this->assertSame('Tester les nouveaux prix une semaine.', $suivi['seances'][0]['prochaines_etapes']);
+        $this->assertSame('mentore', $suivi['je_suis']);
+
+        // Annulation par l'un ou l'autre, avec motif.
+        $id2 = $this->withToken($tMentor)->postJson("/api/mentorat/{$m->id}/seances", ['debut' => now()->addWeek()->toDateTimeString(), 'duree_minutes' => 45, 'format' => 'presentiel', 'lieu' => 'Plateau'])->json('seance.id');
+        $this->withToken($tAwa)->postJson("/api/seances/{$id2}/annuler", ['motif' => 'Empêchement familial'])->assertOk();
+        $this->assertSame('annulee', \App\Models\MentoringSession::find($id2)->statut);
+    }
 }

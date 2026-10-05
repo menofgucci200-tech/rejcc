@@ -226,6 +226,28 @@
                     </div>
                 </section>
 
+                @if ($prochaineSeance)
+                    <section data-test="prochaine-seance">
+                        <h2 class="mb-1 text-[17px] font-bold text-brand">Prochaine séance de mentorat</h2>
+                        <div class="mb-4 h-[3px] w-9 rounded bg-accent"></div>
+                        <a href="{{ route('espace-membre.mentorat.suivi', $prochaineSeance['mentorship_id']) }}" wire:navigate class="card-hover block rounded-[18px] border border-accent/20 bg-white p-5 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                            <div class="flex items-start gap-3">
+                                <span class="flex size-11 shrink-0 flex-col items-center justify-center rounded-xl bg-accent text-white">
+                                    <span class="text-[15px] font-extrabold leading-none">{{ \Carbon\Carbon::parse($prochaineSeance['debut'])->format('d') }}</span>
+                                    <span class="text-[9.5px] font-bold uppercase">{{ \Carbon\Carbon::parse($prochaineSeance['debut'])->translatedFormat('M') }}</span>
+                                </span>
+                                <div class="min-w-0">
+                                    <p class="text-[13.5px] font-bold text-brand">{{ ucfirst(\Carbon\Carbon::parse($prochaineSeance['debut'])->translatedFormat('l \à H\hi')) }} · {{ $prochaineSeance['format'] === 'visio' ? 'visio' : 'présentiel' }}</p>
+                                    <p class="text-[12.5px] text-[#5B677A]">{{ $prochaineSeance['je_suis'] === 'mentor' ? 'Avec votre mentoré·e' : 'Avec votre mentor' }} {{ $prochaineSeance['avec'] }}</p>
+                                    @if ($prochaineSeance['statut'] === 'proposee')
+                                        <p class="mt-1 text-[11.5px] font-bold text-[#8A5A00]">{{ $prochaineSeance['proposee_par_moi'] ? 'En attente de confirmation' : 'À confirmer de votre côté' }}</p>
+                                    @endif
+                                </div>
+                            </div>
+                        </a>
+                    </section>
+                @endif
+
                 <section>
                     <h2 class="mb-1 text-[17px] font-bold text-brand">Mes défis</h2>
                     <div class="mb-4 h-[3px] w-9 rounded bg-accent"></div>

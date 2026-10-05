@@ -91,6 +91,7 @@ Route::middleware('api.auth')->prefix('espace-membre')->name('espace-membre.')->
     Route::get('/parcours', MemberParcours::class)->name('parcours');
     Route::get('/parcours/{pathId}', \App\Livewire\Member\ParcoursDetail::class)->name('parcours.detail');
     Route::get('/mentorat', MemberMentorat::class)->name('mentorat');
+    Route::get('/mentorat/{mentorshipId}', \App\Livewire\Member\MentoratSuivi::class)->whereNumber('mentorshipId')->name('mentorat.suivi');
     Route::get('/marketplace', MemberMarketplace::class)->name('marketplace');
     Route::redirect('/communaute', '/espace-membre/marketplace');
     Route::get('/evenements', MemberEvenements::class)->name('evenements');

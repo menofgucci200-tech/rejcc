@@ -83,7 +83,10 @@
                                     </div>
                                 </div>
                                 <p class="mt-3 text-[12.5px] text-ink"><span class="font-semibold text-brand">Objectif :</span> {{ $r['objectif'] }}</p>
-                                <a href="{{ route('espace-membre.messaging', ['to' => $r['autre']['id']]) }}" wire:navigate class="btn-tap mt-3 inline-flex items-center gap-1.5 rounded-full bg-brand px-3.5 py-1.5 text-[12px] font-bold text-white hover:bg-brand/90"><x-ui.icon name="message-circle" class="size-3.5" /> Écrire</a>
+                                <div class="mt-3 flex flex-wrap gap-2">
+                                    <a href="{{ route('espace-membre.mentorat.suivi', $r['id']) }}" wire:navigate data-test="ouvrir-suivi" class="btn-tap inline-flex items-center gap-1.5 rounded-full bg-accent px-3.5 py-1.5 text-[12px] font-bold text-white hover:bg-accent-600"><x-ui.icon name="calendar" class="size-3.5" /> Suivi &amp; séances</a>
+                                    <a href="{{ route('espace-membre.messaging', ['to' => $r['autre']['id']]) }}" wire:navigate class="btn-tap inline-flex items-center gap-1.5 rounded-full bg-brand px-3.5 py-1.5 text-[12px] font-bold text-white hover:bg-brand/90"><x-ui.icon name="message-circle" class="size-3.5" /> Écrire</a>
+                                </div>
                             </article>
                         @endforeach
                     </div>
@@ -184,6 +187,9 @@
                                 <div class="mt-3 flex flex-wrap gap-2">
                                     @if ($r['statut'] === 'en_attente')
                                         <button wire:click="annuler({{ $r['id'] }})" wire:confirm="Retirer votre demande de mentorat ?" class="btn-tap rounded-full border border-brand/15 px-3.5 py-1.5 text-[12px] font-bold text-brand hover:bg-cloud">Retirer ma demande</button>
+                                    @endif
+                                    @if (in_array($r['statut'], ['accepte', 'termine'], true))
+                                        <a href="{{ route('espace-membre.mentorat.suivi', $r['id']) }}" wire:navigate data-test="ouvrir-suivi" class="btn-tap inline-flex items-center gap-1.5 rounded-full bg-accent px-3.5 py-1.5 text-[12px] font-bold text-white hover:bg-accent-600"><x-ui.icon name="calendar" class="size-3.5" /> Suivi &amp; séances</a>
                                     @endif
                                     @if ($r['statut'] === 'accepte')
                                         <a href="{{ route('espace-membre.messaging', ['to' => $r['autre']['id']]) }}" wire:navigate class="btn-tap inline-flex items-center gap-1.5 rounded-full bg-brand px-3.5 py-1.5 text-[12px] font-bold text-white hover:bg-brand/90"><x-ui.icon name="message-circle" class="size-3.5" /> Écrire à mon mentor</a>

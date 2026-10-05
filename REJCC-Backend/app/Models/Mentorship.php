@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Mentorship extends Model
 {
@@ -33,6 +34,16 @@ class Mentorship extends Model
     public function mentore(): BelongsTo
     {
         return $this->belongsTo(User::class, 'mentore_id');
+    }
+
+    public function seances(): HasMany
+    {
+        return $this->hasMany(MentoringSession::class)->orderBy('debut_at');
+    }
+
+    public function participe(int $userId): bool
+    {
+        return $this->mentor_id === $userId || $this->mentore_id === $userId;
     }
 
     /** Demandes en attente ou mentorats en cours. */

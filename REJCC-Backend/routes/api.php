@@ -100,6 +100,12 @@ Route::middleware('auth.token')->group(function () {
     Route::post('/mentorat/{id}/annuler', [\App\Http\Controllers\Api\MentoratController::class, 'annuler'])->whereNumber('id');
     Route::post('/mentorat/{id}/accepter', [\App\Http\Controllers\Api\MentoratController::class, 'accepter'])->whereNumber('id');
     Route::post('/mentorat/{id}/refuser', [\App\Http\Controllers\Api\MentoratController::class, 'refuser'])->whereNumber('id');
+    Route::get('/mentorat/prochaine-seance', [\App\Http\Controllers\Api\SeanceController::class, 'prochaine']);
+    Route::get('/mentorat/{id}', [\App\Http\Controllers\Api\SeanceController::class, 'show'])->whereNumber('id');
+    Route::post('/mentorat/{id}/seances', [\App\Http\Controllers\Api\SeanceController::class, 'proposer'])->whereNumber('id');
+    Route::post('/seances/{id}/confirmer', [\App\Http\Controllers\Api\SeanceController::class, 'confirmer'])->whereNumber('id');
+    Route::post('/seances/{id}/annuler', [\App\Http\Controllers\Api\SeanceController::class, 'annuler'])->whereNumber('id');
+    Route::post('/seances/{id}/compte-rendu', [\App\Http\Controllers\Api\SeanceController::class, 'compteRendu'])->whereNumber('id');
 
     // Notifications
     Route::get('/notifications', [NotificationController::class, 'index']);
