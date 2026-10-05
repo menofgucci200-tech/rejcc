@@ -34,6 +34,7 @@
                 :editable="true"
                 uploadId="card-photo-input"
             />
+            <p class="carte-consigne mt-[8mm] hidden max-w-[180mm] text-center text-[9pt] text-[#5B677A]">Découpez le recto et le verso le long des pointillés, collez-les dos à dos puis faites plastifier la carte. Format carte bancaire : 85,6 × 54 mm.</p>
         </div>
 
         @if ($validite)
@@ -54,7 +55,7 @@
             <label for="card-photo-input" class="btn-tap inline-flex cursor-pointer items-center gap-2 rounded-full bg-brand px-4 py-2 text-xs font-bold text-white hover:bg-brand/90">
                 <x-ui.icon name="image" class="size-3.5" /> {{ $photo ? 'Changer ma photo' : 'Ajouter ma photo' }}
             </label>
-            <button type="button" onclick="window.print()" class="btn-tap inline-flex items-center gap-2 rounded-full border border-brand/15 bg-white px-4 py-2 text-xs font-bold text-brand hover:bg-cloud">
+            <button type="button" data-test="imprimer" onclick="{{ $photo ? 'window.print()' : "if (confirm('Votre carte n\\'a pas encore de photo. Imprimer quand même ?')) window.print()" }}" class="btn-tap inline-flex items-center gap-2 rounded-full border border-brand/15 bg-white px-4 py-2 text-xs font-bold text-brand hover:bg-cloud">
                 <x-ui.icon name="download" class="size-3.5" /> Imprimer / enregistrer en PDF
             </button>
             <span wire:loading wire:target="photoUpload" class="text-xs font-semibold text-[#9AA6B8]">Envoi de la photo…</span>
@@ -131,12 +132,27 @@
                 padding: 0;
                 opacity: 1 !important;
             }
+            /* Format réel d'une carte bancaire (ISO 7810 ID-1 : 85,6 × 54 mm),
+               recto et verso côte à côte, avec un trait de coupe en pointillés. */
+            #carte-print-zone {
+                flex-direction: column;
+                justify-content: flex-start;
+                padding-top: 15mm;
+            }
             #carte-print-zone > .grid {
-                grid-template-columns: 1fr !important;
-                width: 158mm;
-                max-width: 158mm;
+                grid-template-columns: 85.6mm 85.6mm !important;
+                width: auto;
+                max-width: none;
                 gap: 8mm !important;
             }
+            #carte-print-zone > .grid > div {
+                box-shadow: none !important;
+                outline: 0.25mm dashed #8a94a6;
+                outline-offset: 1.5mm;
+            }
+            #carte-print-zone .carte-consigne { display: block !important; }
+            #carte-print-zone .carte-sans-photo,
+            #carte-print-zone .carte-sans-photo * { visibility: hidden !important; }
             @page { size: A4 portrait; margin: 10mm; }
         }
     </style>

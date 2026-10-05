@@ -44,8 +44,9 @@
                 <img src="{{ $photo }}" alt="Photo de {{ $name }}"
                      class="h-[40cqh] w-[22cqw] rounded-[2cqw] object-cover ring-1 ring-white/20">
             @elseif ($editable && $uploadId)
+                {{-- carte-sans-photo : la zone d'invitation est masquée à l'impression (cf. carte.blade.php) --}}
                 <label for="{{ $uploadId }}"
-                       class="flex h-[40cqh] w-[22cqw] cursor-pointer flex-col items-center justify-center gap-[1.5cqw] rounded-[2cqw] border border-dashed border-white/30 bg-white/[.04] text-center text-white/50 hover:bg-white/[.1]">
+                       class="carte-sans-photo flex h-[40cqh] w-[22cqw] cursor-pointer flex-col items-center justify-center gap-[1.5cqw] rounded-[2cqw] border border-dashed border-white/30 bg-white/[.04] text-center text-white/50 hover:bg-white/[.1]">
                     <x-ui.icon name="image" class="w-[4.5cqw]" />
                     <span class="text-[1.7cqw] font-semibold leading-snug">Photo du membre</span>
                 </label>
