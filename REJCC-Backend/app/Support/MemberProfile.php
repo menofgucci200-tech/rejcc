@@ -2,7 +2,10 @@
 
 namespace App\Support;
 
+use App\Models\EventRegistration;
+use App\Models\FormationEnrollment;
 use App\Models\MarketplaceListing;
+use App\Models\Project;
 use App\Models\User;
 
 /**
@@ -26,6 +29,19 @@ class MemberProfile
         $contactVisible = $public
             ? (bool) ($prefs['coordonnees_publiques'] ?? false)
             : (bool) ($prefs['visibilite_profil'] ?? true);
+
+        $certificats = FormationEnrollment::with('formation:id,title,category,is_certifying')
+            ->where('user_id', $user->id)
+            ->whereNotNull('completed_at')
+            ->whereHas('formation', fn ($q) => $q->where('is_certifying', true))
+            ->orderByDesc('completed_at')
+            ->get()
+            ->map(fn (FormationEnrollment $e) => [
+                'titre' => $e->formation->title,
+                'categorie' => $e->formation->category,
+                'reference' => $e->certificateReference(),
+                'obtenu_le' => $e->completed_at->toDateString(),
+            ])->values();
 
         $listings = MarketplaceListing::where('user_id', $user->id)
             ->where('statut', 'approuve')
@@ -59,8 +75,26 @@ class MemberProfile
                 default => null,
             },
             'organisation' => $user->organisation,
+            'titre' => $user->titre,
             'paroisse' => $user->paroisse,
+            'diocese' => $user->diocese,
             'bio' => $user->bio,
+            'competences' => $user->competences ?? [],
+            'parcours' => $user->parcours ?? [],
+            'liens' => $user->liens ?? [],
+
+            // Données vérifiées par la plateforme (activité réelle dans le réseau)
+            'certificats' => $certificats,
+            'groupes' => $user->groups()->orderBy('ordre')->get(['groups.name'])
+                ->map(fn ($g) => ['nom' => $g->name, 'specialite' => $g->pivot->specialite])->values(),
+            'projets' => Project::where('user_id', $user->id)
+                ->whereNotIn('status', ['En évaluation', 'Refusé'])
+                ->latest()->limit(4)->get(['title', 'description', 'status']),
+            'engagement' => [
+                'formations_terminees' => FormationEnrollment::where('user_id', $user->id)->whereNotNull('completed_at')->count(),
+                'evenements' => EventRegistration::where('user_id', $user->id)->count(),
+                'certificats' => $certificats->count(),
+            ],
             'email' => $contactVisible ? $user->email : null,
             'telephone' => $contactVisible ? $user->telephone : null,
             'listings' => $listings,

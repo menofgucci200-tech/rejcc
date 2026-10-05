@@ -29,4 +29,10 @@ class FormationEnrollment extends Model
     {
         return $this->hasMany(FormationModuleCompletion::class);
     }
+
+    /** Référence du certificat (formation certifiante terminée), ex. REJCC-CERT-2026-0012. */
+    public function certificateReference(): string
+    {
+        return 'REJCC-CERT-'.$this->completed_at->format('Y').'-'.str_pad((string) $this->id, 4, '0', STR_PAD_LEFT);
+    }
 }

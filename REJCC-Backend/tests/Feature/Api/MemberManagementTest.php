@@ -99,11 +99,50 @@ class MemberManagementTest extends TestCase
         $attendu = 'REJCC-'.$membre->created_at->format('Y').'-'.$membre->created_at->format('dm').$code;
         $this->assertSame($attendu, $card['numero']);
 
-        // Profil professionnel : le contact est visible par défaut
-        // (préférence « visibilité du profil » activée).
+        // Page publique (sans connexion) : le contact est masqué par défaut,
+        // pour qu'on ne puisse pas collecter les coordonnées en essayant les codes.
+        $this->assertNull($card['email']);
+        $this->assertNull($card['telephone']);
+        $this->assertSame([], $card['listings']);
+
+        // Validité de la carte = fin de l'abonnement annuel (date anniversaire).
+        $this->assertTrue($card['a_jour']);
+        $this->assertSame($membre->subscription_expires_at->toDateString(), $card['valable_jusqu']);
+    }
+
+    public function test_le_contact_public_n_apparait_que_sur_choix_du_membre(): void
+    {
+        $membre = User::factory()->abonne()->create([
+            'preferences' => ['visibilite_profil' => true, 'coordonnees_publiques' => true],
+        ]);
+
+        $card = $this->getJson('/api/member-card/'.$membre->id)->assertOk()->json('card');
+
         $this->assertSame($membre->email, $card['email']);
         $this->assertSame($membre->telephone, $card['telephone']);
-        $this->assertSame([], $card['listings']);
+    }
+
+    public function test_la_page_biographique_publie_les_informations_du_membre(): void
+    {
+        $membre = User::factory()->abonne()->create([
+            'titre' => 'Fondatrice d\'AgroVert',
+            'diocese' => 'Archidiocèse d\'Abidjan',
+            'competences' => ['Agrobusiness', 'Export'],
+            'parcours' => [['periode' => '2022 – auj.', 'titre' => 'Fondatrice', 'structure' => 'AgroVert']],
+            'liens' => ['linkedin' => 'https://www.linkedin.com/in/test'],
+        ]);
+        \App\Models\Project::create(['user_id' => $membre->id, 'title' => 'Séchage de mangues', 'description' => 'Unité de transformation.', 'status' => 'Recherche partenaires']);
+        \App\Models\Project::create(['user_id' => $membre->id, 'title' => 'Projet confidentiel', 'description' => 'Ne doit pas être public.', 'status' => 'En évaluation']);
+
+        $card = $this->getJson('/api/member-card/'.$membre->id)->assertOk()->json('card');
+
+        $this->assertSame('Fondatrice d\'AgroVert', $card['titre']);
+        $this->assertSame(['Agrobusiness', 'Export'], $card['competences']);
+        $this->assertSame('Fondatrice', $card['parcours'][0]['titre']);
+        $this->assertSame('https://www.linkedin.com/in/test', $card['liens']['linkedin']);
+        // Un projet encore en évaluation n'est pas rendu public.
+        $this->assertSame(['Séchage de mangues'], array_column($card['projets'], 'title'));
+        $this->assertSame(['formations_terminees' => 0, 'evenements' => 0, 'certificats' => 0], $card['engagement']);
     }
 
     public function test_le_contact_est_masque_si_le_profil_n_est_pas_visible(): void
@@ -144,7 +183,9 @@ class MemberManagementTest extends TestCase
         $card = $this->getJson("/api/member-card/{$code}")->assertOk()->json('card');
 
         $this->assertTrue($card['locked']);
-        $this->assertSame('Awa', $card['prenom']);
+        // Aucune donnée personnelle, pas même le nom.
+        $this->assertArrayNotHasKey('prenom', $card);
+        $this->assertArrayNotHasKey('nom', $card);
         $this->assertArrayNotHasKey('email', $card);
         $this->assertArrayNotHasKey('role', $card);
     }

@@ -55,6 +55,7 @@ Route::get('/actualites/{slug}', [NewsController::class, 'show']);
 
 Route::view('/partenaires', 'pages.partenaires');
 Route::get('/carte/{code}', [\App\Http\Controllers\CardController::class, 'show'])->name('carte');
+Route::get('/carte/{code}/contact.vcf', [\App\Http\Controllers\CardController::class, 'vcard'])->name('carte.vcard');
 Route::get('/participer/{slug}', \App\Livewire\EventSignup::class)->name('event.signup');
 Route::get('/adhesion', \App\Livewire\AdhesionApplicationForm::class)->name('adhesion');
 Route::get('/suivre-ma-candidature', \App\Livewire\AdhesionStatusCheck::class)->name('adhesion.status');

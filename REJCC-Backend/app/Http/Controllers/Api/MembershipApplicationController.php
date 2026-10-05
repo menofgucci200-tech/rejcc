@@ -154,6 +154,11 @@ class MembershipApplicationController extends Controller
             'ville' => $application->ville,
             'secteur' => $application->secteurs_activite[0] ?? ($application->domaines_futurs[0] ?? null),
             'profil' => $this->deriveProfil($application),
+            // Reprise des réponses utiles à la page biographique (modifiables ensuite).
+            'paroisse' => $application->paroisse,
+            'diocese' => $application->diocese,
+            'organisation' => $application->nom_activite,
+            'competences' => $application->competences ?: null,
             'role' => 'member',
         ]);
 

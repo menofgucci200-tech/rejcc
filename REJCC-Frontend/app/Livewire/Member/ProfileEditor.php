@@ -49,6 +49,21 @@ class ProfileEditor extends Component
 
     public string $bio = '';
 
+    // Page biographique publique (QR code de la carte)
+    public string $titre = '';
+
+    public string $diocese = '';
+
+    public array $competences = [];
+
+    public string $nouvelleCompetence = '';
+
+    public array $parcours = [];
+
+    public array $liens = ['site' => '', 'linkedin' => '', 'facebook' => '', 'instagram' => ''];
+
+    public string $bioStatus = 'idle';
+
     public string $reference = '';
 
     public string $date_adhesion = '';
@@ -92,6 +107,14 @@ class ProfileEditor extends Component
         $this->profil = $user->profil ?? '';
         $this->organisation = $user->organisation ?? '';
         $this->bio = $user->bio ?? '';
+        $this->titre = $user->titre ?? '';
+        $this->diocese = $user->diocese ?? '';
+        $this->competences = array_values((array) ($user->competences ?? []));
+        $this->parcours = array_map(
+            fn ($p) => ['periode' => (string) ($p['periode'] ?? ''), 'titre' => (string) ($p['titre'] ?? ''), 'structure' => (string) ($p['structure'] ?? '')],
+            array_values((array) ($user->parcours ?? [])),
+        );
+        $this->liens = array_merge($this->liens, array_map('strval', (array) ($user->liens ?? [])));
         $this->reference = $user->reference ?? '';
         $this->date_adhesion = $user->date_adhesion ?? '';
         $this->photo = $user->photo ?? '';
@@ -167,7 +190,6 @@ class ProfileEditor extends Component
             'secteur' => 'nullable|string|max:100',
             'profil' => 'nullable|in:etudiant,porteur,entrepreneur',
             'organisation' => 'nullable|string|max:120',
-            'bio' => 'nullable|string|max:600',
         ]);
 
         $result = Api::put('/auth/profile', $validated, Api::token());
@@ -175,6 +197,71 @@ class ProfileEditor extends Component
         if ($result['ok'] ?? false) {
             session(['api_user' => $result['user']]);
             $this->status = 'saved';
+        }
+    }
+
+    public function ajouterCompetence(): void
+    {
+        $c = trim($this->nouvelleCompetence);
+        if (mb_strlen($c) >= 2 && count($this->competences) < 15 && ! in_array($c, $this->competences, true)) {
+            $this->competences[] = mb_substr($c, 0, 40);
+        }
+        $this->nouvelleCompetence = '';
+    }
+
+    public function retirerCompetence(int $i): void
+    {
+        unset($this->competences[$i]);
+        $this->competences = array_values($this->competences);
+    }
+
+    public function ajouterEtape(): void
+    {
+        if (count($this->parcours) < 8) {
+            $this->parcours[] = ['periode' => '', 'titre' => '', 'structure' => ''];
+        }
+    }
+
+    public function retirerEtape(int $i): void
+    {
+        unset($this->parcours[$i]);
+        $this->parcours = array_values($this->parcours);
+    }
+
+    public function saveBio(): void
+    {
+        $this->bioStatus = 'idle';
+
+        $this->validate([
+            'titre' => 'nullable|string|max:120',
+            'diocese' => 'nullable|string|max:120',
+            'bio' => 'nullable|string|max:1500',
+            'competences' => 'array|max:15',
+            'parcours' => 'array|max:8',
+            'parcours.*.periode' => 'nullable|string|max:40',
+            'parcours.*.titre' => 'required|string|max:100',
+            'parcours.*.structure' => 'nullable|string|max:120',
+            'liens.*' => 'nullable|url|max:300',
+        ], [
+            'parcours.*.titre.required' => 'Indiquez le poste ou la réalisation (ou retirez la ligne).',
+            'liens.*.url' => 'Collez l\'adresse complète (https://…).',
+            'bio.max' => 'La présentation ne doit pas dépasser 1 500 caractères.',
+        ]);
+
+        $result = Api::put('/auth/profile', [
+            'titre' => $this->titre ?: null,
+            'diocese' => $this->diocese ?: null,
+            'bio' => $this->bio ?: null,
+            'competences' => $this->competences,
+            'parcours' => $this->parcours,
+            'liens' => array_filter($this->liens),
+        ], Api::token());
+
+        if ($result['ok'] ?? false) {
+            session(['api_user' => $result['user']]);
+            $this->bioStatus = 'saved';
+        } else {
+            $this->addError('bio', $result['message'] ?? 'Une erreur est survenue.');
         }
     }
 
@@ -237,6 +324,7 @@ class ProfileEditor extends Component
             'preferenceRows' => $preferences,
             'completion' => $this->completion(),
             'champsManquants' => ProfileCompletion::missing($this->completionFields()),
+            'pagePublique' => ($code = Api::user()->code ?? null) ? url('/carte/'.$code) : null,
         ]);
     }
 }

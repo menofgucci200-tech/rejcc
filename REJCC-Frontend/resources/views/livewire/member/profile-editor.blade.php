@@ -104,7 +104,7 @@
                             </label>
                         </div>
 
-                        <label class="flex flex-col gap-1.5 text-xs font-semibold text-[#5B677A]">Paroisse / Diocèse
+                        <label class="flex flex-col gap-1.5 text-xs font-semibold text-[#5B677A]">Paroisse
                             <input wire:model="paroisse" type="text" placeholder="Paroisse Saint-Jean, Abidjan" class="rounded-[9px] border border-brand/10 px-3 py-2.5 text-[13px] text-ink outline-none focus:border-azure" />
                         </label>
 
@@ -131,10 +131,6 @@
 
                         <label class="flex flex-col gap-1.5 text-xs font-semibold text-[#5B677A]">Entreprise / projet
                             <input wire:model="organisation" type="text" class="rounded-[9px] border border-brand/10 px-3 py-2.5 text-[13px] text-ink outline-none focus:border-azure" />
-                        </label>
-
-                        <label class="flex flex-col gap-1.5 text-xs font-semibold text-[#5B677A]">Bio
-                            <textarea wire:model="bio" placeholder="Décrivez-vous en quelques mots…" class="min-h-[90px] resize-y rounded-[9px] border border-brand/10 px-3 py-2.5 text-[13px] text-ink outline-none focus:border-azure"></textarea>
                         </label>
 
                         <button
@@ -168,6 +164,88 @@
                         </div>
                     @endforeach
                 </div>
+            </div>
+        </section>
+
+        {{-- Page biographique publique (ouverte par le QR code de la carte) --}}
+        <section class="mb-6" data-test="section-bio">
+            <div class="mb-1 flex flex-wrap items-end justify-between gap-3">
+                <h2 class="text-[17px] font-bold text-brand">Ma page biographique</h2>
+                @if ($pagePublique)
+                    <a href="{{ $pagePublique }}" target="_blank" rel="noopener" data-test="voir-page-publique" class="inline-flex items-center gap-1.5 text-[12.5px] font-bold text-azure hover:underline">
+                        <x-ui.icon name="external-link" class="size-3.5" /> Voir ma page publique
+                    </a>
+                @endif
+            </div>
+            <div class="mb-4 h-[3px] w-9 rounded bg-accent"></div>
+
+            <div class="rounded-[18px] border border-brand/10 bg-white p-6 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                <p class="mb-5 max-w-3xl text-[12.5px] text-[#5B677A]">C'est la page que découvre toute personne qui scanne le QR code de votre carte membre : votre carte de visite et votre CV dans le réseau. Vos certificats, groupes, projets et offres REJCC s'y ajoutent automatiquement. Votre téléphone et votre e-mail n'y figurent que si vous activez « Coordonnées sur ma page publique ».</p>
+
+                <form wire:submit="saveBio" class="grid gap-5 lg:grid-cols-2">
+                    <div class="flex flex-col gap-3">
+                        <label class="flex flex-col gap-1.5 text-xs font-semibold text-[#5B677A]">Fonction / titre
+                            <input wire:model="titre" type="text" placeholder="Ex : Fondatrice d'AgroVert, consultante en agrobusiness" class="rounded-[9px] border border-brand/10 px-3 py-2.5 text-[13px] text-ink outline-none focus:border-azure" />
+                            @error('titre') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
+                        </label>
+                        <label class="flex flex-col gap-1.5 text-xs font-semibold text-[#5B677A]">Diocèse
+                            <input wire:model="diocese" type="text" placeholder="Ex : Archidiocèse d'Abidjan" class="rounded-[9px] border border-brand/10 px-3 py-2.5 text-[13px] text-ink outline-none focus:border-azure" />
+                        </label>
+                        <label class="flex flex-col gap-1.5 text-xs font-semibold text-[#5B677A]" x-data="{ n: {{ mb_strlen($bio) }} }">
+                            <span class="flex justify-between">À propos de moi <span class="font-normal text-[#9AA6B8]" x-text="n + ' / 1 500'"></span></span>
+                            <textarea wire:model="bio" @input="n = $event.target.value.length" rows="6" maxlength="1500" placeholder="Votre histoire, votre vision, ce qui vous anime, ce que vous apportez au réseau…" class="resize-y rounded-[9px] border border-brand/10 px-3 py-2.5 text-[13px] text-ink outline-none focus:border-azure"></textarea>
+                            @error('bio') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
+                        </label>
+                        <div class="flex flex-col gap-1.5 text-xs font-semibold text-[#5B677A]">Compétences ({{ count($competences) }} / 15)
+                            <div class="flex flex-wrap gap-1.5">
+                                @foreach ($competences as $i => $c)
+                                    <span wire:key="comp-{{ $i }}" class="inline-flex items-center gap-1 rounded-full bg-azure/10 py-1 pl-3 pr-1.5 text-[12px] font-semibold text-azure">
+                                        {{ $c }}
+                                        <button type="button" wire:click="retirerCompetence({{ $i }})" aria-label="Retirer {{ $c }}" class="flex size-4 items-center justify-center rounded-full hover:bg-azure/20"><x-ui.icon name="x" class="size-3" /></button>
+                                    </span>
+                                @endforeach
+                            </div>
+                            <div class="flex gap-2">
+                                <input wire:model="nouvelleCompetence" wire:keydown.enter.prevent="ajouterCompetence" type="text" placeholder="Ex : Comptabilité, Marketing digital…" class="min-w-0 flex-1 rounded-[9px] border border-brand/10 px-3 py-2 text-[13px] font-normal text-ink outline-none focus:border-azure" />
+                                <button type="button" wire:click="ajouterCompetence" class="btn-tap rounded-[9px] border border-brand/15 px-3 text-[12px] font-bold text-brand hover:bg-cloud">Ajouter</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-3">
+                        <div class="flex flex-col gap-1.5 text-xs font-semibold text-[#5B677A]">Parcours (postes, réalisations, formations)
+                            @foreach ($parcours as $i => $etape)
+                                <div wire:key="etape-{{ $i }}" class="rounded-[10px] border border-brand/10 p-2.5">
+                                    <div class="grid gap-2 sm:grid-cols-[110px_1fr]">
+                                        <input wire:model="parcours.{{ $i }}.periode" type="text" placeholder="2022 – auj." class="rounded-[8px] border border-brand/10 px-2.5 py-2 text-[12.5px] font-normal text-ink outline-none focus:border-azure" />
+                                        <input wire:model="parcours.{{ $i }}.titre" type="text" placeholder="Poste ou réalisation" class="rounded-[8px] border border-brand/10 px-2.5 py-2 text-[12.5px] font-normal text-ink outline-none focus:border-azure" />
+                                    </div>
+                                    <div class="mt-2 flex gap-2">
+                                        <input wire:model="parcours.{{ $i }}.structure" type="text" placeholder="Entreprise, organisation, école…" class="min-w-0 flex-1 rounded-[8px] border border-brand/10 px-2.5 py-2 text-[12.5px] font-normal text-ink outline-none focus:border-azure" />
+                                        <button type="button" wire:click="retirerEtape({{ $i }})" class="px-1 text-[11.5px] font-semibold text-accent hover:underline">Retirer</button>
+                                    </div>
+                                    @error("parcours.{$i}.titre") <span class="mt-1 block text-xs font-medium text-accent">{{ $message }}</span> @enderror
+                                </div>
+                            @endforeach
+                            @if (count($parcours) < 8)
+                                <button type="button" wire:click="ajouterEtape" class="btn-tap inline-flex w-fit items-center gap-1.5 rounded-[9px] border border-dashed border-brand/25 px-3 py-2 text-[12px] font-bold text-brand hover:bg-cloud"><x-ui.icon name="plus" class="size-3.5" /> Ajouter une étape</button>
+                            @endif
+                        </div>
+                        <div class="flex flex-col gap-1.5 text-xs font-semibold text-[#5B677A]">Liens
+                            @foreach (['site' => 'Site web', 'linkedin' => 'LinkedIn', 'facebook' => 'Facebook', 'instagram' => 'Instagram'] as $k => $label)
+                                <input wire:model="liens.{{ $k }}" type="url" placeholder="{{ $label }} — https://…" class="rounded-[9px] border border-brand/10 px-3 py-2 text-[12.5px] font-normal text-ink outline-none focus:border-azure" />
+                                @error("liens.{$k}") <span class="text-xs font-medium text-accent">{{ $label }} : {{ $message }}</span> @enderror
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-3 lg:col-span-2">
+                        <button type="submit" wire:loading.attr="disabled" data-test="enregistrer-bio" class="btn-tap rounded-[9px] px-5 py-2.5 text-[12.5px] font-bold text-white shadow-sm hover:shadow-md" style="background: {{ $bioStatus === 'saved' ? '#22A85A' : '#031D59' }}">
+                            <span wire:loading.remove wire:target="saveBio">{{ $bioStatus === 'saved' ? 'Page publiée !' : 'Publier ma page' }}</span>
+                            <span wire:loading wire:target="saveBio">Publication…</span>
+                        </button>
+                    </div>
+                </form>
             </div>
         </section>
 

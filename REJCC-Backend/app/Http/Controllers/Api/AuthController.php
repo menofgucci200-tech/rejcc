@@ -35,7 +35,8 @@ class AuthController extends Controller
             ...$u->only([
                 'id', 'prenom', 'nom', 'email', 'telephone', 'genre',
                 'ville', 'paroisse', 'secteur', 'profil',
-                'organisation', 'bio', 'photo', 'piece_identite', 'role', 'permissions',
+                'organisation', 'titre', 'diocese', 'bio', 'competences', 'parcours', 'liens',
+                'photo', 'piece_identite', 'role', 'permissions',
             ]),
             'reference' => $u->memberNumber(),
             'numero' => $u->memberNumber(),
@@ -221,7 +222,21 @@ class AuthController extends Controller
             'secteur' => 'nullable|string|max:100',
             'profil' => 'nullable|in:etudiant,porteur,entrepreneur',
             'organisation' => 'nullable|string|max:120',
-            'bio' => 'nullable|string|max:600',
+            'titre' => 'nullable|string|max:120',
+            'diocese' => 'nullable|string|max:120',
+            'bio' => 'nullable|string|max:1500',
+            // Page biographique publique
+            'competences' => 'nullable|array|max:15',
+            'competences.*' => 'string|min:2|max:40',
+            'parcours' => 'nullable|array|max:8',
+            'parcours.*.periode' => 'nullable|string|max:40',
+            'parcours.*.titre' => 'required|string|max:100',
+            'parcours.*.structure' => 'nullable|string|max:120',
+            'liens' => 'nullable|array',
+            'liens.site' => 'nullable|url|max:300',
+            'liens.linkedin' => 'nullable|url|max:300',
+            'liens.facebook' => 'nullable|url|max:300',
+            'liens.instagram' => 'nullable|url|max:300',
             'photo' => 'nullable|url|max:500', // URL de la photo (fichier stocké côté frontend)
             'piece_identite' => 'nullable|url|max:500', // URL de la pièce d'identité
         ]);
@@ -230,7 +245,25 @@ class AuthController extends Controller
             return response()->json(['ok' => false, 'message' => $validator->errors()->first()], 422);
         }
 
-        $user->fill($validator->validated());
+        $data = $validator->validated();
+
+        // Page biographique : on ne garde que les clés attendues, sans valeurs vides.
+        if (array_key_exists('liens', $data)) {
+            $data['liens'] = array_filter(
+                array_intersect_key((array) $data['liens'], array_flip(['site', 'linkedin', 'facebook', 'instagram'])),
+            ) ?: null;
+        }
+        if (array_key_exists('parcours', $data)) {
+            $data['parcours'] = array_values(array_map(
+                fn (array $p) => array_intersect_key($p, array_flip(['periode', 'titre', 'structure'])),
+                (array) $data['parcours'],
+            )) ?: null;
+        }
+        if (array_key_exists('competences', $data)) {
+            $data['competences'] = array_values(array_unique(array_map('trim', (array) $data['competences']))) ?: null;
+        }
+
+        $user->fill($data);
         if ($user->isDirty(['prenom', 'nom'])) {
             $user->name = $user->prenom . ' ' . $user->nom;
         }

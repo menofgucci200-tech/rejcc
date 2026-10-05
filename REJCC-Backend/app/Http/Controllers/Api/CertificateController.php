@@ -56,6 +56,6 @@ class CertificateController extends Controller
 
     private function reference(FormationEnrollment $e): string
     {
-        return 'REJCC-CERT-'.$e->completed_at->format('Y').'-'.str_pad((string) $e->id, 4, '0', STR_PAD_LEFT);
+        return $e->certificateReference();
     }
 }

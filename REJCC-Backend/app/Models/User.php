@@ -34,7 +34,12 @@ class User extends Authenticatable
         'secteur',
         'profil',
         'organisation',
+        'titre',
+        'diocese',
         'bio',
+        'competences',
+        'parcours',
+        'liens',
         'preferences',
         'photo',
         'piece_identite',
@@ -53,7 +58,7 @@ class User extends Authenticatable
     /** Groupes sectoriels rejoints (adhésion multiple libre). */
     public function groups(): BelongsToMany
     {
-        return $this->belongsToMany(Group::class)->withTimestamps();
+        return $this->belongsToMany(Group::class)->withPivot('specialite')->withTimestamps();
     }
 
     /** Historique des paiements (adhésion + abonnements annuels). */
@@ -91,6 +96,9 @@ class User extends Authenticatable
             'password' => 'hashed',
             'date_naissance' => 'date',
             'preferences' => 'array',
+            'competences' => 'array',
+            'parcours' => 'array',
+            'liens' => 'array',
             'permissions' => 'array',
             'is_active' => 'boolean',
             'subscription_expires_at' => 'datetime',
