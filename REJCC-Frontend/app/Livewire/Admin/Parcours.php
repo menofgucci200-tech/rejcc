@@ -36,6 +36,10 @@ class Parcours extends Component
     /** @var array<int> Identifiants de formations, dans l'ordre du parcours. */
     public array $formationIds = [];
 
+    public ?string $messageFormations = null;
+
+    public bool $erreurFormations = false;
+
     protected function rules(): array
     {
         return [
@@ -149,6 +153,7 @@ class Parcours extends Component
         }
 
         $this->formationsPathId = $pathId;
+        $this->messageFormations = null;
         $detail = Api::get("/admin/paths/{$pathId}", [], Api::token())['path'] ?? [];
         $this->formationIds = collect($detail['formations'] ?? [])->pluck('id')->all();
     }
@@ -184,12 +189,20 @@ class Parcours extends Component
     public function enregistrerFormations(): void
     {
         if (! $this->formationsPathId || empty($this->formationIds)) {
+            $this->erreurFormations = true;
+            $this->messageFormations = 'Ajoutez au moins une formation au parcours.';
+
             return;
         }
 
-        Api::put("/admin/paths/{$this->formationsPathId}/formations", [
+        $result = Api::put("/admin/paths/{$this->formationsPathId}/formations", [
             'formation_ids' => $this->formationIds,
         ], Api::token());
+
+        $this->erreurFormations = ! ($result['ok'] ?? false);
+        $this->messageFormations = $this->erreurFormations
+            ? ($result['message'] ?? 'Enregistrement impossible, réessayez.')
+            : 'Ordre des formations enregistré.';
     }
 
     public function render()

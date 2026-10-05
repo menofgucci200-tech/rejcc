@@ -23,9 +23,14 @@ class PathTest extends TestCase
         return $plain;
     }
 
-    private function formation(string $title): Formation
+    private function formation(string $title, bool $contenu = true): Formation
     {
-        return Formation::create(['title' => $title, 'category' => 'Entrepreneuriat', 'modules_count' => 1]);
+        $f = Formation::create(['title' => $title, 'category' => 'Entrepreneuriat', 'modules_count' => 1, 'is_published' => true]);
+        if ($contenu) {
+            $f->modules()->create(['titre' => 'Module 1', 'contenu' => 'Leçon', 'ordre' => 1]);
+        }
+
+        return $f;
     }
 
     public function test_un_admin_cree_un_parcours_et_y_attache_des_formations_ordonnees(): void
@@ -83,6 +88,39 @@ class PathTest extends TestCase
         $liste = $this->withToken($token)->getJson('/api/paths')->assertOk()->json('paths');
         $this->assertTrue($liste[0]['badge_obtenu']);
         $this->assertSame(2, $liste[0]['formations_terminees']);
+    }
+
+    public function test_une_etape_sans_contenu_ne_bloque_pas_et_ne_compte_pas(): void
+    {
+        $admin = $this->tokenFor(User::factory()->create(['role' => 'admin']));
+        $f1 = $this->formation('Sans contenu', contenu: false);
+        $f2 = $this->formation('Avec contenu');
+        $f3 = $this->formation('Brouillon');
+        $f3->update(['is_published' => false]);
+
+        $pathId = $this->withToken($admin)->postJson('/api/admin/paths', ['title' => 'Parcours Test'])->json('path.id');
+        $this->withToken($admin)->putJson("/api/admin/paths/{$pathId}/formations", ['formation_ids' => [$f1->id, $f2->id, $f3->id]]);
+
+        $membre = User::factory()->create();
+        $token = $this->tokenFor($membre);
+
+        // Une ancienne validation « au clic » d'une formation sans contenu ne compte pas.
+        FormationEnrollment::create(['formation_id' => $f1->id, 'user_id' => $membre->id, 'progress' => 100, 'completed_at' => now()]);
+
+        $detail = $this->withToken($token)->getJson("/api/paths/{$pathId}")->assertOk()->json();
+        $this->assertFalse($detail['formations'][0]['disponible']);
+        $this->assertFalse($detail['formations'][0]['completed']);
+        $this->assertFalse($detail['formations'][0]['is_certifying']);
+        $this->assertFalse($detail['formations'][1]['verrouille']); // pas bloquée par l'étape sans contenu
+        $this->assertFalse($detail['formations'][2]['disponible']);
+
+        $liste = $this->withToken($token)->getJson('/api/paths')->json('paths');
+        $this->assertSame(1, $liste[0]['total_formations']);
+        $this->assertSame(0, $liste[0]['formations_terminees']);
+        $this->assertSame(2, $liste[0]['a_venir']);
+
+        $admins = $this->withToken($admin)->getJson('/api/admin/paths')->assertOk()->json('paths');
+        $this->assertSame(2, $admins[0]['formations_indisponibles_count']);
     }
 
     public function test_un_parcours_non_publie_est_invisible_des_membres(): void

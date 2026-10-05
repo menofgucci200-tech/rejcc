@@ -18,6 +18,35 @@ use Illuminate\Support\Str;
  */
 class PathController extends Controller
 {
+    /**
+     * Étape « disponible » : formation publiée et dotée d'un contenu (modules).
+     * Une étape non disponible ne bloque pas le parcours et ne compte pas dans
+     * le total ; une formation n'est « terminée » que si elle est disponible
+     * (les anciennes validations au clic, sans contenu, ne comptent pas).
+     */
+    private function etapes(Path $p, $enrollments)
+    {
+        $avecContenu = Formation::whereIn('id', $p->formations->pluck('id'))->whereHas('modules')->pluck('id')->all();
+
+        return $p->formations->map(function (Formation $f) use ($enrollments, $avecContenu) {
+            $e = $enrollments->get($f->id);
+            $disponible = $f->is_published && in_array($f->id, $avecContenu, true);
+
+            return [
+                'id' => $f->id,
+                'title' => $f->title,
+                'category' => $f->category,
+                'duration' => $f->duration,
+                'is_certifying' => $f->is_certifying && $disponible,
+                'has_modules' => in_array($f->id, $avecContenu, true),
+                'disponible' => $disponible,
+                'enrolled' => (bool) $e,
+                'progress' => $e?->progress ?? 0,
+                'completed' => $disponible && $e?->completed_at !== null,
+            ];
+        });
+    }
+
     /** Parcours publiés + progression du membre courant. */
     public function index(Request $request)
     {
@@ -25,11 +54,13 @@ class PathController extends Controller
 
         $paths = Path::where('is_published', true)
             ->orderBy('ordre')->orderBy('id')
-            ->with('formations:id')
+            ->with('formations')
             ->get()
             ->map(function (Path $p) use ($enrollments) {
-                $total = $p->formations->count();
-                $termines = $p->formations->filter(fn (Formation $f) => $enrollments->get($f->id)?->completed_at !== null)->count();
+                $etapes = $this->etapes($p, $enrollments);
+                $disponibles = $etapes->where('disponible', true);
+                $total = $disponibles->count();
+                $termines = $disponibles->where('completed', true)->count();
 
                 return [
                     'id' => $p->id,
@@ -41,6 +72,7 @@ class PathController extends Controller
                     'badge_couleur' => $p->badge_couleur,
                     'total_formations' => $total,
                     'formations_terminees' => $termines,
+                    'a_venir' => $etapes->count() - $total,
                     'pct' => $total > 0 ? (int) round($termines * 100 / $total) : 0,
                     'badge_obtenu' => $total > 0 && $termines >= $total,
                 ];
@@ -62,31 +94,21 @@ class PathController extends Controller
             ->get()
             ->keyBy('formation_id');
 
+        // Déblocage progressif sur les seules étapes disponibles : une étape
+        // « bientôt disponible » ne bloque pas les suivantes.
         $debloque = true;
-        $formations = $path->formations->map(function (Formation $f) use ($enrollments, &$debloque) {
-            $e = $enrollments->get($f->id);
-            $termine = $e?->completed_at !== null;
-            $item = [
-                'id' => $f->id,
-                'title' => $f->title,
-                'category' => $f->category,
-                'duration' => $f->duration,
-                'is_certifying' => (bool) $f->is_certifying,
-                'has_modules' => $f->modules()->exists(),
-                'enrolled' => (bool) $e,
-                'progress' => $e?->progress ?? 0,
-                'completed' => $termine,
-                'verrouille' => ! $debloque,
-            ];
-            if (! $termine) {
+        $formations = $this->etapes($path, $enrollments)->map(function (array $item) use (&$debloque) {
+            $item['verrouille'] = $item['disponible'] && ! $debloque;
+            if ($item['disponible'] && ! $item['completed']) {
                 $debloque = false;
             }
 
             return $item;
         });
 
-        $total = $formations->count();
-        $termines = $formations->where('completed', true)->count();
+        $disponibles = $formations->where('disponible', true);
+        $total = $disponibles->count();
+        $termines = $disponibles->where('completed', true)->count();
 
         return response()->json([
             'ok' => true,
@@ -95,7 +117,7 @@ class PathController extends Controller
                 'objectif' => $path->objectif, 'badge_icon' => $path->badge_icon, 'badge_couleur' => $path->badge_couleur,
                 'badge_obtenu' => $total > 0 && $termines >= $total,
             ],
-            'formations' => $formations,
+            'formations' => $formations->values(),
         ]);
     }
 
@@ -106,6 +128,7 @@ class PathController extends Controller
     public function adminIndex()
     {
         $paths = Path::withCount('formations')
+            ->withCount(['formations as formations_indisponibles_count' => fn ($q) => $q->where(fn ($w) => $w->where('is_published', false)->orWhereDoesntHave('modules'))])
             ->orderBy('ordre')->orderBy('id')
             ->get();
 
@@ -114,7 +137,7 @@ class PathController extends Controller
 
     public function adminShow(int $id)
     {
-        $path = Path::with('formations:id,title,category')->find($id);
+        $path = Path::with(['formations' => fn ($q) => $q->select('formations.id', 'title', 'category', 'is_published')->withCount('modules')])->find($id);
         if (! $path) {
             return response()->json(['ok' => false, 'message' => 'Parcours introuvable.'], 404);
         }

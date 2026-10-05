@@ -40,10 +40,13 @@
 
             <div class="flex flex-col gap-3">
                 @foreach ($formations as $i => $f)
-                    <div class="flex items-center gap-4 rounded-[16px] border bg-white p-4 shadow-[0_2px_8px_rgba(3,29,89,.05)] {{ $f['verrouille'] ? 'border-brand/10 opacity-60' : 'border-brand/10' }}">
-                        <span class="flex size-9 shrink-0 items-center justify-center rounded-full text-[13px] font-bold {{ $f['completed'] ? 'bg-[#22A85A]/10 text-[#22A85A]' : ($f['verrouille'] ? 'bg-cloud text-[#9AA6B8]' : 'bg-azure/10 text-azure') }}">
+                    @php $dispo = $f['disponible'] ?? true; @endphp
+                    <div data-test="etape" class="flex items-center gap-4 rounded-[16px] border bg-white p-4 shadow-[0_2px_8px_rgba(3,29,89,.05)] {{ $f['verrouille'] || ! $dispo ? 'border-brand/10 opacity-60' : 'border-brand/10' }}">
+                        <span class="flex size-9 shrink-0 items-center justify-center rounded-full text-[13px] font-bold {{ $f['completed'] ? 'bg-[#22A85A]/10 text-[#22A85A]' : ($f['verrouille'] || ! $dispo ? 'bg-cloud text-[#9AA6B8]' : 'bg-azure/10 text-azure') }}">
                             @if ($f['completed'])
                                 <x-ui.icon name="check" class="size-4" />
+                            @elseif (! $dispo)
+                                <x-ui.icon name="clock" class="size-4" />
                             @elseif ($f['verrouille'])
                                 <x-ui.icon name="shield" class="size-4" />
                             @else
@@ -53,7 +56,9 @@
                         <div class="min-w-0 flex-1">
                             <p class="truncate text-[13.5px] font-bold text-brand">{{ $f['title'] }}</p>
                             <p class="mt-0.5 text-[11.5px] text-[#9AA6B8]">{{ $f['category'] }}@if ($f['duration']) · {{ $f['duration'] }}@endif@if ($f['is_certifying']) · Certifiante @endif</p>
-                            @if ($f['enrolled'] && ! $f['completed'])
+                            @if (! $dispo)
+                                <p class="mt-1 text-[11.5px] text-[#5B677A]">Contenu en préparation : cette étape ne bloque pas la suite du parcours.</p>
+                            @elseif ($f['enrolled'] && ! $f['completed'])
                                 <div class="mt-2 h-1.5 w-full max-w-[180px] rounded-full bg-cloud">
                                     <div class="h-1.5 rounded-full bg-azure" style="width: {{ $f['progress'] }}%"></div>
                                 </div>
@@ -61,6 +66,8 @@
                         </div>
                         @if ($f['completed'])
                             <span class="shrink-0 rounded-full bg-[#22A85A]/10 px-3 py-1.5 text-[11.5px] font-bold text-[#22A85A]">Terminée</span>
+                        @elseif (! $dispo)
+                            <span class="shrink-0 rounded-full bg-cloud px-3 py-1.5 text-[11.5px] font-bold text-[#9AA6B8]">Bientôt disponible</span>
                         @elseif ($f['verrouille'])
                             <span class="shrink-0 rounded-full bg-cloud px-3 py-1.5 text-[11.5px] font-bold text-[#9AA6B8]">Verrouillée</span>
                         @elseif ($f['enrolled'] && $f['has_modules'])

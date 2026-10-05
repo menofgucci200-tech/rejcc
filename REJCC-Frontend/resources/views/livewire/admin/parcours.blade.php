@@ -63,6 +63,11 @@
                         <div class="min-w-[180px] flex-1">
                             <p class="text-[13.5px] font-bold text-brand">{{ $p['title'] }}</p>
                             <p class="text-xs text-[#5B677A]">{{ $p['formations_count'] ?? 0 }} formation{{ ($p['formations_count'] ?? 0) > 1 ? 's' : '' }}</p>
+                            @if ($n = $p['formations_indisponibles_count'] ?? 0)
+                                <p data-test="alerte-parcours" class="mt-1 inline-flex items-center gap-1 rounded-full bg-[#FFF8EC] px-2.5 py-0.5 text-[11px] font-semibold text-[#8A5A00]">
+                                    <x-ui.icon name="alert-circle" class="size-3" /> {{ $n }} formation{{ $n > 1 ? 's' : '' }} sans contenu ou non publiée{{ $n > 1 ? 's' : '' }} : affichée{{ $n > 1 ? 's' : '' }} « Bientôt disponible » aux membres
+                                </p>
+                            @endif
                         </div>
                         <span class="w-20 shrink-0 rounded-full px-2.5 py-1 text-center text-[11px] font-bold" style="color: {{ $p['is_published'] ? '#22A85A' : '#9AA6B8' }}; background: {{ $p['is_published'] ? '#EAF6EE' : '#EEF1F5' }}">{{ $p['is_published'] ? 'Publié' : 'Brouillon' }}</span>
                         <button wire:click="togglePublication({{ $p['id'] }})" class="shrink-0 rounded-[9px] border border-[#C9D3E6] px-3 py-1.5 text-xs font-bold text-brand hover:bg-cloud">{{ $p['is_published'] ? 'Dépublier' : 'Publier' }}</button>
@@ -84,9 +89,13 @@
                                 <p class="mb-2 text-[12px] font-bold uppercase tracking-[0.05em] text-[#9AA6B8]">Dans le parcours (ordre)</p>
                                 <div class="flex flex-col gap-1.5 rounded-[10px] bg-white p-2">
                                     @forelse ($formationsChoisies as $i => $f)
+                                        @php $etat = ! ($f['is_published'] ?? true) ? 'Non publiée' : (($f['modules_reels_count'] ?? 0) === 0 ? 'Sans contenu' : null); @endphp
                                         <div class="flex items-center gap-2 rounded-[8px] bg-cloud/60 px-2.5 py-2">
                                             <span class="w-5 shrink-0 text-center text-[11px] font-bold text-[#9AA6B8]">{{ $i + 1 }}</span>
                                             <span class="min-w-0 flex-1 truncate text-[12.5px] font-semibold text-brand">{{ $f['title'] }}</span>
+                                            @if ($etat)
+                                                <span class="shrink-0 rounded-full bg-[#FFF8EC] px-2 py-0.5 text-[10.5px] font-bold text-[#8A5A00]">{{ $etat }}</span>
+                                            @endif
                                             <button wire:click="monter({{ $i }})" class="icon-btn shrink-0 rounded p-1 text-[#9AA6B8] hover:bg-brand/10 hover:text-brand" title="Monter"><x-ui.icon name="chevron-right" class="size-3.5 -rotate-90" /></button>
                                             <button wire:click="descendre({{ $i }})" class="icon-btn shrink-0 rounded p-1 text-[#9AA6B8] hover:bg-brand/10 hover:text-brand" title="Descendre"><x-ui.icon name="chevron-right" class="size-3.5 rotate-90" /></button>
                                             <button wire:click="retirerFormation({{ $f['id'] }})" class="icon-btn shrink-0 rounded p-1 text-[#9AA6B8] hover:bg-accent/10 hover:text-accent"><x-ui.icon name="x" class="size-3.5" /></button>
@@ -96,13 +105,20 @@
                                     @endforelse
                                 </div>
                                 <button wire:click="enregistrerFormations" wire:loading.attr="disabled" class="btn-tap mt-3 rounded-full bg-brand px-4 py-2 text-[12px] font-bold text-white hover:bg-brand/90 disabled:opacity-60">Enregistrer l'ordre</button>
+                                @if ($messageFormations)
+                                    <p data-test="message-formations" class="mt-2 text-[12px] font-semibold {{ $erreurFormations ? 'text-accent' : 'text-[#1C8F4C]' }}">{{ $messageFormations }}</p>
+                                @endif
                             </div>
                             <div>
                                 <p class="mb-2 text-[12px] font-bold uppercase tracking-[0.05em] text-[#9AA6B8]">Formations disponibles</p>
                                 <div class="flex max-h-[260px] flex-col gap-1.5 overflow-y-auto rounded-[10px] bg-white p-2">
                                     @forelse ($formationsDisponibles as $f)
+                                        @php $etat = ! ($f['is_published'] ?? true) ? 'Non publiée' : (($f['modules_reels_count'] ?? 0) === 0 ? 'Sans contenu' : null); @endphp
                                         <button type="button" wire:click="ajouterFormation({{ $f['id'] }})" class="flex items-center justify-between gap-2 rounded-[8px] px-2.5 py-2 text-left hover:bg-cloud/60">
                                             <span class="min-w-0 flex-1 truncate text-[12.5px] font-semibold text-ink">{{ $f['title'] }}</span>
+                                            @if ($etat)
+                                                <span class="shrink-0 rounded-full bg-[#FFF8EC] px-2 py-0.5 text-[10.5px] font-bold text-[#8A5A00]">{{ $etat }}</span>
+                                            @endif
                                             <x-ui.icon name="plus" class="size-3.5 shrink-0 text-azure" />
                                         </button>
                                     @empty

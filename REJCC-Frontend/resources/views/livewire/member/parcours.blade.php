@@ -32,7 +32,10 @@
                             <div class="h-1.5 w-full rounded-full bg-cloud">
                                 <div class="h-1.5 rounded-full {{ $p['badge_obtenu'] ? 'bg-[#22A85A]' : 'bg-azure' }}" style="width: {{ $p['pct'] }}%"></div>
                             </div>
-                            <p class="mt-1.5 text-[11.5px] font-semibold text-[#5B677A]">{{ $p['formations_terminees'] }}/{{ $p['total_formations'] }} formations terminées</p>
+                            <p class="mt-1.5 text-[11.5px] font-semibold text-[#5B677A]">Formations terminées : {{ $p['formations_terminees'] }}/{{ $p['total_formations'] }}</p>
+                            @if ($p['a_venir'] ?? 0)
+                                <p class="mt-0.5 text-[11px] text-[#9AA6B8]">+ {{ $p['a_venir'] }} étape{{ $p['a_venir'] > 1 ? 's' : '' }} bientôt disponible{{ $p['a_venir'] > 1 ? 's' : '' }}</p>
+                            @endif
                         </div>
                     </a>
                 @endforeach
