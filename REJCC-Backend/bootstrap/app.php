@@ -23,5 +23,14 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Trop de tentatives (connexion, formulaires…) : message en français
+        // avec le délai d'attente, au lieu de « Too Many Attempts. ».
+        $exceptions->render(function (\Illuminate\Http\Exceptions\ThrottleRequestsException $e) {
+            $secondes = (int) ($e->getHeaders()['Retry-After'] ?? 60);
+
+            return response()->json([
+                'ok' => false,
+                'message' => 'Trop de tentatives. Patientez '.($secondes >= 60 ? ceil($secondes / 60).' minute'.($secondes >= 120 ? 's' : '') : $secondes.' secondes').' avant de réessayer.',
+            ], 429, $e->getHeaders());
+        });
     })->create();
