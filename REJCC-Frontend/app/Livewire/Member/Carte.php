@@ -3,6 +3,7 @@
 namespace App\Livewire\Member;
 
 use App\Support\Api;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -21,13 +22,11 @@ class Carte extends Component
 
     public function mount(): void
     {
-        // Sessions ouvertes avant l'ajout du numéro/code : on rafraîchit le profil.
-        $user = Api::user();
-        if (! ($user->code ?? null)) {
-            $result = Api::get('/auth/me', [], Api::token());
-            if ($result['ok'] ?? false) {
-                session(['api_user' => $result['user']]);
-            }
+        // L'utilisateur en session date de la connexion : on le relit pour que
+        // la carte suive l'état réel de l'abonnement (expiration, renouvellement).
+        $result = Api::get('/auth/me', [], Api::token());
+        if ($result['ok'] ?? false) {
+            session(['api_user' => $result['user']]);
         }
     }
 
@@ -40,10 +39,9 @@ class Carte extends Component
             'photoUpload.max' => 'La photo ne doit pas dépasser 2 Mo.',
         ], ['photoUpload' => 'photo']);
 
-        // Stockée sur le disque public du frontend (rejcc.site/storage/...),
-        // puis l'URL est enregistrée côté backend via l'API.
-        $path = $this->photoUpload->store('members', 'public');
-        $url = url('storage/'.$path);
+        // Même emplacement que la photo de la page Paramètres (public/uploads,
+        // servi sans lien symbolique), puis l'URL est enregistrée via l'API.
+        $url = Storage::disk('uploads')->url($this->photoUpload->store('membres/photos', 'uploads'));
 
         $result = Api::put('/auth/profile', ['photo' => $url], Api::token());
 
