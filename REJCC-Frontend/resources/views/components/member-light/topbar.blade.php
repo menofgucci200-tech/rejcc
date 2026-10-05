@@ -5,7 +5,7 @@
 @php
     $user = \App\Support\Api::user();
     $estMentor = ($user->role ?? null) === 'mentor';
-    $route = request()->route()?->getName() ?? '';
+    $route = \App\Support\RouteCourante::nom();
 
     // Rubrique de la page courante, et page parente pour les pages de détail.
     $rubriques = [

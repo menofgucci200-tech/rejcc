@@ -7,7 +7,7 @@
 
     $user = \App\Support\Api::user();
     $aTraiter = AdminNav::aTraiter();
-    [$rubrique, $parent] = AdminNav::fil(request()->route()?->getName() ?? '');
+    [$rubrique, $parent] = AdminNav::fil(\App\Support\RouteCourante::nom());
     $restreint = is_array($user->permissions ?? null);
     $initiales = mb_strtoupper(mb_substr($user->prenom ?? '', 0, 1).mb_substr($user->nom ?? '', 0, 1));
 @endphp
