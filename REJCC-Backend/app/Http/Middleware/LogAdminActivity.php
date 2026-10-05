@@ -34,6 +34,7 @@ class LogAdminActivity
         'contacts' => 'Contact',
         'groups' => 'Groupe sectoriel',
         'avis' => 'Avis de membre',
+        'signalements-messages' => 'Signalement de conversation',
     ];
 
     public function handle(Request $request, Closure $next): Response

@@ -12,6 +12,10 @@
             <div class="h-[3px] w-9 rounded bg-accent"></div>
         </div>
 
+        @if ($info)
+            <p data-test="info-messagerie" class="panel-enter mb-3 inline-flex items-center gap-1.5 rounded-full bg-azure/10 px-3.5 py-1.5 text-xs font-semibold text-azure"><x-ui.icon name="info" class="size-3.5" /> {{ $info }}</p>
+        @endif
+
         <div class="grid grid-cols-1 gap-4 rounded-[18px] border border-brand/10 bg-white shadow-[0_2px_8px_rgba(3,29,89,.05)] lg:grid-cols-[320px_1fr]" style="height: calc(100vh - 280px); min-height: 420px" wire:poll.4s="rafraichir">
             <aside class="flex min-h-0 flex-col border-r border-cloud-200 {{ $activeId ? 'hidden lg:flex' : 'flex' }}">
                 <div class="flex shrink-0 items-center gap-2 border-b border-cloud-200 p-3">
@@ -24,8 +28,15 @@
                         class="btn-tap flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-accent text-white hover:bg-accent-600"><x-ui.icon name="pencil" class="size-4" /></button>
                 </div>
 
+                @if ($voirArchives)
+                    <button type="button" wire:click="basculerArchives" data-test="retour-boite" class="flex shrink-0 items-center gap-2 border-b border-cloud-200 bg-cloud/60 px-4 py-2.5 text-left text-[12.5px] font-bold text-brand hover:bg-cloud">
+                        <x-ui.icon name="arrow-left" class="size-3.5" /> Conversations archivées
+                    </button>
+                @endif
                 <div class="min-h-0 flex-1 overflow-y-auto">
-                @if (empty($conversations))
+                @if (empty($conversations) && $voirArchives)
+                    <p class="px-6 py-10 text-center text-[13px] text-[#5B677A]">Aucune conversation archivée.</p>
+                @elseif (empty($conversations))
                     <div class="px-6 py-10 text-center">
                         <x-ui.icon name="message-circle" class="mx-auto mb-3 size-8 text-[#9AA6B8]" />
                         @if (trim($recherche) !== '')
@@ -57,6 +68,7 @@
                                             <span class="flex min-w-0 items-center gap-1.5">
                                                 <span class="truncate text-[13.5px] text-brand {{ $nonLu ? 'font-extrabold' : 'font-semibold' }}">{{ $c['prenom'] }} {{ $c['nom'] }}</span>
                                                 @if ($c['role'] === 'mentor')<span class="shrink-0 rounded-full bg-accent px-1.5 text-[9px] font-bold uppercase leading-4 tracking-[0.05em] text-white">Mentor</span>@endif
+                                                @if ($c['bloque'] ?? false)<span class="shrink-0 rounded-full bg-[#5B677A]/15 px-1.5 text-[9px] font-bold uppercase leading-4 tracking-[0.05em] text-[#5B677A]">Bloqué</span>@endif
                                             </span>
                                             <span data-test="conversation-heure" class="shrink-0 text-[11px] {{ $nonLu ? 'font-bold text-accent' : 'text-[#9AA6B8]' }}">{{ $quand }}</span>
                                         </span>
@@ -75,6 +87,11 @@
                     </ul>
                 @endif
                 </div>
+                @if (! $voirArchives && $nbArchives > 0)
+                    <button type="button" wire:click="basculerArchives" data-test="voir-archives" class="flex shrink-0 items-center justify-center gap-1.5 border-t border-cloud-200 px-4 py-2.5 text-[12px] font-semibold text-[#5B677A] hover:bg-cloud hover:text-brand">
+                        <x-ui.icon name="folder-open" class="size-3.5" /> Conversations archivées ({{ $nbArchives }})
+                    </button>
+                @endif
             </aside>
 
             <section class="flex min-h-0 flex-col {{ $activeId ? 'flex' : 'hidden lg:flex' }}">
@@ -89,7 +106,7 @@
                         <button wire:click="closeThread" class="text-[12.5px] font-semibold text-azure hover:underline">Retour aux conversations</button>
                     </div>
                 @else
-                    <div class="flex shrink-0 items-center gap-3 border-b border-cloud-200 px-[18px] py-3.5">
+                    <div class="relative flex shrink-0 items-center gap-3 border-b border-cloud-200 px-[18px] py-3.5">
                         <button wire:click="closeThread" class="icon-btn rounded-lg p-1 text-[#5B677A] lg:hidden" aria-label="Retour">
                             <x-ui.icon name="arrow-left" class="size-[18px]" />
                         </button>
@@ -100,6 +117,24 @@
                                 <span class="block truncate text-[11.5px] {{ $partner['role'] === 'mentor' ? 'font-semibold text-accent' : 'text-[#5B677A]' }}">{{ collect([$partner['role_label'] ?? null, $partner['titre'] ?? null, $partner['ville'] ?? null])->filter()->join(' · ') }}</span>
                             </span>
                         </button>
+                        <div class="ml-auto" x-data="{ ouvert: false }" x-on:click.outside="ouvert = false" x-on:keydown.escape.window="ouvert = false">
+                            <button type="button" x-on:click="ouvert = ! ouvert" data-test="menu-conversation" aria-label="Options de la conversation" class="icon-btn flex size-9 items-center justify-center rounded-[10px] text-[#5B677A] hover:bg-cloud hover:text-brand"><x-ui.icon name="more-horizontal" class="size-[18px]" /></button>
+                            <div x-show="ouvert" x-transition.origin.top.right style="display: none" class="absolute right-4 z-30 mt-1 w-[230px] overflow-hidden rounded-[14px] border border-brand/10 bg-white py-1.5 text-[13px] shadow-[0_24px_60px_-20px_rgba(3,29,89,.35)]">
+                                <button type="button" wire:click="voirProfil" x-on:click="ouvert = false" class="flex w-full items-center gap-2.5 px-4 py-2 text-left font-semibold text-brand hover:bg-cloud"><x-ui.icon name="user" class="size-4 text-[#5B677A]" /> Voir la fiche</button>
+                                <button type="button" wire:click="archiver" data-test="archiver" class="flex w-full items-center gap-2.5 px-4 py-2 text-left font-semibold text-brand hover:bg-cloud"><x-ui.icon name="folder-open" class="size-4 text-[#5B677A]" /> {{ $archivee ? 'Désarchiver' : 'Archiver la conversation' }}</button>
+                                @if ($bloque)
+                                    <button type="button" wire:click="basculerBlocage" x-on:click="ouvert = false" data-test="debloquer" class="flex w-full items-center gap-2.5 px-4 py-2 text-left font-semibold text-brand hover:bg-cloud"><x-ui.icon name="user-check" class="size-4 text-[#5B677A]" /> Débloquer {{ $partner['prenom'] }}</button>
+                                @else
+                                    <button type="button" wire:click="basculerBlocage" wire:confirm="Bloquer {{ $partner['prenom'] }} ? Il ne pourra plus vous écrire." x-on:click="ouvert = false" data-test="bloquer" class="flex w-full items-center gap-2.5 px-4 py-2 text-left font-semibold text-brand hover:bg-cloud"><x-ui.icon name="user-x" class="size-4 text-[#5B677A]" /> Bloquer {{ $partner['prenom'] }}</button>
+                                @endif
+                                <div class="my-1 h-px bg-cloud-200"></div>
+                                @if ($signalee)
+                                    <p class="px-4 py-2 text-[12px] text-[#9AA6B8]">Conversation signalée, en cours d'examen.</p>
+                                @else
+                                    <button type="button" wire:click="ouvrirSignalement" x-on:click="ouvert = false" data-test="signaler-conversation" class="flex w-full items-center gap-2.5 px-4 py-2 text-left font-semibold text-accent hover:bg-accent/5"><x-ui.icon name="alert-circle" class="size-4" /> Signaler à l'administration</button>
+                                @endif
+                            </div>
+                        </div>
                     </div>
 
                     {{-- Fil : se place sur le dernier message, suit les nouveaux si l'on est déjà en bas --}}
@@ -180,7 +215,16 @@
                             </p>
                         </form>
                     @else
-                        <p data-test="ecriture-impossible" class="shrink-0 border-t border-cloud-200 px-5 py-4 text-center text-[12.5px] text-[#5B677A]">Ce compte est suspendu : vous ne pouvez plus lui écrire.</p>
+                        <div data-test="ecriture-impossible" class="shrink-0 border-t border-cloud-200 px-5 py-4 text-center text-[12.5px] text-[#5B677A]">
+                            @if ($bloque)
+                                Vous avez bloqué {{ $partner['prenom'] }}.
+                                <button type="button" wire:click="basculerBlocage" class="ml-1 font-semibold text-azure hover:underline">Débloquer</button>
+                            @elseif (! ($partner['actif'] ?? true))
+                                Ce compte est suspendu : vous ne pouvez plus lui écrire.
+                            @else
+                                Vous ne pouvez pas répondre à cette conversation.
+                            @endif
+                        </div>
                     @endif
                 @endif
             </section>
@@ -188,6 +232,22 @@
     </div>
     @endif
     <x-member-light.profile-modal :member="$profil" />
+
+    @if ($fenetreSignalement && $partner)
+        <div class="fixed inset-0 z-[90] flex items-center justify-center bg-brand/40 p-4" wire:click.self="fermerSignalement" x-on:keydown.escape.window="$wire.fermerSignalement()">
+            <div data-test="fenetre-signalement" role="dialog" aria-modal="true" class="panel-enter w-full max-w-[460px] rounded-[18px] bg-white p-6 shadow-2xl">
+                <p class="text-[15px] font-bold text-brand">Signaler la conversation avec {{ $partner['prenom'] }} {{ $partner['nom'] }}</p>
+                <p class="mt-1.5 text-[12.5px] leading-relaxed text-[#5B677A]">L'administration pourra lire cette conversation pour l'examiner. Signalez les propos injurieux, le harcèlement, les arnaques ou la publicité abusive.</p>
+                <label for="motif-signalement" class="mb-1 mt-4 block text-xs font-semibold text-[#5B677A]">Que s'est-il passé ? <span class="font-normal text-[#9AA6B8]">(facultatif)</span></label>
+                <textarea id="motif-signalement" wire:model="motif" rows="3" maxlength="500" class="w-full rounded-[10px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure"></textarea>
+                <label class="mt-3 flex items-center gap-2 text-[12.5px] text-ink"><input type="checkbox" wire:model="bloquerAussi" class="size-4 rounded border-brand/30 text-brand"> Bloquer aussi {{ $partner['prenom'] }}</label>
+                <div class="mt-5 flex gap-2">
+                    <button wire:click="signaler" data-test="envoyer-signalement" class="btn-tap rounded-full bg-accent px-5 py-2.5 text-[13px] font-bold text-white hover:bg-accent-600">Signaler</button>
+                    <button wire:click="fermerSignalement" class="btn-tap rounded-full border border-brand/15 px-5 py-2.5 text-[13px] font-bold text-brand hover:bg-cloud">Annuler</button>
+                </div>
+            </div>
+        </div>
+    @endif
 
     {{-- Nouveau message : choisir un membre --}}
     @if ($nouveau)

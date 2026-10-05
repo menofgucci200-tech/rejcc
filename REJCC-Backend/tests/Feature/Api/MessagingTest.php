@@ -102,4 +102,97 @@ class MessagingTest extends TestCase
         $this->withToken($tA)->postJson('/api/messages', ['recipient_id' => $esther->id, 'body' => 'Bonne soirée'])->assertOk();
         $this->assertSame('« Bonne soirée » · 2 messages non lus', \App\Models\MemberNotification::where('user_id', $esther->id)->whereNull('read_at')->value('body'));
     }
+
+    public function test_bloquer_un_membre(): void
+    {
+        $awa = $this->abonne();
+        $intrus = $this->abonne();
+        $tA = $this->tokenFor($awa);
+        $tI = $this->tokenFor($intrus);
+
+        $this->withToken($tI)->postJson('/api/messages', ['recipient_id' => $awa->id, 'body' => 'Achetez mes produits !'])->assertOk();
+        $this->withToken($tA)->postJson("/api/messages/{$intrus->id}/bloquer")->assertOk();
+
+        $this->withToken($tI)->postJson('/api/messages', ['recipient_id' => $awa->id, 'body' => 'Encore moi'])
+            ->assertStatus(403)->assertJsonPath('message', 'Ce membre ne reçoit plus vos messages.');
+        $this->withToken($tA)->postJson('/api/messages', ['recipient_id' => $intrus->id, 'body' => 'Stop'])
+            ->assertStatus(422)->assertJsonPath('message', 'Vous avez bloqué ce membre. Débloquez-le pour lui écrire.');
+        $this->withToken($tA)->getJson("/api/messages/{$intrus->id}")->assertJsonPath('bloque', true)->assertJsonPath('peut_ecrire', false);
+        $this->withToken($tA)->getJson('/api/messages')->assertJsonPath('conversations.0.bloque', true);
+
+        $this->withToken($tA)->deleteJson("/api/messages/{$intrus->id}/bloquer")->assertOk();
+        $this->withToken($tI)->postJson('/api/messages', ['recipient_id' => $awa->id, 'body' => 'Merci'])->assertOk();
+    }
+
+    public function test_archiver_jusqu_au_prochain_message(): void
+    {
+        $awa = $this->abonne();
+        $paul = $this->abonne();
+        $tA = $this->tokenFor($awa);
+        $this->withToken($tA)->postJson('/api/messages', ['recipient_id' => $paul->id, 'body' => 'Bonjour'])->assertOk();
+
+        $this->travel(1)->seconds();
+        $this->withToken($tA)->postJson("/api/messages/{$paul->id}/archiver")->assertOk();
+        $this->withToken($tA)->getJson('/api/messages')->assertJsonCount(0, 'conversations')->assertJsonPath('archives', 1);
+        $this->withToken($tA)->getJson('/api/messages?archives=1')->assertJsonCount(1, 'conversations');
+
+        // Un nouveau message de Paul fait réapparaître la conversation.
+        $this->travel(1)->seconds();
+        $this->withToken($this->tokenFor($paul))->postJson('/api/messages', ['recipient_id' => $awa->id, 'body' => 'Re !'])->assertOk();
+        $this->withToken($tA)->getJson('/api/messages')->assertJsonCount(1, 'conversations')->assertJsonPath('archives', 0);
+    }
+
+    public function test_anti_spam(): void
+    {
+        $moi = $this->abonne();
+        $token = $this->tokenFor($moi);
+        $autres = User::factory()->count(21)->create(['role' => 'member']);
+
+        // 20 nouvelles conversations par 24 h (espacées pour ne pas buter sur la limite par minute).
+        foreach ($autres->take(20) as $i => $u) {
+            $this->travel(5)->seconds();
+            $this->withToken($token)->postJson('/api/messages', ['recipient_id' => $u->id, 'body' => "Bonjour {$i}"])->assertOk();
+        }
+        $this->travel(2)->minutes();
+        $this->withToken($token)->postJson('/api/messages', ['recipient_id' => $autres[20]->id, 'body' => 'Une de trop'])
+            ->assertStatus(429)->assertJsonPath('message', 'Vous avez démarré 20 nouvelles conversations en 24 h : réessayez demain.');
+        // Répondre dans une conversation existante reste possible.
+        $this->withToken($token)->postJson('/api/messages', ['recipient_id' => $autres[0]->id, 'body' => 'Suite'])->assertOk();
+
+        // Plus de 20 messages en une minute.
+        for ($i = 0; $i < 19; $i++) {
+            $this->withToken($token)->postJson('/api/messages', ['recipient_id' => $autres[0]->id, 'body' => "m{$i}"])->assertOk();
+        }
+        $this->withToken($token)->postJson('/api/messages', ['recipient_id' => $autres[0]->id, 'body' => 'trop'])->assertStatus(429);
+    }
+
+    public function test_signaler_une_conversation_et_traitement_admin(): void
+    {
+        $awa = $this->abonne();
+        $intrus = $this->abonne(['prenom' => 'Intrus']);
+        $tA = $this->tokenFor($awa);
+
+        // Rien à signaler tant que l'autre n'a pas écrit.
+        $this->withToken($tA)->postJson("/api/messages/{$intrus->id}/signaler")->assertStatus(422);
+
+        $this->withToken($this->tokenFor($intrus))->postJson('/api/messages', ['recipient_id' => $awa->id, 'body' => 'Propos injurieux'])->assertOk();
+        $this->withToken($tA)->postJson("/api/messages/{$intrus->id}/signaler", ['motif' => 'Insultes', 'bloquer' => true])->assertOk();
+        $this->withToken($tA)->getJson("/api/messages/{$intrus->id}")->assertJsonPath('signalee', true)->assertJsonPath('bloque', true);
+
+        $admin = $this->tokenFor(User::factory()->create(['role' => 'admin', 'permissions' => ['messagerie']]));
+        $this->withToken($this->tokenFor(User::factory()->create(['role' => 'admin', 'permissions' => ['formations']])))
+            ->getJson('/api/admin/signalements-messages')->assertStatus(403);
+        $liste = $this->withToken($admin)->getJson('/api/admin/signalements-messages')->assertOk()->json('signalements');
+        $this->assertSame('Insultes', $liste[0]['motif']);
+        $this->assertSame(1, $liste[0]['messages']);
+        $this->withToken($admin)->getJson('/api/admin/a-traiter')->assertJsonFragment(['cle' => 'signalements', 'nombre' => 1]);
+
+        $this->withToken($admin)->getJson("/api/admin/signalements-messages/{$liste[0]['id']}")->assertOk()
+            ->assertJsonPath('messages.0.body', 'Propos injurieux')->assertJsonPath('messages.0.de_signale', true);
+
+        $this->withToken($admin)->putJson("/api/admin/signalements-messages/{$liste[0]['id']}", ['decision' => 'averti'])->assertOk();
+        $this->assertSame(1, \App\Models\MemberNotification::where('user_id', $intrus->id)->where('title', 'Avertissement de la modération')->count());
+        $this->assertSame(1, \App\Models\MemberNotification::where('user_id', $awa->id)->where('title', 'Votre signalement a été traité')->count());
+        $this->withToken($admin)->getJson('/api/admin/signalements-messages')->assertJsonCount(0, 'signalements');
+    }
 }

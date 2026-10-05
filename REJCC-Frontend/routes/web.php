@@ -122,6 +122,7 @@ Route::middleware(['api.auth', 'admin.web'])->prefix('admin')->name('admin.')->g
     Route::get('/certificats', AdminCertificats::class)->name('certificats');
     Route::get('/emplois', AdminEmplois::class)->name('emplois');
     Route::get('/groupes', \App\Livewire\Admin\Groupes::class)->name('groupes');
+    Route::get('/signalements', \App\Livewire\Admin\Signalements::class)->name('signalements');
     Route::get('/actualites', AdminActualites::class)->name('actualites');
     Route::get('/contenu', AdminContenu::class)->name('contenu');
     Route::get('/pages', \App\Livewire\Admin\Pages::class)->name('pages');

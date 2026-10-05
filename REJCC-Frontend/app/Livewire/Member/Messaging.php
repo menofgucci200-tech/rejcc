@@ -26,6 +26,27 @@ class Messaging extends Component
 
     public bool $peutEcrire = true;
 
+    /** J'ai bloqué l'interlocuteur. */
+    public bool $bloque = false;
+
+    public bool $archivee = false;
+
+    /** J'ai déjà signalé cette conversation (en attente de traitement). */
+    public bool $signalee = false;
+
+    /** Liste affichée : conversations archivées plutôt que la boîte de réception. */
+    public bool $voirArchives = false;
+
+    public int $nbArchives = 0;
+
+    public ?string $info = null;
+
+    public bool $fenetreSignalement = false;
+
+    public string $motif = '';
+
+    public bool $bloquerAussi = true;
+
     public string $body = '';
 
     public ?string $erreur = null;
@@ -63,8 +84,14 @@ class Messaging extends Component
         }
 
         $params = trim($this->recherche) !== '' ? ['q' => trim($this->recherche)] : [];
+        if ($this->voirArchives) {
+            $params['archives'] = 1;
+        }
 
-        return Api::get('/messages', $params, Api::token())['conversations'] ?? [];
+        $result = Api::get('/messages', $params, Api::token());
+        $this->nbArchives = (int) ($result['archives'] ?? 0);
+
+        return $result['conversations'] ?? [];
     }
 
     /** Membres proposés dans « Nouveau message » (recherche dans l'annuaire). */
@@ -117,7 +144,8 @@ class Messaging extends Component
         $this->partner = $result['partner'];
         $this->messages = $result['messages'] ?? [];
         $this->vuJusqua = (int) ($result['vu_jusqua'] ?? 0);
-        $this->peutEcrire = (bool) ($result['peut_ecrire'] ?? true);
+        $this->appliquerEtat($result);
+        $this->info = null;
         NavCompteurs::oublier(); // les messages ouverts sont lus
     }
 
@@ -138,7 +166,72 @@ class Messaging extends Component
             $this->messages[] = $m;
         }
         $this->vuJusqua = (int) ($result['vu_jusqua'] ?? $this->vuJusqua);
+        $this->appliquerEtat($result);
+    }
+
+    private function appliquerEtat(array $result): void
+    {
         $this->peutEcrire = (bool) ($result['peut_ecrire'] ?? true);
+        $this->bloque = (bool) ($result['bloque'] ?? false);
+        $this->archivee = (bool) ($result['archivee'] ?? false);
+        $this->signalee = (bool) ($result['signalee'] ?? false);
+    }
+
+    public function basculerArchives(): void
+    {
+        $this->voirArchives = ! $this->voirArchives;
+        $this->closeThread();
+    }
+
+    public function archiver(): void
+    {
+        if (! $this->activeId) {
+            return;
+        }
+        $this->archivee
+            ? Api::delete("/messages/{$this->activeId}/archiver", Api::token())
+            : Api::post("/messages/{$this->activeId}/archiver", [], Api::token());
+        $etait = $this->archivee;
+        $nom = $this->partner['prenom'] ?? '';
+        $this->closeThread();
+        $this->info = $etait ? "La conversation avec {$nom} est de retour dans vos messages." : "Conversation avec {$nom} archivée. Elle reviendra au prochain message.";
+    }
+
+    public function basculerBlocage(): void
+    {
+        if (! $this->activeId) {
+            return;
+        }
+        $this->bloque
+            ? Api::delete("/messages/{$this->activeId}/bloquer", Api::token())
+            : Api::post("/messages/{$this->activeId}/bloquer", [], Api::token());
+        $this->rafraichir();
+        $this->info = $this->bloque
+            ? ($this->partner['prenom'] ?? 'Ce membre').' est bloqué : il ne peut plus vous écrire.'
+            : ($this->partner['prenom'] ?? 'Ce membre').' est débloqué.';
+    }
+
+    public function ouvrirSignalement(): void
+    {
+        $this->fenetreSignalement = true;
+        $this->motif = '';
+        $this->bloquerAussi = true;
+    }
+
+    public function fermerSignalement(): void
+    {
+        $this->fenetreSignalement = false;
+    }
+
+    public function signaler(): void
+    {
+        if (! $this->activeId) {
+            return;
+        }
+        $result = Api::post("/messages/{$this->activeId}/signaler", ['motif' => trim($this->motif), 'bloquer' => $this->bloquerAussi], Api::token());
+        $this->fenetreSignalement = false;
+        $this->info = $result['message'] ?? 'Une erreur est survenue.';
+        $this->rafraichir();
     }
 
     /** Fiche du membre (fenêtre de l'annuaire), ouverte depuis l'en-tête du fil. */
@@ -207,7 +300,7 @@ class Messaging extends Component
 
         // Pastilles du menu à jour sans recharger la page (hors recherche,
         // qui ne renvoie qu'une partie des conversations).
-        $nonLus = trim($this->recherche) === '' ? array_sum(array_column($conversations, 'unread')) : (NavCompteurs::get()['messages'] ?? 0);
+        $nonLus = trim($this->recherche) === '' && ! $this->voirArchives ? array_sum(array_column($conversations, 'unread')) : (NavCompteurs::get()['messages'] ?? 0);
         NavCompteurs::fixer('messages', $nonLus);
         $this->dispatch('compteur-messages', n: $nonLus);
 

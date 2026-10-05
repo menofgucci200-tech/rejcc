@@ -95,6 +95,11 @@ Route::middleware('auth.token')->group(function () {
         Route::get('/messages', [MessageController::class, 'conversations']);
         Route::get('/messages/{userId}', [MessageController::class, 'thread']);
         Route::post('/messages', [MessageController::class, 'send']);
+        Route::post('/messages/{id}/bloquer', [MessageController::class, 'bloquer'])->whereNumber('id');
+        Route::delete('/messages/{id}/bloquer', [MessageController::class, 'debloquer'])->whereNumber('id');
+        Route::post('/messages/{id}/archiver', [MessageController::class, 'archiver'])->whereNumber('id');
+        Route::delete('/messages/{id}/archiver', [MessageController::class, 'desarchiver'])->whereNumber('id');
+        Route::post('/messages/{id}/signaler', [MessageController::class, 'signaler'])->whereNumber('id');
     });
 
     // Mentorat
@@ -212,6 +217,13 @@ Route::middleware(['auth.token', 'audit.log'])->prefix('admin')->group(function 
         Route::post('/mentorat/attribuer', [\App\Http\Controllers\Api\MentoratAdminController::class, 'attribuer']);
         Route::post('/mentorat/candidatures/{id}/accepter', [\App\Http\Controllers\Api\MentoratAdminController::class, 'accepterCandidature'])->whereNumber('id');
         Route::post('/mentorat/candidatures/{id}/refuser', [\App\Http\Controllers\Api\MentoratAdminController::class, 'refuserCandidature'])->whereNumber('id');
+    });
+
+    // Signalements de conversations (messagerie)
+    Route::middleware('auth.admin:messagerie')->group(function () {
+        Route::get('/signalements-messages', [\App\Http\Controllers\Api\MessageReportAdminController::class, 'index']);
+        Route::get('/signalements-messages/{id}', [\App\Http\Controllers\Api\MessageReportAdminController::class, 'show'])->whereNumber('id');
+        Route::put('/signalements-messages/{id}', [\App\Http\Controllers\Api\MessageReportAdminController::class, 'traiter'])->whereNumber('id');
     });
 
     // Groupes sectoriels et modération des avis

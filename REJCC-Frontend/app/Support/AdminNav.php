@@ -38,6 +38,7 @@ class AdminNav
         ]],
         ['label' => 'Support & système', 'icon' => 'settings', 'items' => [
             ['label' => 'Contacts', 'icon' => 'message-circle', 'route' => 'admin.contacts'],
+            ['label' => 'Signalements', 'icon' => 'alert-circle', 'route' => 'admin.signalements'],
             ['label' => 'Partenariats', 'icon' => 'heart-handshake', 'route' => 'admin.partenariats'],
             ['label' => 'Notifications', 'icon' => 'bell', 'route' => 'admin.notifications'],
             ['label' => "Journal d'audit", 'icon' => 'clock', 'route' => 'admin.audit'],
