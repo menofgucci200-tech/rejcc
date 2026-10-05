@@ -30,7 +30,7 @@ class FormationController extends Controller
                 return [
                     ...$f->only([
                         'id', 'title', 'category', 'description', 'duration',
-                        'level', 'is_free', 'is_certifying', 'modules_count',
+                        'level', 'is_free', 'is_certifying', 'modules_count', 'image_url',
                     ]),
                     'has_modules' => $f->modules_reelles_count > 0,
                     // « Certifiante » seulement si la formation peut réellement délivrer un certificat.
@@ -80,7 +80,7 @@ class FormationController extends Controller
         }
 
         return response()->json(['ok' => true, 'formation' => [
-            ...$f->only(['id', 'title', 'category', 'description', 'duration', 'level', 'is_free', 'is_certifying', 'seuil_reussite']),
+            ...$f->only(['id', 'title', 'category', 'description', 'duration', 'level', 'is_free', 'is_certifying', 'seuil_reussite', 'image_url']),
             'certifiante' => $f->is_certifying && $modules->isNotEmpty(),
             'inscrits' => $f->enrollments_count,
             'programme' => $modules->map(fn ($m) => [
@@ -478,6 +478,7 @@ class FormationController extends Controller
             'is_published' => 'boolean',
             'media_url' => 'nullable|url|max:500',
             'media_name' => 'nullable|string|max:200',
+            'image_url' => 'nullable|url|max:500',
             'seuil_reussite' => 'integer|min:50|max:100',
             ...Quiz::rules('examen', 40),
         ]);

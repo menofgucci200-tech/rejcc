@@ -47,6 +47,14 @@ class Catalogue extends Component
     {
         $result = Api::post("/formations/{$id}/enroll", [], Api::token());
         $this->erreur = ($result['ok'] ?? false) ? null : ($result['message'] ?? 'Inscription impossible.');
+
+        // Inscription faite : on commence directement la formation (si son contenu est en ligne).
+        if (! $this->erreur) {
+            $formation = collect(Api::get('/formations', [], Api::token())['formations'] ?? [])->firstWhere('id', $id);
+            if ($formation['has_modules'] ?? false) {
+                $this->redirectRoute('espace-membre.formations.detail', $id, navigate: true);
+            }
+        }
     }
 
     public function render()
@@ -75,6 +83,7 @@ class Catalogue extends Component
                     'description' => $f['description'] ?? '',
                     'inscrits' => (int) ($f['inscrits'] ?? 0),
                     'publiee_le' => $f['publiee_le'] ?? '',
+                    'image' => $f['image_url'] ?? null,
                 ];
             })
             ->when($this->filtre === 'gratuit', fn ($c) => $c->where('gratuit', true))
@@ -96,6 +105,7 @@ class Catalogue extends Component
             'cours' => $cours,
             'categories' => $categories,
             'aucuneFormation' => $toutes->isEmpty(),
+            'accesLibre' => ! (Api::user()->subscriptions_enforced ?? true),
             'filtresActifs' => trim($this->q) !== '' || $this->categorie !== '' || $this->filtre !== 'toutes',
         ]);
     }

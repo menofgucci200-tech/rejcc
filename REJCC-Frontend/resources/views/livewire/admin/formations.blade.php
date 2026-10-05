@@ -51,8 +51,23 @@
                     <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Description</label>
                     <textarea wire:model="description" rows="2" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure"></textarea>
                 </div>
+                <div class="sm:col-span-2" data-test="couverture">
+                    <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Image de couverture (catalogue et fiche — facultative)</label>
+                    <div class="flex flex-wrap items-center gap-3">
+                        @if ($imageUrl)
+                            <img src="{{ $imageUrl }}" alt="" class="h-16 w-28 rounded-[9px] object-cover ring-1 ring-brand/10">
+                            <button type="button" wire:click="$set('imageUrl', '')" class="text-[11.5px] font-semibold text-accent hover:underline">Retirer</button>
+                        @endif
+                        <label class="inline-flex cursor-pointer items-center gap-1.5 rounded-[9px] border border-dashed border-brand/25 px-3 py-2 text-[12px] font-bold text-brand hover:bg-cloud">
+                            <x-ui.icon name="image" class="size-3.5" /> {{ $imageUrl ? 'Changer l\'image' : 'Choisir une image' }}
+                            <input type="file" wire:model="imageFile" accept="image/*" class="hidden">
+                        </label>
+                        <span wire:loading wire:target="imageFile" class="text-[11px] font-semibold text-azure">Envoi…</span>
+                    </div>
+                    @error('imageFile') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                </div>
                 <div class="sm:col-span-2">
-                    <x-ui.media-field label="Support de la formation (PDF, vidéo, image ou lien)" :media-url="$mediaUrl" :media-name="$mediaName" :media-size="$mediaSize" />
+                    <x-ui.media-field label="Support de la formation (PDF consultable dans la fiche, téléchargeable par les abonnés)" :media-url="$mediaUrl" :media-name="$mediaName" :media-size="$mediaSize" />
                 </div>
                 <div class="sm:col-span-2 rounded-[12px] border border-brand/10 p-4" data-test="editeur-examen">
                     <div class="mb-3 flex flex-wrap items-center gap-3">

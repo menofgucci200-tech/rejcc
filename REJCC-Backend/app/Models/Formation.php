@@ -9,7 +9,7 @@ class Formation extends Model
 {
     protected $fillable = [
         'title', 'category', 'description', 'duration', 'level',
-        'is_free', 'is_certifying', 'modules_count', 'is_published', 'media_url', 'media_name', 'seuil_reussite', 'examen',
+        'is_free', 'is_certifying', 'modules_count', 'is_published', 'media_url', 'media_name', 'image_url', 'seuil_reussite', 'examen',
     ];
 
     protected function casts(): array

@@ -10,7 +10,7 @@
             <p class="rounded-[16px] border border-brand/10 bg-white py-10 text-center text-sm text-[#5B677A]">Cette formation n'est pas disponible.</p>
         @else
             {{-- En-tête --}}
-            <header data-test="fiche-entete" class="overflow-hidden rounded-[20px] text-white shadow-[0_12px_28px_rgba(3,29,89,.18)]" style="background: linear-gradient(120deg, rgba(3,29,89,.55), rgba(3,29,89,.2)), linear-gradient(120deg, {{ $palette['from'] }}, {{ $palette['to'] }})">
+            <header data-test="fiche-entete" class="overflow-hidden rounded-[20px] text-white shadow-[0_12px_28px_rgba(3,29,89,.18)]" style="background: linear-gradient(120deg, rgba(3,29,89,.75), rgba(3,29,89,.25)), {{ $f['image_url'] ? 'url('.e($f['image_url']).') center/cover' : 'linear-gradient(120deg, '.$palette['from'].', '.$palette['to'].')' }}">
                 <div class="p-6 sm:p-8">
                     <div class="mb-3 flex flex-wrap items-center gap-2">
                         <span class="rounded-full bg-white/20 px-2.5 py-0.5 text-[11px] font-bold">{{ $f['category'] }}</span>

@@ -40,6 +40,21 @@ class Formations extends Component
 
     public int $seuilReussite = 70;
 
+    /** Image de couverture (catalogue et fiche). */
+    public string $imageUrl = '';
+
+    public $imageFile = null;
+
+    public function updatedImageFile(): void
+    {
+        $this->validate(['imageFile' => 'image|max:4096'], [
+            'imageFile.image' => 'Choisissez une image (JPG, PNG, WebP).',
+            'imageFile.max' => 'L\'image ne doit pas dépasser 4 Mo.',
+        ], ['imageFile' => 'image']);
+        $this->imageUrl = Storage::disk('uploads')->url($this->imageFile->store('formations/couvertures', 'uploads'));
+        $this->imageFile = null;
+    }
+
     // ── Modules d'une formation ──────────────────────────────────────────
     public ?int $modulesFormationId = null;
 
@@ -205,6 +220,7 @@ class Formations extends Component
         $this->isCertifying = false;
         $this->examen = [];
         $this->seuilReussite = 70;
+        $this->imageUrl = '';
         $this->clearMedia();
         $this->resetValidation();
         $this->showForm = true;
@@ -228,6 +244,7 @@ class Formations extends Component
         $this->isCertifying = (bool) $f['is_certifying'];
         $this->examen = $this->quizPourEdition($f['examen'] ?? null);
         $this->seuilReussite = (int) ($f['seuil_reussite'] ?? 70);
+        $this->imageUrl = (string) ($f['image_url'] ?? '');
         $this->fillMedia($f['media_url'] ?? null, $f['media_name'] ?? null);
         $this->resetValidation();
         $this->showForm = true;
@@ -255,6 +272,7 @@ class Formations extends Component
             'media_url' => $this->mediaUrl ?: null,
             'media_name' => $this->mediaName ?: null,
             'seuil_reussite' => $this->seuilReussite,
+            'image_url' => $this->imageUrl ?: null,
             'examen' => $this->examen,
         ];
         $token = Api::token();

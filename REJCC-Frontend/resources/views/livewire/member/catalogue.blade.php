@@ -27,13 +27,13 @@
                 <x-ui.icon name="search" class="size-4 shrink-0 text-[#9AA6B8]" />
                 <input wire:model.live.debounce.300ms="q" type="search" data-test="recherche-catalogue" placeholder="Rechercher une formation (titre, thème, mot-clé)…" class="rj-search-input w-full min-w-0 border-none bg-transparent text-[13px] outline-none placeholder:text-[#9AA6B8]" />
             </label>
-            <select wire:model.live="categorie" data-test="categorie" class="rounded-[10px] border border-brand/10 bg-white px-3 py-2 text-[13px] text-ink outline-none focus:border-azure">
+            <select wire:model.live="categorie" data-test="categorie" class="rounded-[10px] border border-brand/10 bg-white py-2 pl-3 pr-9 text-[13px] text-ink outline-none focus:border-azure">
                 <option value="">Toutes les catégories</option>
                 @foreach ($categories as $cat)
                     <option value="{{ $cat }}">{{ $cat }}</option>
                 @endforeach
             </select>
-            <select wire:model.live="tri" data-test="tri" class="rounded-[10px] border border-brand/10 bg-white px-3 py-2 text-[13px] text-ink outline-none focus:border-azure">
+            <select wire:model.live="tri" data-test="tri" class="rounded-[10px] border border-brand/10 bg-white py-2 pl-3 pr-9 text-[13px] text-ink outline-none focus:border-azure">
                 <option value="recentes">Plus récentes</option>
                 <option value="populaires">Plus suivies</option>
                 <option value="az">De A à Z</option>
@@ -58,9 +58,19 @@
         <div class="grid gap-4" style="grid-template-columns: repeat(auto-fill, minmax(260px, 1fr))">
             @foreach ($cours as $c)
                 <article class="card-hover overflow-hidden rounded-[16px] border border-brand/10 bg-white shadow-[0_2px_8px_rgba(3,29,89,.05)]">
-                    <div class="flex h-24 items-center justify-center" style="background: linear-gradient(135deg, {{ $c['from'] }}, {{ $c['to'] }})">
-                        <x-ui.icon name="graduation-cap" class="size-9 text-white/85" />
-                    </div>
+                    <a href="{{ route('espace-membre.catalogue.fiche', $c['id']) }}" wire:navigate class="relative flex h-28 items-center justify-center overflow-hidden" style="background: linear-gradient(135deg, {{ $c['from'] }}, {{ $c['to'] }})">
+                        @if ($c['image'])
+                            <img src="{{ $c['image'] }}" alt="" loading="lazy" data-test="couverture-carte" class="absolute inset-0 size-full object-cover">
+                        @else
+                            <x-ui.icon name="graduation-cap" class="size-9 text-white/85" />
+                        @endif
+                        @if ($c['termine'])
+                            <span class="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[10.5px] font-bold text-[#1C8F4C] shadow-sm"><x-ui.icon name="check-circle" class="size-3" /> Terminée</span>
+                        @endif
+                        @if ($c['inscrits'] > 0)
+                            <span class="absolute bottom-2.5 right-3 inline-flex items-center gap-1 rounded-full bg-black/35 px-2 py-0.5 text-[10.5px] font-semibold text-white backdrop-blur-sm" data-test="inscrits"><x-ui.icon name="users" class="size-3" /> {{ $c['inscrits'] }} inscrit{{ $c['inscrits'] > 1 ? 's' : '' }}</span>
+                        @endif
+                    </a>
                     <div class="p-4">
                         <div class="mb-2 flex items-center gap-2">
                             <span class="rounded-full px-2.5 py-0.5 text-[10.5px] font-bold" style="background: {{ $c['tagColor'] }}1A; color: {{ $c['tagColor'] }}">{{ $c['tag'] }}</span>
@@ -79,10 +89,14 @@
                             <span class="inline-flex items-center gap-1"><x-ui.icon name="target" class="size-3" /> {{ $c['niveau'] }}</span>
                         </div>
                         <div class="flex items-center justify-between">
-                            <span class="text-xs font-bold {{ $c['gratuit'] ? 'text-[#22A85A]' : 'text-brand' }}">{{ $c['gratuit'] ? 'Gratuit' : 'Sur adhésion' }}</span>
-                            @if ($c['inscrit'] && $c['has_modules'])
+                            <span class="text-xs font-bold {{ $c['gratuit'] || $accesLibre ? 'text-[#22A85A]' : 'text-brand' }}">{{ $c['gratuit'] ? 'Gratuit' : ($accesLibre ? 'Accès libre' : 'Inclus dans l\'abonnement') }}</span>
+                            @if ($c['termine'] && $c['certifiante'])
+                                <a href="{{ route('espace-membre.certificats') }}" wire:navigate data-test="certificat-carte" class="inline-flex items-center gap-1.5 rounded-full bg-[#22A85A]/10 px-3.5 py-1.5 text-xs font-semibold text-[#1C8F4C] hover:bg-[#22A85A]/20">
+                                    <x-ui.icon name="award" class="size-3.5" /> Mon certificat
+                                </a>
+                            @elseif ($c['inscrit'] && $c['has_modules'])
                                 <a href="{{ route('espace-membre.formations.detail', $c['id']) }}" wire:navigate class="inline-flex items-center gap-1.5 rounded-full bg-[#22A85A]/10 px-3.5 py-1.5 text-xs font-semibold text-[#22A85A] hover:bg-[#22A85A]/20">
-                                    <x-ui.icon name="check" class="size-3.5" /> Voir les modules
+                                    <x-ui.icon name="arrow-right" class="size-3.5" /> Continuer
                                 </a>
                             @elseif ($c['inscrit'])
                                 <span class="inline-flex items-center gap-1.5 rounded-full bg-[#22A85A]/10 px-3.5 py-1.5 text-xs font-semibold text-[#22A85A]">
