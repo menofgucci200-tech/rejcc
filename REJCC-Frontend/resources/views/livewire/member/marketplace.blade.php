@@ -55,13 +55,13 @@
                 </div>
                 <div>
                     <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Catégorie</label>
-                    <select wire:model="category" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure">
+                    <select wire:model="groupId" data-test="categorie-annonce" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure">
                         <option value="">— Choisir —</option>
                         @foreach ($categories as $cat)
-                            <option value="{{ $cat }}">{{ $cat }}</option>
+                            <option value="{{ $cat['id'] }}">{{ $cat['nom'] }}</option>
                         @endforeach
                     </select>
-                    @error('category') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                    @error('groupId') <span class="text-xs text-accent">{{ $message }}</span> @enderror
                 </div>
                 <div class="sm:col-span-2">
                     <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Titre de l'annonce</label>
@@ -96,34 +96,55 @@
 
         @if ($onglet === 'catalogue')
             {{-- Recherche & filtres --}}
-            <div class="mb-6 flex flex-wrap items-center gap-2">
-                <div class="relative max-w-[320px] flex-1">
+            <div class="mb-3 flex flex-wrap items-center gap-2">
+                <div class="relative min-w-[220px] flex-1 sm:max-w-[380px]">
                     <x-ui.icon name="search" class="pointer-events-none absolute left-3.5 top-1/2 size-[15px] -translate-y-1/2 text-[#9AA6B8]" />
-                    <input wire:model.live.debounce.300ms="recherche" type="text" placeholder="Rechercher (service, membre, ville)…" class="w-full rounded-xl border border-brand/10 bg-white py-2.5 pl-10 pr-4 text-[13px] text-ink outline-none focus:border-azure" />
+                    <input wire:model.live.debounce.300ms="recherche" type="search" data-test="recherche-marketplace" aria-label="Rechercher une annonce" placeholder="Ex : traiteur Cocody, couture, attiéké…" class="w-full rounded-xl border border-brand/10 bg-white py-2.5 pl-10 pr-4 text-[13px] text-ink outline-none focus:border-azure" />
                 </div>
                 @foreach (['tous' => 'Tout', 'service' => 'Services', 'produit' => 'Produits'] as $value => $label)
                     <button wire:click="setFiltreType('{{ $value }}')" class="btn-tap rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors duration-200 {{ $filtreType === $value ? 'border-brand bg-brand text-white' : 'border-brand/10 bg-white text-[#5B677A]' }}">{{ $label }}</button>
                 @endforeach
-                @if ($categoriesActives->isNotEmpty())
-                    <select wire:model.live="filtreCategorie" class="rounded-full border border-brand/15 bg-white px-3 py-1.5 text-xs font-semibold text-[#5B677A] outline-none">
-                        <option value="toutes">Toutes les catégories</option>
-                        @foreach ($categoriesActives as $cat)
-                            <option value="{{ $cat }}">{{ $cat }}</option>
+                <button wire:click="$toggle('favoris')" data-test="filtre-favoris" class="btn-tap inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors duration-200 {{ $favoris ? 'border-accent bg-accent text-white' : 'border-brand/10 bg-white text-[#5B677A]' }}">
+                    <span aria-hidden="true">{{ $favoris ? '♥' : '♡' }}</span> Mes favoris{{ $nbFavoris ? ' ('.$nbFavoris.')' : '' }}
+                </button>
+            </div>
+            <div class="mb-6 flex flex-wrap items-center gap-2">
+                <select wire:model.live="filtreGroupe" data-test="filtre-groupe" aria-label="Catégorie" class="rounded-full border border-brand/15 bg-white py-1.5 pl-3 pr-8 text-xs font-semibold text-[#5B677A] outline-none">
+                    <option value="0">Toutes les catégories</option>
+                    @foreach ($categories as $cat)
+                        <option value="{{ $cat['id'] }}">{{ $cat['nom'] }}</option>
+                    @endforeach
+                </select>
+                @if (count($villes))
+                    <select wire:model.live="ville" data-test="filtre-ville" aria-label="Ville" class="rounded-full border border-brand/15 bg-white py-1.5 pl-3 pr-8 text-xs font-semibold text-[#5B677A] outline-none">
+                        <option value="">Toutes les villes</option>
+                        @foreach ($villes as $v)
+                            <option value="{{ $v }}">{{ $v }}</option>
                         @endforeach
                     </select>
                 @endif
+                <select wire:model.live="tri" data-test="tri-marketplace" aria-label="Trier" class="rounded-full border border-brand/15 bg-white py-1.5 pl-3 pr-8 text-xs font-semibold text-[#5B677A] outline-none">
+                    <option value="recent">Plus récentes</option>
+                    <option value="prix_asc">Prix croissant</option>
+                    <option value="prix_desc">Prix décroissant</option>
+                </select>
+                <span data-test="nb-annonces" class="ml-auto text-[12px] font-semibold text-[#5B677A]">{{ $meta['total'] ?? 0 }} annonce{{ ($meta['total'] ?? 0) > 1 ? 's' : '' }}</span>
             </div>
 
             {{-- Grille des annonces --}}
             @if ($listings->isEmpty())
                 <div data-test="marketplace-vide" class="flex flex-col items-center rounded-[18px] border border-brand/10 bg-white px-8 py-16 text-center shadow-[0_2px_8px_rgba(3,29,89,.05)]">
                     <span class="mb-4 flex size-14 items-center justify-center rounded-2xl bg-brand/10 text-brand">
-                        <x-ui.icon :name="$totalCatalogue ? 'search' : 'store'" class="size-7" />
+                        <x-ui.icon :name="$favoris ? 'star' : ($totalCatalogue ? 'search' : 'store')" class="size-7" />
                     </span>
-                    @if ($totalCatalogue)
+                    @if ($favoris && ! trim($recherche))
+                        <h2 class="mb-2 text-[16px] font-bold text-brand">Aucun favori pour l'instant</h2>
+                        <p class="max-w-md text-[13px] leading-relaxed text-[#5B677A]">Touchez ♡ sur une annonce pour la retrouver ici.</p>
+                        <button type="button" wire:click="$set('favoris', false)" class="mt-4 text-[12.5px] font-semibold text-azure hover:underline">Voir tout le catalogue</button>
+                    @elseif ($totalCatalogue)
                         <h2 class="mb-2 text-[16px] font-bold text-brand">Aucune annonce ne correspond</h2>
                         <p class="max-w-md text-[13px] leading-relaxed text-[#5B677A]">Essayez un autre mot ou retirez un filtre.</p>
-                        <button type="button" wire:click="$set('recherche', ''); $set('filtreType', 'tous'); $set('filtreCategorie', 'toutes')" class="mt-4 text-[12.5px] font-semibold text-azure hover:underline">Effacer la recherche et les filtres</button>
+                        <button type="button" wire:click="effacerFiltres" class="mt-4 text-[12.5px] font-semibold text-azure hover:underline">Effacer la recherche et les filtres</button>
                     @else
                         <h2 class="mb-2 text-[16px] font-bold text-brand">Aucune annonce pour le moment</h2>
                         <p class="max-w-md text-[13px] leading-relaxed text-[#5B677A]">Soyez le premier à proposer un service ou un produit au réseau !</p>
@@ -133,11 +154,19 @@
                 <div class="grid gap-4" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr))">
                     @foreach ($listings as $l)
                         <article wire:key="annonce-{{ $l['id'] }}" wire:click="voir({{ $l['id'] }})" data-test="carte-annonce" class="card-hover flex cursor-pointer flex-col overflow-hidden rounded-[16px] border border-brand/10 bg-white shadow-[0_2px_8px_rgba(3,29,89,.05)]">
-                            <x-ui.media-thumb :url="$l['photo']" :alt="$l['title']" mode="card" :fallback-icon="$l['type'] === 'produit' ? 'shopping-bag' : 'nav-briefcase'" />
+                            <div class="relative">
+                                <x-ui.media-thumb :url="$l['photo']" :alt="$l['title']" mode="card" :fallback-icon="$l['type'] === 'produit' ? 'shopping-bag' : 'nav-briefcase'" />
+                                <button type="button" wire:click.stop="basculerFavori({{ $l['id'] }})" data-test="favori" aria-label="{{ $l['favori'] ?? false ? 'Retirer des favoris' : 'Ajouter aux favoris' }}" aria-pressed="{{ $l['favori'] ?? false ? 'true' : 'false' }}"
+                                    class="absolute right-2.5 top-2.5 flex size-8 items-center justify-center rounded-full bg-white/90 text-[16px] shadow transition-transform hover:scale-110 {{ $l['favori'] ?? false ? 'text-accent' : 'text-[#5B677A]' }}">{{ $l['favori'] ?? false ? '♥' : '♡' }}</button>
+                            </div>
                             <div class="flex flex-1 flex-col p-4">
                                 <div class="mb-2 flex items-center gap-2">
                                     <span class="rounded-full px-2.5 py-0.5 text-[10.5px] font-bold {{ $l['type'] === 'service' ? 'bg-azure/10 text-azure' : 'bg-[#F5A623]/10 text-[#B87A0D]' }}">{{ ucfirst($l['type']) }}</span>
-                                    <span class="truncate text-[10.5px] font-semibold text-[#9AA6B8]">{{ $l['category'] }}</span>
+                                    @if ($l['groupe'] ?? null)
+                                        <span class="inline-flex min-w-0 items-center gap-1 truncate text-[10.5px] font-semibold" style="color: {{ $l['groupe']['couleur'] }}"><x-ui.icon :name="$l['groupe']['icone']" class="size-3 shrink-0" /> {{ $l['groupe']['nom'] }}</span>
+                                    @else
+                                        <span class="truncate text-[10.5px] font-semibold text-[#9AA6B8]">{{ $l['category'] }}</span>
+                                    @endif
                                 </div>
                                 <h3 class="mb-1.5 text-[14px] font-bold leading-snug text-brand">{{ $l['title'] }}</h3>
                                 <p class="mb-3 line-clamp-3 text-xs leading-relaxed text-[#5B677A]">{{ $l['description'] }}</p>
@@ -170,6 +199,7 @@
                         </article>
                     @endforeach
                 </div>
+                <x-ui.pager :meta="$meta" />
             @endif
         @else
             {{-- Mes annonces --}}

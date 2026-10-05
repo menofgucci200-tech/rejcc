@@ -25,7 +25,7 @@ class MarketplaceVendeurTest extends TestCase
     private function donnees(array $extra = []): array
     {
         return $extra + ['type' => 'produit', 'title' => 'Jus de bissap', 'category' => 'Autre',
-            'description' => 'Jus naturels faits maison, livraison à Cocody.', 'price' => '1000'];
+            'description' => 'Jus naturels faits maison, livraison à Cocody.', 'price' => '1000', 'group_id' => 12];
     }
 
     private function enLigne(User $vendeur): MarketplaceListing
@@ -106,5 +106,39 @@ class MarketplaceVendeurTest extends TestCase
         $this->withToken($t)->postJson("/api/marketplace/{$l->id}/renouveler")->assertOk();
         $this->assertSame('approuve', $l->fresh()->statut);
         $this->withToken($lecteur)->getJson('/api/marketplace')->assertJsonCount(1, 'listings');
+    }
+
+    public function test_catalogue_recherche_filtres_tri_et_favoris(): void
+    {
+        $abidjan = User::factory()->create(['prenom' => 'Awa', 'ville' => 'Abidjan']);
+        $bouake = User::factory()->create(['prenom' => 'Yao', 'ville' => 'Bouaké']);
+        $creer = fn (User $u, string $titre, ?string $prix, int $groupe, string $type = 'service') => MarketplaceListing::create([
+            'user_id' => $u->id, 'type' => $type, 'title' => $titre, 'category' => 'x', 'group_id' => $groupe, 'price' => $prix,
+            'description' => 'Description suffisamment longue pour le test.', 'statut' => 'approuve', 'publie_le' => now(), 'expire_le' => now()->addDays(90),
+        ]);
+        $traiteur = $creer($abidjan, 'Traiteur pour mariages', '150 000 F', 12);
+        $creer($abidjan, 'Plomberie à domicile', 'Sur devis', 8);
+        $creer($bouake, 'Service traiteur et buffet', '50 000', 12);
+        $creer($bouake, 'Attiéké frais', '1 000 F le kilo', 1, 'produit');
+
+        $t = $this->tokenFor($lecteur = User::factory()->create());
+        $titres = fn (string $qs) => array_column($this->withToken($t)->getJson('/api/marketplace?'.$qs)->assertOk()->json('listings'), 'title');
+
+        $this->assertEqualsCanonicalizing(['Traiteur pour mariages', 'Service traiteur et buffet'], $titres('q='.urlencode('Je cherche un traiteur')));
+        $this->assertSame(['Traiteur pour mariages'], $titres('q='.urlencode('traiteurs Abidjan')));
+        $this->assertSame(['Attiéké frais'], $titres('type=produit'));
+        $this->assertCount(2, $titres('groupe=12'));
+        $this->assertCount(2, $titres('ville='.urlencode('Bouaké')));
+        $this->assertSame(['Attiéké frais', 'Service traiteur et buffet', 'Traiteur pour mariages', 'Plomberie à domicile'], $titres('tri=prix_asc'));
+
+        $res = $this->withToken($t)->getJson('/api/marketplace')->json();
+        $this->assertCount(16, $res['categories']);
+        $this->assertSame(['Abidjan', 'Bouaké'], $res['villes']);
+        $this->assertSame('Hôtellerie & Tourisme', collect($res['listings'])->firstWhere('title', 'Traiteur pour mariages')['groupe']['nom']);
+
+        $this->withToken($t)->postJson("/api/marketplace/{$traiteur->id}/favori")->assertOk()->assertJsonPath('favori', true);
+        $this->assertSame(['Traiteur pour mariages'], $titres('favoris=1'));
+        $this->withToken($t)->postJson("/api/marketplace/{$traiteur->id}/favori")->assertOk()->assertJsonPath('favori', false);
+        $this->assertSame([], $titres('favoris=1'));
     }
 }

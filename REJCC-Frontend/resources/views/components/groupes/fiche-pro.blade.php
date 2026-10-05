@@ -74,6 +74,23 @@
                     </section>
                 @endif
 
+                @if (! empty($fiche['annonces']))
+                    <section data-test="fiche-pro-annonces" class="mt-5 border-t border-cloud-200 pt-4">
+                        <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#9AA6B8]">Ses annonces sur la Marketplace</p>
+                        <div class="mt-2 grid gap-2 sm:grid-cols-2">
+                            @foreach ($fiche['annonces'] as $a)
+                                <a href="{{ route('espace-membre.marketplace', ['annonce' => $a['id']]) }}" wire:navigate class="flex items-center gap-2.5 rounded-[12px] border border-brand/10 p-2 hover:border-brand/30">
+                                    <x-ui.media-thumb :url="$a['photo']" mode="thumb" :fallback-icon="$a['type'] === 'produit' ? 'shopping-bag' : 'nav-briefcase'" />
+                                    <span class="min-w-0">
+                                        <span class="block truncate text-[12.5px] font-bold text-brand">{{ $a['title'] }}</span>
+                                        @if ($a['price'])<span class="block truncate text-[11.5px] font-semibold text-accent">{{ preg_match('/^\s*\d[\d\s.]*$/', $a['price']) ? number_format((int) preg_replace('/\D/', '', $a['price']), 0, ',', ' ').' F' : $a['price'] }}</span>@endif
+                                    </span>
+                                </a>
+                            @endforeach
+                        </div>
+                    </section>
+                @endif
+
                 @if (! empty($fiche['autres_groupes']))
                     <section class="mt-5 border-t border-cloud-200 pt-4">
                         <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#9AA6B8]">Aussi présent dans</p>

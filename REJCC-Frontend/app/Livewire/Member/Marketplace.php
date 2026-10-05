@@ -24,11 +24,26 @@ class Marketplace extends Component
     /** Annonce en cours de modification (null : nouvelle annonce). */
     public ?int $editingId = null;
 
+    #[Url(as: 'q', except: '')]
     public string $recherche = '';
 
+    #[Url(as: 'type', except: 'tous')]
     public string $filtreType = 'tous'; // tous | service | produit
 
-    public string $filtreCategorie = 'toutes';
+    /** Groupe sectoriel (catégorie) : 0 = toutes. */
+    #[Url(as: 'groupe', except: 0)]
+    public int $filtreGroupe = 0;
+
+    #[Url(except: '')]
+    public string $ville = '';
+
+    #[Url(except: 'recent')]
+    public string $tri = 'recent'; // recent | prix_asc | prix_desc
+
+    #[Url(except: false)]
+    public bool $favoris = false;
+
+    public int $page = 1;
 
     public bool $showForm = false;
 
@@ -37,7 +52,8 @@ class Marketplace extends Component
 
     public string $title = '';
 
-    public string $category = '';
+    /** Catégorie de l'annonce = groupe sectoriel. */
+    public string $groupId = '';
 
     public string $description = '';
 
@@ -107,11 +123,34 @@ class Marketplace extends Component
     public function setFiltreType(string $type): void
     {
         $this->filtreType = $type;
+        $this->page = 1;
     }
 
-    public function setFiltreCategorie(string $categorie): void
+    public function updated(string $propriete): void
     {
-        $this->filtreCategorie = $categorie;
+        if (in_array($propriete, ['recherche', 'filtreGroupe', 'ville', 'tri', 'favoris'], true)) {
+            $this->page = 1;
+        }
+    }
+
+    public function gotoPage(int $p): void
+    {
+        $this->page = max(1, $p);
+    }
+
+    public function effacerFiltres(): void
+    {
+        $this->reset(['recherche', 'filtreType', 'filtreGroupe', 'ville', 'favoris']);
+        $this->page = 1;
+    }
+
+    /** Ajoute ou retire une annonce de ses favoris. */
+    public function basculerFavori(int $id): void
+    {
+        $result = Api::post("/marketplace/{$id}/favori", [], Api::token());
+        if (($result['ok'] ?? false) && $this->fiche && $this->fiche['id'] === $id) {
+            $this->fiche['favori'] = $result['favori'];
+        }
     }
 
     public function openForm(): void
@@ -120,7 +159,7 @@ class Marketplace extends Component
             return;
         }
 
-        $this->reset(['type', 'title', 'category', 'description', 'price', 'editingId']);
+        $this->reset(['type', 'title', 'groupId', 'description', 'price', 'editingId']);
         $this->type = 'service';
         $this->contact = Api::user()->telephone ?? '';
         $this->clearMedia();
@@ -145,7 +184,7 @@ class Marketplace extends Component
         $this->editingId = $id;
         $this->type = $l['type'];
         $this->title = $l['title'];
-        $this->category = $l['category'];
+        $this->groupId = (string) ($l['groupe']['id'] ?? '');
         $this->description = $l['description'];
         $this->price = (string) ($l['price'] ?? '');
         $this->contact = (string) ($l['contact'] ?? '');
@@ -185,13 +224,13 @@ class Marketplace extends Component
         $this->validate([
             'type' => 'required|in:service,produit',
             'title' => 'required|string|min:3|max:120',
-            'category' => 'required|string|max:60',
+            'groupId' => 'required|integer',
             'description' => 'required|string|min:20|max:2000',
             'price' => 'nullable|string|max:80',
             'contact' => 'nullable|string|max:60',
         ], [
             'title.required' => 'Donnez un titre à votre annonce.',
-            'category.required' => 'Choisissez une catégorie.',
+            'groupId.required' => 'Choisissez une catégorie.',
             'description.required' => 'Décrivez votre offre.',
             'description.min' => 'Décrivez votre offre en quelques phrases (20 caractères minimum).',
         ]);
@@ -199,7 +238,7 @@ class Marketplace extends Component
         $donnees = [
             'type' => $this->type,
             'title' => $this->title,
-            'category' => $this->category,
+            'group_id' => (int) $this->groupId,
             'description' => $this->description,
             'price' => $this->price ?: null,
             'contact' => $this->contact ?: null,
@@ -237,29 +276,18 @@ class Marketplace extends Component
         $abonnementActif = (bool) (Api::user()->subscription_active ?? false);
         $me = Api::user()->id;
 
-        $data = Api::get('/marketplace', [], Api::token());
+        $params = array_filter([
+            'q' => trim($this->recherche),
+            'type' => $this->filtreType !== 'tous' ? $this->filtreType : null,
+            'groupe' => $this->filtreGroupe ?: null,
+            'ville' => $this->ville,
+            'tri' => $this->tri !== 'recent' ? $this->tri : null,
+            'favoris' => $this->favoris ? 1 : null,
+            'page' => $this->page > 1 ? $this->page : null,
+        ]);
+        $data = Api::get('/marketplace', $params, Api::token());
         $categories = $data['categories'] ?? [];
-
-        $listings = collect($data['listings'] ?? [])
-            ->filter(function (array $l) {
-                if ($this->filtreType !== 'tous' && $l['type'] !== $this->filtreType) {
-                    return false;
-                }
-                if ($this->filtreCategorie !== 'toutes' && $l['category'] !== $this->filtreCategorie) {
-                    return false;
-                }
-                if ($this->recherche !== '') {
-                    $q = mb_strtolower($this->recherche);
-
-                    return str_contains(mb_strtolower($l['title'].' '.$l['description'].' '.$l['category'].' '.($l['seller']['prenom'] ?? '').' '.($l['seller']['nom'] ?? '').' '.($l['seller']['ville'] ?? '')), $q);
-                }
-
-                return true;
-            })
-            ->values();
-
-        // Catégories effectivement présentes (pour le filtre)
-        $categoriesActives = collect($data['listings'] ?? [])->pluck('category')->unique()->sort()->values();
+        $listings = collect($data['listings'] ?? []);
 
         $mesAnnonces = ($this->onglet === 'mes-annonces' && $abonnementActif)
             ? collect(Api::get('/marketplace/mine', [], Api::token())['listings'] ?? [])
@@ -267,9 +295,12 @@ class Marketplace extends Component
 
         return view('livewire.member.marketplace', [
             'listings' => $listings,
-            'totalCatalogue' => count($data['listings'] ?? []),
+            'meta' => $data['meta'] ?? [],
+            'totalCatalogue' => (int) ($data['total_catalogue'] ?? 0),
+            'nbFavoris' => (int) ($data['nb_favoris'] ?? 0),
             'categories' => $categories,
-            'categoriesActives' => $categoriesActives,
+            'villes' => $data['villes'] ?? [],
+            'filtresActifs' => trim($this->recherche) !== '' || $this->filtreType !== 'tous' || $this->filtreGroupe || $this->ville !== '' || $this->favoris,
             'mesAnnonces' => $mesAnnonces,
             'me' => $me,
             'abonnementActif' => $abonnementActif,

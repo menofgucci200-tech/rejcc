@@ -336,6 +336,9 @@ class GroupController extends Controller
             'membre' => $profil,
             'pro' => $fiche,
             'avis' => MemberReviewController::avisDe($membre->id, $request->user()->id),
+            // Ses annonces en ligne sur la Marketplace (on vend là-bas, on se retrouve ici).
+            'annonces' => \App\Models\MarketplaceListing::enLigne()->where('user_id', $membre->id)->latest('publie_le')->limit(4)
+                ->get(['id', 'type', 'title', 'price', 'photo'])->map(fn ($l) => $l->only(['id', 'type', 'title', 'price', 'photo']))->values(),
             'autres_groupes' => $membre->groups()->where('groups.id', '!=', $id)->orderBy('ordre')->get()
                 ->map(fn ($g) => ['id' => $g->id, 'nom' => $g->name, 'specialite' => $g->pivot->specialite])->values(),
         ]]);

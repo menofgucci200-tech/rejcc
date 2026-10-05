@@ -189,6 +189,7 @@ Route::middleware('auth.token')->group(function () {
     // Marketplace : consultation libre pour tout membre connecté, publication réservée aux abonnés à jour
     Route::get('/marketplace', [\App\Http\Controllers\Api\MarketplaceController::class, 'index']);
     Route::get('/marketplace/{id}', [\App\Http\Controllers\Api\MarketplaceController::class, 'show'])->whereNumber('id');
+    Route::post('/marketplace/{id}/favori', [\App\Http\Controllers\Api\MarketplaceController::class, 'favori'])->whereNumber('id');
     Route::post('/marketplace/{id}/signaler', [\App\Http\Controllers\Api\MarketplaceController::class, 'signaler'])->whereNumber('id');
 
     Route::middleware('sub.active')->group(function () {

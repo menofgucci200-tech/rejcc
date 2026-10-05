@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\MarketplaceListing;
 use App\Models\MemberNotification;
+use App\Models\Group;
 use App\Models\MemberReview;
+use App\Support\RechercheMots;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -17,23 +19,82 @@ use Illuminate\Support\Facades\Validator;
  */
 class MarketplaceController extends Controller
 {
-    private const CATEGORIES = [
-        'Artisanat & BTP', 'Alimentation & Restauration', 'Mode & Beauté',
-        'Services numériques', 'Transport & Logistique', 'Éducation & Formation',
-        'Santé & Bien-être', 'Agriculture', 'Commerce & Distribution',
-        'Finance & Conseil', 'Événementiel', 'Autre',
-    ];
-
-    /** GET /marketplace — annonces approuvées, visibles par tous les membres. */
-    public function index()
+    /** Catégories : les 16 groupes sectoriels (une seule classification dans le réseau). */
+    private function categories()
     {
-        $listings = MarketplaceListing::enLigne()
-            ->with('user:id,prenom,nom,ville,photo,role')
-            ->latest()
-            ->get()
-            ->map(fn ($l) => $this->payload($l));
+        return Group::orderBy('ordre')->orderBy('id')->get(['id', 'name', 'icone', 'couleur'])
+            ->map(fn (Group $g) => ['id' => $g->id, 'nom' => $g->name, 'icone' => $g->icone ?: 'network', 'couleur' => $g->couleur ?: '#031D59'])->values();
+    }
 
-        return response()->json(['ok' => true, 'listings' => $listings, 'categories' => self::CATEGORIES]);
+    /**
+     * GET /marketplace?q=&type=&groupe=&ville=&tri=&favoris=1&page= — catalogue
+     * des annonces en ligne, recherche en langage courant (« traiteur Cocody »),
+     * filtres, tri (récentes, prix croissant/décroissant) et pagination.
+     */
+    public function index(Request $request)
+    {
+        $moi = $request->user();
+        $query = MarketplaceListing::enLigne()
+            ->select('marketplace_listings.*')
+            ->join('users', 'users.id', '=', 'marketplace_listings.user_id')
+            ->with(['user:id,prenom,nom,ville,photo,role', 'group:id,name,icone,couleur']);
+
+        RechercheMots::appliquer($query, (string) $request->query('q', ''), [
+            'marketplace_listings.title', 'marketplace_listings.description', 'marketplace_listings.category',
+            'users.prenom', 'users.nom', 'users.ville',
+        ]);
+        if (in_array($request->query('type'), ['service', 'produit'], true)) {
+            $query->where('marketplace_listings.type', $request->query('type'));
+        }
+        if ($groupe = (int) $request->query('groupe')) {
+            $query->where('marketplace_listings.group_id', $groupe);
+        }
+        if ($ville = trim((string) $request->query('ville', ''))) {
+            $query->where('users.ville', $ville);
+        }
+        if ($request->boolean('favoris')) {
+            $query->whereIn('marketplace_listings.id', DB::table('marketplace_favoris')->where('user_id', $moi->id)->select('listing_id'));
+        }
+
+        match ($request->query('tri')) {
+            'prix_asc' => $query->orderByRaw('marketplace_listings.prix_valeur is null')->orderBy('marketplace_listings.prix_valeur'),
+            'prix_desc' => $query->orderByRaw('marketplace_listings.prix_valeur is null')->orderByDesc('marketplace_listings.prix_valeur'),
+            default => null,
+        };
+        $query->orderByDesc('marketplace_listings.publie_le')->orderByDesc('marketplace_listings.id');
+
+        $page = $query->paginate(12);
+        $favoris = DB::table('marketplace_favoris')->where('user_id', $moi->id)->pluck('listing_id')->flip();
+
+        return response()->json([
+            'ok' => true,
+            'listings' => collect($page->items())->map(fn ($l) => $this->payload($l) + ['favori' => isset($favoris[$l->id])])->values(),
+            'meta' => ['current_page' => $page->currentPage(), 'last_page' => $page->lastPage(), 'total' => $page->total(), 'per_page' => $page->perPage()],
+            'total_catalogue' => MarketplaceListing::enLigne()->count(),
+            'categories' => $this->categories(),
+            'villes' => MarketplaceListing::enLigne()->join('users', 'users.id', '=', 'marketplace_listings.user_id')
+                ->whereNotNull('users.ville')->distinct()->orderBy('users.ville')->pluck('users.ville')->values(),
+            'nb_favoris' => $favoris->count(),
+        ]);
+    }
+
+    /** POST /marketplace/{id}/favori — ajouter ou retirer des favoris. */
+    public function favori(Request $request, int $id)
+    {
+        $moi = $request->user()->id;
+        if (! MarketplaceListing::find($id)) {
+            return response()->json(['ok' => false, 'message' => "Cette annonce n'est plus disponible."], 404);
+        }
+        $existe = DB::table('marketplace_favoris')->where('user_id', $moi)->where('listing_id', $id);
+        if ($existe->exists()) {
+            $existe->delete();
+            $favori = false;
+        } else {
+            DB::table('marketplace_favoris')->insert(['user_id' => $moi, 'listing_id' => $id, 'created_at' => now(), 'updated_at' => now()]);
+            $favori = true;
+        }
+
+        return response()->json(['ok' => true, 'favori' => $favori]);
     }
 
     /**
@@ -45,7 +106,7 @@ class MarketplaceController extends Controller
     public function show(Request $request, int $id)
     {
         $moi = $request->user();
-        $l = MarketplaceListing::with('user')->find($id);
+        $l = MarketplaceListing::with(['user', 'group'])->find($id);
         $enLigne = $l && $l->statut === 'approuve' && (! $l->expire_le || $l->expire_le->isFuture());
         if (! $l || (! $enLigne && $l->user_id !== $moi->id)) {
             return response()->json(['ok' => false, 'message' => "Cette annonce n'est plus disponible."], 404);
@@ -68,6 +129,7 @@ class MarketplaceController extends Controller
             'annonces' => MarketplaceListing::where('user_id', $u->id)->where('statut', 'approuve')->count(),
         ];
         $data['est_vendeur'] = $estVendeur;
+        $data['favori'] = DB::table('marketplace_favoris')->where('user_id', $moi->id)->where('listing_id', $l->id)->exists();
         $data['deja_signalee'] = DB::table('listing_reports')->where('listing_id', $l->id)
             ->where('reporter_id', $moi->id)->where('statut', 'nouveau')->exists();
         if ($estVendeur) {
@@ -105,6 +167,7 @@ class MarketplaceController extends Controller
         MarketplaceListing::traiterEcheances($request->user()->id);
 
         $listings = MarketplaceListing::where('user_id', $request->user()->id)
+            ->with('group:id,name,icone,couleur')
             ->latest()
             ->get()
             ->map(fn ($l) => $this->payload($l, withStatus: true) + [
@@ -133,9 +196,11 @@ class MarketplaceController extends Controller
             return response()->json(['ok' => false, 'message' => 'Vous avez déjà 5 annonces en attente de validation. Patientez avant d\'en soumettre de nouvelles.'], 422);
         }
 
+        $d = $validator->validated();
         $listing = MarketplaceListing::create([
             'user_id' => $request->user()->id,
-            ...$validator->validated(),
+            ...$d,
+            'category' => Group::find($d['group_id'])->name,
             'statut' => 'en_attente',
         ]);
 
@@ -147,7 +212,7 @@ class MarketplaceController extends Controller
         return Validator::make($request->all(), [
             'type' => 'required|in:service,produit',
             'title' => 'required|string|min:3|max:120',
-            'category' => 'required|string|max:60',
+            'group_id' => 'required|integer|exists:groups,id',
             'description' => 'required|string|min:20|max:2000',
             'price' => 'nullable|string|max:80',
             'contact' => 'nullable|string|max:60',
@@ -156,7 +221,8 @@ class MarketplaceController extends Controller
             'type.required' => 'Choisissez « Service » ou « Produit ».',
             'title.required' => 'Donnez un titre à votre annonce.',
             'title.min' => 'Le titre doit faire au moins 3 caractères.',
-            'category.required' => 'Choisissez une catégorie.',
+            'group_id.required' => 'Choisissez une catégorie.',
+            'group_id.exists' => 'Choisissez une catégorie de la liste.',
             'description.required' => 'Décrivez votre offre.',
             'description.min' => 'Décrivez votre offre en quelques phrases (20 caractères minimum).',
             'photo.url' => 'Le visuel doit être une image, une vidéo ou un lien valide.',
@@ -187,8 +253,9 @@ class MarketplaceController extends Controller
         $d['photo'] = $d['photo'] ?? null;
         $d['price'] = $d['price'] ?? null;
         $d['contact'] = $d['contact'] ?? null;
+        $d['category'] = Group::find($d['group_id'])->name;
 
-        $contenuModifie = collect(['type', 'title', 'category', 'description', 'photo'])
+        $contenuModifie = collect(['type', 'title', 'group_id', 'description', 'photo'])
             ->contains(fn ($champ) => (string) ($d[$champ] ?? '') !== (string) ($l->{$champ} ?? ''));
 
         $l->fill($d);
@@ -253,7 +320,7 @@ class MarketplaceController extends Controller
     /** GET /admin/marketplace — toutes les annonces pour modération. */
     public function adminIndex()
     {
-        $listings = MarketplaceListing::with('user:id,prenom,nom,email,ville,telephone,photo,role')
+        $listings = MarketplaceListing::with(['user:id,prenom,nom,email,ville,telephone,photo,role', 'group:id,name,icone,couleur'])
             ->orderByRaw("statut = 'en_attente' DESC")
             ->latest()
             ->get()
@@ -323,6 +390,12 @@ class MarketplaceController extends Controller
             'type' => $l->type,
             'title' => $l->title,
             'category' => $l->category,
+            'groupe' => $l->group_id ? [
+                'id' => $l->group_id,
+                'nom' => $l->group->name ?? $l->category,
+                'icone' => $l->group->icone ?? 'network',
+                'couleur' => $l->group->couleur ?? '#031D59',
+            ] : null,
             'description' => $l->description,
             'price' => $l->price,
             'contact' => $l->contact,

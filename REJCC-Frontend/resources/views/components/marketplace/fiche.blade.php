@@ -31,7 +31,12 @@
             <div class="overflow-y-auto p-6">
                 <div class="mb-2 flex flex-wrap items-center gap-2">
                     <span class="rounded-full px-2.5 py-0.5 text-[10.5px] font-bold {{ $l['type'] === 'service' ? 'bg-azure/10 text-azure' : 'bg-[#F5A623]/10 text-[#B87A0D]' }}">{{ ucfirst($l['type']) }}</span>
-                    <span class="text-[11px] font-semibold text-[#9AA6B8]">{{ $l['category'] }} · publiée {{ \Illuminate\Support\Carbon::parse($l['created_at'])->locale('fr')->diffForHumans() }}</span>
+                    @if ($l['groupe'] ?? null)
+                        <a href="{{ route('espace-membre.groupes.membres', $l['groupe']['id']) }}" wire:navigate class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold hover:underline" style="color: {{ $l['groupe']['couleur'] }}; background: {{ $l['groupe']['couleur'] }}14"><x-ui.icon :name="$l['groupe']['icone']" class="size-3" /> {{ $l['groupe']['nom'] }}</a>
+                    @else
+                        <span class="text-[11px] font-semibold text-[#9AA6B8]">{{ $l['category'] }}</span>
+                    @endif
+                    <span class="text-[11px] font-semibold text-[#9AA6B8]">publiée {{ \Illuminate\Support\Carbon::parse($l['publie_le'] ?? $l['created_at'])->locale('fr')->diffForHumans() }}</span>
                 </div>
                 <h2 data-test="fiche-titre" class="text-[19px] font-extrabold leading-snug text-brand">{{ $l['title'] }}</h2>
                 @if ($prix)<p data-test="fiche-prix" class="mt-1 text-[16px] font-extrabold text-accent">{{ $prix }}</p>@endif
@@ -83,6 +88,9 @@
                     @else
                         <a href="{{ route('espace-membre.abonnement') }}" wire:navigate class="btn-tap inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-[13px] font-bold text-white hover:bg-accent-600"><x-ui.icon name="lock" class="size-4" /> S'abonner pour contacter {{ $v['prenom'] ?? 'le vendeur' }}</a>
                     @endif
+                    @unless ($l['est_vendeur'] ?? false)
+                        <button type="button" wire:click="basculerFavori({{ $l['id'] }})" data-test="fiche-favori" class="btn-tap inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-[13px] font-bold {{ $l['favori'] ?? false ? 'border-accent/30 bg-accent/5 text-accent' : 'border-brand/15 text-brand hover:bg-cloud' }}">{{ $l['favori'] ?? false ? '♥ Dans mes favoris' : '♡ Sauvegarder' }}</button>
+                    @endunless
                     <button type="button" data-test="fiche-partager" x-data="{ copie: false }"
                         x-on:click="navigator.clipboard?.writeText(@js($lien)); copie = true; setTimeout(() => copie = false, 2000)"
                         class="btn-tap inline-flex items-center gap-2 rounded-full border border-brand/15 px-4 py-2.5 text-[13px] font-bold text-brand hover:bg-cloud">

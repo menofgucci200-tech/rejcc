@@ -44,7 +44,7 @@ class MarketplaceTest extends TestCase
         $token = $this->tokenFor($membre);
 
         $this->withToken($token)->postJson('/api/marketplace', [
-            'type' => 'service', 'title' => 'Mes services', 'category' => 'BTP',
+            'type' => 'service', 'title' => 'Mes services', 'group_id' => 8,
             'description' => 'Une description suffisamment longue pour passer la validation.',
         ])->assertStatus(402);
 
@@ -56,8 +56,8 @@ class MarketplaceTest extends TestCase
         $membre = User::factory()->abonne()->create();
 
         $this->withToken($this->tokenFor($membre))->postJson('/api/marketplace', [
-            'type' => 'service', 'title' => 'Dépannage plomberie', 'category' => 'BTP',
+            'type' => 'service', 'title' => 'Dépannage plomberie', 'group_id' => 8,
             'description' => 'Une description suffisamment longue pour passer la validation.',
-        ])->assertOk()->assertJsonPath('ok', true);
+        ])->assertOk()->assertJsonPath('ok', true)->assertJsonPath('listing.category', 'BTP & Construction');
     }
 }

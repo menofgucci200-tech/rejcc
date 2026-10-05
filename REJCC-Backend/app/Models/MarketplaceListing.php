@@ -8,8 +8,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class MarketplaceListing extends Model
 {
     protected $fillable = [
-        'user_id', 'type', 'title', 'category', 'description',
-        'price', 'contact', 'photo', 'statut', 'reject_reason', 'vues', 'contacts',
+        'user_id', 'type', 'title', 'category', 'group_id', 'description',
+        'price', 'prix_valeur', 'contact', 'photo', 'statut', 'reject_reason', 'vues', 'contacts',
         'publie_le', 'expire_le', 'rappel_expiration_at',
     ];
 
@@ -67,6 +67,30 @@ class MarketplaceListing extends Model
         }
 
         return ['rappels' => $rappels, 'expirees' => $expirees];
+    }
+
+    /**
+     * Valeur numérique d'un prix saisi en texte libre, pour le tri :
+     * « 15 000 FCFA » → 15000, « 1.500 F la bouteille » → 1500, « Sur devis » → null.
+     */
+    public static function valeurPrix(?string $prix): ?int
+    {
+        if ($prix === null || ! preg_match('/\d[\d\s.\x{00A0}\x{202F}]*/u', $prix, $m)) {
+            return null;
+        }
+        $chiffres = preg_replace('/\D/', '', $m[0]);
+
+        return $chiffres === '' ? null : (int) $chiffres;
+    }
+
+    protected static function booted(): void
+    {
+        static::saving(fn (self $l) => $l->prix_valeur = self::valeurPrix($l->price));
+    }
+
+    public function group(): BelongsTo
+    {
+        return $this->belongsTo(Group::class);
     }
 
     public function user(): BelongsTo
