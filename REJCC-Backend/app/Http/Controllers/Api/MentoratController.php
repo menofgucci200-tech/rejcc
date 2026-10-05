@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\MemberNotification;
+use App\Models\MentorApplication;
 use App\Models\Message;
 use App\Models\Mentorship;
 use App\Models\User;
@@ -300,6 +301,61 @@ class MentoratController extends Controller
             'title' => 'Réponse à votre demande de mentorat',
             'body' => trim("{$mentor->prenom} {$mentor->nom}")." ne peut pas vous accompagner pour le moment. Consultez son message et trouvez un autre mentor.",
             'link' => '/espace-membre/mentorat',
+        ]);
+
+        return response()->json(['ok' => true]);
+    }
+
+    /** GET /mentorat/candidature — dernière candidature « Devenir mentor » du membre. */
+    public function maCandidature(Request $request)
+    {
+        $c = MentorApplication::where('user_id', $request->user()->id)->latest()->first();
+
+        return response()->json(['ok' => true, 'candidature' => $c ? [
+            'id' => $c->id,
+            'statut' => $c->statut,
+            'statut_label' => MentorApplication::STATUTS[$c->statut] ?? $c->statut,
+            'reponse' => $c->reponse,
+            'cree_le' => $c->created_at?->toDateString(),
+        ] : null]);
+    }
+
+    /** POST /mentorat/candidature — un membre propose de devenir mentor. */
+    public function candidater(Request $request)
+    {
+        $me = $request->user();
+        if ($me->role !== 'member') {
+            return response()->json(['ok' => false, 'message' => 'Vous êtes déjà mentor ou administrateur.'], 422);
+        }
+        if (MentorApplication::where('user_id', $me->id)->where('statut', 'en_attente')->exists()) {
+            return response()->json(['ok' => false, 'message' => 'Votre candidature est déjà en cours d\'examen.'], 422);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'expertises' => 'required|array|min:1|max:8',
+            'expertises.*' => 'string|min:2|max:60',
+            'experience' => 'required|string|min:30|max:2000',
+            'motivation' => 'required|string|min:20|max:1500',
+            'disponibilites' => 'nullable|string|max:255',
+        ], [
+            'expertises.required' => 'Indiquez au moins un domaine d\'expertise.',
+            'expertises.min' => 'Indiquez au moins un domaine d\'expertise.',
+            'experience.required' => 'Présentez votre expérience professionnelle.',
+            'experience.min' => 'Présentez votre expérience en quelques phrases (30 caractères au moins).',
+            'motivation.required' => 'Dites-nous pourquoi vous souhaitez devenir mentor.',
+            'motivation.min' => 'Dites-nous en quelques phrases pourquoi vous souhaitez devenir mentor.',
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['ok' => false, 'message' => $validator->errors()->first()], 422);
+        }
+
+        MentorApplication::create([
+            'user_id' => $me->id,
+            'expertises' => collect($request->input('expertises'))->map(fn ($e) => trim($e))->filter()->unique()->values()->all(),
+            'experience' => trim($request->input('experience')),
+            'motivation' => trim($request->input('motivation')),
+            'disponibilites' => $request->input('disponibilites'),
+            'statut' => 'en_attente',
         ]);
 
         return response()->json(['ok' => true]);

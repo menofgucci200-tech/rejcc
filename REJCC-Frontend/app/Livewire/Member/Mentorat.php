@@ -52,6 +52,19 @@ class Mentorat extends Component
 
     public ?string $message = null;
 
+    // ── Candidature « Devenir mentor » (membres) ─────────────────────────
+    public bool $formCandidature = false;
+
+    public string $candExpertises = '';
+
+    public string $candExperience = '';
+
+    public string $candMotivation = '';
+
+    public string $candDispo = '';
+
+    public ?string $erreurCandidature = null;
+
     // ── Demandes reçues (mentors) ────────────────────────────────────────
     /** @var array<int, string> Mot du mentor par demande (accueil ou refus). */
     public array $reponses = [];
@@ -184,6 +197,26 @@ class Mentorat extends Component
         $this->repondre($id, 'refuser');
     }
 
+    public function candidater(): void
+    {
+        $this->erreurCandidature = null;
+        $result = Api::post('/mentorat/candidature', [
+            'expertises' => array_values(array_filter(array_map('trim', explode(',', $this->candExpertises)))),
+            'experience' => trim($this->candExperience),
+            'motivation' => trim($this->candMotivation),
+            'disponibilites' => trim($this->candDispo) ?: null,
+        ], Api::token());
+
+        if (! ($result['ok'] ?? false)) {
+            $this->erreurCandidature = $result['message'] ?? 'Envoi impossible, réessayez.';
+
+            return;
+        }
+
+        $this->reset(['formCandidature', 'candExpertises', 'candExperience', 'candMotivation', 'candDispo']);
+        $this->message = 'Candidature envoyée : l\'équipe REJCC l\'examine et vous répondra par notification.';
+    }
+
     public function render()
     {
         $token = Api::token();
@@ -201,7 +234,10 @@ class Mentorat extends Component
                 ))->values();
         }
 
+        $candidature = $this->estMentor() ? null : (Api::get('/mentorat/candidature', [], $token)['candidature'] ?? null);
+
         return view('livewire.member.mentorat', [
+            'candidature' => $candidature,
             'estMentor' => $this->estMentor(),
             'user' => Api::user(),
             'mentorats' => $mentorats,

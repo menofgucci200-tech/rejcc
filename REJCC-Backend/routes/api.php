@@ -95,6 +95,8 @@ Route::middleware('auth.token')->group(function () {
     // Mentorat
     Route::put('/mentorat/profil', [\App\Http\Controllers\Api\MentoratController::class, 'updateProfil']);
     Route::get('/mentors', [\App\Http\Controllers\Api\MentoratController::class, 'mentors']);
+    Route::get('/mentorat/candidature', [\App\Http\Controllers\Api\MentoratController::class, 'maCandidature']);
+    Route::post('/mentorat/candidature', [\App\Http\Controllers\Api\MentoratController::class, 'candidater']);
     Route::post('/mentors/{id}/demande', [\App\Http\Controllers\Api\MentoratController::class, 'demander'])->whereNumber('id');
     Route::get('/mentorat', [\App\Http\Controllers\Api\MentoratController::class, 'mesMentorats']);
     Route::post('/mentorat/{id}/annuler', [\App\Http\Controllers\Api\MentoratController::class, 'annuler'])->whereNumber('id');
@@ -188,6 +190,14 @@ Route::middleware(['auth.token', 'audit.log'])->prefix('admin')->group(function 
 
     // Export des jeux de données
     Route::get('/export/{dataset}', [\App\Http\Controllers\Api\ExportController::class, 'data'])->middleware('auth.admin');
+
+    // Programme de mentorat
+    Route::middleware('auth.admin:mentors')->group(function () {
+        Route::get('/mentorat', [\App\Http\Controllers\Api\MentoratAdminController::class, 'index']);
+        Route::post('/mentorat/attribuer', [\App\Http\Controllers\Api\MentoratAdminController::class, 'attribuer']);
+        Route::post('/mentorat/candidatures/{id}/accepter', [\App\Http\Controllers\Api\MentoratAdminController::class, 'accepterCandidature'])->whereNumber('id');
+        Route::post('/mentorat/candidatures/{id}/refuser', [\App\Http\Controllers\Api\MentoratAdminController::class, 'refuserCandidature'])->whereNumber('id');
+    });
 
     Route::middleware('auth.admin:membres')->group(function () {
         Route::get('/members', [AdminController::class, 'members']);

@@ -269,6 +269,53 @@
                 @endif
             </section>
 
+            {{-- Devenir mentor --}}
+            <section data-test="devenir-mentor" class="mt-10 rounded-[18px] border border-accent/15 bg-gradient-to-br from-white to-[#FBEFEE] p-6">
+                <div class="flex flex-wrap items-start justify-between gap-4">
+                    <div class="max-w-xl">
+                        <h2 class="text-[15px] font-bold text-brand">Devenir mentor</h2>
+                        <p class="mt-1 text-[13px] leading-relaxed text-[#5B677A]">Entrepreneur ou professionnel expérimenté ? Partagez votre expérience avec les jeunes du réseau. Les mentors reçoivent une carte de mentor et sont dispensés d'abonnement.</p>
+                    </div>
+                    @if (! $formCandidature && (! $candidature || $candidature['statut'] === 'refusee'))
+                        <button wire:click="$set('formCandidature', true)" data-test="ouvrir-candidature" class="btn-tap rounded-full bg-accent px-4 py-2 text-[12.5px] font-bold text-white hover:bg-accent-600">Proposer ma candidature</button>
+                    @endif
+                </div>
+
+                @if ($candidature && $candidature['statut'] === 'en_attente')
+                    <p data-test="candidature-statut" class="mt-4 inline-flex items-center gap-1.5 rounded-full bg-[#F5A623]/15 px-3.5 py-1.5 text-[12px] font-bold text-[#8A5A00]"><x-ui.icon name="clock" class="size-3.5" /> Candidature envoyée le {{ \Carbon\Carbon::parse($candidature['cree_le'])->translatedFormat('j F Y') }} : en cours d'examen</p>
+                @elseif ($candidature && $candidature['statut'] === 'refusee' && ! $formCandidature)
+                    <p data-test="candidature-statut" class="mt-4 rounded-[12px] bg-white/80 px-4 py-3 text-[12.5px] text-[#5B677A]"><span class="font-semibold text-brand">Votre dernière candidature n'a pas été retenue.</span> @if ($candidature['reponse'])« {{ $candidature['reponse'] }} »@endif</p>
+                @endif
+
+                @if ($formCandidature)
+                    <div data-test="form-candidature" class="panel-enter mt-5 grid gap-3 sm:grid-cols-2">
+                        <div class="sm:col-span-2">
+                            <label for="cand-expertises" class="mb-1 block text-xs font-semibold text-[#5B677A]">Domaines d'expertise <span class="font-normal text-[#9AA6B8]">(séparés par des virgules)</span></label>
+                            <input id="cand-expertises" wire:model="candExpertises" type="text" placeholder="Ex : Agrobusiness, Export, Gestion d'équipe" class="w-full rounded-[10px] border border-brand/15 bg-white px-3 py-2.5 text-sm outline-none focus:border-azure" />
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label for="cand-experience" class="mb-1 block text-xs font-semibold text-[#5B677A]">Votre expérience</label>
+                            <textarea id="cand-experience" wire:model="candExperience" rows="3" maxlength="2000" placeholder="Parcours, entreprises créées ou dirigées, réalisations…" class="w-full rounded-[10px] border border-brand/15 bg-white px-3 py-2.5 text-sm outline-none focus:border-azure"></textarea>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label for="cand-motivation" class="mb-1 block text-xs font-semibold text-[#5B677A]">Votre motivation</label>
+                            <textarea id="cand-motivation" wire:model="candMotivation" rows="2" maxlength="1500" placeholder="Pourquoi souhaitez-vous accompagner des jeunes entrepreneurs ?" class="w-full rounded-[10px] border border-brand/15 bg-white px-3 py-2.5 text-sm outline-none focus:border-azure"></textarea>
+                        </div>
+                        <div>
+                            <label for="cand-dispo" class="mb-1 block text-xs font-semibold text-[#5B677A]">Disponibilités <span class="font-normal text-[#9AA6B8]">(facultatif)</span></label>
+                            <input id="cand-dispo" wire:model="candDispo" type="text" placeholder="Ex : samedi matin" class="w-full rounded-[10px] border border-brand/15 bg-white px-3 py-2.5 text-sm outline-none focus:border-azure" />
+                        </div>
+                        @if ($erreurCandidature)
+                            <p data-test="erreur-candidature" role="alert" class="flex items-start gap-1.5 text-[12.5px] font-semibold text-accent sm:col-span-2"><x-ui.icon name="alert-circle" class="mt-px size-4 shrink-0" /> {{ $erreurCandidature }}</p>
+                        @endif
+                        <div class="flex flex-wrap gap-2 sm:col-span-2">
+                            <button wire:click="candidater" wire:loading.attr="disabled" data-test="envoyer-candidature" class="btn-tap rounded-full bg-accent px-5 py-2.5 text-[13px] font-bold text-white hover:bg-accent-600 disabled:opacity-60">Envoyer ma candidature</button>
+                            <button wire:click="$set('formCandidature', false)" class="btn-tap rounded-full border border-brand/15 bg-white px-5 py-2.5 text-[13px] font-bold text-brand hover:bg-cloud">Annuler</button>
+                        </div>
+                    </div>
+                @endif
+            </section>
+
             {{-- Fiche du mentor + formulaire de demande --}}
             @if ($mentorFiche)
                 <div class="fixed inset-0 z-[90] flex items-center justify-center bg-brand/40 p-4" wire:click.self="fermerMentor" @keydown.escape.window="$wire.fermerMentor()">

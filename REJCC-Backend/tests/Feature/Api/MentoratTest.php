@@ -227,4 +227,65 @@ class MentoratTest extends TestCase
         $this->assertSame(['accompagnes' => 1, 'note_moyenne' => 4.0, 'nb_avis' => 1], \App\Support\MemberProfile::mentor($mentor->fresh())['stats']);
         $this->getJson('/api/member-card/'.$mentor->id)->assertJsonPath('card.mentor.stats.accompagnes', 1);
     }
+
+    public function test_un_membre_candidate_pour_devenir_mentor_et_l_admin_valide(): void
+    {
+        $awa = $this->abonne();
+        $koffi = $this->abonne();
+        $tAwa = $this->tokenFor($awa);
+        $tAdmin = $this->tokenFor(User::factory()->create(['role' => 'admin', 'permissions' => ['mentors']]));
+
+        $this->withToken($tAwa)->postJson('/api/mentorat/candidature', ['expertises' => [], 'experience' => 'x', 'motivation' => 'y'])->assertStatus(422);
+        $this->withToken($tAwa)->postJson('/api/mentorat/candidature', [
+            'expertises' => ['Agrobusiness', 'Export'],
+            'experience' => 'Fondatrice d\'AgroVert depuis 8 ans, j\'exporte vers la sous-région.',
+            'motivation' => 'Transmettre ce que j\'ai appris aux jeunes du réseau.',
+        ])->assertOk();
+        $this->withToken($tAwa)->postJson('/api/mentorat/candidature', ['expertises' => ['A'], 'experience' => str_repeat('a', 40), 'motivation' => str_repeat('b', 30)])->assertStatus(422);
+        $this->assertSame('en_attente', $this->withToken($tAwa)->getJson('/api/mentorat/candidature')->json('candidature.statut'));
+
+        $vue = $this->withToken($tAdmin)->getJson('/api/admin/mentorat')->assertOk()->json();
+        $this->assertSame(1, $vue['stats']['candidatures']);
+        $id = $vue['candidatures'][0]['id'];
+
+        $this->withToken($tAdmin)->postJson("/api/admin/mentorat/candidatures/{$id}/accepter")->assertOk();
+        $awa->refresh();
+        $this->assertSame('mentor', $awa->role);
+        $this->assertSame(['Agrobusiness', 'Export'], $awa->mentor_expertises);
+
+        // Candidature refusée : un message est obligatoire.
+        $this->withToken($this->tokenFor($koffi))->postJson('/api/mentorat/candidature', ['expertises' => ['Marketing'], 'experience' => str_repeat('Expérience. ', 4), 'motivation' => str_repeat('Motivation. ', 3)])->assertOk();
+        $id2 = \App\Models\MentorApplication::where('user_id', $koffi->id)->value('id');
+        $this->withToken($tAdmin)->postJson("/api/admin/mentorat/candidatures/{$id2}/refuser")->assertStatus(422);
+        $this->withToken($tAdmin)->postJson("/api/admin/mentorat/candidatures/{$id2}/refuser", ['reponse' => 'Revenez vers nous après deux ans d\'activité.'])->assertOk();
+        $this->assertSame('refusee', $this->withToken($this->tokenFor($koffi))->getJson('/api/mentorat/candidature')->json('candidature.statut'));
+
+        // Un admin sans la section Mentors n'y a pas accès.
+        $this->withToken($this->tokenFor(User::factory()->create(['role' => 'admin', 'permissions' => ['formations']])))->getJson('/api/admin/mentorat')->assertStatus(403);
+    }
+
+    public function test_l_admin_attribue_un_mentor_a_un_membre(): void
+    {
+        $mentor = User::factory()->create(['role' => 'mentor', 'mentor_capacite' => 1]);
+        $awa = $this->abonne();
+        $tAdmin = $this->tokenFor(User::factory()->create(['role' => 'admin']));
+
+        $this->withToken($tAdmin)->postJson('/api/admin/mentorat/attribuer', ['mentor_id' => $mentor->id, 'mentore_id' => $awa->id, 'objectif' => 'court'])->assertStatus(422);
+        $id = $this->withToken($tAdmin)->postJson('/api/admin/mentorat/attribuer', [
+            'mentor_id' => $mentor->id, 'mentore_id' => $awa->id, 'objectif' => 'Préparer le salon de l\'agriculture',
+        ])->assertOk()->json('id');
+
+        $m = Mentorship::find($id);
+        $this->assertSame('accepte', $m->statut);
+        $this->assertTrue($m->cree_par_admin);
+        $this->assertSame(1, MemberNotification::where('user_id', $awa->id)->count());
+        $this->assertSame(1, MemberNotification::where('user_id', $mentor->id)->count());
+
+        // Capacité atteinte.
+        $this->withToken($tAdmin)->postJson('/api/admin/mentorat/attribuer', ['mentor_id' => $mentor->id, 'mentore_id' => $this->abonne()->id, 'objectif' => 'Lancer ma boutique en ligne'])->assertStatus(422);
+
+        $vue = $this->withToken($tAdmin)->getJson('/api/admin/mentorat')->json();
+        $this->assertSame(1, $vue['mentors'][0]['en_cours']);
+        $this->assertTrue($vue['relations'][0]['cree_par_admin']);
+    }
 }

@@ -19,7 +19,7 @@ class AdminSections
         'communaute' => 'Marketplace',
         'certificats' => 'Certificats',
         'opportunites' => 'Opportunités',
-        'mentors' => 'Mentors',
+        'mentors' => 'Mentorat',
         'actualites' => 'Actualités',
         'contenu' => 'Contenu du site',
         'newsletter' => 'Newsletter',
