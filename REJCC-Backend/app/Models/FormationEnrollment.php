@@ -8,11 +8,29 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class FormationEnrollment extends Model
 {
-    protected $fillable = ['formation_id', 'user_id', 'progress', 'completed_at'];
+    protected $fillable = [
+        'formation_id', 'user_id', 'progress', 'completed_at',
+        'examen_score', 'examen_reussi_at', 'examen_echecs', 'examen_bloque_jusqu',
+    ];
 
     protected function casts(): array
     {
-        return ['completed_at' => 'datetime'];
+        return ['completed_at' => 'datetime', 'examen_reussi_at' => 'datetime', 'examen_bloque_jusqu' => 'datetime'];
+    }
+
+    /** Tous les modules de la formation sont validés. */
+    public function modulesTermines(): bool
+    {
+        $ids = $this->formation->modules()->pluck('id');
+
+        return $ids->isNotEmpty()
+            && $ids->diff($this->moduleCompletions()->pluck('formation_module_id'))->isEmpty();
+    }
+
+    /** Examen final réussi, ou formation sans examen. */
+    public function examenValide(): bool
+    {
+        return empty($this->formation->examen) || $this->examen_reussi_at !== null;
     }
 
     public function formation(): BelongsTo

@@ -25,6 +25,52 @@ class FormationDetail extends Component
     /** Réponses aux quiz : [moduleId => [indexQuestion => indexChoix]]. */
     public array $reponses = [];
 
+    // Examen final de certification
+    public bool $examenOuvert = false;
+
+    public array $examenQuestions = [];
+
+    public array $reponsesExamen = [];
+
+    public ?array $resultatExamen = null;
+
+    public function ouvrirExamen(): void
+    {
+        $result = Api::get("/formations/{$this->formationId}/examen", [], Api::token());
+
+        if (! ($result['ok'] ?? false)) {
+            $this->resultatExamen = ['reussi' => false, 'message' => $result['message'] ?? 'Examen indisponible.'];
+
+            return;
+        }
+
+        $this->examenQuestions = $result['questions'] ?? [];
+        $this->reponsesExamen = [];
+        $this->resultatExamen = null;
+        $this->examenOuvert = true;
+    }
+
+    public function passerExamen(): void
+    {
+        $reponses = [];
+        foreach (array_keys($this->examenQuestions) as $i) {
+            $reponses[$i] = isset($this->reponsesExamen[$i]) ? (int) $this->reponsesExamen[$i] : -1;
+        }
+
+        $result = Api::post("/formations/{$this->formationId}/examen", ['reponses' => $reponses], Api::token());
+
+        $this->resultatExamen = [
+            'reussi' => (bool) ($result['reussi'] ?? false),
+            'score' => $result['score'] ?? null,
+            'message' => $result['message'] ?? null,
+        ];
+
+        if ($this->resultatExamen['reussi']) {
+            $this->examenOuvert = false;
+            $this->message = "Examen réussi ({$result['score']} %) : formation terminée, votre certificat est délivré !";
+        }
+    }
+
     public function mount(int $formationId): void
     {
         $this->formationId = $formationId;
@@ -69,6 +115,7 @@ class FormationDetail extends Component
             'progress' => $result['progress'] ?? 0,
             'completed' => $result['completed'] ?? false,
             'telechargementAutorise' => (bool) ($result['telechargement_autorise'] ?? false),
+            'examen' => $result['examen'] ?? null,
         ]);
     }
 }

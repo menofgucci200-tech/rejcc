@@ -54,6 +54,16 @@
                 <div class="sm:col-span-2">
                     <x-ui.media-field label="Support de la formation (PDF, vidéo, image ou lien)" :media-url="$mediaUrl" :media-name="$mediaName" :media-size="$mediaSize" />
                 </div>
+                <div class="sm:col-span-2 rounded-[12px] border border-brand/10 p-4" data-test="editeur-examen">
+                    <div class="mb-3 flex flex-wrap items-center gap-3">
+                        <p class="text-[13px] font-bold text-brand">Examen final de certification</p>
+                        <label class="ml-auto inline-flex items-center gap-2 text-xs font-semibold text-[#5B677A]">Seuil de réussite (quiz et examen)
+                            <input wire:model="seuilReussite" type="number" min="50" max="100" class="w-16 rounded-[8px] border border-brand/15 px-2 py-1 text-sm outline-none focus:border-azure" /> %
+                        </label>
+                    </div>
+                    <p class="mb-3 text-[11.5px] text-[#9AA6B8]">Facultatif. S'il est défini, le membre le passe sur la plateforme une fois tous les modules validés ; la formation n'est terminée (et le certificat délivré) qu'après réussite. 3 essais, puis pause de 24 h.</p>
+                    <x-admin-light.quiz-editor champ="examen" :questions="$examen" label="Questions de l'examen" :max="40" />
+                </div>
                 <button wire:click="save" wire:loading.attr="disabled" class="btn-tap rounded-[9px] bg-brand px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-brand/90 hover:shadow-md disabled:opacity-60 sm:col-span-2 sm:w-fit">Enregistrer</button>
             </div>
         @endif
@@ -152,37 +162,7 @@
                                         <span wire:loading wire:target="moduleRessourceFiles" class="ml-1 text-[11px] font-semibold text-azure">Envoi…</span>
                                         @error('moduleRessourceFiles.*') <span class="block text-xs text-accent">{{ $message }}</span> @enderror
                                     </div>
-                                    <div class="sm:col-span-2" data-test="editeur-quiz">
-                                        <div class="mb-1.5 flex items-center justify-between">
-                                            <label class="text-xs font-semibold text-[#5B677A]">Quiz de validation (facultatif) — le membre doit le réussir pour valider le module</label>
-                                            <button type="button" wire:click="ajouterQuestion" class="text-[11.5px] font-bold text-azure hover:underline">+ Question</button>
-                                        </div>
-                                        @foreach ($moduleQuiz as $qi => $q)
-                                            <div wire:key="quiz-{{ $qi }}" class="mb-2 rounded-[10px] border border-brand/10 bg-cloud/40 p-3">
-                                                <div class="flex items-center gap-2">
-                                                    <span class="text-[11px] font-bold text-[#9AA6B8]">Q{{ $qi + 1 }}</span>
-                                                    <input wire:model="moduleQuiz.{{ $qi }}.question" type="text" placeholder="Intitulé de la question" class="min-w-0 flex-1 rounded-[8px] border border-brand/15 bg-white px-2.5 py-1.5 text-[12.5px] outline-none focus:border-azure" />
-                                                    <button type="button" wire:click="retirerQuestion({{ $qi }})" class="text-[11px] font-semibold text-accent hover:underline">Retirer</button>
-                                                </div>
-                                                @error("moduleQuiz.{$qi}.question") <span class="mt-1 block text-xs text-accent">{{ $message }}</span> @enderror
-                                                <div class="mt-2 flex flex-col gap-1.5 pl-6">
-                                                    @foreach ($q['choix'] as $ci => $choix)
-                                                        <div wire:key="quiz-{{ $qi }}-{{ $ci }}" class="flex items-center gap-2">
-                                                            <input type="radio" wire:model="moduleQuiz.{{ $qi }}.bonne" name="bonne-{{ $qi }}" value="{{ $ci }}" title="Bonne réponse" class="accent-[#22A85A]">
-                                                            <input wire:model="moduleQuiz.{{ $qi }}.choix.{{ $ci }}" type="text" placeholder="Réponse {{ $ci + 1 }}" class="min-w-0 flex-1 rounded-[8px] border border-brand/15 bg-white px-2.5 py-1 text-[12px] outline-none focus:border-azure" />
-                                                            @if (count($q['choix']) > 2)
-                                                                <button type="button" wire:click="retirerChoix({{ $qi }}, {{ $ci }})" class="text-[#9AA6B8] hover:text-accent" aria-label="Retirer la réponse"><x-ui.icon name="x" class="size-3.5" /></button>
-                                                            @endif
-                                                        </div>
-                                                    @endforeach
-                                                    @if (count($q['choix']) < 6)
-                                                        <button type="button" wire:click="ajouterChoix({{ $qi }})" class="w-fit text-[11px] font-semibold text-azure hover:underline">+ Réponse</button>
-                                                    @endif
-                                                    <p class="text-[10.5px] text-[#9AA6B8]">Cochez le rond de la bonne réponse.</p>
-                                                </div>
-                                            </div>
-                                        @endforeach
-                                    </div>
+                                    <x-admin-light.quiz-editor class="sm:col-span-2" data-test="editeur-quiz" champ="moduleQuiz" :questions="$moduleQuiz" label="Quiz de validation (facultatif) — le membre doit le réussir pour valider le module" />
                                     <div>
                                         <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Durée (ex : 15 min)</label>
                                         <input wire:model="moduleDuree" type="text" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />

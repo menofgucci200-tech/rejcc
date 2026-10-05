@@ -111,6 +111,9 @@ Route::middleware('auth.token')->group(function () {
     Route::post('/formations/{id}/complete-module', [FormationController::class, 'completeModule']);
     Route::get('/formations/{id}/modules', [FormationController::class, 'modules']);
     Route::post('/formations/{id}/modules/{moduleId}/complete', [FormationController::class, 'completeFormationModule']);
+    // Examen final de certification (passé sur la plateforme)
+    Route::get('/formations/{id}/examen', [FormationController::class, 'examen']);
+    Route::post('/formations/{id}/examen', [FormationController::class, 'passerExamen'])->middleware('throttle:20,1');
 
     // Parcours guidés (séquences de formations à déblocage progressif)
     Route::get('/paths', [\App\Http\Controllers\Api\PathController::class, 'index']);

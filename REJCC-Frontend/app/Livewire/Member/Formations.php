@@ -38,11 +38,14 @@ class Formations extends Component
                     'from' => $palette['from'],
                     'to' => $palette['to'],
                     'has_modules' => (bool) ($f['has_modules'] ?? false),
-                    'detail' => $termine
+                    'examen' => (bool) ($f['examen_a_passer'] ?? false),
+                    'detail' => ($f['examen_a_passer'] ?? false)
+                        ? 'Modules terminés — examen final à passer pour obtenir le certificat'
+                        : ($termine
                         ? 'Terminée le '.Carbon::parse($f['completed_at'] ?? now())->translatedFormat('j F Y')
                         : ($f['module_courant'] ?? null
                             ? "Module en cours : {$f['module_courant']}"
-                            : "Module {$moduleCourant} sur {$modules}".($f['duration'] ? " · {$f['duration']}" : '')),
+                            : "Module {$moduleCourant} sur {$modules}".($f['duration'] ? " · {$f['duration']}" : ''))),
                 ];
             });
     }

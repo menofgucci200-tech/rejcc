@@ -64,6 +64,8 @@ class FormationController extends Controller
                     'completed' => $e->completed_at !== null,
                     'completed_at' => $e->completed_at?->toDateString(),
                     'module_courant' => $prochain?->titre,
+                    'examen_a_passer' => ! empty($e->formation->examen) && $e->examen_reussi_at === null
+                        && $modules->isNotEmpty() && ! $prochain,
                     // Modules réellement validés (ou, pour une formation sans modules
                     // détaillés, la part de modules correspondant à la progression).
                     'modules_done' => $modules->isNotEmpty()
@@ -154,7 +156,104 @@ class FormationController extends Controller
             'progress' => $enrollment->progress,
             'completed' => $enrollment->completed_at !== null,
             'telechargement_autorise' => $peutTelecharger,
+            'examen' => $this->etatExamen($enrollment),
         ]);
+    }
+
+    /** État de l'examen final pour une inscription (null si la formation n'en a pas). */
+    private function etatExamen(FormationEnrollment $e): ?array
+    {
+        $examen = $e->formation->examen;
+        if (empty($examen)) {
+            return null;
+        }
+
+        return [
+            'nb_questions' => count($examen),
+            'seuil' => (int) ($e->formation->seuil_reussite ?? 70),
+            'disponible' => $e->modulesTermines(),
+            'reussi' => $e->examen_reussi_at !== null,
+            'score' => $e->examen_score,
+            'bloque_jusqu' => $e->examen_bloque_jusqu?->isFuture() ? $e->examen_bloque_jusqu->toIso8601String() : null,
+        ];
+    }
+
+    /** GET /formations/{id}/examen — questions de l'examen final (sans les réponses). */
+    public function examen(Request $request, int $id)
+    {
+        $e = $this->inscription($request, $id);
+        if (! $e || empty($e->formation->examen)) {
+            return response()->json(['ok' => false, 'message' => 'Aucun examen pour cette formation.'], 404);
+        }
+        if (! $e->modulesTermines()) {
+            return response()->json(['ok' => false, 'message' => 'Terminez tous les modules pour accéder à l\'examen.'], 422);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'questions' => Quiz::forMember($e->formation->examen),
+            'etat' => $this->etatExamen($e),
+        ]);
+    }
+
+    /**
+     * POST /formations/{id}/examen {reponses} — corrige l'examen final. Réussi :
+     * la formation est terminée et le certificat délivré. Après 3 échecs
+     * consécutifs, une pause de 24 h est imposée avant de retenter.
+     */
+    public function passerExamen(Request $request, int $id)
+    {
+        $e = $this->inscription($request, $id);
+        if (! $e || empty($e->formation->examen)) {
+            return response()->json(['ok' => false, 'message' => 'Aucun examen pour cette formation.'], 404);
+        }
+        if ($e->examen_reussi_at) {
+            return response()->json(['ok' => true, 'reussi' => true, 'score' => $e->examen_score, 'deja' => true]);
+        }
+        if (! $e->modulesTermines()) {
+            return response()->json(['ok' => false, 'message' => 'Terminez tous les modules pour accéder à l\'examen.'], 422);
+        }
+        if ($e->examen_bloque_jusqu?->isFuture()) {
+            return response()->json(['ok' => false, 'message' => 'Après 3 essais, l\'examen sera de nouveau disponible le '.$e->examen_bloque_jusqu->translatedFormat('j F \à H\hi').'. Profitez-en pour revoir les modules.'], 429);
+        }
+
+        $resultat = Quiz::grade($e->formation->examen, (array) $request->input('reponses', []));
+        $seuil = (int) ($e->formation->seuil_reussite ?? 70);
+
+        if ($resultat['score'] >= $seuil) {
+            $e->update([
+                'examen_score' => $resultat['score'],
+                'examen_reussi_at' => now(),
+                'examen_echecs' => 0,
+                'examen_bloque_jusqu' => null,
+                'progress' => 100,
+                'completed_at' => $e->completed_at ?? now(),
+            ]);
+
+            return response()->json(['ok' => true, 'reussi' => true] + $resultat + ['seuil' => $seuil]);
+        }
+
+        $echecs = $e->examen_echecs + 1;
+        $e->update([
+            'examen_score' => $resultat['score'],
+            'examen_echecs' => $echecs >= 3 ? 0 : $echecs,
+            'examen_bloque_jusqu' => $echecs >= 3 ? now()->addDay() : null,
+        ]);
+
+        return response()->json(['ok' => false, 'reussi' => false] + $resultat + [
+            'seuil' => $seuil,
+            'essais_restants' => $echecs >= 3 ? 0 : 3 - $echecs,
+            'message' => "Examen non réussi : {$resultat['correctes']} bonne(s) réponse(s) sur {$resultat['total']} ({$resultat['score']} %), il faut {$seuil} %."
+                .($echecs >= 3 ? ' Nouvel essai possible dans 24 h.' : ' Il vous reste '.(3 - $echecs).' essai(s) avant une pause de 24 h.'),
+        ], 422);
+    }
+
+    private function inscription(Request $request, int $formationId): ?FormationEnrollment
+    {
+        return FormationEnrollment::with('formation')
+            ->where('formation_id', $formationId)
+            ->where('user_id', $request->user()->id)
+            ->first();
     }
 
     /** Valide un module précis (formations avec contenu réel) — doit être le prochain débloqué. */
@@ -207,7 +306,9 @@ class FormationController extends Controller
         $fait = count($completedIds) + ($prochain ? 1 : 0);
         $enrollment->update([
             'progress' => $total > 0 ? (int) round($fait * 100 / $total) : $enrollment->progress,
-            'completed_at' => $fait >= $total ? now() : null,
+            // Avec un examen final, la formation n'est terminée (et le certificat
+            // délivré) qu'une fois l'examen réussi.
+            'completed_at' => $fait >= $total && $enrollment->examenValide() ? ($enrollment->completed_at ?? now()) : null,
         ]);
 
         return response()->json([
@@ -289,13 +390,22 @@ class FormationController extends Controller
             'media_url' => 'nullable|url|max:500',
             'media_name' => 'nullable|string|max:200',
             'seuil_reussite' => 'integer|min:50|max:100',
+            ...Quiz::rules('examen', 40),
         ]);
 
         if ($validator->fails()) {
             return response()->json(['ok' => false, 'message' => $validator->errors()->first()], 422);
         }
 
-        $formation->fill($validator->validated())->save();
+        if ($erreur = Quiz::invalid($request->input('examen'))) {
+            return response()->json(['ok' => false, 'message' => 'Examen — '.$erreur], 422);
+        }
+
+        $data = $validator->validated();
+        if (array_key_exists('examen', $data)) {
+            $data['examen'] = Quiz::normalize($data['examen']);
+        }
+        $formation->fill($data)->save();
 
         return response()->json(['ok' => true, 'formation' => $formation]);
     }

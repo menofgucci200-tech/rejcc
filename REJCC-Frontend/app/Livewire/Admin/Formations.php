@@ -35,6 +35,11 @@ class Formations extends Component
 
     public bool $isCertifying = false;
 
+    /** Examen final de certification : [{question, choix, bonne}] */
+    public array $examen = [];
+
+    public int $seuilReussite = 70;
+
     // ── Modules d'une formation ──────────────────────────────────────────
     public ?int $modulesFormationId = null;
 
@@ -69,35 +74,58 @@ class Formations extends Component
     /** Quiz de validation : [{question, choix: [...], bonne: index}] */
     public array $moduleQuiz = [];
 
-    public function ajouterQuestion(): void
+    /** Éditeurs de QCM : quiz du module (moduleQuiz) et examen final de la formation (examen). */
+    private function champQuiz(string $champ): string
     {
-        if (count($this->moduleQuiz) < 20) {
-            $this->moduleQuiz[] = ['question' => '', 'choix' => ['', ''], 'bonne' => 0];
+        return in_array($champ, ['moduleQuiz', 'examen'], true) ? $champ : 'moduleQuiz';
+    }
+
+    public function ajouterQuestion(string $champ = 'moduleQuiz'): void
+    {
+        $champ = $this->champQuiz($champ);
+        if (count($this->{$champ}) < ($champ === 'examen' ? 40 : 20)) {
+            $this->{$champ}[] = ['question' => '', 'choix' => ['', ''], 'bonne' => 0];
         }
     }
 
-    public function retirerQuestion(int $i): void
+    public function retirerQuestion(string $champ, int $i): void
     {
-        unset($this->moduleQuiz[$i]);
-        $this->moduleQuiz = array_values($this->moduleQuiz);
+        $champ = $this->champQuiz($champ);
+        $liste = $this->{$champ};
+        unset($liste[$i]);
+        $this->{$champ} = array_values($liste);
     }
 
-    public function ajouterChoix(int $i): void
+    public function ajouterChoix(string $champ, int $i): void
     {
-        if (count($this->moduleQuiz[$i]['choix'] ?? []) < 6) {
-            $this->moduleQuiz[$i]['choix'][] = '';
+        $champ = $this->champQuiz($champ);
+        if (count($this->{$champ}[$i]['choix'] ?? []) < 6) {
+            $this->{$champ}[$i]['choix'][] = '';
         }
     }
 
-    public function retirerChoix(int $i, int $c): void
+    public function retirerChoix(string $champ, int $i, int $c): void
     {
-        if (count($this->moduleQuiz[$i]['choix'] ?? []) > 2) {
-            unset($this->moduleQuiz[$i]['choix'][$c]);
-            $this->moduleQuiz[$i]['choix'] = array_values($this->moduleQuiz[$i]['choix']);
-            if ((int) $this->moduleQuiz[$i]['bonne'] >= count($this->moduleQuiz[$i]['choix'])) {
-                $this->moduleQuiz[$i]['bonne'] = 0;
+        $champ = $this->champQuiz($champ);
+        $q = $this->{$champ}[$i] ?? null;
+        if ($q && count($q['choix']) > 2) {
+            unset($q['choix'][$c]);
+            $q['choix'] = array_values($q['choix']);
+            if ((int) $q['bonne'] >= count($q['choix'])) {
+                $q['bonne'] = 0;
             }
+            $this->{$champ}[$i] = $q;
         }
+    }
+
+    /** Normalise un QCM chargé depuis l'API pour l'édition. */
+    private function quizPourEdition(?array $questions): array
+    {
+        return array_map(fn ($q) => [
+            'question' => (string) ($q['question'] ?? ''),
+            'choix' => array_values(array_map('strval', (array) ($q['choix'] ?? ['', '']))),
+            'bonne' => (int) ($q['bonne'] ?? 0),
+        ], array_values($questions ?? []));
     }
 
     public function updatedModuleVideoFile(): void
@@ -156,6 +184,11 @@ class Formations extends Component
             'modulesCount' => 'required|integer|min:1|max:50',
             'isFree' => 'boolean',
             'isCertifying' => 'boolean',
+            'seuilReussite' => 'integer|min:50|max:100',
+            'examen' => 'array|max:40',
+            'examen.*.question' => 'required|string|min:3|max:400',
+            'examen.*.choix' => 'array|min:2|max:6',
+            'examen.*.choix.*' => 'required|string|max:250',
         ];
     }
 
@@ -170,6 +203,8 @@ class Formations extends Component
         $this->modulesCount = 1;
         $this->isFree = true;
         $this->isCertifying = false;
+        $this->examen = [];
+        $this->seuilReussite = 70;
         $this->clearMedia();
         $this->resetValidation();
         $this->showForm = true;
@@ -191,6 +226,8 @@ class Formations extends Component
         $this->modulesCount = (int) $f['modules_count'];
         $this->isFree = (bool) $f['is_free'];
         $this->isCertifying = (bool) $f['is_certifying'];
+        $this->examen = $this->quizPourEdition($f['examen'] ?? null);
+        $this->seuilReussite = (int) ($f['seuil_reussite'] ?? 70);
         $this->fillMedia($f['media_url'] ?? null, $f['media_name'] ?? null);
         $this->resetValidation();
         $this->showForm = true;
@@ -217,13 +254,19 @@ class Formations extends Component
             'is_certifying' => $this->isCertifying,
             'media_url' => $this->mediaUrl ?: null,
             'media_name' => $this->mediaName ?: null,
+            'seuil_reussite' => $this->seuilReussite,
+            'examen' => $this->examen,
         ];
         $token = Api::token();
 
-        if ($this->editingId) {
-            Api::put("/admin/formations/{$this->editingId}", $data, $token);
-        } else {
-            Api::post('/admin/formations', $data, $token);
+        $result = $this->editingId
+            ? Api::put("/admin/formations/{$this->editingId}", $data, $token)
+            : Api::post('/admin/formations', $data, $token);
+
+        if (! ($result['ok'] ?? false)) {
+            $this->addError('examen', $result['message'] ?? 'Enregistrement impossible.');
+
+            return;
         }
 
         $this->closeForm();
@@ -287,11 +330,7 @@ class Formations extends Component
         $this->moduleDocumentUrl = $m['document_url'] ?? '';
         $this->moduleContenu = $m['contenu'] ?? '';
         $this->moduleRessources = array_values((array) ($m['ressources'] ?? []));
-        $this->moduleQuiz = array_map(fn ($q) => [
-            'question' => (string) ($q['question'] ?? ''),
-            'choix' => array_values(array_map('strval', (array) ($q['choix'] ?? ['', '']))),
-            'bonne' => (int) ($q['bonne'] ?? 0),
-        ], array_values((array) ($m['quiz'] ?? [])));
+        $this->moduleQuiz = $this->quizPourEdition($m['quiz'] ?? null);
         $this->moduleDuree = $m['duree'] ?? '';
         $this->moduleOrdre = (int) $m['ordre'];
         $this->resetValidation();
@@ -336,10 +375,14 @@ class Formations extends Component
         ];
         $token = Api::token();
 
-        if ($this->moduleEditingId) {
-            Api::put("/admin/formations/{$this->modulesFormationId}/modules/{$this->moduleEditingId}", $data, $token);
-        } else {
-            Api::post("/admin/formations/{$this->modulesFormationId}/modules", $data, $token);
+        $result = $this->moduleEditingId
+            ? Api::put("/admin/formations/{$this->modulesFormationId}/modules/{$this->moduleEditingId}", $data, $token)
+            : Api::post("/admin/formations/{$this->modulesFormationId}/modules", $data, $token);
+
+        if (! ($result['ok'] ?? false)) {
+            $this->addError('moduleQuiz', $result['message'] ?? 'Enregistrement impossible.');
+
+            return;
         }
 
         $this->closeModuleForm();

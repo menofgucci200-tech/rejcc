@@ -32,7 +32,11 @@
                     <div class="h-2 rounded-full {{ $completed ? 'bg-[#22A85A]' : 'bg-azure' }}" style="width: {{ $progress }}%"></div>
                 </div>
                 @if ($completed)
-                    <p class="mt-3 inline-flex items-center gap-1.5 text-[12.5px] font-bold text-[#22A85A]"><x-ui.icon name="award" class="size-4" /> Formation terminée{{ $formation['is_certifying'] ? ' — certificat disponible dans « Certificats »' : '' }} !</p>
+                    <p class="mt-3 inline-flex items-center gap-1.5 text-[12.5px] font-bold text-[#22A85A]"><x-ui.icon name="award" class="size-4" /> Formation terminée !
+                        @if ($formation['is_certifying'])
+                            <a href="{{ route('espace-membre.certificats') }}" wire:navigate data-test="lien-certificat" class="ml-1 underline">Voir mon certificat</a>
+                        @endif
+                    </p>
                 @endif
             </div>
 
@@ -163,6 +167,59 @@
                     </div>
                 @endforeach
             </div>
+
+            {{-- Examen final de certification --}}
+            @if ($examen)
+                <section id="examen" data-test="examen" class="mt-6 rounded-[16px] border p-5 shadow-[0_2px_8px_rgba(3,29,89,.05)] {{ $examen['reussi'] ? 'border-[#22A85A]/30 bg-[#F2FBF5]' : 'border-brand/10 bg-white' }}">
+                    <div class="flex flex-wrap items-center gap-3">
+                        <span class="flex size-10 shrink-0 items-center justify-center rounded-xl {{ $examen['reussi'] ? 'bg-[#22A85A]/15 text-[#1C8F4C]' : 'bg-[#F5A623]/15 text-[#B27007]' }}"><x-ui.icon name="award" class="size-5" /></span>
+                        <div class="min-w-[200px] flex-1">
+                            <p class="text-[14px] font-bold text-brand">Examen final{{ $formation['is_certifying'] ? ' de certification' : '' }}</p>
+                            <p class="text-[12px] text-[#5B677A]">
+                                @if ($examen['reussi'])
+                                    Réussi avec {{ $examen['score'] }} %{{ $formation['is_certifying'] ? ' — certificat délivré.' : '.' }}
+                                @elseif (! $examen['disponible'])
+                                    {{ $examen['nb_questions'] }} questions · {{ $examen['seuil'] }} % requis. Accessible une fois tous les modules validés.
+                                @elseif ($examen['bloque_jusqu'])
+                                    Nouvel essai possible le {{ \Carbon\Carbon::parse($examen['bloque_jusqu'])->translatedFormat('j F à H\hi') }}.
+                                @else
+                                    {{ $examen['nb_questions'] }} questions · {{ $examen['seuil'] }} % de bonnes réponses requis{{ $formation['is_certifying'] ? ' pour obtenir le certificat' : '' }}. 3 essais, puis pause de 24 h.
+                                @endif
+                            </p>
+                        </div>
+                        @if ($examen['reussi'] && $formation['is_certifying'])
+                            <a href="{{ route('espace-membre.certificats') }}" wire:navigate class="btn-tap inline-flex items-center gap-1.5 rounded-full bg-[#22A85A] px-4 py-2 text-[12.5px] font-bold text-white">Voir mon certificat</a>
+                        @elseif ($examen['disponible'] && ! $examen['bloque_jusqu'] && ! $examenOuvert)
+                            <button wire:click="ouvrirExamen" data-test="ouvrir-examen" class="btn-tap rounded-full bg-accent px-4 py-2 text-[12.5px] font-bold text-white hover:bg-accent-600">Passer l'examen</button>
+                        @endif
+                    </div>
+
+                    @if ($resultatExamen && ! $resultatExamen['reussi'] && $resultatExamen['message'])
+                        <p data-test="examen-echec" class="mt-3 rounded-lg bg-[#F9E9E9] px-3 py-2 text-[12.5px] font-semibold text-accent">{{ $resultatExamen['message'] }}</p>
+                    @endif
+
+                    @if ($examenOuvert)
+                        <form wire:submit="passerExamen" class="mt-4 border-t border-cloud-200 pt-4" data-test="formulaire-examen">
+                            <ol class="flex flex-col gap-4">
+                                @foreach ($examenQuestions as $qi => $q)
+                                    <li wire:key="ex-{{ $qi }}">
+                                        <p class="mb-1.5 text-[13px] font-semibold text-ink">{{ $qi + 1 }}. {{ $q['question'] }}</p>
+                                        <div class="flex flex-col gap-1.5">
+                                            @foreach ($q['choix'] as $ci => $choix)
+                                                <label class="flex cursor-pointer items-center gap-2.5 rounded-lg border border-brand/10 bg-white px-3 py-2 text-[12.5px] text-ink hover:border-azure/40 has-[:checked]:border-azure has-[:checked]:bg-azure/10">
+                                                    <input type="radio" wire:model="reponsesExamen.{{ $qi }}" name="ex-{{ $qi }}" value="{{ $ci }}" class="accent-[#4F6FBF]">
+                                                    {{ $choix }}
+                                                </label>
+                                            @endforeach
+                                        </div>
+                                    </li>
+                                @endforeach
+                            </ol>
+                            <button type="submit" wire:loading.attr="disabled" wire:confirm="Valider vos réponses à l'examen ?" data-test="valider-examen" class="btn-tap mt-4 rounded-full bg-brand px-5 py-2.5 text-[13px] font-bold text-white hover:bg-brand/90 disabled:opacity-60">Envoyer mes réponses</button>
+                        </form>
+                    @endif
+                </section>
+            @endif
         @endif
     </div>
 </div>

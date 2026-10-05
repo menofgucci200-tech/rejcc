@@ -285,4 +285,53 @@ class FormationTest extends TestCase
             'titre' => 'Module', 'quiz' => [['question' => 'Combien ?', 'choix' => ['Un', 'Deux'], 'bonne' => 5]],
         ])->assertStatus(422);
     }
+
+    public function test_le_certificat_n_est_delivre_qu_apres_l_examen_final(): void
+    {
+        $formation = $this->formation(['is_certifying' => true, 'seuil_reussite' => 70, 'examen' => [
+            ['question' => 'E1', 'choix' => ['A', 'B'], 'bonne' => 0],
+            ['question' => 'E2', 'choix' => ['A', 'B'], 'bonne' => 1],
+        ]]);
+        $module = $formation->modules()->create(['titre' => 'Module 1', 'ordre' => 1]);
+        $user = User::factory()->create();
+        FormationEnrollment::create(['formation_id' => $formation->id, 'user_id' => $user->id]);
+        $token = $this->tokenFor($user);
+        $examen = "/api/formations/{$formation->id}/examen";
+
+        // Examen inaccessible tant que les modules ne sont pas terminés.
+        $this->withToken($token)->getJson($examen)->assertStatus(422);
+
+        // Module terminé : formation pas encore terminée, pas de certificat.
+        $this->withToken($token)->postJson("/api/formations/{$formation->id}/modules/{$module->id}/complete")
+            ->assertOk()->assertJsonPath('completed', false);
+        $this->assertSame([], $this->withToken($token)->getJson('/api/my-certificates')->json('certificates'));
+        $this->assertTrue($this->withToken($token)->getJson('/api/my-formations')->json('formations.0.examen_a_passer'));
+
+        // Questions sans la clé.
+        $this->assertSame(['question' => 'E1', 'choix' => ['A', 'B']], $this->withToken($token)->getJson($examen)->json('questions.0'));
+
+        // Échec, puis réussite → certificat.
+        $this->withToken($token)->postJson($examen, ['reponses' => [1, 0]])->assertStatus(422)->assertJsonPath('score', 0);
+        $this->withToken($token)->postJson($examen, ['reponses' => [0, 1]])->assertOk()->assertJsonPath('reussi', true);
+        $this->assertCount(1, $this->withToken($token)->getJson('/api/my-certificates')->json('certificates'));
+    }
+
+    public function test_trois_echecs_a_l_examen_imposent_une_pause_de_24_h(): void
+    {
+        $formation = $this->formation(['examen' => [['question' => 'E1', 'choix' => ['A', 'B'], 'bonne' => 0]]]);
+        $module = $formation->modules()->create(['titre' => 'Module 1', 'ordre' => 1]);
+        $user = User::factory()->create();
+        FormationEnrollment::create(['formation_id' => $formation->id, 'user_id' => $user->id]);
+        $token = $this->tokenFor($user);
+        $this->withToken($token)->postJson("/api/formations/{$formation->id}/modules/{$module->id}/complete");
+
+        $examen = "/api/formations/{$formation->id}/examen";
+        $this->withToken($token)->postJson($examen, ['reponses' => [1]])->assertJsonPath('essais_restants', 2);
+        $this->withToken($token)->postJson($examen, ['reponses' => [1]])->assertJsonPath('essais_restants', 1);
+        $this->withToken($token)->postJson($examen, ['reponses' => [1]])->assertJsonPath('essais_restants', 0);
+        $this->withToken($token)->postJson($examen, ['reponses' => [0]])->assertStatus(429);   // même la bonne réponse attend
+
+        $this->travel(25)->hours();
+        $this->withToken($token)->postJson($examen, ['reponses' => [0]])->assertOk();
+    }
 }

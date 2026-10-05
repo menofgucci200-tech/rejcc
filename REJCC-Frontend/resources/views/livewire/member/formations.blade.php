@@ -59,6 +59,8 @@
                         <span class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#22A85A]/10 px-3 py-1.5 text-xs font-semibold text-[#22A85A]">
                             <x-ui.icon name="check" class="size-3.5" /> Terminée
                         </span>
+                    @elseif ($c['examen'])
+                        <a href="{{ route('espace-membre.formations.detail', $c['id']) }}#examen" wire:navigate data-test="passer-examen" class="btn-tap inline-flex shrink-0 items-center gap-1.5 rounded-full bg-accent px-3.5 py-1.5 text-xs font-bold text-white hover:bg-accent-600"><x-ui.icon name="award" class="size-3.5" /> Passer l'examen</a>
                     @elseif ($c['has_modules'])
                         <a href="{{ route('espace-membre.formations.detail', $c['id']) }}" wire:navigate class="btn-tap shrink-0 rounded-full border border-azure/25 bg-azure/10 px-3.5 py-1.5 text-xs font-semibold text-azure hover:bg-azure/20">Voir les modules</a>
                     @else
