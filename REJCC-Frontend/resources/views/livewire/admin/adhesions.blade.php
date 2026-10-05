@@ -81,6 +81,9 @@
                             'Défi principal' => $c->defi_principal,
                             'Revenu mensuel' => $c->revenu_mensuel,
                             'Motif du rejet' => $c->reject_reason ?? null,
+                            'Conditions acceptées' => ($c->conditions_acceptees_at ?? null)
+                                ? 'Le '.\Carbon\Carbon::parse($c->conditions_acceptees_at)->translatedFormat('j F Y à H\hi').' — '.collect((array) ($c->versions_acceptees ?? []))->map(fn ($v, $k) => \App\Support\Content\LegalPages::LIBELLES_COURTS[$k].' '.($v ? 'v'.$v : '(non publiée)'))->join(', ')
+                                : 'Non recueillies (demande antérieure)',
                         ];
                     @endphp
                     <div class="panel-enter mb-3.5 grid grid-cols-1 gap-x-6 gap-y-2.5 rounded-xl bg-[#F8FAFC] p-4 sm:grid-cols-2">

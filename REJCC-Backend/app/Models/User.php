@@ -54,6 +54,8 @@ class User extends Authenticatable
         'mentor_format',
         'mentor_capacite',
         'mentor_accepte',
+        'conditions_acceptees_at',
+        'versions_acceptees',
     ];
 
     public function tokens(): HasMany
@@ -130,6 +132,8 @@ class User extends Authenticatable
             'mentor_expertises' => 'array',
             'mentor_capacite' => 'integer',
             'mentor_accepte' => 'boolean',
+            'conditions_acceptees_at' => 'datetime',
+            'versions_acceptees' => 'array',
         ];
     }
 

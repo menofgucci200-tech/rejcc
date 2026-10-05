@@ -33,6 +33,8 @@ class MembershipApplication extends Model
         'formations_interet',
         'defi_principal',
         'revenu_mensuel',
+        'conditions_acceptees_at',
+        'versions_acceptees',
         'traite',
         'statut',
         'user_id',
@@ -51,6 +53,8 @@ class MembershipApplication extends Model
         'formations_interet' => 'array',
         'traite' => 'boolean',
         'password' => 'hashed',
+        'conditions_acceptees_at' => 'datetime',
+        'versions_acceptees' => 'array',
     ];
 
     public function user(): BelongsTo

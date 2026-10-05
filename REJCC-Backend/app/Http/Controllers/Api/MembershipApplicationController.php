@@ -43,6 +43,9 @@ class MembershipApplicationController extends Controller
             'formations_interet' => 'required|array|min:1',
             'defi_principal' => 'required|string',
             'revenu_mensuel' => 'required|string',
+            'accepte_conditions' => 'accepted',
+        ], [
+            'accepte_conditions.accepted' => 'Acceptez les conditions générales d\'utilisation, la politique de confidentialité et la charte du membre pour envoyer votre demande.',
         ]);
 
         if ($validator->fails()) {
@@ -86,6 +89,9 @@ class MembershipApplicationController extends Controller
             'defi_principal' => $validated['defi_principal'],
             'revenu_mensuel' => $validated['revenu_mensuel'],
             'statut' => 'en_attente',
+            // Preuve du consentement : date et versions des documents acceptés.
+            'conditions_acceptees_at' => now(),
+            'versions_acceptees' => \App\Models\LegalPage::versionsEnVigueur(),
         ]);
 
         Mailer::send($application->email, new CandidatureRecue($application));
@@ -160,6 +166,8 @@ class MembershipApplicationController extends Controller
             'organisation' => $application->nom_activite,
             'competences' => $application->competences ?: null,
             'role' => 'member',
+            'conditions_acceptees_at' => $application->conditions_acceptees_at,
+            'versions_acceptees' => $application->versions_acceptees,
         ]);
 
         // La candidature stocke déjà le mot de passe hashé choisi par le candidat :

@@ -79,6 +79,9 @@ class AdhesionApplicationForm extends Component
 
     public string $revenu_mensuel = '';
 
+    /** Acceptation des CGU, de la politique de confidentialité et de la charte. */
+    public bool $accepte_conditions = false;
+
     public function select(string $field, string $value): void
     {
         $this->{$field} = $value;
@@ -96,6 +99,9 @@ class AdhesionApplicationForm extends Component
     public function next(): void
     {
         if ($this->step === 7) {
+            $this->validate(['accepte_conditions' => 'accepted'], [
+                'accepte_conditions.accepted' => 'Cochez la case pour accepter les conditions avant d\'envoyer votre demande.',
+            ]);
             $this->submit();
 
             return;
@@ -177,6 +183,7 @@ class AdhesionApplicationForm extends Component
             'formations_interet' => $this->formations_interet,
             'defi_principal' => $this->defi_principal,
             'revenu_mensuel' => $this->revenu_mensuel,
+            'accepte_conditions' => $this->accepte_conditions,
         ]);
 
         if (! ($result['ok'] ?? false)) {

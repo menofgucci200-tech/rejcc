@@ -52,7 +52,28 @@ class MembershipApplicationTest extends TestCase
             'formations_interet' => ['Finance'],
             'defi_principal' => 'Financement',
             'revenu_mensuel' => 'Aucun revenu',
+            'accepte_conditions' => true,
         ]);
+    }
+
+    public function test_les_conditions_doivent_etre_acceptees_et_le_consentement_est_conserve(): void
+    {
+        Mail::fake();
+        $this->soumettre(['accepte_conditions' => false])->assertStatus(422)
+            ->assertJsonPath('message', 'Acceptez les conditions générales d\'utilisation, la politique de confidentialité et la charte du membre pour envoyer votre demande.');
+
+        \App\Models\LegalPage::where('slug', 'cgu')->update(['contenu' => 'Texte', 'publie' => true, 'version' => '1.2', 'publie_at' => now()]);
+        $id = $this->soumettre()->assertOk()->json('id');
+
+        $candidature = \App\Models\MembershipApplication::find($id);
+        $this->assertNotNull($candidature->conditions_acceptees_at);
+        $this->assertSame(['cgu' => '1.2', 'politique-de-confidentialite' => null, 'charte-du-membre' => null], $candidature->versions_acceptees);
+
+        // Reporté sur le compte à l'acceptation de la candidature.
+        $this->withToken($this->adminToken())->postJson("/api/admin/membership-applications/{$id}/accept")->assertOk();
+        $user = User::where('email', 'marie@example.com')->first();
+        $this->assertNotNull($user->conditions_acceptees_at);
+        $this->assertSame('1.2', $user->versions_acceptees['cgu']);
     }
 
     public function test_une_candidature_est_enregistree_et_confirmee_par_email(): void

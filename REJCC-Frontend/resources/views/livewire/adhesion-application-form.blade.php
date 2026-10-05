@@ -295,6 +295,17 @@
                             </div>
                         @endforeach
                     </div>
+                    <label data-test="consentement" class="mt-5 flex cursor-pointer items-start gap-3 rounded-[12px] border p-4 transition-colors {{ $errors->has('accepte_conditions') ? 'border-accent/40 bg-accent/[.03]' : 'border-brand/10 bg-cloud/50' }}">
+                        <input type="checkbox" wire:model="accepte_conditions" class="mt-0.5 size-4 shrink-0 rounded border-brand/30 text-accent">
+                        <span class="text-[12.5px] leading-relaxed text-ink">
+                            J'ai lu et j'accepte les
+                            <a href="{{ url('/cgu') }}" target="_blank" rel="noopener" class="font-semibold text-azure underline">conditions générales d'utilisation</a>,
+                            la <a href="{{ url('/politique-de-confidentialite') }}" target="_blank" rel="noopener" class="font-semibold text-azure underline">politique de confidentialité</a>
+                            et la <a href="{{ url('/charte-du-membre') }}" target="_blank" rel="noopener" class="font-semibold text-azure underline">charte du membre</a>
+                            du REJCC — Réseau Entrepreneurial des Jeunes Chrétiens Catholiques.
+                        </span>
+                    </label>
+                    @error('accepte_conditions') <p data-test="erreur-consentement" class="mt-2 text-xs font-medium text-accent">{{ $message }}</p> @enderror
                     @error('email') <p class="mt-4 text-xs font-medium text-accent">{{ $message }}</p> @enderror
                     @error('revenu_mensuel') <p class="mt-4 text-xs font-medium text-accent">{{ $message }}</p> @enderror
                 @endif
