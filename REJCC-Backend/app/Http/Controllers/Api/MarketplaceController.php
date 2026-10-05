@@ -5,7 +5,10 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\MarketplaceListing;
 use App\Models\MemberNotification;
+use App\Models\MemberReview;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 /**
@@ -31,6 +34,67 @@ class MarketplaceController extends Controller
             ->map(fn ($l) => $this->payload($l));
 
         return response()->json(['ok' => true, 'listings' => $listings, 'categories' => self::CATEGORIES]);
+    }
+
+    /**
+     * GET /marketplace/{id} — fiche complète d'une annonce en ligne (ou de
+     * sa propre annonce) : vendeur, note des membres, groupes. Le téléphone
+     * saisi dans l'annonce n'est donné qu'aux membres abonnés. Compte une
+     * vue par membre et par jour (hors vendeur).
+     */
+    public function show(Request $request, int $id)
+    {
+        $moi = $request->user();
+        $l = MarketplaceListing::with('user')->find($id);
+        if (! $l || ($l->statut !== 'approuve' && $l->user_id !== $moi->id)) {
+            return response()->json(['ok' => false, 'message' => "Cette annonce n'est plus disponible."], 404);
+        }
+
+        $estVendeur = $l->user_id === $moi->id;
+        if (! $estVendeur && Cache::add("marketplace:vue:{$l->id}:{$moi->id}", true, now()->endOfDay())) {
+            $l->increment('vues');
+        }
+
+        $u = $l->user;
+        $data = $this->payload($l, withStatus: $estVendeur);
+        $data['contact'] = $moi->hasActiveSubscription() || $estVendeur ? $l->contact : null;
+        $data['seller'] += [
+            'role_label' => $u->roleLabel(),
+            'titre' => $u->titre,
+            'avis' => MemberReview::resume($u->id),
+            'groupes' => $u->groups()->orderBy('ordre')->get(['groups.id', 'groups.name'])
+                ->map(fn ($g) => ['id' => $g->id, 'nom' => $g->name])->values(),
+            'annonces' => MarketplaceListing::where('user_id', $u->id)->where('statut', 'approuve')->count(),
+        ];
+        $data['est_vendeur'] = $estVendeur;
+        $data['deja_signalee'] = DB::table('listing_reports')->where('listing_id', $l->id)
+            ->where('reporter_id', $moi->id)->where('statut', 'nouveau')->exists();
+        if ($estVendeur) {
+            $data['vues'] = $l->vues;
+            $data['contacts'] = $l->contacts;
+        }
+
+        return response()->json(['ok' => true, 'listing' => $data]);
+    }
+
+    /** POST /marketplace/{id}/signaler — signaler une annonce à l'administration. */
+    public function signaler(Request $request, int $id)
+    {
+        $moi = $request->user();
+        $l = MarketplaceListing::where('statut', 'approuve')->find($id);
+        if (! $l) {
+            return response()->json(['ok' => false, 'message' => "Cette annonce n'est plus disponible."], 404);
+        }
+        if ($l->user_id === $moi->id) {
+            return response()->json(['ok' => false, 'message' => 'Vous ne pouvez pas signaler votre propre annonce.'], 422);
+        }
+
+        DB::table('listing_reports')->updateOrInsert(
+            ['listing_id' => $l->id, 'reporter_id' => $moi->id, 'statut' => 'nouveau'],
+            ['motif' => mb_substr(trim((string) $request->input('motif')), 0, 500) ?: null, 'created_at' => now(), 'updated_at' => now()],
+        );
+
+        return response()->json(['ok' => true, 'message' => "Merci, l'annonce a été signalée à l'administration."]);
     }
 
     /** GET /marketplace/mine — les annonces du membre connecté, tous statuts. */

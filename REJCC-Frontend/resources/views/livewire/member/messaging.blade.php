@@ -171,6 +171,17 @@
                                 @php $jourPrecedent = $jour; @endphp
                             @endif
                             <div wire:key="msg-{{ $m['id'] }}" data-test="message" class="flex flex-col {{ $mine ? 'items-end' : 'items-start' }}">
+                                @if ($m['annonce'] ?? null)
+                                    <a href="{{ route('espace-membre.marketplace', ['annonce' => $m['annonce']['id']]) }}" wire:navigate data-test="message-annonce"
+                                        class="mb-1 flex max-w-[78%] items-center gap-2.5 rounded-[12px] border border-brand/10 bg-white p-2 pr-3 text-left hover:border-brand/30">
+                                        <x-ui.media-thumb :url="$m['annonce']['photo']" mode="thumb" :fallback-icon="$m['annonce']['type'] === 'produit' ? 'shopping-bag' : 'nav-briefcase'" />
+                                        <span class="min-w-0">
+                                            <span class="block text-[10.5px] font-bold uppercase tracking-[0.08em] text-[#9AA6B8]">À propos de l'annonce</span>
+                                            <span class="block truncate text-[12.5px] font-bold text-brand">{{ $m['annonce']['title'] }}</span>
+                                            @if ($m['annonce']['statut'] !== 'approuve')<span class="block text-[11px] text-[#9AA6B8]">Annonce retirée</span>@endif
+                                        </span>
+                                    </a>
+                                @endif
                                 <div
                                     class="max-w-[78%] whitespace-pre-line break-words rounded-[14px] px-3.5 py-2.5 text-[13.5px] leading-relaxed {{ $mine ? 'text-white' : 'border border-cloud-200 bg-cloud text-ink' }}"
                                     style="{{ $mine ? 'background: linear-gradient(135deg, #4F6FBF, #031D59);' : '' }}"
@@ -194,7 +205,18 @@
                     @if ($peutEcrire)
                         <form wire:submit="send" class="shrink-0 border-t border-cloud-200 px-3.5 py-3"
                             x-data="{ n: 0, ajuster() { const t = $refs.saisie; t.style.height = 'auto'; t.style.height = Math.min(t.scrollHeight, 160) + 'px'; this.n = t.value.length } }"
+                            x-init="$nextTick(() => ajuster())"
                             x-on:message-envoye.window="$nextTick(() => ajuster())">
+                            @if ($annonceContexte)
+                                <div data-test="contexte-annonce" class="mb-2 flex items-center gap-2.5 rounded-[12px] border border-azure/25 bg-azure/[.06] p-2 pr-2.5">
+                                    <x-ui.media-thumb :url="$annonceContexte['photo']" mode="thumb" :fallback-icon="$annonceContexte['type'] === 'produit' ? 'shopping-bag' : 'nav-briefcase'" />
+                                    <span class="min-w-0 flex-1">
+                                        <span class="block text-[10.5px] font-bold uppercase tracking-[0.08em] text-azure">À propos de l'annonce</span>
+                                        <span class="block truncate text-[12.5px] font-bold text-brand">{{ $annonceContexte['title'] }}</span>
+                                    </span>
+                                    <button type="button" wire:click="retirerAnnonce" aria-label="Ne plus rattacher l'annonce" class="icon-btn rounded-lg p-1 text-[#9AA6B8] hover:bg-white hover:text-brand"><x-ui.icon name="x" class="size-3.5" /></button>
+                                </div>
+                            @endif
                             @if ($erreur)
                                 <p data-test="erreur-message" class="mb-2 text-[12.5px] font-semibold text-accent">{{ $erreur }}</p>
                             @endif

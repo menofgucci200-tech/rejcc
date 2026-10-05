@@ -130,7 +130,7 @@
             @else
                 <div class="grid gap-4" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr))">
                     @foreach ($listings as $l)
-                        <article class="card-hover flex flex-col overflow-hidden rounded-[16px] border border-brand/10 bg-white shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                        <article wire:key="annonce-{{ $l['id'] }}" wire:click="voir({{ $l['id'] }})" data-test="carte-annonce" class="card-hover flex cursor-pointer flex-col overflow-hidden rounded-[16px] border border-brand/10 bg-white shadow-[0_2px_8px_rgba(3,29,89,.05)]">
                             <x-ui.media-thumb :url="$l['photo']" :alt="$l['title']" mode="card" :fallback-icon="$l['type'] === 'produit' ? 'shopping-bag' : 'nav-briefcase'" />
                             <div class="flex flex-1 flex-col p-4">
                                 <div class="mb-2 flex items-center gap-2">
@@ -152,11 +152,11 @@
                                     </div>
                                     @if (($l['seller']['id'] ?? null) !== $me)
                                         @if ($abonnementActif)
-                                            <a href="{{ route('espace-membre.messaging', ['to' => $l['seller']['id']]) }}" wire:navigate data-test="contacter-vendeur" class="btn-tap flex items-center justify-center gap-1.5 rounded-[9px] bg-brand py-2 text-[12px] font-bold text-white hover:bg-brand/90">
+                                            <a href="{{ route('espace-membre.messaging', ['to' => $l['seller']['id'], 'annonce' => $l['id']]) }}" wire:navigate onclick="event.stopPropagation()" data-test="contacter-vendeur" class="btn-tap flex items-center justify-center gap-1.5 rounded-[9px] bg-brand py-2 text-[12px] font-bold text-white hover:bg-brand/90">
                                                 <x-ui.icon name="message-circle" class="size-3.5" /> Contacter le vendeur
                                             </a>
                                         @else
-                                            <a href="{{ route('espace-membre.abonnement') }}" wire:navigate data-test="abonner-pour-contacter" class="btn-tap flex items-center justify-center gap-1.5 rounded-[9px] border border-[#F5A623]/40 bg-[#F5A623]/10 py-2 text-[12px] font-bold text-[#B27007] hover:bg-[#F5A623]/20">
+                                            <a href="{{ route('espace-membre.abonnement') }}" wire:navigate onclick="event.stopPropagation()" data-test="abonner-pour-contacter" class="btn-tap flex items-center justify-center gap-1.5 rounded-[9px] border border-[#F5A623]/40 bg-[#F5A623]/10 py-2 text-[12px] font-bold text-[#B27007] hover:bg-[#F5A623]/20">
                                                 <x-ui.icon name="lock" class="size-3.5" /> S'abonner pour contacter
                                             </a>
                                         @endif
@@ -198,4 +198,6 @@
             @endif
         @endif
     </div>
+
+    <x-marketplace.fiche :fiche="$fiche" :abonnement-actif="$abonnementActif" :info="$ficheInfo" />
 </div>

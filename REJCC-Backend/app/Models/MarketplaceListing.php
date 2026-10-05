@@ -9,7 +9,7 @@ class MarketplaceListing extends Model
 {
     protected $fillable = [
         'user_id', 'type', 'title', 'category', 'description',
-        'price', 'contact', 'photo', 'statut', 'reject_reason',
+        'price', 'contact', 'photo', 'statut', 'reject_reason', 'vues', 'contacts',
     ];
 
     public function user(): BelongsTo

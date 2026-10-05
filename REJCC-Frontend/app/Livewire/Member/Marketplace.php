@@ -5,6 +5,7 @@ namespace App\Livewire\Member;
 use App\Livewire\Concerns\HandlesMedia;
 use App\Support\Api;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 /**
@@ -42,9 +43,53 @@ class Marketplace extends Component
 
     public ?string $message = null;
 
+    /** Annonce ouverte (lien partageable ?annonce=ID). */
+    #[Url(as: 'annonce', except: null)]
+    public ?int $annonceId = null;
+
+    public ?array $fiche = null;
+
+    public ?string $ficheInfo = null;
+
     public function mount(): void
     {
         $this->contact = Api::user()->telephone ?? '';
+        if ($this->annonceId) {
+            $this->voir($this->annonceId);
+        }
+    }
+
+    /** Ouvre la fiche complète d'une annonce. */
+    public function voir(int $id): void
+    {
+        $result = Api::get("/marketplace/{$id}", [], Api::token());
+        $this->ficheInfo = null;
+        if ($result['ok'] ?? false) {
+            $this->fiche = $result['listing'];
+            $this->annonceId = $id;
+        } else {
+            $this->fiche = null;
+            $this->annonceId = null;
+            $this->message = $result['message'] ?? "Cette annonce n'est plus disponible.";
+        }
+    }
+
+    public function fermerFiche(): void
+    {
+        $this->fiche = null;
+        $this->annonceId = null;
+    }
+
+    public function signaler(string $motif = ''): void
+    {
+        if (! $this->fiche) {
+            return;
+        }
+        $result = Api::post("/marketplace/{$this->fiche['id']}/signaler", ['motif' => $motif], Api::token());
+        $this->ficheInfo = $result['message'] ?? 'Une erreur est survenue.';
+        if ($result['ok'] ?? false) {
+            $this->fiche['deja_signalee'] = true;
+        }
     }
 
     public function setOnglet(string $onglet): void

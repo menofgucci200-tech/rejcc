@@ -51,6 +51,9 @@ class Messaging extends Component
 
     public ?string $erreur = null;
 
+    /** Annonce de la Marketplace dont on parle (contact depuis une annonce). */
+    public ?array $annonceContexte = null;
+
     /** Recherche dans les conversations (nom de l'interlocuteur). */
     public string $recherche = '';
 
@@ -65,6 +68,7 @@ class Messaging extends Component
 
         if ($to) {
             $this->openThread($to);
+            $this->rattacherAnnonce(request()->integer('annonce'));
         }
     }
 
@@ -125,9 +129,31 @@ class Messaging extends Component
         $this->openThread($id);
     }
 
+    /** Contact depuis une annonce : elle est rappelée au-dessus du message et rattachée à l'envoi. */
+    private function rattacherAnnonce(int $annonceId): void
+    {
+        if (! $annonceId || ! $this->partner) {
+            return;
+        }
+        $l = Api::get("/marketplace/{$annonceId}", [], Api::token())['listing'] ?? null;
+        if (! $l || ($l['seller']['id'] ?? null) !== $this->partner['id']) {
+            return;
+        }
+        $this->annonceContexte = ['id' => $l['id'], 'title' => $l['title'], 'price' => $l['price'], 'photo' => $l['photo'], 'type' => $l['type']];
+        if (trim($this->body) === '') {
+            $this->body = "Bonjour {$this->partner['prenom']}, votre annonce m'intéresse. ";
+        }
+    }
+
+    public function retirerAnnonce(): void
+    {
+        $this->annonceContexte = null;
+    }
+
     public function openThread(int $userId): void
     {
         $this->activeId = $userId;
+        $this->annonceContexte = null;
         $this->erreur = null;
         $this->body = '';
 
@@ -282,6 +308,7 @@ class Messaging extends Component
         $result = Api::post('/messages', [
             'recipient_id' => $this->activeId,
             'body' => $texte,
+            'listing_id' => $this->annonceContexte['id'] ?? null,
         ], Api::token());
 
         if (! ($result['ok'] ?? false)) {
@@ -291,6 +318,7 @@ class Messaging extends Component
         }
 
         $this->body = '';
+        $this->annonceContexte = null;
         $this->rafraichir();
         $this->dispatch('message-envoye');
     }

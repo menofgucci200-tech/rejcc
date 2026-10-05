@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Message extends Model
 {
-    protected $fillable = ['sender_id', 'recipient_id', 'body', 'read_at'];
+    protected $fillable = ['sender_id', 'recipient_id', 'body', 'listing_id', 'read_at'];
 
     protected function casts(): array
     {
@@ -22,5 +22,11 @@ class Message extends Model
     public function recipient(): BelongsTo
     {
         return $this->belongsTo(User::class, 'recipient_id');
+    }
+
+    /** Annonce de la Marketplace dont parle ce message (« À propos de… »). */
+    public function listing(): BelongsTo
+    {
+        return $this->belongsTo(MarketplaceListing::class, 'listing_id');
     }
 }
