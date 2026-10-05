@@ -95,8 +95,8 @@ class MemberManagementTest extends TestCase
         $this->assertSame('Membre officiel', $card['role_label']);
         $this->assertTrue($card['is_active']);
 
-        // N° membre : REJCC-{année}-{jour}{mois}{code}
-        $attendu = 'REJCC-'.$membre->created_at->format('Y').'-'.$membre->created_at->format('dm').$code;
+        // N° membre : REJCC-{année}-{jour}{mois}-{code}
+        $attendu = 'REJCC-'.$membre->created_at->format('Y').'-'.$membre->created_at->format('dm').'-'.$code;
         $this->assertSame($attendu, $card['numero']);
 
         // Page publique (sans connexion) : le contact est masqué par défaut,

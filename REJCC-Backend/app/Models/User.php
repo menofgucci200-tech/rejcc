@@ -114,7 +114,9 @@ class User extends Authenticatable
     {
         $date = $this->created_at ?? now();
 
-        return 'REJCC-'.$date->format('Y').'-'.$date->format('dm').$this->cardCode();
+        // Mêmes chiffres qu'avant, regroupés pour la lecture : REJCC-2026-0410-0006
+        // (année d'adhésion, jour+mois, code carte).
+        return 'REJCC-'.$date->format('Y').'-'.$date->format('dm').'-'.$this->cardCode();
     }
 
     /** Code carte à 4 chiffres généré à l'inscription (identifiant, cible du QR). */
