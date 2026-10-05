@@ -52,6 +52,12 @@ class Mentorat extends Component
 
     public ?string $message = null;
 
+    // ── Demandes reçues (mentors) ────────────────────────────────────────
+    /** @var array<int, string> Mot du mentor par demande (accueil ou refus). */
+    public array $reponses = [];
+
+    public ?int $erreurPour = null;
+
     public function mount(): void
     {
         $mentor = Api::user()->mentor ?? null;
@@ -149,10 +155,40 @@ class Mentorat extends Component
         $this->erreurDemande = ($result['ok'] ?? false) ? null : ($result['message'] ?? 'Action impossible.');
     }
 
+    protected function repondre(int $id, string $action): void
+    {
+        $this->message = $this->erreurDemande = null;
+        $this->erreurPour = null;
+        $result = Api::post("/mentorat/{$id}/{$action}", ['reponse' => trim($this->reponses[$id] ?? '')], Api::token());
+
+        if (! ($result['ok'] ?? false)) {
+            $this->erreurPour = $id;
+            $this->erreurDemande = $result['message'] ?? 'Action impossible, réessayez.';
+
+            return;
+        }
+
+        unset($this->reponses[$id]);
+        $this->message = $action === 'accepter'
+            ? 'Demande acceptée : une notification a été envoyée au membre.'
+            : 'Réponse envoyée : une notification a été envoyée au membre.';
+    }
+
+    public function accepter(int $id): void
+    {
+        $this->repondre($id, 'accepter');
+    }
+
+    public function refuser(int $id): void
+    {
+        $this->repondre($id, 'refuser');
+    }
+
     public function render()
     {
         $token = Api::token();
-        $mentorats = Collection::make(Api::get('/mentorat', [], $token)['mentorats'] ?? []);
+        $mesMentorats = Api::get('/mentorat', [], $token);
+        $mentorats = Collection::make($mesMentorats['mentorats'] ?? []);
         $mentors = collect();
         $domaines = collect();
 
@@ -172,6 +208,7 @@ class Mentorat extends Component
             'mentors' => $mentors,
             'domaines' => $domaines,
             'mentorFiche' => $this->mentorOuvert ? $mentors->firstWhere('id', $this->mentorOuvert) : null,
+            'placesRestantes' => $mesMentorats['places_restantes'] ?? null,
             'peutDemander' => (bool) (Api::user()->subscription_active ?? false),
         ]);
     }

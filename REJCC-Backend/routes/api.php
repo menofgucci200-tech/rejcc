@@ -98,6 +98,8 @@ Route::middleware('auth.token')->group(function () {
     Route::post('/mentors/{id}/demande', [\App\Http\Controllers\Api\MentoratController::class, 'demander'])->whereNumber('id');
     Route::get('/mentorat', [\App\Http\Controllers\Api\MentoratController::class, 'mesMentorats']);
     Route::post('/mentorat/{id}/annuler', [\App\Http\Controllers\Api\MentoratController::class, 'annuler'])->whereNumber('id');
+    Route::post('/mentorat/{id}/accepter', [\App\Http\Controllers\Api\MentoratController::class, 'accepter'])->whereNumber('id');
+    Route::post('/mentorat/{id}/refuser', [\App\Http\Controllers\Api\MentoratController::class, 'refuser'])->whereNumber('id');
 
     // Notifications
     Route::get('/notifications', [NotificationController::class, 'index']);

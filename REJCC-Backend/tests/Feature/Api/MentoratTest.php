@@ -127,4 +127,34 @@ class MentoratTest extends TestCase
         $this->assertFalse($this->withToken($token)->getJson('/api/mentors')->json('mentors.0.disponible'));
         $this->withToken($token)->postJson("/api/mentors/{$mentor->id}/demande", ['objectif' => 'Développer ma boutique en ligne'])->assertStatus(422);
     }
+
+    public function test_le_mentor_accepte_ou_refuse_les_demandes_recues(): void
+    {
+        $mentor = User::factory()->create(['role' => 'mentor', 'mentor_capacite' => 1]);
+        $tokenMentor = $this->tokenFor($mentor);
+        $awa = $this->abonne();
+        $koffi = $this->abonne();
+        $d1 = Mentorship::create(['mentor_id' => $mentor->id, 'mentore_id' => $awa->id, 'objectif' => 'Structurer mes finances']);
+        $d2 = Mentorship::create(['mentor_id' => $mentor->id, 'mentore_id' => $koffi->id, 'objectif' => 'Trouver mes premiers clients']);
+
+        $recues = $this->withToken($tokenMentor)->getJson('/api/mentorat')->json();
+        $this->assertCount(2, $recues['mentorats']);
+        $this->assertSame('mentor', $recues['mentorats'][0]['je_suis']);
+        $this->assertSame(1, $recues['places_restantes']);
+
+        // Un autre membre ne peut pas répondre à sa place.
+        $this->withToken($this->tokenFor($awa))->postJson("/api/mentorat/{$d1->id}/accepter")->assertStatus(404);
+
+        $this->withToken($tokenMentor)->postJson("/api/mentorat/{$d1->id}/accepter", ['reponse' => 'Avec plaisir, écrivons-nous cette semaine.'])
+            ->assertOk()->assertJsonPath('mentorship.statut', 'accepte');
+        $this->assertSame(1, \App\Models\Message::where('sender_id', $mentor->id)->where('recipient_id', $awa->id)->count());
+        $this->assertSame(1, MemberNotification::where('user_id', $awa->id)->where('type', 'success')->count());
+
+        // Capacité atteinte : impossible d'accepter la 2e ; le refus exige un mot.
+        $this->withToken($tokenMentor)->postJson("/api/mentorat/{$d2->id}/accepter")->assertStatus(422);
+        $this->withToken($tokenMentor)->postJson("/api/mentorat/{$d2->id}/refuser", ['reponse' => ''])->assertStatus(422);
+        $this->withToken($tokenMentor)->postJson("/api/mentorat/{$d2->id}/refuser", ['reponse' => 'Je suis complet, voyez avec un mentor marketing.'])->assertOk();
+        $this->assertSame('refuse', $d2->fresh()->statut);
+        $this->assertSame(1, MemberNotification::where('user_id', $koffi->id)->count());
+    }
 }

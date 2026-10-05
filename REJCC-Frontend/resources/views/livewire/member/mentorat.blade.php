@@ -14,7 +14,96 @@
             </p>
         </div>
 
+        @if ($message)
+            <p data-test="message-mentorat" class="panel-enter mb-5 inline-flex items-center gap-1.5 rounded-full bg-[#22A85A]/10 px-3.5 py-1.5 text-xs font-semibold text-[#1C8F4C]"><x-ui.icon name="check-circle" class="size-3.5" /> {{ $message }}</p>
+        @endif
+
         @if ($estMentor)
+            @php
+                $demandes = $mentorats->where('je_suis', 'mentor')->where('statut', 'en_attente');
+                $suivis = $mentorats->where('je_suis', 'mentor')->where('statut', 'accepte');
+                $historique = $mentorats->where('je_suis', 'mentor')->whereIn('statut', ['refuse', 'termine']);
+            @endphp
+
+            <div class="mb-6 grid gap-3 sm:grid-cols-3">
+                @foreach ([['Demandes en attente', $demandes->count(), 'bell'], ['Mentorés suivis', $suivis->count(), 'users'], ['Places restantes', $placesRestantes ?? 0, 'user-plus']] as [$label, $val, $icon])
+                    <div class="flex items-center gap-3 rounded-[16px] border border-brand/10 bg-white p-4 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                        <span class="flex size-10 items-center justify-center rounded-xl bg-accent/10 text-accent"><x-ui.icon :name="$icon" class="size-5" /></span>
+                        <div><p class="text-[20px] font-extrabold leading-none text-brand">{{ $val }}</p><p class="mt-1 text-[11.5px] text-[#5B677A]">{{ $label }}</p></div>
+                    </div>
+                @endforeach
+            </div>
+
+            <section data-test="demandes-recues" class="mb-8">
+                <h2 class="mb-3 text-[12px] font-bold uppercase tracking-[0.08em] text-[#9AA6B8]">Demandes reçues</h2>
+                @forelse ($demandes as $r)
+                    <article data-test="demande" wire:key="demande-{{ $r['id'] }}" class="mb-3 rounded-[16px] border border-[#F5A623]/30 bg-white p-5 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                        <div class="flex items-start gap-3">
+                            <x-mentorat.avatar :personne="$r['autre']" />
+                            <div class="min-w-0 flex-1">
+                                <div class="flex flex-wrap items-center justify-between gap-2">
+                                    <p class="text-[13.5px] font-bold text-brand">{{ $r['autre']['prenom'] }} {{ $r['autre']['nom'] }}</p>
+                                    <span class="text-[11.5px] text-[#9AA6B8]">{{ ucfirst(\Carbon\Carbon::parse($r['cree_le'])->diffForHumans()) }}</span>
+                                </div>
+                                <p class="text-[12px] text-[#5B677A]">{{ collect([$r['autre']['titre'] ?? null, $r['autre']['secteur'] ?? null, $r['autre']['ville'] ?? null])->filter()->join(' · ') }}</p>
+                            </div>
+                        </div>
+                        <p class="mt-3 text-[13px] text-ink"><span class="font-semibold text-brand">Objectif :</span> {{ $r['objectif'] }}</p>
+                        @if ($r['besoin'])
+                            <p class="mt-1.5 whitespace-pre-line text-[12.5px] leading-relaxed text-[#5B677A]">{{ $r['besoin'] }}</p>
+                        @endif
+                        <textarea wire:model="reponses.{{ $r['id'] }}" rows="2" maxlength="1000" data-test="reponse-{{ $r['id'] }}" placeholder="Votre message : mot d'accueil (facultatif) ou explication si vous déclinez" class="mt-3 w-full rounded-[10px] border border-brand/15 px-3 py-2 text-[13px] outline-none focus:border-azure"></textarea>
+                        @if ($erreurDemande && $erreurPour === $r['id'])
+                            <p data-test="erreur-reponse" role="alert" class="mt-2 flex items-start gap-1.5 text-[12.5px] font-semibold text-accent"><x-ui.icon name="alert-circle" class="mt-px size-4 shrink-0" /> {{ $erreurDemande }}</p>
+                        @endif
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            <button wire:click="accepter({{ $r['id'] }})" wire:loading.attr="disabled" data-test="accepter" class="btn-tap inline-flex items-center gap-1.5 rounded-full bg-[#1C8F4C] px-4 py-2 text-[12px] font-bold text-white hover:bg-[#1C8F4C]/90 disabled:opacity-60"><x-ui.icon name="check" class="size-3.5" /> Accepter</button>
+                            <button wire:click="refuser({{ $r['id'] }})" wire:loading.attr="disabled" data-test="refuser" class="btn-tap rounded-full border border-brand/15 bg-white px-4 py-2 text-[12px] font-bold text-brand hover:bg-cloud disabled:opacity-60">Décliner</button>
+                        </div>
+                    </article>
+                @empty
+                    <p class="rounded-[16px] border border-brand/10 bg-white py-6 text-center text-[13px] text-[#5B677A]">Aucune demande en attente.</p>
+                @endforelse
+            </section>
+
+            @if ($suivis->isNotEmpty())
+                <section data-test="mes-mentores" class="mb-8">
+                    <h2 class="mb-3 text-[12px] font-bold uppercase tracking-[0.08em] text-[#9AA6B8]">Mes mentorés</h2>
+                    <div class="grid gap-3 md:grid-cols-2">
+                        @foreach ($suivis as $r)
+                            <article data-test="mentore" class="rounded-[16px] border border-brand/10 bg-white p-4 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                                <div class="flex items-start gap-3">
+                                    <x-mentorat.avatar :personne="$r['autre']" />
+                                    <div class="min-w-0 flex-1">
+                                        <div class="flex flex-wrap items-center justify-between gap-2">
+                                            <p class="truncate text-[13.5px] font-bold text-brand">{{ $r['autre']['prenom'] }} {{ $r['autre']['nom'] }}</p>
+                                            <x-mentorat.statut :statut="$r['statut']" :label="$r['statut_label']" />
+                                        </div>
+                                        <p class="mt-0.5 text-[11.5px] text-[#9AA6B8]">Depuis le {{ \Carbon\Carbon::parse($r['repondu_le'])->translatedFormat('j F Y') }}</p>
+                                    </div>
+                                </div>
+                                <p class="mt-3 text-[12.5px] text-ink"><span class="font-semibold text-brand">Objectif :</span> {{ $r['objectif'] }}</p>
+                                <a href="{{ route('espace-membre.messaging', ['to' => $r['autre']['id']]) }}" wire:navigate class="btn-tap mt-3 inline-flex items-center gap-1.5 rounded-full bg-brand px-3.5 py-1.5 text-[12px] font-bold text-white hover:bg-brand/90"><x-ui.icon name="message-circle" class="size-3.5" /> Écrire</a>
+                            </article>
+                        @endforeach
+                    </div>
+                </section>
+            @endif
+
+            @if ($historique->isNotEmpty())
+                <details class="mb-8 rounded-[16px] border border-brand/10 bg-white p-4">
+                    <summary class="cursor-pointer text-[12.5px] font-bold text-brand">Historique ({{ $historique->count() }})</summary>
+                    <ul class="mt-3 flex flex-col gap-2">
+                        @foreach ($historique as $r)
+                            <li class="flex flex-wrap items-center justify-between gap-2 text-[12.5px] text-[#5B677A]">
+                                <span><span class="font-semibold text-brand">{{ $r['autre']['prenom'] }} {{ $r['autre']['nom'] }}</span> — {{ $r['objectif'] }}</span>
+                                <x-mentorat.statut :statut="$r['statut']" :label="$r['statut_label']" />
+                            </li>
+                        @endforeach
+                    </ul>
+                </details>
+            @endif
+
             <div class="grid items-start gap-6 lg:grid-cols-[1.4fr_1fr]">
                 <section data-test="fiche-mentor-form" class="rounded-[18px] border border-brand/10 bg-white p-6 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
                     <h2 class="text-[15px] font-bold text-brand">Ma fiche de mentor</h2>
@@ -70,9 +159,6 @@
                 </aside>
             </div>
         @else
-            @if ($message)
-                <p data-test="message-mentorat" class="panel-enter mb-5 inline-flex items-center gap-1.5 rounded-full bg-[#22A85A]/10 px-3.5 py-1.5 text-xs font-semibold text-[#1C8F4C]"><x-ui.icon name="check-circle" class="size-3.5" /> {{ $message }}</p>
-            @endif
 
             {{-- Mes demandes et mentorats --}}
             @if ($mentorats->isNotEmpty())

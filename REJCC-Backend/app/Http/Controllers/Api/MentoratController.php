@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\MemberNotification;
+use App\Models\Message;
 use App\Models\Mentorship;
 use App\Models\User;
 use App\Support\MemberProfile;
@@ -209,7 +210,11 @@ class MentoratController extends Controller
             ->get()
             ->map(fn (Mentorship $m) => $this->relation($m, $me));
 
-        return response()->json(['ok' => true, 'mentorats' => $liste->values()]);
+        return response()->json([
+            'ok' => true,
+            'mentorats' => $liste->values(),
+            'places_restantes' => $me->role === 'mentor' ? $this->placesRestantes($me) : null,
+        ]);
     }
 
     /** POST /mentorat/{id}/annuler — le membre retire sa demande en attente. */
@@ -220,6 +225,80 @@ class MentoratController extends Controller
             return response()->json(['ok' => false, 'message' => 'Demande introuvable ou déjà traitée.'], 404);
         }
         $m->update(['statut' => 'annule']);
+
+        return response()->json(['ok' => true]);
+    }
+
+    /** Demande en attente adressée au mentor courant. */
+    private function demandeRecue(Request $request, int $id): ?Mentorship
+    {
+        return Mentorship::with(['mentor', 'mentore'])
+            ->where('mentor_id', $request->user()->id)
+            ->where('statut', 'en_attente')
+            ->find($id);
+    }
+
+    /** POST /mentorat/{id}/accepter — le mentor accepte (mot d'accueil facultatif). */
+    public function accepter(Request $request, int $id)
+    {
+        $m = $this->demandeRecue($request, $id);
+        if (! $m) {
+            return response()->json(['ok' => false, 'message' => 'Demande introuvable ou déjà traitée.'], 404);
+        }
+        $mentor = $request->user();
+        if ($this->placesRestantes($mentor) === 0) {
+            return response()->json(['ok' => false, 'message' => "Vous avez atteint votre maximum de {$mentor->mentor_capacite} mentorat(s) en cours : augmentez votre capacité dans votre fiche ou terminez un mentorat avant d'accepter."], 422);
+        }
+
+        $mot = trim((string) $request->input('reponse', '')) ?: null;
+        if ($mot !== null && mb_strlen($mot) > 1000) {
+            return response()->json(['ok' => false, 'message' => 'Votre message est trop long (1000 caractères au plus).'], 422);
+        }
+
+        $m->update(['statut' => 'accepte', 'reponse' => $mot, 'repondu_at' => now()]);
+
+        // Le mot d'accueil ouvre aussi la conversation dans la messagerie.
+        if ($mot) {
+            Message::create(['sender_id' => $mentor->id, 'recipient_id' => $m->mentore_id, 'body' => $mot]);
+        }
+
+        MemberNotification::create([
+            'user_id' => $m->mentore_id,
+            'type' => 'success',
+            'title' => 'Votre demande de mentorat est acceptée !',
+            'body' => trim("{$mentor->prenom} {$mentor->nom}")." devient votre mentor pour : « {$m->objectif} ».",
+            'link' => '/espace-membre/mentorat',
+        ]);
+
+        return response()->json(['ok' => true, 'mentorship' => $this->relation($m->fresh(['mentor', 'mentore']), $mentor)]);
+    }
+
+    /** POST /mentorat/{id}/refuser — le mentor décline, avec un mot d'explication. */
+    public function refuser(Request $request, int $id)
+    {
+        $m = $this->demandeRecue($request, $id);
+        if (! $m) {
+            return response()->json(['ok' => false, 'message' => 'Demande introuvable ou déjà traitée.'], 404);
+        }
+
+        $validator = Validator::make($request->all(), ['reponse' => 'required|string|min:5|max:1000'], [
+            'reponse.required' => 'Expliquez en quelques mots pourquoi vous ne pouvez pas accompagner ce membre.',
+            'reponse.min' => 'Expliquez en quelques mots pourquoi vous ne pouvez pas accompagner ce membre.',
+        ]);
+        if ($validator->fails()) {
+            return response()->json(['ok' => false, 'message' => $validator->errors()->first()], 422);
+        }
+
+        $mentor = $request->user();
+        $m->update(['statut' => 'refuse', 'reponse' => trim($request->input('reponse')), 'repondu_at' => now()]);
+
+        MemberNotification::create([
+            'user_id' => $m->mentore_id,
+            'type' => 'info',
+            'title' => 'Réponse à votre demande de mentorat',
+            'body' => trim("{$mentor->prenom} {$mentor->nom}")." ne peut pas vous accompagner pour le moment. Consultez son message et trouvez un autre mentor.",
+            'link' => '/espace-membre/mentorat',
+        ]);
 
         return response()->json(['ok' => true]);
     }
