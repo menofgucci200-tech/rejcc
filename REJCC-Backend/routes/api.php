@@ -157,6 +157,10 @@ Route::middleware('auth.token')->group(function () {
 Route::middleware(['auth.token', 'audit.log'])->prefix('admin')->group(function () {
     Route::get('/stats', [AdminController::class, 'stats'])->middleware('auth.admin');
 
+    // Interrupteur général des abonnements (obligatoires ou non)
+    Route::get('/subscription-mode', [AdminController::class, 'subscriptionMode'])->middleware('auth.admin');
+    Route::put('/subscription-mode', [AdminController::class, 'updateSubscriptionMode'])->middleware('auth.admin:membres');
+
     // Journal d'audit (lecture seule)
     Route::get('/audit', [AdminController::class, 'auditLog'])->middleware('auth.admin:audit');
 

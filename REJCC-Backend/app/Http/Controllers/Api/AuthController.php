@@ -46,6 +46,8 @@ class AuthController extends Controller
             'preferences' => $u->preferences ?? $u->defaultPreferences(),
             'date_adhesion' => $u->created_at?->toDateString(),
             'subscription_active' => $u->hasActiveSubscription(),
+            'subscription_paid' => $u->hasPaidSubscription(),
+            'subscriptions_enforced' => \App\Support\SubscriptionMode::enforced(),
             'subscription_expires_at' => $u->subscription_expires_at?->toDateString(),
         ];
     }

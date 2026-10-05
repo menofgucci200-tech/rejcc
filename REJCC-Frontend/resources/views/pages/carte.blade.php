@@ -54,7 +54,12 @@
                 <div class="relative h-28 sm:h-36" style="background: linear-gradient(120deg, #0B1F52, #1D2556 55%, {{ $accent }} 160%)">
                     <img src="{{ asset('brand/rejcc-monogram-white.png') }}" alt="" aria-hidden="true" class="absolute -right-6 -top-8 w-44 opacity-[.07]">
                     <span data-test="statut-public" class="absolute right-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-[11.5px] font-bold text-[#1C8F4C] shadow-sm sm:right-6 sm:top-5">
-                        <x-ui.icon name="shield-check" class="size-3.5" /> Membre à jour{{ $valable ? ' — valable jusqu\'au '.$valable : '' }}
+                        <x-ui.icon name="shield-check" class="size-3.5" />
+                        @if ($card->abonnements_obligatoires ?? true)
+                            Membre à jour{{ $valable ? ' — valable jusqu\'au '.$valable : '' }}
+                        @else
+                            Membre du REJCC
+                        @endif
                     </span>
                 </div>
                 {{-- relative : passe au-dessus du bandeau (positionné) qu'il chevauche --}}

@@ -67,8 +67,18 @@ class User extends Authenticatable
         return $this->hasMany(Payment::class);
     }
 
-    /** Abonnement annuel (10 000 F) à jour : donne accès aux fonctionnalités premium. */
+    /**
+     * Accès aux fonctionnalités premium : toujours accordé quand les abonnements
+     * ne sont pas obligatoires (interrupteur du tableau de bord admin), sinon
+     * réservé aux abonnés à jour.
+     */
     public function hasActiveSubscription(): bool
+    {
+        return ! \App\Support\SubscriptionMode::enforced() || $this->hasPaidSubscription();
+    }
+
+    /** Abonnement annuel (10 000 F) réellement payé et en cours (ou administrateur). */
+    public function hasPaidSubscription(): bool
     {
         return $this->role === 'admin'
             || ($this->subscription_expires_at !== null && $this->subscription_expires_at->isFuture());

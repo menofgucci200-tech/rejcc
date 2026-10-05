@@ -7,6 +7,46 @@
             <p class="text-sm text-[#5B677A]">Voici l'état du réseau aujourd'hui, {{ now()->translatedFormat('d F Y') }}.</p>
         </section>
 
+        {{-- Interrupteur général des abonnements --}}
+        @php $ab = $abonnements; $sansAbonnement = max(0, $ab['membres'] - $ab['abonnes']); @endphp
+        <section data-test="interrupteur-abonnements" class="mb-7 flex flex-wrap items-center gap-5 rounded-[18px] border p-5 shadow-[0_2px_8px_rgba(3,29,89,.05)] {{ $ab['obligatoires'] ? 'border-accent/25 bg-white' : 'border-[#22A85A]/30 bg-[#F2FBF5]' }}">
+            <span class="flex size-12 shrink-0 items-center justify-center rounded-2xl {{ $ab['obligatoires'] ? 'bg-accent/10 text-accent' : 'bg-[#22A85A]/15 text-[#1C8F4C]' }}">
+                <x-ui.icon :name="$ab['obligatoires'] ? 'shield' : 'shield-check'" class="size-6" />
+            </span>
+            <div class="min-w-[260px] flex-1">
+                <div class="flex flex-wrap items-center gap-2">
+                    <p class="text-[15px] font-bold text-brand">Abonnements</p>
+                    <span data-test="etat-abonnements" class="rounded-full px-2.5 py-0.5 text-[11px] font-bold {{ $ab['obligatoires'] ? 'bg-accent text-white' : 'bg-[#22A85A] text-white' }}">
+                        {{ $ab['obligatoires'] ? 'Activés — restrictions appliquées' : 'Désactivés — accès libre pour tous' }}
+                    </span>
+                </div>
+                <p class="mt-1 text-[12.5px] leading-relaxed text-[#5B677A]">
+                    @if ($ab['obligatoires'])
+                        Carte membre, annuaire, messagerie, projets et publication sur la marketplace sont réservés aux membres à jour de leur abonnement annuel (10 000 F).
+                    @else
+                        Tous les membres accèdent à toutes les fonctionnalités, sans abonnement. Activez les abonnements quand le paiement en ligne sera prêt.
+                    @endif
+                </p>
+                <p class="mt-1.5 text-[11.5px] text-[#9AA6B8]">{{ $ab['abonnes'] }} abonné(s) à jour sur {{ $ab['membres'] }} membre(s){{ $ab['depuis'] ? ' · dernier changement le '.$ab['depuis'] : '' }}</p>
+                @if ($messageAbonnements)
+                    <p class="panel-enter mt-2 inline-flex items-center gap-1.5 text-[12px] font-bold text-[#1C8F4C]"><x-ui.icon name="check-circle" class="size-3.5" /> {{ $messageAbonnements }}</p>
+                @endif
+            </div>
+            @if ($ab['modifiable'])
+                @if ($ab['obligatoires'])
+                    <button type="button" wire:click="basculerAbonnements(false)" data-test="desactiver-abonnements"
+                        wire:confirm="Désactiver les abonnements ? Tous les membres auront accès à toutes les fonctionnalités, sans abonnement."
+                        class="btn-tap rounded-xl border border-brand/15 bg-white px-5 py-2.5 text-[13px] font-bold text-brand hover:bg-cloud">Désactiver les abonnements</button>
+                @else
+                    <button type="button" wire:click="basculerAbonnements(true)" data-test="activer-abonnements"
+                        wire:confirm="Activer les abonnements ? {{ $sansAbonnement }} membre(s) sans abonnement à jour perdront immédiatement l'accès à la carte membre, l'annuaire, la messagerie, les projets et la publication sur la marketplace."
+                        class="btn-tap rounded-xl bg-accent px-5 py-2.5 text-[13px] font-bold text-white hover:bg-accent-600">Activer les abonnements</button>
+                @endif
+            @else
+                <p class="text-[11.5px] text-[#9AA6B8]">Réglage réservé aux administrateurs ayant la section « Membres ».</p>
+            @endif
+        </section>
+
         <section class="mb-7 grid grid-cols-2 gap-3.5 lg:grid-cols-4">
             @foreach ($cards as $c)
                 <div class="card-hover rounded-2xl border border-brand/10 bg-white p-[18px] shadow-[0_2px_8px_rgba(3,29,89,.05)]">

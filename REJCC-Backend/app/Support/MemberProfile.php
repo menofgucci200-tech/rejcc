@@ -65,6 +65,7 @@ class MemberProfile
             'membre_depuis' => $user->created_at?->toDateString(),
             // Abonnement annuel, renouvelable à date anniversaire.
             'a_jour' => $user->hasActiveSubscription(),
+            'abonnements_obligatoires' => SubscriptionMode::enforced(),
             'valable_jusqu' => $user->subscription_expires_at?->toDateString(),
 
             'profil' => $user->profil,

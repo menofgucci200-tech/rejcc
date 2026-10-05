@@ -69,6 +69,8 @@ class Abonnement extends Component
 
         return view('livewire.member.abonnement', [
             'active' => $status['active'] ?? false,
+            // Abonnements obligatoires ? (interrupteur du tableau de bord admin)
+            'enforced' => (bool) ($status['enforced'] ?? true),
             'expiresAt' => $status['expires_at'] ?? null,
             'amount' => $status['amount'] ?? 10000,
             'history' => $status['history'] ?? [],

@@ -25,6 +25,17 @@
             </p>
         @endif
 
+        @if (! $enforced)
+            <div data-test="abonnements-libres" class="mb-5 flex items-start gap-3.5 rounded-[16px] border border-[#22A85A]/30 bg-[#F2FBF5] p-5">
+                <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#22A85A]/15 text-[#1C8F4C]"><x-ui.icon name="shield-check" class="size-5" /></span>
+                <div>
+                    <p class="text-[14px] font-bold text-brand">Accès libre pour le moment</p>
+                    <p class="mt-0.5 text-[12.5px] leading-relaxed text-[#5B677A]">Les abonnements ne sont pas encore ouverts : toutes les fonctionnalités de l'espace membre sont accessibles gratuitement. Vous serez prévenu avant leur mise en place.</p>
+                </div>
+            </div>
+        @endif
+
+        @if ($enforced)
         <div class="rounded-[16px] border border-brand/10 bg-white p-6 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
             <div class="flex flex-wrap items-center justify-between gap-4">
                 <div class="flex items-center gap-3.5">
@@ -65,6 +76,7 @@
 
             <p class="mt-4 text-[11.5px] text-[#9AA6B8]">Paiement sécurisé via CinetPay — Wave, Orange Money, MTN Money, Moov Money ou carte bancaire.</p>
         </div>
+        @endif
 
         @if (! empty($history))
             <div class="mt-6 rounded-[16px] border border-brand/10 bg-white p-6 shadow-[0_2px_8px_rgba(3,29,89,.05)]">

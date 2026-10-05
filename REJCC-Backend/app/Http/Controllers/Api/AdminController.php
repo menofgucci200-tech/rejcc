@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Support\SubscriptionMode;
 use App\Http\Controllers\Controller;
 use App\Models\Contact;
 use App\Models\Document;
@@ -140,7 +141,7 @@ class AdminController extends Controller
                 'code' => $u->cardCode(),
                 'domaines_formation' => $domaines[$u->email] ?? null,
                 'created_at' => $u->created_at,
-                'abonnement_actif' => $u->hasActiveSubscription(),
+                'abonnement_actif' => $u->hasPaidSubscription(),
                 'abonnement_expire_le' => $u->subscription_expires_at?->toDateString(),
             ];
         });
@@ -224,7 +225,7 @@ class AdminController extends Controller
                 'role_label' => $user->roleLabel(),
                 'date_naissance' => $user->date_naissance?->toDateString(),
                 'date_adhesion' => $user->created_at?->toDateString(),
-                'abonnement_actif' => $user->hasActiveSubscription(),
+                'abonnement_actif' => $user->hasPaidSubscription(),
                 'abonnement_expire_le' => $user->subscription_expires_at?->toDateString(),
             ],
             'application' => $application,
@@ -445,5 +446,33 @@ class AdminController extends Controller
         }
         $partnership->fill($validator->validated())->save();
         return response()->json(['ok' => true]);
+    }
+
+    /** GET /admin/subscription-mode — état de l'interrupteur des abonnements et chiffres utiles. */
+    public function subscriptionMode()
+    {
+        $membres = User::where('role', 'member');
+
+        return response()->json([
+            'ok' => true,
+            'enforced' => SubscriptionMode::enforced(),
+            'changed_at' => \App\Models\SiteSetting::where('key', 'subscription.enforced_changed_at')->value('value'),
+            'membres' => (clone $membres)->count(),
+            'abonnes' => (clone $membres)->whereNotNull('subscription_expires_at')->where('subscription_expires_at', '>', now())->count(),
+        ]);
+    }
+
+    /** PUT /admin/subscription-mode {enforced: bool} — active ou désactive les abonnements obligatoires. */
+    public function updateSubscriptionMode(Request $request)
+    {
+        $validator = Validator::make($request->all(), ['enforced' => 'required|boolean']);
+
+        if ($validator->fails()) {
+            return response()->json(['ok' => false, 'message' => $validator->errors()->first()], 422);
+        }
+
+        SubscriptionMode::set($request->boolean('enforced'));
+
+        return $this->subscriptionMode();
     }
 }

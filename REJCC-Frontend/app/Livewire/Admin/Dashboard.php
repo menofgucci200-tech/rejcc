@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Support\AdminSections;
 use App\Support\Api;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
@@ -15,6 +16,22 @@ class Dashboard extends Component
     public function setPeriode(int $mois): void
     {
         $this->periode = $mois;
+    }
+
+    public ?string $messageAbonnements = null;
+
+    /** Interrupteur général : abonnements obligatoires (restrictions) ou accès libre. */
+    public function basculerAbonnements(bool $obligatoires): void
+    {
+        if (! AdminSections::allowed(session('api_user'), 'membres')) {
+            return;
+        }
+
+        $result = Api::put('/admin/subscription-mode', ['enforced' => $obligatoires], Api::token());
+
+        $this->messageAbonnements = ($result['ok'] ?? false)
+            ? ($obligatoires ? 'Abonnements activés : les restrictions s\'appliquent.' : 'Abonnements désactivés : tous les membres accèdent à tout.')
+            : ($result['message'] ?? 'Une erreur est survenue.');
     }
 
     public function render()
@@ -67,7 +84,16 @@ class Dashboard extends Component
             ])
             ->all();
 
+        $modeAbonnements = Api::get('/admin/subscription-mode', [], Api::token());
+
         return view('livewire.admin.dashboard', [
+            'abonnements' => [
+                'obligatoires' => (bool) ($modeAbonnements['enforced'] ?? false),
+                'membres' => (int) ($modeAbonnements['membres'] ?? 0),
+                'abonnes' => (int) ($modeAbonnements['abonnes'] ?? 0),
+                'depuis' => ! empty($modeAbonnements['changed_at']) ? \Carbon\Carbon::parse($modeAbonnements['changed_at'])->translatedFormat('j F Y \à H\hi') : null,
+                'modifiable' => AdminSections::allowed(session('api_user'), 'membres'),
+            ],
             'cards' => $cards,
             'mois' => $mois,
             'enAttente' => $enAttente,
