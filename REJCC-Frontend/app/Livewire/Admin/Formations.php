@@ -66,6 +66,40 @@ class Formations extends Component
     /** [{nom, url, taille}] */
     public array $moduleRessources = [];
 
+    /** Quiz de validation : [{question, choix: [...], bonne: index}] */
+    public array $moduleQuiz = [];
+
+    public function ajouterQuestion(): void
+    {
+        if (count($this->moduleQuiz) < 20) {
+            $this->moduleQuiz[] = ['question' => '', 'choix' => ['', ''], 'bonne' => 0];
+        }
+    }
+
+    public function retirerQuestion(int $i): void
+    {
+        unset($this->moduleQuiz[$i]);
+        $this->moduleQuiz = array_values($this->moduleQuiz);
+    }
+
+    public function ajouterChoix(int $i): void
+    {
+        if (count($this->moduleQuiz[$i]['choix'] ?? []) < 6) {
+            $this->moduleQuiz[$i]['choix'][] = '';
+        }
+    }
+
+    public function retirerChoix(int $i, int $c): void
+    {
+        if (count($this->moduleQuiz[$i]['choix'] ?? []) > 2) {
+            unset($this->moduleQuiz[$i]['choix'][$c]);
+            $this->moduleQuiz[$i]['choix'] = array_values($this->moduleQuiz[$i]['choix']);
+            if ((int) $this->moduleQuiz[$i]['bonne'] >= count($this->moduleQuiz[$i]['choix'])) {
+                $this->moduleQuiz[$i]['bonne'] = 0;
+            }
+        }
+    }
+
     public function updatedModuleVideoFile(): void
     {
         $this->validate(['moduleVideoFile' => 'file|max:102400|mimes:mp4,webm,mov,m4v'], [
@@ -233,7 +267,7 @@ class Formations extends Component
 
     public function openModuleCreate(): void
     {
-        $this->reset(['moduleEditingId', 'moduleTitre', 'moduleDescription', 'moduleVideoUrl', 'moduleDocumentUrl', 'moduleDuree', 'moduleContenu', 'moduleRessources']);
+        $this->reset(['moduleEditingId', 'moduleTitre', 'moduleDescription', 'moduleVideoUrl', 'moduleDocumentUrl', 'moduleDuree', 'moduleContenu', 'moduleRessources', 'moduleQuiz']);
         $this->moduleOrdre = $this->modules()->count() + 1;
         $this->resetValidation();
         $this->moduleFormOpen = true;
@@ -253,6 +287,11 @@ class Formations extends Component
         $this->moduleDocumentUrl = $m['document_url'] ?? '';
         $this->moduleContenu = $m['contenu'] ?? '';
         $this->moduleRessources = array_values((array) ($m['ressources'] ?? []));
+        $this->moduleQuiz = array_map(fn ($q) => [
+            'question' => (string) ($q['question'] ?? ''),
+            'choix' => array_values(array_map('strval', (array) ($q['choix'] ?? ['', '']))),
+            'bonne' => (int) ($q['bonne'] ?? 0),
+        ], array_values((array) ($m['quiz'] ?? [])));
         $this->moduleDuree = $m['duree'] ?? '';
         $this->moduleOrdre = (int) $m['ordre'];
         $this->resetValidation();
@@ -271,12 +310,17 @@ class Formations extends Component
             'moduleTitre' => 'required|string|min:2|max:200',
             'moduleDescription' => 'nullable|string|max:2000',
             'moduleContenu' => 'nullable|string|max:50000',
+            'moduleQuiz' => 'array|max:20',
+            'moduleQuiz.*.question' => 'required|string|min:3|max:400',
+            'moduleQuiz.*.choix' => 'array|min:2|max:6',
+            'moduleQuiz.*.choix.*' => 'required|string|max:250',
             'moduleVideoUrl' => 'nullable|url|max:500',
             'moduleDocumentUrl' => 'nullable|url|max:500',
             'moduleDuree' => 'nullable|string|max:50',
             'moduleOrdre' => 'integer|min:0|max:1000',
         ], [], [
             'moduleTitre' => 'titre', 'moduleVideoUrl' => 'lien vidéo', 'moduleDocumentUrl' => 'lien document',
+            'moduleQuiz.*.question' => 'question du quiz', 'moduleQuiz.*.choix.*' => 'réponse proposée',
         ]);
 
         $data = [
@@ -286,6 +330,7 @@ class Formations extends Component
             'document_url' => $this->moduleDocumentUrl ?: null,
             'contenu' => $this->moduleContenu ?: null,
             'ressources' => $this->moduleRessources,
+            'quiz' => $this->moduleQuiz,
             'duree' => $this->moduleDuree ?: null,
             'ordre' => $this->moduleOrdre,
         ];

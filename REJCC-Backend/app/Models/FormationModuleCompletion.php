@@ -9,7 +9,7 @@ class FormationModuleCompletion extends Model
 {
     public $timestamps = false;
 
-    protected $fillable = ['formation_enrollment_id', 'formation_module_id', 'completed_at'];
+    protected $fillable = ['formation_enrollment_id', 'formation_module_id', 'completed_at', 'quiz_score'];
 
     protected function casts(): array
     {

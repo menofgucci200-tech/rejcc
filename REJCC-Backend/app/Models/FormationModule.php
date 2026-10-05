@@ -8,9 +8,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class FormationModule extends Model
 {
-    protected $fillable = ['formation_id', 'titre', 'description', 'contenu', 'video_url', 'document_url', 'ressources', 'duree', 'ordre'];
+    protected $fillable = ['formation_id', 'titre', 'description', 'contenu', 'video_url', 'document_url', 'ressources', 'quiz', 'duree', 'ordre'];
 
-    protected $casts = ['ressources' => 'array'];
+    protected $casts = ['ressources' => 'array', 'quiz' => 'array'];
 
     public function formation(): BelongsTo
     {

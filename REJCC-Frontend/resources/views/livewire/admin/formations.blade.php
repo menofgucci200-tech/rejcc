@@ -152,6 +152,37 @@
                                         <span wire:loading wire:target="moduleRessourceFiles" class="ml-1 text-[11px] font-semibold text-azure">Envoi…</span>
                                         @error('moduleRessourceFiles.*') <span class="block text-xs text-accent">{{ $message }}</span> @enderror
                                     </div>
+                                    <div class="sm:col-span-2" data-test="editeur-quiz">
+                                        <div class="mb-1.5 flex items-center justify-between">
+                                            <label class="text-xs font-semibold text-[#5B677A]">Quiz de validation (facultatif) — le membre doit le réussir pour valider le module</label>
+                                            <button type="button" wire:click="ajouterQuestion" class="text-[11.5px] font-bold text-azure hover:underline">+ Question</button>
+                                        </div>
+                                        @foreach ($moduleQuiz as $qi => $q)
+                                            <div wire:key="quiz-{{ $qi }}" class="mb-2 rounded-[10px] border border-brand/10 bg-cloud/40 p-3">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="text-[11px] font-bold text-[#9AA6B8]">Q{{ $qi + 1 }}</span>
+                                                    <input wire:model="moduleQuiz.{{ $qi }}.question" type="text" placeholder="Intitulé de la question" class="min-w-0 flex-1 rounded-[8px] border border-brand/15 bg-white px-2.5 py-1.5 text-[12.5px] outline-none focus:border-azure" />
+                                                    <button type="button" wire:click="retirerQuestion({{ $qi }})" class="text-[11px] font-semibold text-accent hover:underline">Retirer</button>
+                                                </div>
+                                                @error("moduleQuiz.{$qi}.question") <span class="mt-1 block text-xs text-accent">{{ $message }}</span> @enderror
+                                                <div class="mt-2 flex flex-col gap-1.5 pl-6">
+                                                    @foreach ($q['choix'] as $ci => $choix)
+                                                        <div wire:key="quiz-{{ $qi }}-{{ $ci }}" class="flex items-center gap-2">
+                                                            <input type="radio" wire:model="moduleQuiz.{{ $qi }}.bonne" name="bonne-{{ $qi }}" value="{{ $ci }}" title="Bonne réponse" class="accent-[#22A85A]">
+                                                            <input wire:model="moduleQuiz.{{ $qi }}.choix.{{ $ci }}" type="text" placeholder="Réponse {{ $ci + 1 }}" class="min-w-0 flex-1 rounded-[8px] border border-brand/15 bg-white px-2.5 py-1 text-[12px] outline-none focus:border-azure" />
+                                                            @if (count($q['choix']) > 2)
+                                                                <button type="button" wire:click="retirerChoix({{ $qi }}, {{ $ci }})" class="text-[#9AA6B8] hover:text-accent" aria-label="Retirer la réponse"><x-ui.icon name="x" class="size-3.5" /></button>
+                                                            @endif
+                                                        </div>
+                                                    @endforeach
+                                                    @if (count($q['choix']) < 6)
+                                                        <button type="button" wire:click="ajouterChoix({{ $qi }})" class="w-fit text-[11px] font-semibold text-azure hover:underline">+ Réponse</button>
+                                                    @endif
+                                                    <p class="text-[10.5px] text-[#9AA6B8]">Cochez le rond de la bonne réponse.</p>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
                                     <div>
                                         <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Durée (ex : 15 min)</label>
                                         <input wire:model="moduleDuree" type="text" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
@@ -170,11 +201,14 @@
                                     <div class="min-w-0 flex-1">
                                         <p class="truncate text-[12.5px] font-bold text-brand">{{ $m['titre'] }}</p>
                                         <p class="truncate text-[11px] text-[#9AA6B8]">
-                                            @if ($m['contenu'] ?? null) Leçon · @endif
-                                            @if ($m['video_url']) Vidéo @endif
-                                            @if ($m['document_url']) · Document @endif
-                                            @if (! empty($m['ressources'])) · {{ count($m['ressources']) }} ressource(s) @endif
-                                            @if ($m['duree']) · {{ $m['duree'] }} @endif
+                                            {{ collect([
+                                                ($m['contenu'] ?? null) ? 'Leçon' : null,
+                                                $m['video_url'] ? 'Vidéo' : null,
+                                                $m['document_url'] ? 'Document' : null,
+                                                ! empty($m['ressources']) ? count($m['ressources']).' ressource(s)' : null,
+                                                ! empty($m['quiz']) ? 'Quiz ('.count($m['quiz']).' q.)' : null,
+                                                $m['duree'] ?: null,
+                                            ])->filter()->join(' · ') }}
                                         </p>
                                     </div>
                                     <button wire:click="openModuleEdit({{ $m['id'] }})" class="icon-btn shrink-0 rounded-lg p-1.5 text-[#9AA6B8] hover:bg-brand/10 hover:text-brand"><x-ui.icon name="pencil" class="size-3.5" /></button>

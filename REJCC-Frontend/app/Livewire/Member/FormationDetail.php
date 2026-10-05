@@ -19,6 +19,12 @@ class FormationDetail extends Component
 
     public ?string $message = null;
 
+    /** Message d'échec (quiz non réussi, ordre…) affiché dans le module ouvert. */
+    public ?string $erreur = null;
+
+    /** Réponses aux quiz : [moduleId => [indexQuestion => indexChoix]]. */
+    public array $reponses = [];
+
     public function mount(int $formationId): void
     {
         $this->formationId = $formationId;
@@ -26,20 +32,29 @@ class FormationDetail extends Component
 
     public function toggleModule(int $moduleId): void
     {
+        $this->erreur = null;
         $this->moduleOuvert = $this->moduleOuvert === $moduleId ? null : $moduleId;
     }
 
     public function validerModule(int $moduleId): void
     {
-        $result = Api::post("/formations/{$this->formationId}/modules/{$moduleId}/complete", [], Api::token());
+        $this->erreur = null;
+        $reponses = array_map('intval', (array) ($this->reponses[$moduleId] ?? []));
+
+        $result = Api::post("/formations/{$this->formationId}/modules/{$moduleId}/complete", ['reponses' => $reponses], Api::token());
 
         if (! ($result['ok'] ?? false)) {
-            $this->message = $result['message'] ?? 'Une erreur est survenue.';
+            // Le module reste ouvert pour relire le contenu et retenter le quiz.
+            $this->erreur = $result['message'] ?? 'Une erreur est survenue.';
+            $this->message = null;
 
             return;
         }
 
-        $this->message = ($result['completed'] ?? false) ? 'Formation terminée, bravo !' : 'Module validé !';
+        $score = $result['quiz_score'] ?? null;
+        $this->message = ($result['completed'] ?? false)
+            ? 'Formation terminée, bravo !'
+            : ($score !== null ? "Quiz réussi ({$score} %) : module validé !" : 'Module validé !');
         $this->moduleOuvert = null;
     }
 

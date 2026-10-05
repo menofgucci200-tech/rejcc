@@ -251,4 +251,38 @@ class FormationTest extends TestCase
         $this->assertSame('https://exemple.ci/modele.xlsx', $vue->json('modules.0.ressources.0.url'));
         $this->assertTrue($vue->json('telechargement_autorise'));
     }
+
+    public function test_un_module_avec_quiz_se_valide_seulement_en_reussissant_le_quiz(): void
+    {
+        $formation = $this->formation(['seuil_reussite' => 70]);
+        $module = $formation->modules()->create(['titre' => 'Module 1', 'ordre' => 1, 'quiz' => [
+            ['question' => 'Q1', 'choix' => ['A', 'B'], 'bonne' => 1],
+            ['question' => 'Q2', 'choix' => ['A', 'B', 'C'], 'bonne' => 2],
+            ['question' => 'Q3', 'choix' => ['A', 'B'], 'bonne' => 0],
+        ]]);
+        $user = User::factory()->create();
+        FormationEnrollment::create(['formation_id' => $formation->id, 'user_id' => $user->id]);
+        $token = $this->tokenFor($user);
+
+        // La clé des réponses n'est jamais envoyée au membre.
+        $quiz = $this->withToken($token)->getJson("/api/formations/{$formation->id}/modules")->json('modules.0.quiz');
+        $this->assertSame(['question' => 'Q1', 'choix' => ['A', 'B']], $quiz[0]);
+
+        $url = "/api/formations/{$formation->id}/modules/{$module->id}/complete";
+        $this->withToken($token)->postJson($url)->assertStatus(422);                                  // sans réponse
+        $this->withToken($token)->postJson($url, ['reponses' => [1, 0, 1]])->assertStatus(422)          // 1/3 = 33 %
+            ->assertJsonPath('quiz.score', 33)->assertJsonPath('quiz.seuil', 70);
+        $this->withToken($token)->postJson($url, ['reponses' => [1, 2, 0]])->assertOk()                 // 3/3
+            ->assertJsonPath('completed', true)->assertJsonPath('quiz_score', 100);
+    }
+
+    public function test_l_admin_ne_peut_pas_enregistrer_un_quiz_incoherent(): void
+    {
+        $token = $this->tokenFor(User::factory()->create(['role' => 'admin']));
+        $formation = $this->formation();
+
+        $this->withToken($token)->postJson("/api/admin/formations/{$formation->id}/modules", [
+            'titre' => 'Module', 'quiz' => [['question' => 'Combien ?', 'choix' => ['Un', 'Deux'], 'bonne' => 5]],
+        ])->assertStatus(422);
+    }
 }

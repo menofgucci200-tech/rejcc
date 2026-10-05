@@ -125,8 +125,38 @@
                                     </div>
                                 @endif
 
-                                @if (! $m['termine'])
+                                @if (! $m['termine'] && $m['quiz_requis'])
+                                    {{-- Quiz de validation : corrigé par le serveur --}}
+                                    <form wire:submit="validerModule({{ $m['id'] }})" class="rounded-xl border border-azure/25 bg-azure/[.04] p-4" data-test="quiz">
+                                        <p class="text-[13px] font-bold text-brand">Quiz de validation</p>
+                                        <p class="mb-3 text-[11.5px] text-[#5B677A]">{{ count($m['quiz']) }} question(s) — il faut au moins {{ $formation['seuil_reussite'] ?? 70 }} % de bonnes réponses pour valider le module.</p>
+                                        <ol class="flex flex-col gap-3.5">
+                                            @foreach ($m['quiz'] as $qi => $q)
+                                                <li wire:key="q-{{ $m['id'] }}-{{ $qi }}">
+                                                    <p class="mb-1.5 text-[13px] font-semibold text-ink">{{ $qi + 1 }}. {{ $q['question'] }}</p>
+                                                    <div class="flex flex-col gap-1.5">
+                                                        @foreach ($q['choix'] as $ci => $choix)
+                                                            <label class="flex cursor-pointer items-center gap-2.5 rounded-lg border border-brand/10 bg-white px-3 py-2 text-[12.5px] text-ink hover:border-azure/40 has-[:checked]:border-azure has-[:checked]:bg-azure/10">
+                                                                <input type="radio" wire:model="reponses.{{ $m['id'] }}.{{ $qi }}" name="q-{{ $m['id'] }}-{{ $qi }}" value="{{ $ci }}" class="accent-[#4F6FBF]">
+                                                                {{ $choix }}
+                                                            </label>
+                                                        @endforeach
+                                                    </div>
+                                                </li>
+                                            @endforeach
+                                        </ol>
+                                        @if ($erreur)
+                                            <p class="mt-3 rounded-lg bg-[#F9E9E9] px-3 py-2 text-[12.5px] font-semibold text-accent" data-test="quiz-echec">{{ $erreur }}</p>
+                                        @endif
+                                        <button type="submit" wire:loading.attr="disabled" data-test="valider-quiz" class="btn-tap mt-3 rounded-full bg-brand px-4 py-2 text-[12.5px] font-bold text-white hover:bg-brand/90 disabled:opacity-60">Valider mes réponses</button>
+                                    </form>
+                                @elseif (! $m['termine'])
+                                    @if ($erreur)
+                                        <p class="mb-2 text-[12.5px] font-semibold text-accent">{{ $erreur }}</p>
+                                    @endif
                                     <button wire:click="validerModule({{ $m['id'] }})" wire:loading.attr="disabled" class="btn-tap rounded-full bg-brand px-4 py-2 text-[12.5px] font-bold text-white hover:bg-brand/90 disabled:opacity-60">Marquer ce module comme terminé</button>
+                                @elseif ($m['quiz_requis'])
+                                    <p class="inline-flex items-center gap-1.5 text-[12.5px] font-bold text-[#22A85A]"><x-ui.icon name="check-circle" class="size-4" /> Quiz réussi — module validé</p>
                                 @endif
                             </div>
                         @endif

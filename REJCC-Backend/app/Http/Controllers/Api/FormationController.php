@@ -7,6 +7,7 @@ use App\Models\Formation;
 use App\Models\FormationEnrollment;
 use App\Models\FormationModule;
 use App\Models\FormationModuleCompletion;
+use App\Support\Quiz;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -132,6 +133,9 @@ class FormationController extends Controller
                     'taille' => $r['taille'] ?? null,
                     'url' => $peutTelecharger ? ($r['url'] ?? null) : null,
                 ])->values() : [],
+                // Quiz de validation : questions sans la bonne réponse.
+                'quiz' => $accessible ? Quiz::forMember($m->quiz) : [],
+                'quiz_requis' => ! empty($m->quiz),
                 'duree' => $m->duree,
                 'termine' => $fait,
                 'verrouille' => ! $debloque,
@@ -145,7 +149,7 @@ class FormationController extends Controller
 
         return response()->json([
             'ok' => true,
-            'formation' => $enrollment->formation->only(['id', 'title', 'category', 'description', 'is_certifying']),
+            'formation' => $enrollment->formation->only(['id', 'title', 'category', 'description', 'is_certifying', 'seuil_reussite']),
             'modules' => $liste,
             'progress' => $enrollment->progress,
             'completed' => $enrollment->completed_at !== null,
@@ -178,10 +182,26 @@ class FormationController extends Controller
             return response()->json(['ok' => false, 'message' => 'Validez les modules dans l\'ordre.'], 422);
         }
 
+        // Module avec quiz : il faut atteindre le seuil de réussite de la formation.
+        $quizScore = null;
+        if (! empty($module->quiz) && ! in_array($moduleId, $completedIds, true)) {
+            $resultat = Quiz::grade($module->quiz, (array) $request->input('reponses', []));
+            $seuil = (int) ($enrollment->formation->seuil_reussite ?? 70);
+
+            if ($resultat['score'] < $seuil) {
+                return response()->json([
+                    'ok' => false,
+                    'quiz' => $resultat + ['seuil' => $seuil, 'reussi' => false],
+                    'message' => "{$resultat['correctes']} bonne(s) réponse(s) sur {$resultat['total']} ({$resultat['score']} %) : il faut au moins {$seuil} %. Revoyez le contenu du module et réessayez.",
+                ], 422);
+            }
+            $quizScore = $resultat['score'];
+        }
+
         FormationModuleCompletion::firstOrCreate([
             'formation_enrollment_id' => $enrollment->id,
             'formation_module_id' => $moduleId,
-        ]);
+        ], ['quiz_score' => $quizScore]);
 
         $total = $modules->count();
         $fait = count($completedIds) + ($prochain ? 1 : 0);
@@ -194,6 +214,7 @@ class FormationController extends Controller
             'ok' => true,
             'progress' => $enrollment->progress,
             'completed' => $enrollment->completed_at !== null,
+            'quiz_score' => $quizScore,
         ]);
     }
 
@@ -267,6 +288,7 @@ class FormationController extends Controller
             'is_published' => 'boolean',
             'media_url' => 'nullable|url|max:500',
             'media_name' => 'nullable|string|max:200',
+            'seuil_reussite' => 'integer|min:50|max:100',
         ]);
 
         if ($validator->fails()) {
@@ -337,13 +359,21 @@ class FormationController extends Controller
             'ressources.*.taille' => 'nullable|string|max:20',
             'duree' => 'nullable|string|max:50',
             'ordre' => 'nullable|integer|min:0|max:1000',
+            ...Quiz::rules('quiz', 20),
         ]);
 
         if ($validator->fails()) {
             return response()->json(['ok' => false, 'message' => $validator->errors()->first()], 422);
         }
+        if ($erreur = Quiz::invalid($request->input('quiz'))) {
+            return response()->json(['ok' => false, 'message' => $erreur], 422);
+        }
 
-        $module->fill($validator->validated())->save();
+        $data = $validator->validated();
+        if (array_key_exists('quiz', $data)) {
+            $data['quiz'] = Quiz::normalize($data['quiz']);
+        }
+        $module->fill($data)->save();
         $formation->syncModulesCount();
 
         return response()->json(['ok' => true, 'module' => $module]);
