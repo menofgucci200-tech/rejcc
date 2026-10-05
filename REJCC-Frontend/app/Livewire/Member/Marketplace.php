@@ -103,6 +103,7 @@ class Marketplace extends Component
         ], [
             'title.required' => 'Donnez un titre à votre annonce.',
             'category.required' => 'Choisissez une catégorie.',
+            'description.required' => 'Décrivez votre offre.',
             'description.min' => 'Décrivez votre offre en quelques phrases (20 caractères minimum).',
         ]);
 
@@ -155,7 +156,7 @@ class Marketplace extends Component
                 if ($this->recherche !== '') {
                     $q = mb_strtolower($this->recherche);
 
-                    return str_contains(mb_strtolower($l['title'].' '.$l['description'].' '.$l['category'].' '.($l['seller']['prenom'] ?? '').' '.($l['seller']['nom'] ?? '')), $q);
+                    return str_contains(mb_strtolower($l['title'].' '.$l['description'].' '.$l['category'].' '.($l['seller']['prenom'] ?? '').' '.($l['seller']['nom'] ?? '').' '.($l['seller']['ville'] ?? '')), $q);
                 }
 
                 return true;
@@ -171,6 +172,7 @@ class Marketplace extends Component
 
         return view('livewire.member.marketplace', [
             'listings' => $listings,
+            'totalCatalogue' => count($data['listings'] ?? []),
             'categories' => $categories,
             'categoriesActives' => $categoriesActives,
             'mesAnnonces' => $mesAnnonces,

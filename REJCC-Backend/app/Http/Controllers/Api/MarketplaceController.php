@@ -25,7 +25,7 @@ class MarketplaceController extends Controller
     public function index()
     {
         $listings = MarketplaceListing::where('statut', 'approuve')
-            ->with('user:id,prenom,nom,ville,telephone')
+            ->with('user:id,prenom,nom,ville,photo,role')
             ->latest()
             ->get()
             ->map(fn ($l) => $this->payload($l));
@@ -55,6 +55,14 @@ class MarketplaceController extends Controller
             'price' => 'nullable|string|max:80',
             'contact' => 'nullable|string|max:60',
             'photo' => 'nullable|url|max:500',
+        ], [
+            'type.required' => 'Choisissez « Service » ou « Produit ».',
+            'title.required' => 'Donnez un titre à votre annonce.',
+            'title.min' => 'Le titre doit faire au moins 3 caractères.',
+            'category.required' => 'Choisissez une catégorie.',
+            'description.required' => 'Décrivez votre offre.',
+            'description.min' => 'Décrivez votre offre en quelques phrases (20 caractères minimum).',
+            'photo.url' => 'Le visuel doit être une image, une vidéo ou un lien valide.',
         ]);
 
         if ($validator->fails()) {
@@ -93,7 +101,7 @@ class MarketplaceController extends Controller
     /** GET /admin/marketplace — toutes les annonces pour modération. */
     public function adminIndex()
     {
-        $listings = MarketplaceListing::with('user:id,prenom,nom,email,ville,telephone')
+        $listings = MarketplaceListing::with('user:id,prenom,nom,email,ville,telephone,photo,role')
             ->orderByRaw("statut = 'en_attente' DESC")
             ->latest()
             ->get()
@@ -170,8 +178,11 @@ class MarketplaceController extends Controller
                 'prenom' => $l->user->prenom,
                 'nom' => $l->user->nom,
                 'ville' => $l->user->ville,
-                'telephone' => $l->user->telephone,
-                ...($withEmail ? ['email' => $l->user->email] : []),
+                'photo' => $l->user->photo,
+                'role' => $l->user->role,
+                // Coordonnées personnelles réservées à l'administration ; les
+                // membres contactent le vendeur par la messagerie.
+                ...($withEmail ? ['email' => $l->user->email, 'telephone' => $l->user->telephone] : []),
             ] : null,
         ];
 
