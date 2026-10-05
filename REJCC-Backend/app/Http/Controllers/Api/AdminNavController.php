@@ -47,6 +47,8 @@ class AdminNavController extends Controller
                 'nombre' => MentorApplication::where('statut', 'en_attente')->count()],
             ['cle' => 'mentorat_retard', 'section' => 'mentors', 'route' => 'admin.mentors', 'libelle' => 'Demandes de mentorat sans réponse (> 7 j)',
                 'nombre' => Mentorship::where('statut', 'en_attente')->where('created_at', '<', now()->subDays(7))->count()],
+            ['cle' => 'avis', 'section' => 'groupes', 'route' => 'admin.groupes', 'libelle' => 'Avis de membres signalés',
+                'nombre' => \App\Models\MemberReview::whereNotNull('signale_at')->where('masque', false)->count()],
         ];
 
         $elements = array_values(array_filter($elements, fn ($e) => $this->autorise($me, $e['section'])));

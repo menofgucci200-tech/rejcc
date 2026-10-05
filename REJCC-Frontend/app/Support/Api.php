@@ -39,9 +39,9 @@ class Api
         return $response->json() ?? ['ok' => false];
     }
 
-    public static function delete(string $path, ?string $token = null): array
+    public static function delete(string $path, ?string $token = null, array $data = []): array
     {
-        $response = static::client($token)->delete($path);
+        $response = static::client($token)->delete($path, $data);
 
         return $response->json() ?? ['ok' => false];
     }

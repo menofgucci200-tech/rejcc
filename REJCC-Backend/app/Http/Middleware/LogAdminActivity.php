@@ -32,6 +32,8 @@ class LogAdminActivity
         'notifications' => 'Notification',
         'partenariats' => 'Partenariat',
         'contacts' => 'Contact',
+        'groups' => 'Groupe sectoriel',
+        'avis' => 'Avis de membre',
     ];
 
     public function handle(Request $request, Closure $next): Response

@@ -175,6 +175,7 @@ Route::middleware('auth.token')->group(function () {
         // Avis des membres sur les professionnels du réseau
         Route::post('/members/{id}/avis', [\App\Http\Controllers\Api\MemberReviewController::class, 'store'])->whereNumber('id');
         Route::delete('/members/{id}/avis', [\App\Http\Controllers\Api\MemberReviewController::class, 'destroy'])->whereNumber('id');
+        Route::post('/avis/{id}/signaler', [\App\Http\Controllers\Api\MemberReviewController::class, 'signaler'])->whereNumber('id');
     });
 
     // Marketplace : consultation libre pour tout membre connecté, publication réservée aux abonnés à jour
@@ -210,6 +211,20 @@ Route::middleware(['auth.token', 'audit.log'])->prefix('admin')->group(function 
         Route::post('/mentorat/attribuer', [\App\Http\Controllers\Api\MentoratAdminController::class, 'attribuer']);
         Route::post('/mentorat/candidatures/{id}/accepter', [\App\Http\Controllers\Api\MentoratAdminController::class, 'accepterCandidature'])->whereNumber('id');
         Route::post('/mentorat/candidatures/{id}/refuser', [\App\Http\Controllers\Api\MentoratAdminController::class, 'refuserCandidature'])->whereNumber('id');
+    });
+
+    // Groupes sectoriels et modération des avis
+    Route::middleware('auth.admin:groupes')->group(function () {
+        Route::get('/groups', [\App\Http\Controllers\Api\GroupAdminController::class, 'index']);
+        Route::post('/groups', [\App\Http\Controllers\Api\GroupAdminController::class, 'store']);
+        Route::put('/groups/{id}', [\App\Http\Controllers\Api\GroupAdminController::class, 'update'])->whereNumber('id');
+        Route::post('/groups/{id}/move', [\App\Http\Controllers\Api\GroupAdminController::class, 'move'])->whereNumber('id');
+        Route::delete('/groups/{id}', [\App\Http\Controllers\Api\GroupAdminController::class, 'destroy'])->whereNumber('id');
+        Route::get('/groups/{id}/members', [\App\Http\Controllers\Api\GroupAdminController::class, 'members'])->whereNumber('id');
+        Route::delete('/groups/{id}/members/{userId}', [\App\Http\Controllers\Api\GroupAdminController::class, 'removeMember'])->whereNumber(['id', 'userId']);
+        Route::get('/avis', [\App\Http\Controllers\Api\GroupAdminController::class, 'avis']);
+        Route::put('/avis/{id}', [\App\Http\Controllers\Api\GroupAdminController::class, 'moderer'])->whereNumber('id');
+        Route::delete('/avis/{id}', [\App\Http\Controllers\Api\GroupAdminController::class, 'supprimerAvis'])->whereNumber('id');
     });
 
     Route::middleware('auth.admin:membres')->group(function () {

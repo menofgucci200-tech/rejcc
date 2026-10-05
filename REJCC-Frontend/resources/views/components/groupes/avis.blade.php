@@ -114,6 +114,15 @@
                         </p>
                         @if ($a['commentaire'])<p class="mt-0.5 text-[12.5px] leading-relaxed text-ink">{{ $a['commentaire'] }}</p>@endif
                     </div>
+                    @if (($a['auteur_id'] ?? 0) !== (\App\Support\Api::user()->id ?? -1))
+                        @if ($a['signale'] ?? false)
+                            <span data-test="avis-signale" class="shrink-0 self-start text-[11px] font-semibold text-[#9AA6B8]">Signalé</span>
+                        @else
+                            <button type="button" data-test="signaler-avis" title="Signaler cet avis à l'administration"
+                                x-on:click="const motif = prompt('Pourquoi signalez-vous cet avis ? (injurieux, faux, hors sujet…)'); if (motif !== null) $wire.signalerAvis({{ $a['id'] }}, motif)"
+                                class="shrink-0 self-start rounded-full px-2 py-0.5 text-[11px] font-semibold text-[#9AA6B8] hover:bg-accent/5 hover:text-accent">Signaler</button>
+                        @endif
+                    @endif
                 </li>
             @endforeach
         </ul>

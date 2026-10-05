@@ -9,8 +9,8 @@ class ExportController extends Controller
 {
     public function download(string $dataset): StreamedResponse
     {
-        // Paramètres de filtrage éventuels (ex. export des participants d'un événement précis).
-        $query = request()->only('event');
+        // Paramètres de filtrage éventuels (participants d'un événement, membres d'un groupe).
+        $query = request()->only('event', 'group');
 
         $result = Api::get('/admin/export/'.rawurlencode($dataset), $query, Api::token());
 

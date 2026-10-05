@@ -39,6 +39,7 @@ class MemberReviewController extends Controller
                 'note' => $r->note,
                 'commentaire' => $r->commentaire,
                 'groupe' => $r->group?->name,
+                'signale' => $r->signale_at !== null,
                 'date' => $r->updated_at?->toIso8601String(),
             ])->values()->all(),
             // Son propre avis, même masqué par la modération (avec l'indication).
@@ -67,14 +68,18 @@ class MemberReviewController extends Controller
             return response()->json(['ok' => false, 'message' => $validator->errors()->first()], 422);
         }
 
-        $avis = MemberReview::updateOrCreate(
-            ['reviewer_id' => $moi->id, 'reviewed_id' => $pro->id],
-            [
-                'note' => (int) $request->input('note'),
-                'commentaire' => trim((string) $request->input('commentaire')) ?: null,
-                'group_id' => $request->input('group_id'),
-            ],
-        );
+        $avis = MemberReview::firstOrNew(['reviewer_id' => $moi->id, 'reviewed_id' => $pro->id]);
+        $avis->fill([
+            'note' => (int) $request->input('note'),
+            'commentaire' => trim((string) $request->input('commentaire')) ?: null,
+            'group_id' => $request->input('group_id'),
+        ]);
+        // Un avis masqué puis corrigé par son auteur redevient visible et
+        // repasse devant la modération.
+        if ($avis->exists && $avis->masque) {
+            $avis->fill(['masque' => false, 'signale_at' => now(), 'signale_par' => null, 'motif_signalement' => 'Avis corrigé par son auteur après masquage']);
+        }
+        $avis->save();
 
         if ($avis->wasRecentlyCreated) {
             MemberNotification::create([
@@ -95,5 +100,28 @@ class MemberReviewController extends Controller
         MemberReview::where('reviewer_id', $request->user()->id)->where('reviewed_id', $id)->delete();
 
         return response()->json(['ok' => true, 'avis' => self::avisDe($id, $request->user()->id)]);
+    }
+
+    /**
+     * POST /avis/{id}/signaler — signaler un avis abusif à l'administration.
+     * L'avis reste visible jusqu'à la décision de la modération.
+     */
+    public function signaler(Request $request, int $id)
+    {
+        $avis = MemberReview::where('masque', false)->find($id);
+        if (! $avis) {
+            return response()->json(['ok' => false, 'message' => 'Avis introuvable.'], 404);
+        }
+        if ($avis->reviewer_id === $request->user()->id) {
+            return response()->json(['ok' => false, 'message' => 'Vous ne pouvez pas signaler votre propre avis.'], 422);
+        }
+
+        $avis->update([
+            'signale_at' => now(),
+            'signale_par' => $request->user()->id,
+            'motif_signalement' => mb_substr(trim((string) $request->input('motif')), 0, 300) ?: null,
+        ]);
+
+        return response()->json(['ok' => true, 'message' => "Merci, l'avis a été signalé à l'administration."]);
     }
 }

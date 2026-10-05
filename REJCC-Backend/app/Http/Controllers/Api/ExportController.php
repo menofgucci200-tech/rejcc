@@ -31,6 +31,7 @@ class ExportController extends Controller
             'evenements' => $this->evenements(),
             'opportunites' => $this->opportunites(),
             'participants' => $this->participants($request->query('event')),
+            'groupes' => $this->groupes($request->query('group')),
             default => null,
         };
 
@@ -158,6 +159,34 @@ class ExportController extends Controller
             'rows' => Opportunity::orderByDesc('created_at')->get()->map(fn ($o) => [
                 $o->title, $o->type, $o->description, $o->contact, $o->deadline?->format('d/m/Y'), $o->created_at?->format('d/m/Y'),
             ])->all(),
+        ];
+    }
+
+    /** Membres des groupes sectoriels (tous, ou d'un seul groupe) avec leur fiche professionnelle. */
+    private function groupes($groupId): array
+    {
+        $query = \App\Models\Group::with(['users' => fn ($q) => $q->orderBy('prenom')->orderBy('nom')])->orderBy('ordre');
+        if ($groupId) {
+            $query->whereKey((int) $groupId);
+        }
+
+        $rows = [];
+        foreach ($query->get() as $g) {
+            foreach ($g->users as $u) {
+                $avis = \App\Models\MemberReview::resume($u->id);
+                $rows[] = [
+                    $g->name, $u->memberNumber(), $u->prenom, $u->nom, $u->email, $u->telephone, $u->ville,
+                    $u->pivot->specialite, implode(', ', json_decode((string) $u->pivot->services, true) ?: []),
+                    $u->pivot->zone, $u->pivot->disponibilites,
+                    $avis['moyenne'] !== null ? str_replace('.', ',', (string) $avis['moyenne']).'/5 ('.$avis['nombre'].')' : '',
+                    $u->is_active ? 'Actif' : 'Suspendu', $u->pivot->created_at?->format('d/m/Y'),
+                ];
+            }
+        }
+
+        return [
+            'columns' => ['Groupe', 'N° membre', 'Prénom', 'Nom', 'Email', 'Téléphone', 'Ville', 'Spécialité', 'Services', "Zone d'intervention", 'Disponibilités', 'Note', 'Statut', 'Rejoint le'],
+            'rows' => $rows,
         ];
     }
 }

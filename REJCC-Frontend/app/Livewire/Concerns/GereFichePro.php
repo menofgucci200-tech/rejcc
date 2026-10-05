@@ -59,4 +59,17 @@ trait GereFichePro
             $this->detail['avis'] = $result['avis'];
         }
     }
+
+    /** Signale un avis abusif à l'administration (il reste visible jusqu'à sa décision). */
+    public function signalerAvis(int $avisId, string $motif = ''): void
+    {
+        $result = Api::post("/avis/{$avisId}/signaler", ['motif' => $motif], Api::token());
+        if (($result['ok'] ?? false) && $this->detail) {
+            foreach ($this->detail['avis']['liste'] ?? [] as $i => $a) {
+                if ($a['id'] === $avisId) {
+                    $this->detail['avis']['liste'][$i]['signale'] = true;
+                }
+            }
+        }
+    }
 }
