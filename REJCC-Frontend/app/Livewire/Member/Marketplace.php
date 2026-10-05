@@ -18,7 +18,11 @@ class Marketplace extends Component
 {
     use HandlesMedia;
 
+    #[Url(except: 'catalogue')]
     public string $onglet = 'catalogue'; // catalogue | mes-annonces
+
+    /** Annonce en cours de modification (null : nouvelle annonce). */
+    public ?int $editingId = null;
 
     public string $recherche = '';
 
@@ -116,7 +120,7 @@ class Marketplace extends Component
             return;
         }
 
-        $this->reset(['type', 'title', 'category', 'description', 'price']);
+        $this->reset(['type', 'title', 'category', 'description', 'price', 'editingId']);
         $this->type = 'service';
         $this->contact = Api::user()->telephone ?? '';
         $this->clearMedia();
@@ -128,6 +132,46 @@ class Marketplace extends Component
     public function closeForm(): void
     {
         $this->showForm = false;
+        $this->editingId = null;
+    }
+
+    /** Ouvre le formulaire pré-rempli pour modifier une de ses annonces. */
+    public function modifier(int $id): void
+    {
+        $l = collect(Api::get('/marketplace/mine', [], Api::token())['listings'] ?? [])->firstWhere('id', $id);
+        if (! $l) {
+            return;
+        }
+        $this->editingId = $id;
+        $this->type = $l['type'];
+        $this->title = $l['title'];
+        $this->category = $l['category'];
+        $this->description = $l['description'];
+        $this->price = (string) ($l['price'] ?? '');
+        $this->contact = (string) ($l['contact'] ?? '');
+        $this->clearMedia();
+        if ($l['photo'] ?? null) {
+            $this->fillMedia($l['photo'], null);
+        }
+        $this->resetValidation();
+        $this->message = null;
+        $this->showForm = true;
+    }
+
+    public function basculerDisponibilite(int $id, bool $disponible): void
+    {
+        $result = Api::post("/marketplace/{$id}/disponibilite", ['disponible' => $disponible], Api::token());
+        $this->message = ($result['ok'] ?? false)
+            ? ($disponible ? 'Annonce remise en ligne.' : 'Annonce marquée « Vendu / indisponible » : elle n\'apparaît plus dans le catalogue.')
+            : ($result['message'] ?? 'Une erreur est survenue.');
+    }
+
+    public function renouveler(int $id): void
+    {
+        $result = Api::post("/marketplace/{$id}/renouveler", [], Api::token());
+        $this->message = ($result['ok'] ?? false)
+            ? 'Annonce renouvelée pour 90 jours.'
+            : ($result['message'] ?? 'Une erreur est survenue.');
     }
 
     public function soumettre(): void
@@ -152,7 +196,7 @@ class Marketplace extends Component
             'description.min' => 'Décrivez votre offre en quelques phrases (20 caractères minimum).',
         ]);
 
-        $result = Api::post('/marketplace', [
+        $donnees = [
             'type' => $this->type,
             'title' => $this->title,
             'category' => $this->category,
@@ -160,7 +204,10 @@ class Marketplace extends Component
             'price' => $this->price ?: null,
             'contact' => $this->contact ?: null,
             'photo' => $this->mediaUrl ?: null,
-        ], Api::token());
+        ];
+        $result = $this->editingId
+            ? Api::put("/marketplace/{$this->editingId}", $donnees, Api::token())
+            : Api::post('/marketplace', $donnees, Api::token());
 
         if (! ($result['ok'] ?? false)) {
             $this->addError('title', $result['message'] ?? 'Une erreur est survenue.');
@@ -168,9 +215,12 @@ class Marketplace extends Component
             return;
         }
 
+        $this->message = $this->editingId
+            ? ($result['message'] ?? 'Modifications enregistrées.')
+            : 'Annonce soumise ! Elle sera visible sur la Marketplace dès validation par l\'administration.';
         $this->showForm = false;
+        $this->editingId = null;
         $this->onglet = 'mes-annonces';
-        $this->message = 'Annonce soumise ! Elle sera visible sur la Marketplace dès validation par l\'administration.';
     }
 
     public function retirer(int $id): void

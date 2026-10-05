@@ -27,7 +27,7 @@ class MarketplaceController extends Controller
     /** GET /marketplace — annonces approuvées, visibles par tous les membres. */
     public function index()
     {
-        $listings = MarketplaceListing::where('statut', 'approuve')
+        $listings = MarketplaceListing::enLigne()
             ->with('user:id,prenom,nom,ville,photo,role')
             ->latest()
             ->get()
@@ -46,7 +46,8 @@ class MarketplaceController extends Controller
     {
         $moi = $request->user();
         $l = MarketplaceListing::with('user')->find($id);
-        if (! $l || ($l->statut !== 'approuve' && $l->user_id !== $moi->id)) {
+        $enLigne = $l && $l->statut === 'approuve' && (! $l->expire_le || $l->expire_le->isFuture());
+        if (! $l || (! $enLigne && $l->user_id !== $moi->id)) {
             return response()->json(['ok' => false, 'message' => "Cette annonce n'est plus disponible."], 404);
         }
 
@@ -81,7 +82,7 @@ class MarketplaceController extends Controller
     public function signaler(Request $request, int $id)
     {
         $moi = $request->user();
-        $l = MarketplaceListing::where('statut', 'approuve')->find($id);
+        $l = MarketplaceListing::enLigne()->find($id);
         if (! $l) {
             return response()->json(['ok' => false, 'message' => "Cette annonce n'est plus disponible."], 404);
         }
@@ -100,10 +101,18 @@ class MarketplaceController extends Controller
     /** GET /marketplace/mine — les annonces du membre connecté, tous statuts. */
     public function mine(Request $request)
     {
+        // Échéances de ses annonces traitées à l'ouverture (en plus de la tâche quotidienne).
+        MarketplaceListing::traiterEcheances($request->user()->id);
+
         $listings = MarketplaceListing::where('user_id', $request->user()->id)
             ->latest()
             ->get()
-            ->map(fn ($l) => $this->payload($l, withStatus: true));
+            ->map(fn ($l) => $this->payload($l, withStatus: true) + [
+                'vues' => $l->vues,
+                'contacts' => $l->contacts,
+                'publie_le' => $l->publie_le?->toIso8601String(),
+                'expire_le' => $l->expire_le?->toIso8601String(),
+            ]);
 
         return response()->json(['ok' => true, 'listings' => $listings]);
     }
@@ -111,23 +120,7 @@ class MarketplaceController extends Controller
     /** POST /marketplace — soumettre une annonce (statut en attente). */
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'type' => 'required|in:service,produit',
-            'title' => 'required|string|min:3|max:120',
-            'category' => 'required|string|max:60',
-            'description' => 'required|string|min:20|max:2000',
-            'price' => 'nullable|string|max:80',
-            'contact' => 'nullable|string|max:60',
-            'photo' => 'nullable|url|max:500',
-        ], [
-            'type.required' => 'Choisissez « Service » ou « Produit ».',
-            'title.required' => 'Donnez un titre à votre annonce.',
-            'title.min' => 'Le titre doit faire au moins 3 caractères.',
-            'category.required' => 'Choisissez une catégorie.',
-            'description.required' => 'Décrivez votre offre.',
-            'description.min' => 'Décrivez votre offre en quelques phrases (20 caractères minimum).',
-            'photo.url' => 'Le visuel doit être une image, une vidéo ou un lien valide.',
-        ]);
+        $validator = $this->validateur($request);
 
         if ($validator->fails()) {
             return response()->json(['ok' => false, 'message' => $validator->errors()->first()], 422);
@@ -147,6 +140,101 @@ class MarketplaceController extends Controller
         ]);
 
         return response()->json(['ok' => true, 'listing' => $this->payload($listing, withStatus: true)]);
+    }
+
+    private function validateur(Request $request)
+    {
+        return Validator::make($request->all(), [
+            'type' => 'required|in:service,produit',
+            'title' => 'required|string|min:3|max:120',
+            'category' => 'required|string|max:60',
+            'description' => 'required|string|min:20|max:2000',
+            'price' => 'nullable|string|max:80',
+            'contact' => 'nullable|string|max:60',
+            'photo' => 'nullable|url|max:500',
+        ], [
+            'type.required' => 'Choisissez « Service » ou « Produit ».',
+            'title.required' => 'Donnez un titre à votre annonce.',
+            'title.min' => 'Le titre doit faire au moins 3 caractères.',
+            'category.required' => 'Choisissez une catégorie.',
+            'description.required' => 'Décrivez votre offre.',
+            'description.min' => 'Décrivez votre offre en quelques phrases (20 caractères minimum).',
+            'photo.url' => 'Le visuel doit être une image, une vidéo ou un lien valide.',
+        ]);
+    }
+
+    /**
+     * PUT /marketplace/{id} — modifier sa propre annonce. Prix et téléphone :
+     * immédiat. Titre, description, visuel, type ou catégorie d'une annonce
+     * en ligne : elle repasse en validation. Une annonce refusée corrigée
+     * est resoumise.
+     */
+    public function update(Request $request, int $id)
+    {
+        $l = MarketplaceListing::where('user_id', $request->user()->id)->find($id);
+        if (! $l) {
+            return response()->json(['ok' => false, 'message' => 'Annonce introuvable.'], 404);
+        }
+        if ($l->statut === 'expiree') {
+            return response()->json(['ok' => false, 'message' => "Renouvelez d'abord cette annonce pour la modifier."], 422);
+        }
+
+        $validator = $this->validateur($request);
+        if ($validator->fails()) {
+            return response()->json(['ok' => false, 'message' => $validator->errors()->first()], 422);
+        }
+        $d = $validator->validated();
+        $d['photo'] = $d['photo'] ?? null;
+        $d['price'] = $d['price'] ?? null;
+        $d['contact'] = $d['contact'] ?? null;
+
+        $contenuModifie = collect(['type', 'title', 'category', 'description', 'photo'])
+            ->contains(fn ($champ) => (string) ($d[$champ] ?? '') !== (string) ($l->{$champ} ?? ''));
+
+        $l->fill($d);
+        $revalidation = false;
+        if ($l->statut === 'refuse' || (in_array($l->statut, ['approuve', 'indisponible'], true) && $contenuModifie)) {
+            $l->statut = 'en_attente';
+            $l->reject_reason = null;
+            $revalidation = true;
+        }
+        $l->save();
+
+        return response()->json([
+            'ok' => true,
+            'revalidation' => $revalidation,
+            'message' => $revalidation
+                ? "Modifications enregistrées : l'annonce repasse en validation avant d'être de nouveau visible."
+                : 'Modifications enregistrées.',
+        ]);
+    }
+
+    /** POST /marketplace/{id}/disponibilite — « Vendu / indisponible » ou remise en ligne. */
+    public function disponibilite(Request $request, int $id)
+    {
+        $l = MarketplaceListing::where('user_id', $request->user()->id)->find($id);
+        if (! $l || ! in_array($l->statut, ['approuve', 'indisponible'], true)) {
+            return response()->json(['ok' => false, 'message' => 'Cette annonce ne peut pas changer de disponibilité.'], 422);
+        }
+        $l->update(['statut' => $request->boolean('disponible') ? 'approuve' : 'indisponible']);
+
+        return response()->json(['ok' => true, 'statut' => $l->statut]);
+    }
+
+    /** POST /marketplace/{id}/renouveler — 90 jours de plus, sans nouvelle validation. */
+    public function renouveler(Request $request, int $id)
+    {
+        $l = MarketplaceListing::where('user_id', $request->user()->id)->find($id);
+        if (! $l || ! in_array($l->statut, ['approuve', 'expiree', 'indisponible'], true) || ! $l->publie_le) {
+            return response()->json(['ok' => false, 'message' => 'Seule une annonce déjà validée peut être renouvelée.'], 422);
+        }
+        $l->update([
+            'statut' => $l->statut === 'expiree' ? 'approuve' : $l->statut,
+            'expire_le' => now()->addDays(MarketplaceListing::DUREE_JOURS),
+            'rappel_expiration_at' => null,
+        ]);
+
+        return response()->json(['ok' => true, 'expire_le' => $l->expire_le->toIso8601String()]);
     }
 
     /** DELETE /marketplace/{id} — retirer sa propre annonce. */
@@ -178,14 +266,17 @@ class MarketplaceController extends Controller
     public function approve(int $id)
     {
         $listing = MarketplaceListing::findOrFail($id);
-        $listing->update(['statut' => 'approuve', 'reject_reason' => null]);
+        $listing->update([
+            'statut' => 'approuve', 'reject_reason' => null,
+            'publie_le' => now(), 'expire_le' => now()->addDays(MarketplaceListing::DUREE_JOURS), 'rappel_expiration_at' => null,
+        ]);
 
         MemberNotification::create([
             'user_id' => $listing->user_id,
             'type' => 'info',
             'title' => 'Votre annonce est en ligne !',
             'body' => "« {$listing->title} » a été validée par l'administration et est maintenant visible sur la Marketplace.",
-            'link' => '/espace-membre/marketplace',
+            'link' => "/espace-membre/marketplace?annonce={$listing->id}",
         ]);
 
         return response()->json(['ok' => true]);
@@ -211,7 +302,7 @@ class MarketplaceController extends Controller
             'type' => 'alert',
             'title' => 'Annonce non retenue',
             'body' => "« {$listing->title} » n'a pas été validée.".($motif ? " Motif : {$motif}" : '').' Vous pouvez la modifier et la soumettre à nouveau.',
-            'link' => '/espace-membre/marketplace',
+            'link' => '/espace-membre/marketplace?onglet=mes-annonces',
         ]);
 
         return response()->json(['ok' => true]);

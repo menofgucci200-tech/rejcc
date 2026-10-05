@@ -2,6 +2,8 @@
     $statutBadge = fn ($s) => match ($s) {
         'approuve' => ['#22A85A', '#EAF6EE', 'En ligne'],
         'refuse' => ['#AC0100', '#F9E9E9', 'Refusée'],
+        'indisponible' => ['#5B677A', '#EEF1F6', 'Vendu / indisponible'],
+        'expiree' => ['#5B677A', '#EEF1F6', 'Expirée'],
         default => ['#F5A623', '#FCF1DD', 'En attente de validation'],
     };
     // Prix saisi en chiffres seuls (« 5000 ») : affiché « 5 000 F ».
@@ -38,8 +40,8 @@
             <div class="panel-enter mb-6 grid grid-cols-1 gap-3.5 rounded-[16px] border border-brand/10 bg-white p-5 shadow-[0_2px_8px_rgba(3,29,89,.05)] sm:grid-cols-2">
                 <div class="flex items-center justify-between sm:col-span-2">
                     <div>
-                        <p class="text-sm font-bold text-brand">Proposer un service ou un produit</p>
-                        <p class="mt-0.5 text-[11.5px] text-[#9AA6B8]">Votre annonce sera examinée par l'administration avant d'apparaître sur la Marketplace.</p>
+                        <p class="text-sm font-bold text-brand">{{ $editingId ? 'Modifier mon annonce' : 'Proposer un service ou un produit' }}</p>
+                        <p class="mt-0.5 text-[11.5px] text-[#9AA6B8]">{{ $editingId ? 'Prix et téléphone : modifiés immédiatement. Titre, description, visuel, type ou catégorie : l\'annonce repasse en validation.' : 'Votre annonce sera examinée par l\'administration avant d\'apparaître sur la Marketplace.' }}</p>
                     </div>
                     <button wire:click="closeForm" class="icon-btn rounded-lg p-1 hover:bg-cloud hover:text-brand"><x-ui.icon name="x" class="size-4 text-[#5B677A]" /></button>
                 </div>
@@ -82,7 +84,7 @@
                 <div class="sm:col-span-2">
                     <x-ui.media-field label="Image ou vidéo de votre service / produit (optionnel)" hint="Ajoutez une photo, une courte vidéo de présentation (20 Mo max), ou collez un lien YouTube/TikTok — un visuel augmente vos chances d'être contacté." :media-url="$mediaUrl" :media-name="$mediaName" :media-size="$mediaSize" />
                 </div>
-                <button wire:click="soumettre" wire:loading.attr="disabled" class="btn-tap rounded-[9px] bg-brand px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-brand/90 hover:shadow-md disabled:opacity-60 sm:col-span-2 sm:w-fit">Soumettre à la validation</button>
+                <button wire:click="soumettre" wire:loading.attr="disabled" class="btn-tap rounded-[9px] bg-brand px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-brand/90 hover:shadow-md disabled:opacity-60 sm:col-span-2 sm:w-fit" data-test="enregistrer-annonce">{{ $editingId ? 'Enregistrer les modifications' : 'Soumettre à la validation' }}</button>
             </div>
         @endif
 
@@ -178,20 +180,52 @@
             @else
                 <div class="space-y-3">
                     @foreach ($mesAnnonces as $l)
-                        @php $b = $statutBadge($l['statut']); @endphp
-                        <article class="card-hover flex flex-wrap items-center gap-4 rounded-[16px] border border-brand/10 bg-white p-4 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                        @php
+                            $b = $statutBadge($l['statut']);
+                            $expire = $l['expire_le'] ? \Illuminate\Support\Carbon::parse($l['expire_le']) : null;
+                            $joursRestants = $expire && $expire->isFuture() ? (int) ceil(now()->diffInHours($expire) / 24) : null;
+                            $renouvelable = in_array($l['statut'], ['approuve', 'indisponible', 'expiree'], true) && ($l['statut'] === 'expiree' || ($joursRestants !== null && $joursRestants <= 7));
+                        @endphp
+                        <article wire:key="mes-{{ $l['id'] }}" data-test="mon-annonce" class="flex flex-wrap items-center gap-4 rounded-[16px] border border-brand/10 bg-white p-4 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
                             <x-ui.media-thumb :url="$l['photo']" mode="thumb" :fallback-icon="$l['type'] === 'produit' ? 'shopping-bag' : 'nav-briefcase'" />
-                            <div class="min-w-[200px] flex-1">
+                            <div class="min-w-[220px] flex-1">
                                 <p class="text-[13.5px] font-bold text-brand">{{ $l['title'] }}</p>
                                 <p class="mt-0.5 text-xs text-[#5B677A]">{{ ucfirst($l['type']) }} · {{ $l['category'] }}@if ($l['price']) · {{ $prix($l['price']) }}@endif</p>
+                                @if (in_array($l['statut'], ['approuve', 'indisponible', 'expiree'], true))
+                                    <p data-test="mon-annonce-stats" class="mt-1 flex flex-wrap gap-x-3 text-[11.5px] text-[#9AA6B8]">
+                                        <span class="inline-flex items-center gap-1"><x-ui.icon name="eye" class="size-3.5" /> {{ $l['vues'] }} vue{{ $l['vues'] > 1 ? 's' : '' }}</span>
+                                        <span class="inline-flex items-center gap-1"><x-ui.icon name="message-circle" class="size-3.5" /> {{ $l['contacts'] }} contact{{ $l['contacts'] > 1 ? 's' : '' }}</span>
+                                        @if ($l['statut'] === 'expiree')
+                                            <span class="font-semibold text-accent">Expirée : plus visible</span>
+                                        @elseif ($joursRestants !== null)
+                                            <span class="{{ $joursRestants <= 7 ? 'font-semibold text-[#B27007]' : '' }}">Expire dans {{ $joursRestants }} jour{{ $joursRestants > 1 ? 's' : '' }}</span>
+                                        @endif
+                                    </p>
+                                @endif
                                 @if ($l['statut'] === 'refuse' && $l['reject_reason'])
                                     <p class="mt-1 text-[11.5px] text-accent">Motif du refus : {{ $l['reject_reason'] }}</p>
                                 @endif
                             </div>
                             <span class="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold" style="color: {{ $b[0] }}; background: {{ $b[1] }}">{{ $b[2] }}</span>
-                            <button wire:click="retirer({{ $l['id'] }})" wire:confirm="Retirer définitivement « {{ $l['title'] }} » de la Marketplace ?" class="icon-btn shrink-0 rounded-lg p-1.5 text-[#9AA6B8] hover:bg-accent/10 hover:text-accent" title="Retirer l'annonce">
-                                <x-ui.icon name="trash-2" class="size-4" />
-                            </button>
+                            <div class="flex shrink-0 flex-wrap items-center gap-1.5">
+                                @if ($renouvelable)
+                                    <button wire:click="renouveler({{ $l['id'] }})" data-test="renouveler" class="btn-tap rounded-full bg-accent px-3 py-1.5 text-[11.5px] font-bold text-white hover:bg-accent-600">Renouveler 90 jours</button>
+                                @endif
+                                @if ($l['statut'] === 'approuve')
+                                    <button wire:click="basculerDisponibilite({{ $l['id'] }}, false)" data-test="marquer-vendu" class="btn-tap rounded-full border border-brand/15 px-3 py-1.5 text-[11.5px] font-bold text-brand hover:bg-cloud">Vendu / indisponible</button>
+                                @elseif ($l['statut'] === 'indisponible')
+                                    <button wire:click="basculerDisponibilite({{ $l['id'] }}, true)" data-test="remettre-en-ligne" class="btn-tap rounded-full border border-[#22A85A]/30 bg-[#22A85A]/10 px-3 py-1.5 text-[11.5px] font-bold text-[#1C8F4C] hover:bg-[#22A85A]/20">Remettre en ligne</button>
+                                @endif
+                                @if ($l['statut'] === 'approuve')
+                                    <button wire:click="voir({{ $l['id'] }})" title="Voir l'annonce" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-brand/10 hover:text-brand"><x-ui.icon name="eye" class="size-4" /></button>
+                                @endif
+                                @if ($l['statut'] !== 'expiree')
+                                    <button wire:click="modifier({{ $l['id'] }})" data-test="modifier-annonce" title="{{ $l['statut'] === 'refuse' ? 'Corriger et resoumettre' : 'Modifier' }}" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-brand/10 hover:text-brand"><x-ui.icon name="pencil" class="size-4" /></button>
+                                @endif
+                                <button wire:click="retirer({{ $l['id'] }})" wire:confirm="Retirer définitivement « {{ $l['title'] }} » de la Marketplace ?" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-accent/10 hover:text-accent" title="Retirer l'annonce">
+                                    <x-ui.icon name="trash-2" class="size-4" />
+                                </button>
+                            </div>
                         </article>
                     @endforeach
                 </div>

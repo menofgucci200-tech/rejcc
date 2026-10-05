@@ -194,6 +194,9 @@ Route::middleware('auth.token')->group(function () {
     Route::middleware('sub.active')->group(function () {
         Route::get('/marketplace/mine', [\App\Http\Controllers\Api\MarketplaceController::class, 'mine']);
         Route::post('/marketplace', [\App\Http\Controllers\Api\MarketplaceController::class, 'store']);
+        Route::put('/marketplace/{id}', [\App\Http\Controllers\Api\MarketplaceController::class, 'update'])->whereNumber('id');
+        Route::post('/marketplace/{id}/disponibilite', [\App\Http\Controllers\Api\MarketplaceController::class, 'disponibilite'])->whereNumber('id');
+        Route::post('/marketplace/{id}/renouveler', [\App\Http\Controllers\Api\MarketplaceController::class, 'renouveler'])->whereNumber('id');
         Route::delete('/marketplace/{id}', [\App\Http\Controllers\Api\MarketplaceController::class, 'destroy']);
     });
 });
