@@ -110,6 +110,8 @@ class FormationDetail extends Component
 
         return view('livewire.member.formation-detail', [
             'ok' => $result['ok'] ?? false,
+            'reserveAbonnes' => ($result['code'] ?? null) === 'subscription_required',
+            'erreurAcces' => $result['message'] ?? null,
             'formation' => $result['formation'] ?? null,
             'modules' => $result['modules'] ?? [],
             'progress' => $result['progress'] ?? 0,

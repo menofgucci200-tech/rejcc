@@ -29,9 +29,12 @@ class Catalogue extends Component
         $this->filtre = $filtre;
     }
 
+    public ?string $erreur = null;
+
     public function inscrire(int $id): void
     {
-        Api::post("/formations/{$id}/enroll", [], Api::token());
+        $result = Api::post("/formations/{$id}/enroll", [], Api::token());
+        $this->erreur = ($result['ok'] ?? false) ? null : ($result['message'] ?? 'Inscription impossible.');
     }
 
     public function render()

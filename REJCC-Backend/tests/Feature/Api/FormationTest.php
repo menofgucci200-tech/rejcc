@@ -334,4 +334,56 @@ class FormationTest extends TestCase
         $this->travel(25)->hours();
         $this->withToken($token)->postJson($examen, ['reponses' => [0]])->assertOk();
     }
+
+    public function test_desinscription_d_une_formation_non_terminee(): void
+    {
+        $formation = $this->formation();
+        $user = User::factory()->create();
+        FormationEnrollment::create(['formation_id' => $formation->id, 'user_id' => $user->id]);
+        $token = $this->tokenFor($user);
+
+        $this->withToken($token)->deleteJson("/api/formations/{$formation->id}/enroll")->assertOk();
+        $this->assertSame([], $this->withToken($token)->getJson('/api/my-formations')->json('formations'));
+
+        // Une formation terminée reste.
+        FormationEnrollment::create(['formation_id' => $formation->id, 'user_id' => $user->id, 'completed_at' => now(), 'progress' => 100]);
+        $this->withToken($token)->deleteJson("/api/formations/{$formation->id}/enroll")->assertStatus(422);
+    }
+
+    public function test_les_formations_sur_adhesion_sont_reservees_aux_abonnes_quand_les_abonnements_sont_actifs(): void
+    {
+        $payante = $this->formation(['is_free' => false]);
+        $nonAbonne = $this->tokenFor(User::factory()->create(['subscription_expires_at' => null]));
+        $abonne = $this->tokenFor(User::factory()->abonne()->create());
+
+        \App\Support\SubscriptionMode::set(true);
+        $this->withToken($nonAbonne)->postJson("/api/formations/{$payante->id}/enroll")->assertStatus(402);
+        $this->withToken($abonne)->postJson("/api/formations/{$payante->id}/enroll")->assertOk();
+
+        \App\Support\SubscriptionMode::set(false);
+        $this->withToken($nonAbonne)->postJson("/api/formations/{$payante->id}/enroll")->assertOk();
+    }
+
+    public function test_ajouter_un_module_recalcule_la_progression_sans_retirer_les_certificats(): void
+    {
+        $formation = $this->formation(['is_certifying' => true]);
+        $m1 = $formation->modules()->create(['titre' => 'Module 1', 'ordre' => 1]);
+        $enCours = User::factory()->create();
+        $termine = User::factory()->create();
+        foreach ([$enCours, $termine] as $u) {
+            FormationEnrollment::create(['formation_id' => $formation->id, 'user_id' => $u->id]);
+        }
+        $this->withToken($this->tokenFor($termine))->postJson("/api/formations/{$formation->id}/modules/{$m1->id}/complete")
+            ->assertJsonPath('completed', true);
+
+        $admin = $this->tokenFor(User::factory()->create(['role' => 'admin']));
+        $this->withToken($admin)->postJson("/api/admin/formations/{$formation->id}/modules", ['titre' => 'Module 2', 'ordre' => 2])->assertOk();
+
+        // Le membre qui avait terminé garde sa formation terminée et son certificat.
+        $this->assertNotNull(FormationEnrollment::where('user_id', $termine->id)->first()->completed_at);
+        $this->assertCount(1, $this->withToken($this->tokenFor($termine))->getJson('/api/my-certificates')->json('certificates'));
+
+        // Le nouveau module apparaît pour celui qui n'avait pas fini (0 sur 2).
+        $this->assertSame(0, FormationEnrollment::where('user_id', $enCours->id)->first()->progress);
+    }
 }

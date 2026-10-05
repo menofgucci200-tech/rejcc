@@ -46,7 +46,7 @@ class FormationController extends Controller
     {
         $formations = FormationEnrollment::with(['formation', 'moduleCompletions'])
             ->where('user_id', $request->user()->id)
-            ->latest()
+            ->latest('updated_at')
             ->get()
             ->filter(fn (FormationEnrollment $e) => $e->formation !== null)
             ->values()
@@ -64,6 +64,9 @@ class FormationController extends Controller
                     'completed' => $e->completed_at !== null,
                     'completed_at' => $e->completed_at?->toDateString(),
                     'module_courant' => $prochain?->titre,
+                    'modules_reels' => $modules->count(),
+                    // Dernière activité (inscription ou module validé) : sert à choisir la formation à reprendre.
+                    'derniere_activite' => $e->updated_at?->toIso8601String(),
                     'examen_a_passer' => ! empty($e->formation->examen) && $e->examen_reussi_at === null
                         && $modules->isNotEmpty() && ! $prochain,
                     // Modules réellement validés (ou, pour une formation sans modules
@@ -85,10 +88,35 @@ class FormationController extends Controller
             return response()->json(['ok' => false, 'message' => 'Formation introuvable.'], 404);
         }
 
+        if (! $formation->is_free && ! $request->user()->hasActiveSubscription()) {
+            return response()->json([
+                'ok' => false,
+                'code' => 'subscription_required',
+                'message' => 'Cette formation est incluse dans l\'abonnement annuel : activez votre abonnement pour la suivre.',
+            ], 402);
+        }
+
         FormationEnrollment::firstOrCreate([
             'formation_id' => $formation->id,
             'user_id' => $request->user()->id,
         ]);
+
+        return response()->json(['ok' => true]);
+    }
+
+    /** Désinscription d'une formation non terminée (une formation terminée reste, avec son certificat). */
+    public function unenroll(Request $request, int $id)
+    {
+        $e = $this->inscription($request, $id);
+        if (! $e) {
+            return response()->json(['ok' => false, 'message' => 'Inscription introuvable.'], 404);
+        }
+        if ($e->completed_at) {
+            return response()->json(['ok' => false, 'message' => 'Une formation terminée ne peut pas être retirée.'], 422);
+        }
+
+        $e->moduleCompletions()->delete();
+        $e->delete();
 
         return response()->json(['ok' => true]);
     }
@@ -107,6 +135,10 @@ class FormationController extends Controller
 
         if (! $enrollment || ! $enrollment->formation) {
             return response()->json(['ok' => false, 'message' => "Vous n'êtes pas inscrit à cette formation."], 404);
+        }
+
+        if (! $enrollment->formation->is_free && ! $request->user()->hasActiveSubscription()) {
+            return response()->json(['ok' => false, 'code' => 'subscription_required', 'message' => 'Cette formation est incluse dans l\'abonnement annuel : activez votre abonnement pour continuer.'], 402);
         }
 
         $modules = $enrollment->formation->modules;
@@ -451,6 +483,7 @@ class FormationController extends Controller
 
         FormationModule::where('formation_id', $id)->where('id', $moduleId)->delete();
         $formation->syncModulesCount();
+        $formation->recalculerProgressions();
 
         return response()->json(['ok' => true]);
     }
@@ -483,8 +516,12 @@ class FormationController extends Controller
         if (array_key_exists('quiz', $data)) {
             $data['quiz'] = Quiz::normalize($data['quiz']);
         }
+        $estNouveau = ! $module->exists;
         $module->fill($data)->save();
         $formation->syncModulesCount();
+        if ($estNouveau) {
+            $formation->recalculerProgressions();
+        }
 
         return response()->json(['ok' => true, 'module' => $module]);
     }

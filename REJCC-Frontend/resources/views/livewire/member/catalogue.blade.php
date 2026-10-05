@@ -14,6 +14,13 @@
             </div>
         </div>
 
+        @if ($erreur)
+            <div data-test="erreur-inscription" class="mb-4 flex flex-wrap items-center gap-3 rounded-[14px] border border-[#F5A623]/40 bg-[#FFF8EC] px-4 py-3 text-[13px] text-brand">
+                <x-ui.icon name="shield" class="size-4 text-[#B97400]" /> <span class="flex-1">{{ $erreur }}</span>
+                <a href="{{ route('espace-membre.abonnement') }}" wire:navigate class="font-bold text-accent hover:underline">Activer mon abonnement</a>
+            </div>
+        @endif
+
         @if (trim($q) !== '')
             <div data-test="filtre-recherche" class="mb-4 flex flex-wrap items-center gap-2 text-[13px] text-[#5B677A]">
                 <x-ui.icon name="search" class="size-4" />

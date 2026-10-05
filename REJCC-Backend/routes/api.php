@@ -108,6 +108,7 @@ Route::middleware('auth.token')->group(function () {
     Route::get('/formations', [FormationController::class, 'catalogue']);
     Route::get('/my-formations', [FormationController::class, 'mine']);
     Route::post('/formations/{id}/enroll', [FormationController::class, 'enroll']);
+    Route::delete('/formations/{id}/enroll', [FormationController::class, 'unenroll']);
     Route::post('/formations/{id}/complete-module', [FormationController::class, 'completeModule']);
     Route::get('/formations/{id}/modules', [FormationController::class, 'modules']);
     Route::post('/formations/{id}/modules/{moduleId}/complete', [FormationController::class, 'completeFormationModule']);

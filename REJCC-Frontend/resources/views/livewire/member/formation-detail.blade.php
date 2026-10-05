@@ -8,7 +8,9 @@
             </a>
         </div>
 
-        @if (! $ok)
+        @if (! $ok && $reserveAbonnes)
+            <x-member-light.paywall :description="$erreurAcces" />
+        @elseif (! $ok)
             <p class="mt-6 rounded-[16px] border border-brand/10 bg-white py-10 text-center text-sm text-[#5B677A]">Vous n'êtes pas inscrit à cette formation.</p>
         @else
             <div class="mb-5">

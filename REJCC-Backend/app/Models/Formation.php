@@ -40,4 +40,31 @@ class Formation extends Model
             $this->update(['modules_count' => $count]);
         }
     }
+
+    /**
+     * Après l'ajout ou la suppression d'un module : recalcule la progression
+     * des membres inscrits. Une formation déjà terminée le reste (le certificat
+     * obtenu n'est pas retiré) ; les autres avancent ou se terminent selon les
+     * modules réellement validés (et l'examen final, s'il existe).
+     */
+    public function recalculerProgressions(): void
+    {
+        $ids = $this->modules()->pluck('id');
+        $total = $ids->count();
+        if ($total === 0) {
+            return;
+        }
+
+        FormationEnrollment::with(['moduleCompletions', 'formation'])
+            ->where('formation_id', $this->id)
+            ->whereNull('completed_at')
+            ->get()
+            ->each(function (FormationEnrollment $e) use ($ids, $total) {
+                $fait = $e->moduleCompletions->pluck('formation_module_id')->intersect($ids)->count();
+                $e->update([
+                    'progress' => (int) round($fait * 100 / $total),
+                    'completed_at' => $fait >= $total && $e->examenValide() ? now() : null,
+                ]);
+            });
+    }
 }

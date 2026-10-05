@@ -100,10 +100,10 @@ class Dashboard extends Component
             ? (int) round($formations->avg(fn ($f) => $f['completed'] ? 100 : (int) $f['progress']))
             : 0;
 
-        // Formation à reprendre : la première en cours (progression la plus avancée).
+        // Formation à reprendre : la plus récemment suivie (comme « Mes formations »).
         $continuer = $formations
             ->reject(fn ($f) => $f['completed'])
-            ->sortByDesc('progress')
+            ->sortByDesc(fn ($f) => $f['derniere_activite'] ?? '')
             ->map(function (array $f) {
                 $modules = max(1, (int) $f['modules_count']);
                 $moduleCourant = min($modules, (int) ceil($f['progress'] / 100 * $modules) + 1);
