@@ -243,6 +243,35 @@ class GroupController extends Controller
         ]);
     }
 
+    /**
+     * GET /groups/{id}/apercu — ce que contient un groupe, pour les membres
+     * non abonnés : chiffres et services les plus proposés, sans aucune
+     * donnée personnelle (le trombinoscope reste réservé aux abonnés).
+     */
+    public function apercu(Request $request, int $id)
+    {
+        $group = Group::with('referent:id,prenom,nom,photo,role')->find($id);
+        if (! $group) {
+            return response()->json(['ok' => false, 'message' => 'Groupe introuvable.'], 404);
+        }
+
+        $membres = $this->visibles($group->users())->get(['users.id', 'users.ville']);
+        $ids = $membres->pluck('id');
+        $services = $membres->flatMap(fn (User $u) => json_decode((string) $u->pivot->services, true) ?: [])
+            ->map(fn ($s) => \Illuminate\Support\Str::ucfirst(mb_strtolower(trim($s))))->filter()
+            ->countBy()->sortDesc()->keys()->take(8)->values();
+        $avis = MemberReview::whereIn('reviewed_id', $ids)->where('masque', false);
+
+        return response()->json(['ok' => true, 'apercu' => [
+            'group' => $this->identite($group, $request->user(), false) + ['description' => $group->description],
+            'membres' => $ids->count(),
+            'villes' => $membres->pluck('ville')->filter()->unique()->count(),
+            'avis' => (clone $avis)->count(),
+            'note_moyenne' => (clone $avis)->count() ? round((float) (clone $avis)->avg('note'), 1) : null,
+            'services' => $services,
+        ]]);
+    }
+
     /** Trombinoscope du groupe : liste des membres avec leur spécialité (réservé aux abonnés). */
     public function members(Request $request, int $id)
     {

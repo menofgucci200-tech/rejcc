@@ -60,7 +60,10 @@ class GroupeMembres extends Component
     public function render()
     {
         if (! (Api::user()->subscription_active ?? false)) {
-            return view('livewire.member.groupe-membres', ['locked' => true, 'members' => collect(), 'meta' => [], 'groupe' => null]);
+            // Aperçu sans données personnelles : chiffres et services proposés.
+            $apercu = Api::get("/groups/{$this->groupId}/apercu", [], Api::token())['apercu'] ?? null;
+
+            return view('livewire.member.groupe-membres', ['locked' => true, 'apercu' => $apercu, 'members' => collect(), 'meta' => [], 'groupe' => $apercu['group'] ?? null]);
         }
 
         $params = ['page' => $this->page, 'tri' => $this->tri];

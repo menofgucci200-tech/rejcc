@@ -98,4 +98,22 @@ class GroupSearchTest extends TestCase
         $this->assertSame(2, $res['total']);
         $this->assertSame([], $res['members']);
     }
+
+    public function test_apercu_d_un_groupe_sans_donnees_personnelles(): void
+    {
+        SubscriptionMode::set(true);
+        $token = $this->tokenFor(User::factory()->create(['role' => 'member']));
+
+        $this->withToken($token)->getJson('/api/groups/8/members')->assertStatus(402);
+
+        $apercu = $this->withToken($token)->getJson('/api/groups/8/apercu')->assertOk()->json('apercu');
+        $this->assertSame('BTP & Construction', $apercu['group']['name']);
+        $this->assertSame(3, $apercu['membres']);
+        $this->assertSame(1, $apercu['villes']);
+        $this->assertSame(3, $apercu['avis']);
+        $this->assertEqualsWithDelta(4.3, $apercu['note_moyenne'], 0.01);
+        $this->assertContains('Pose de chauffe-eau', $apercu['services']);
+        $this->assertNull($apercu['group']['whatsapp']);
+        $this->assertStringNotContainsString('Esther', json_encode($apercu));
+    }
 }
