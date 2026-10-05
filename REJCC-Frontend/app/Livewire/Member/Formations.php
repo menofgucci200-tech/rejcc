@@ -19,11 +19,6 @@ class Formations extends Component
         $this->filtre = $filtre;
     }
 
-    public function validerModule(int $id): void
-    {
-        Api::post("/formations/{$id}/complete-module", [], Api::token());
-    }
-
     protected function cours(): Collection
     {
         return Collection::make(Api::get('/my-formations', [], Api::token())['formations'] ?? [])

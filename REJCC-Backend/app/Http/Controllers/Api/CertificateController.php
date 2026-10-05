@@ -49,8 +49,7 @@ class CertificateController extends Controller
     private function completedCertifying()
     {
         return FormationEnrollment::with('formation')
-            ->whereNotNull('completed_at')
-            ->whereHas('formation', fn ($q) => $q->where('is_certifying', true))
+            ->certificats()
             ->orderByDesc('completed_at');
     }
 

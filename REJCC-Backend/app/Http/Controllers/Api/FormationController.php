@@ -182,7 +182,7 @@ class FormationController extends Controller
         ]);
     }
 
-    /** Valide le module en cours (formations « legacy » sans contenu réel — simple compteur). */
+    /** Ancien compteur de modules (formations sans contenu) : désactivé, la validation passe par les modules. */
     public function completeModule(Request $request, int $id)
     {
         $enrollment = FormationEnrollment::with('formation')
@@ -194,25 +194,13 @@ class FormationController extends Controller
             return response()->json(['ok' => false, 'message' => 'Inscription introuvable.'], 404);
         }
 
+        // Plus de validation « au clic » : une formation se suit et se valide
+        // uniquement à travers ses modules (contenu, quiz, examen) sur la plateforme.
         if ($enrollment->formation->modules()->exists()) {
             return response()->json(['ok' => false, 'message' => 'Cette formation utilise désormais des modules détaillés.'], 422);
         }
 
-        if ($enrollment->completed_at === null) {
-            $modules = max(1, (int) $enrollment->formation->modules_count);
-            $fait = min($modules, (int) round($enrollment->progress * $modules / 100) + 1);
-
-            $enrollment->update([
-                'progress' => (int) round($fait * 100 / $modules),
-                'completed_at' => $fait >= $modules ? now() : null,
-            ]);
-        }
-
-        return response()->json([
-            'ok' => true,
-            'progress' => $enrollment->progress,
-            'completed' => $enrollment->completed_at !== null,
-        ]);
+        return response()->json(['ok' => false, 'message' => 'Le contenu de cette formation est en préparation : elle ne peut pas encore être validée.'], 422);
     }
 
     // ------------------------------------------------------------------
@@ -221,7 +209,7 @@ class FormationController extends Controller
 
     public function index()
     {
-        $formations = Formation::withCount('enrollments')
+        $formations = Formation::withCount(['enrollments', 'modules as modules_reels_count'])
             ->orderBy('category')->orderBy('title')
             ->get();
 

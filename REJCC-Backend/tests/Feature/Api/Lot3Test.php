@@ -40,6 +40,10 @@ class Lot3Test extends TestCase
         $certifiante = Formation::create(['title' => 'Leadership', 'category' => 'Leadership', 'is_certifying' => true, 'modules_count' => 2]);
         $simple = Formation::create(['title' => 'Productivité', 'category' => 'Productivité', 'is_certifying' => false, 'modules_count' => 2]);
 
+        // Un certificat suppose un vrai contenu : la formation a au moins un module.
+        $certifiante->modules()->create(['titre' => 'Module 1', 'ordre' => 1]);
+        $sansContenu = Formation::create(['title' => 'Sans contenu', 'category' => 'Finance', 'is_certifying' => true, 'modules_count' => 3]);
+        FormationEnrollment::create(['formation_id' => $sansContenu->id, 'user_id' => $user->id, 'progress' => 100, 'completed_at' => now()]);
         FormationEnrollment::create(['formation_id' => $certifiante->id, 'user_id' => $user->id, 'progress' => 100, 'completed_at' => now()]);
         FormationEnrollment::create(['formation_id' => $simple->id, 'user_id' => $user->id, 'progress' => 100, 'completed_at' => now()]);
 

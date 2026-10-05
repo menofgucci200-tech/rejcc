@@ -48,9 +48,7 @@ class AdminController extends Controller
                 'partenariats_attente' => PartnershipRequest::where('statut', 'nouveau')->count(),
                 'marketplace_attente' => \App\Models\MarketplaceListing::where('statut', 'en_attente')->count(),
                 'formations' => \App\Models\Formation::where('is_published', true)->count(),
-                'certificats' => FormationEnrollment::whereNotNull('completed_at')
-                    ->whereHas('formation', fn ($q) => $q->where('is_certifying', true))
-                    ->count(),
+                'certificats' => FormationEnrollment::certificats()->count(),
                 'projets' => \App\Models\Project::count(),
                 'croissance' => $croissance,
             ],

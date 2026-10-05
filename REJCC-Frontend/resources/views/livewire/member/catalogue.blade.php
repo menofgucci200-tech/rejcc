@@ -40,6 +40,9 @@
                             @endif
                         </div>
                         <p class="mb-2 text-[13.5px] font-bold leading-snug text-brand">{{ $c['titre'] }}</p>
+                        @unless ($c['has_modules'])
+                            <p class="mb-2 inline-flex items-center gap-1 rounded-full bg-cloud px-2 py-0.5 text-[10.5px] font-semibold text-[#5B677A]"><x-ui.icon name="clock" class="size-3" /> Contenu en préparation</p>
+                        @endunless
                         <div class="mb-3 flex items-center gap-3 text-xs text-[#9AA6B8]">
                             <span class="inline-flex items-center gap-1"><x-ui.icon name="clock" class="size-3" /> {{ $c['duree'] }}</span>
                             <span class="inline-flex items-center gap-1"><x-ui.icon name="target" class="size-3" /> {{ $c['niveau'] }}</span>

@@ -254,6 +254,8 @@ class Formations extends Component
                 'duree' => $f['duration'] ?? '—',
                 'inscrits' => (int) ($f['enrollments_count'] ?? 0),
                 'publiee' => (bool) $f['is_published'],
+                'sansContenu' => (int) ($f['modules_reels_count'] ?? 0) === 0,
+                'certifiante' => (bool) ($f['is_certifying'] ?? false),
                 'visuel' => "linear-gradient(135deg, {$palette['from']}, {$palette['to']})",
             ];
         });

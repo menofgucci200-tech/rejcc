@@ -32,8 +32,7 @@ class MemberProfile
 
         $certificats = FormationEnrollment::with('formation:id,title,category,is_certifying')
             ->where('user_id', $user->id)
-            ->whereNotNull('completed_at')
-            ->whereHas('formation', fn ($q) => $q->where('is_certifying', true))
+            ->certificats()
             ->orderByDesc('completed_at')
             ->get()
             ->map(fn (FormationEnrollment $e) => [

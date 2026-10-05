@@ -66,6 +66,11 @@
                         <div class="min-w-[180px] flex-1">
                             <p class="text-[13.5px] font-bold text-brand">{{ $f['titre'] }}</p>
                             <p class="text-xs text-[#5B677A]">{{ $f['categorie'] }} · {{ $f['duree'] }}</p>
+                            @if ($f['sansContenu'])
+                                <p data-test="alerte-sans-contenu" class="mt-1 inline-flex items-center gap-1 rounded-full bg-[#F5A623]/15 px-2 py-0.5 text-[10.5px] font-bold text-[#8A5A00]">
+                                    <x-ui.icon name="alert-circle" class="size-3" /> Aucun module : les membres voient « contenu en préparation »{{ $f['certifiante'] ? ', aucun certificat délivré' : '' }}
+                                </p>
+                            @endif
                         </div>
                         <span class="w-[110px] shrink-0 text-xs text-[#5B677A]">{{ $f['inscrits'] }} {{ $f['inscrits'] > 1 ? 'inscrits' : 'inscrit' }}</span>
                         <span class="w-20 shrink-0 rounded-full px-2.5 py-1 text-center text-[11px] font-bold" style="color: {{ $f['publiee'] ? '#22A85A' : '#9AA6B8' }}; background: {{ $f['publiee'] ? '#EAF6EE' : '#EEF1F5' }}">{{ $f['publiee'] ? 'Publiée' : 'Brouillon' }}</span>

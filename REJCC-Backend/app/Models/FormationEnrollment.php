@@ -35,4 +35,15 @@ class FormationEnrollment extends Model
     {
         return 'REJCC-CERT-'.$this->completed_at->format('Y').'-'.str_pad((string) $this->id, 4, '0', STR_PAD_LEFT);
     }
+
+    /**
+     * Inscriptions qui donnent droit à un certificat : formation certifiante
+     * terminée ET dotée d'un vrai contenu (au moins un module). Une formation
+     * sans module ne peut plus délivrer de certificat.
+     */
+    public function scopeCertificats($query)
+    {
+        return $query->whereNotNull('completed_at')
+            ->whereHas('formation', fn ($q) => $q->where('is_certifying', true)->whereHas('modules'));
+    }
 }

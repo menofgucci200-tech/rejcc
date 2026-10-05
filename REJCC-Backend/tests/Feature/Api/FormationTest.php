@@ -87,9 +87,11 @@ class FormationTest extends TestCase
         $this->assertFalse($response->json('formations.0.completed'));
     }
 
-    public function test_valider_un_module_fait_avancer_la_progression(): void
+    public function test_une_formation_sans_contenu_ne_se_valide_plus_au_clic(): void
     {
-        $formation = $this->formation(['modules_count' => 4]);
+        // Avant : 4 clics sur « Valider le module » suffisaient pour terminer la
+        // formation (et obtenir un certificat) sans aucun contenu suivi.
+        $formation = $this->formation(['modules_count' => 4, 'is_certifying' => true]);
         $user = User::factory()->create();
         FormationEnrollment::create([
             'formation_id' => $formation->id,
@@ -97,18 +99,12 @@ class FormationTest extends TestCase
         ]);
         $token = $this->tokenFor($user);
 
-        $this->withToken($token)->postJson("/api/formations/{$formation->id}/complete-module")
-            ->assertOk()->assertJsonPath('progress', 25)->assertJsonPath('completed', false);
-
-        // Valider les 3 modules restants termine la formation.
-        for ($i = 0; $i < 3; $i++) {
-            $response = $this->withToken($token)->postJson("/api/formations/{$formation->id}/complete-module");
+        for ($i = 0; $i < 4; $i++) {
+            $this->withToken($token)->postJson("/api/formations/{$formation->id}/complete-module")->assertStatus(422);
         }
-        $response->assertJsonPath('progress', 100)->assertJsonPath('completed', true);
 
-        // Un clic de plus ne dépasse pas 100 %.
-        $this->withToken($token)->postJson("/api/formations/{$formation->id}/complete-module")
-            ->assertJsonPath('progress', 100);
+        $this->assertNull(FormationEnrollment::first()->completed_at);
+        $this->assertSame([], $this->withToken($token)->getJson('/api/my-certificates')->json('certificates'));
     }
 
     public function test_valider_un_module_exige_d_etre_inscrit(): void
