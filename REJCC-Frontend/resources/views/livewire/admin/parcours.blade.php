@@ -6,7 +6,7 @@
             <div>
                 <h2 class="mb-1 text-[17px] font-bold text-brand">Parcours guidés</h2>
                 <div class="h-[3px] w-9 rounded bg-accent"></div>
-                <p class="mt-2 text-xs text-[#9AA6B8]">Séquences de formations vers un objectif, avec déblocage progressif et badge de fin.</p>
+                <p class="mt-2 text-xs text-[#9AA6B8]">Séquences de formations vers un objectif, dans un ordre conseillé, avec un badge de fin.</p>
             </div>
             <button wire:click="openCreate" class="btn-tap rounded-[10px] bg-accent px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-accent-600 hover:shadow-md">+ Nouveau parcours</button>
         </div>

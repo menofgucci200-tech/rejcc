@@ -54,7 +54,7 @@ class PathTest extends TestCase
         $this->assertSame(['Aller plus loin', 'Les bases'], $ordre);
     }
 
-    public function test_les_formations_d_un_parcours_se_debloquent_progressivement(): void
+    public function test_un_parcours_conseille_un_ordre_sans_verrouiller(): void
     {
         $admin = $this->tokenFor(User::factory()->create(['role' => 'admin']));
         $f1 = $this->formation('Les bases');
@@ -69,17 +69,21 @@ class PathTest extends TestCase
         $membre = User::factory()->create();
         $token = $this->tokenFor($membre);
 
-        // Avant toute inscription : la 1ère formation est déverrouillée, la 2e non.
+        // Avant toute inscription : la 1ère formation est conseillée, la 2e
+        // reste accessible mais conseillée après la 1ère.
         $detail = $this->withToken($token)->getJson("/api/paths/{$pathId}")->assertOk()->json();
-        $this->assertFalse($detail['formations'][0]['verrouille']);
-        $this->assertTrue($detail['formations'][1]['verrouille']);
+        $this->assertTrue($detail['formations'][0]['conseillee']);
+        $this->assertFalse($detail['formations'][1]['conseillee']);
+        $this->assertSame('Les bases', $detail['formations'][1]['conseillee_apres']);
+        $this->assertArrayNotHasKey('verrouille', $detail['formations'][1]);
         $this->assertFalse($detail['path']['badge_obtenu']);
 
         // On termine la 1ère formation.
         FormationEnrollment::create(['formation_id' => $f1->id, 'user_id' => $membre->id, 'progress' => 100, 'completed_at' => now()]);
 
         $detail = $this->withToken($token)->getJson("/api/paths/{$pathId}")->json();
-        $this->assertFalse($detail['formations'][1]['verrouille']);
+        $this->assertTrue($detail['formations'][1]['conseillee']);
+        $this->assertNull($detail['formations'][1]['conseillee_apres']);
         $this->assertFalse($detail['path']['badge_obtenu']); // la 2e n'est pas encore terminée
 
         // On termine la 2e : le badge du parcours est obtenu.
@@ -111,7 +115,9 @@ class PathTest extends TestCase
         $this->assertFalse($detail['formations'][0]['disponible']);
         $this->assertFalse($detail['formations'][0]['completed']);
         $this->assertFalse($detail['formations'][0]['is_certifying']);
-        $this->assertFalse($detail['formations'][1]['verrouille']); // pas bloquée par l'étape sans contenu
+        $this->assertTrue($detail['formations'][1]['conseillee']); // l'étape sans contenu est sautée
+        $this->assertNull($detail['formations'][0]['numero']);
+        $this->assertSame(1, $detail['formations'][1]['numero']);
         $this->assertFalse($detail['formations'][2]['disponible']);
 
         $liste = $this->withToken($token)->getJson('/api/paths')->json('paths');

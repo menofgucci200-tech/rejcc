@@ -8,8 +8,8 @@ use Livewire\Attributes\Layout;
 use Livewire\Component;
 
 /**
- * Parcours guidés : séquences de formations vers un objectif, avec
- * déblocage progressif et badge à la clé.
+ * Parcours guidés : séquences de formations vers un objectif, dans un
+ * ordre conseillé, avec un badge à la clé.
  */
 #[Layout('layouts.member-light')]
 class Parcours extends Component

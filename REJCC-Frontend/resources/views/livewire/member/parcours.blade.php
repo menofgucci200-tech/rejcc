@@ -5,7 +5,7 @@
         <div class="mb-6">
             <h1 class="mb-1 text-[17px] font-bold text-brand">Parcours guidés</h1>
             <div class="h-[3px] w-9 rounded bg-accent"></div>
-            <p class="mt-3 max-w-2xl text-[13px] text-[#5B677A]">Des séquences de formations vers un objectif précis. Terminez chaque formation dans l'ordre pour débloquer la suivante et décrocher le badge du parcours.</p>
+            <p class="mt-3 max-w-2xl text-[13px] text-[#5B677A]">Des séquences de formations vers un objectif précis. Suivez les formations dans l'ordre conseillé et terminez-les toutes pour décrocher le badge du parcours.</p>
         </div>
 
         @if ($paths->isEmpty())

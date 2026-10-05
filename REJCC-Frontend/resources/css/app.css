@@ -97,8 +97,12 @@
   background: linear-gradient(90deg, var(--color-accent), var(--color-azure)) !important;
 }
 
-* {
-  border-color: color-mix(in oklab, var(--color-brand) 12%, transparent);
+/* Couleur de bordure par défaut, dans la couche « base » pour que les
+   classes de couleur (border-azure/40, border-accent…) restent prioritaires. */
+@layer base {
+  * {
+    border-color: color-mix(in oklab, var(--color-brand) 12%, transparent);
+  }
 }
 
 [x-cloak] {

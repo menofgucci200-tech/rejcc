@@ -11,10 +11,10 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
 /**
- * Parcours guidé : séquence ordonnée de formations vers un objectif. Le
- * déblocage est progressif (une formation ne s'ouvre qu'une fois la
- * précédente terminée) ; le badge de fin est calculé à la volée, comme les
- * certificats de formation, plutôt que stocké.
+ * Parcours guidé : séquence ordonnée de formations vers un objectif. L'ordre
+ * est conseillé, pas imposé (chaque formation reste ouverte au catalogue) ;
+ * le badge de fin est obtenu quand toutes les étapes disponibles sont
+ * terminées.
  */
 class PathController extends Controller
 {
@@ -94,13 +94,22 @@ class PathController extends Controller
             ->get()
             ->keyBy('formation_id');
 
-        // Déblocage progressif sur les seules étapes disponibles : une étape
-        // « bientôt disponible » ne bloque pas les suivantes.
-        $debloque = true;
-        $formations = $this->etapes($path, $enrollments)->map(function (array $item) use (&$debloque) {
-            $item['verrouille'] = $item['disponible'] && ! $debloque;
+        // Ordre conseillé (et non imposé : le catalogue reste ouvert) : l'étape
+        // conseillée est la première étape disponible non terminée ; les
+        // suivantes, pas encore commencées, indiquent l'étape à faire avant.
+        $numero = 0;
+        $conseillee = null;
+        $formations = $this->etapes($path, $enrollments)->map(function (array $item) use (&$numero, &$conseillee) {
+            $item['numero'] = $item['disponible'] ? ++$numero : null;
+            $item['conseillee'] = false;
+            $item['conseillee_apres'] = null;
             if ($item['disponible'] && ! $item['completed']) {
-                $debloque = false;
+                if ($conseillee === null) {
+                    $conseillee = $item['title'];
+                    $item['conseillee'] = true;
+                } elseif (! $item['enrolled']) {
+                    $item['conseillee_apres'] = $conseillee;
+                }
             }
 
             return $item;

@@ -38,26 +38,41 @@
                 </div>
             @endif
 
+            @php $prochaine = $formations->firstWhere('conseillee', true); @endphp
+            @if ($prochaine && ! $path['badge_obtenu'])
+                <div data-test="etape-conseillee" class="mb-4 flex flex-wrap items-center gap-3 rounded-[16px] border border-azure/30 bg-azure/10 p-4">
+                    <x-ui.icon name="target" class="size-5 shrink-0 text-azure" />
+                    <p class="min-w-0 flex-1 text-[13px] text-brand">
+                        <span class="font-bold">Étape conseillée :</span> {{ $prochaine['title'] }}
+                        <span class="block text-[11.5px] text-[#5B677A]">{{ $prochaine['enrolled'] ? 'Reprenez là où vous en étiez.' : 'Commencez par celle-ci : les formations suivantes s\'appuient dessus.' }}</span>
+                    </p>
+                </div>
+            @endif
+
             <div class="flex flex-col gap-3">
-                @foreach ($formations as $i => $f)
+                @foreach ($formations as $f)
                     @php $dispo = $f['disponible'] ?? true; @endphp
-                    <div data-test="etape" class="flex items-center gap-4 rounded-[16px] border bg-white p-4 shadow-[0_2px_8px_rgba(3,29,89,.05)] {{ $f['verrouille'] || ! $dispo ? 'border-brand/10 opacity-60' : 'border-brand/10' }}">
-                        <span class="flex size-9 shrink-0 items-center justify-center rounded-full text-[13px] font-bold {{ $f['completed'] ? 'bg-[#22A85A]/10 text-[#22A85A]' : ($f['verrouille'] || ! $dispo ? 'bg-cloud text-[#9AA6B8]' : 'bg-azure/10 text-azure') }}">
+                    <div data-test="etape" class="flex items-center gap-4 rounded-[16px] border bg-white p-4 shadow-[0_2px_8px_rgba(3,29,89,.05)] {{ ! $dispo ? 'border-brand/10 opacity-60' : ($f['conseillee'] ? 'border-azure/40 ring-2 ring-azure/10' : 'border-brand/10') }}">
+                        <span class="flex size-9 shrink-0 items-center justify-center rounded-full text-[13px] font-bold {{ $f['completed'] ? 'bg-[#22A85A]/10 text-[#22A85A]' : (! $dispo ? 'bg-cloud text-[#9AA6B8]' : 'bg-azure/10 text-azure') }}">
                             @if ($f['completed'])
                                 <x-ui.icon name="check" class="size-4" />
                             @elseif (! $dispo)
                                 <x-ui.icon name="clock" class="size-4" />
-                            @elseif ($f['verrouille'])
-                                <x-ui.icon name="shield" class="size-4" />
                             @else
-                                {{ $i + 1 }}
+                                {{ $f['numero'] }}
                             @endif
                         </span>
                         <div class="min-w-0 flex-1">
-                            <p class="truncate text-[13.5px] font-bold text-brand">{{ $f['title'] }}</p>
+                            @if ($dispo)
+                                <a href="{{ $f['enrolled'] ? route('espace-membre.formations.detail', $f['id']) : route('espace-membre.catalogue.fiche', $f['id']) }}" wire:navigate class="block truncate text-[13.5px] font-bold text-brand hover:text-azure hover:underline">{{ $f['title'] }}</a>
+                            @else
+                                <p class="truncate text-[13.5px] font-bold text-brand">{{ $f['title'] }}</p>
+                            @endif
                             <p class="mt-0.5 text-[11.5px] text-[#9AA6B8]">{{ $f['category'] }}@if ($f['duration']) · {{ $f['duration'] }}@endif@if ($f['is_certifying']) · Certifiante @endif</p>
                             @if (! $dispo)
                                 <p class="mt-1 text-[11.5px] text-[#5B677A]">Contenu en préparation : cette étape ne bloque pas la suite du parcours.</p>
+                            @elseif ($f['conseillee_apres'])
+                                <p class="mt-1 text-[11.5px] text-[#5B677A]">Conseillée après « {{ $f['conseillee_apres'] }} »</p>
                             @elseif ($f['enrolled'] && ! $f['completed'])
                                 <div class="mt-2 h-1.5 w-full max-w-[180px] rounded-full bg-cloud">
                                     <div class="h-1.5 rounded-full bg-azure" style="width: {{ $f['progress'] }}%"></div>
@@ -68,14 +83,10 @@
                             <span class="shrink-0 rounded-full bg-[#22A85A]/10 px-3 py-1.5 text-[11.5px] font-bold text-[#22A85A]">Terminée</span>
                         @elseif (! $dispo)
                             <span class="shrink-0 rounded-full bg-cloud px-3 py-1.5 text-[11.5px] font-bold text-[#9AA6B8]">Bientôt disponible</span>
-                        @elseif ($f['verrouille'])
-                            <span class="shrink-0 rounded-full bg-cloud px-3 py-1.5 text-[11.5px] font-bold text-[#9AA6B8]">Verrouillée</span>
-                        @elseif ($f['enrolled'] && $f['has_modules'])
-                            <a href="{{ route('espace-membre.formations.detail', $f['id']) }}" wire:navigate class="btn-tap shrink-0 rounded-full bg-brand px-4 py-2 text-[12px] font-bold text-white hover:bg-brand/90">Continuer</a>
                         @elseif ($f['enrolled'])
-                            <a href="{{ route('espace-membre.formations') }}" wire:navigate class="btn-tap shrink-0 rounded-full bg-brand px-4 py-2 text-[12px] font-bold text-white hover:bg-brand/90">Continuer</a>
+                            <a href="{{ route('espace-membre.formations.detail', $f['id']) }}" wire:navigate class="btn-tap shrink-0 rounded-full bg-brand px-4 py-2 text-[12px] font-bold text-white hover:bg-brand/90">Continuer</a>
                         @else
-                            <button wire:click="demarrer({{ $f['id'] }})" wire:loading.attr="disabled" class="btn-tap shrink-0 rounded-full bg-brand px-4 py-2 text-[12px] font-bold text-white hover:bg-brand/90 disabled:opacity-60">Commencer</button>
+                            <button wire:click="demarrer({{ $f['id'] }})" wire:loading.attr="disabled" class="btn-tap shrink-0 rounded-full px-4 py-2 text-[12px] font-bold disabled:opacity-60 {{ $f['conseillee'] ? 'bg-brand text-white hover:bg-brand/90' : 'border border-brand/20 bg-white text-brand hover:bg-cloud' }}">Commencer</button>
                         @endif
                     </div>
                 @endforeach
