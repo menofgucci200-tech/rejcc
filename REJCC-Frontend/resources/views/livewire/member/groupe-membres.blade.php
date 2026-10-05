@@ -42,7 +42,7 @@
                     <article
                         data-test="carte-groupe"
                         wire:key="gm-{{ $m['id'] }}"
-                        wire:click="voirProfil({{ $m['id'] }}, {{ \Illuminate\Support\Js::from($m['specialite']) }})"
+                        wire:click="voirProfil({{ $m['id'] }})"
                         class="card-hover flex cursor-pointer flex-col rounded-[16px] border bg-white p-[18px] shadow-[0_2px_8px_rgba(3,29,89,.05)] {{ $estMentor ? 'border-accent/30' : 'border-brand/10' }}"
                     >
                         <div class="flex items-start gap-3">
@@ -70,12 +70,24 @@
                             </div>
                         @endif
 
-                        <p class="mt-3 flex flex-1 items-start gap-1.5 text-xs text-[#9AA6B8]">
-                            @if ($m['ville'] || $m['organisation'])
-                                <x-ui.icon name="map-pin" class="mt-px size-3 shrink-0" />
-                                <span class="truncate">{{ collect([$m['ville'], $m['organisation']])->filter()->join(' · ') }}</span>
+                        @if (! empty($m['services']))
+                            <div class="mt-2.5 flex flex-wrap gap-1.5">
+                                @foreach ($m['services'] as $service)
+                                    <span class="max-w-full truncate rounded-full bg-brand/[.05] px-2 py-0.5 text-[11px] font-semibold text-brand">{{ $service }}</span>
+                                @endforeach
+                            </div>
+                        @endif
+
+                        <div class="mt-3 flex flex-1 flex-col gap-1 text-xs text-[#9AA6B8]">
+                            @if ($m['zone'] ?? null)
+                                <p class="flex items-start gap-1.5"><x-ui.icon name="map-pin" class="mt-px size-3 shrink-0" /> <span class="line-clamp-1">Intervient : {{ $m['zone'] }}</span></p>
+                            @elseif ($m['ville'] || $m['organisation'])
+                                <p class="flex items-start gap-1.5"><x-ui.icon name="map-pin" class="mt-px size-3 shrink-0" /> <span class="truncate">{{ collect([$m['ville'], $m['organisation']])->filter()->join(' · ') }}</span></p>
                             @endif
-                        </p>
+                            @if ($m['disponibilites'] ?? null)
+                                <p class="flex items-start gap-1.5"><x-ui.icon name="clock" class="mt-px size-3 shrink-0" /> <span class="line-clamp-1">{{ $m['disponibilites'] }}</span></p>
+                            @endif
+                        </div>
 
                         @if ($m['id'] === (\App\Support\Api::user()->id ?? 0))
                             <span class="mt-3.5 flex items-center justify-center rounded-[9px] bg-cloud py-2 text-[12px] font-semibold text-[#9AA6B8]">C'est votre fiche</span>
@@ -93,6 +105,6 @@
         @endif
     </div>
 
-    <x-member-light.profile-modal :member="$detail" />
+    <x-groupes.fiche-pro :fiche="$detail" />
     @endif
 </div>

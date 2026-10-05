@@ -39,10 +39,11 @@ class GroupeMembres extends Component
         $this->page = max(1, $p);
     }
 
-    public function voirProfil(int $id, ?string $specialite = null): void
+    /** Ouvre la fiche professionnelle complète du membre dans ce groupe. */
+    public function voirProfil(int $id): void
     {
-        $result = Api::get("/members/{$id}", [], Api::token());
-        $this->detail = ($result['ok'] ?? false) ? [...$result['member'], 'specialite' => $specialite] : null;
+        $result = Api::get("/groups/{$this->groupId}/members/{$id}", [], Api::token());
+        $this->detail = ($result['ok'] ?? false) ? $result['fiche'] : null;
     }
 
     public function fermerProfil(): void

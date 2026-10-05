@@ -28,7 +28,7 @@ class GroupController extends Controller
 
     public function index(Request $request)
     {
-        $mesSpecialites = $request->user()->groups()->pluck('group_user.specialite', 'groups.id');
+        $mesFiches = $request->user()->groups()->get()->keyBy('id');
 
         $groups = Group::withCount(['users' => fn ($q) => $q->where('users.is_active', true)])
             ->orderBy('ordre')
@@ -40,11 +40,26 @@ class GroupController extends Controller
                 'slug' => $g->slug,
                 'description' => $g->description,
                 'members' => $g->users_count,
-                'joined' => $mesSpecialites->has($g->id),
-                'ma_specialite' => $mesSpecialites->get($g->id),
+                'joined' => $mesFiches->has($g->id),
+                'ma_specialite' => $mesFiches->get($g->id)?->pivot->specialite,
+                'ma_fiche' => $mesFiches->has($g->id) ? $this->fiche($mesFiches->get($g->id)->pivot) : null,
             ]);
 
         return response()->json(['ok' => true, 'groups' => $groups]);
+    }
+
+    /** Fiche professionnelle (colonnes du pivot) sous forme de tableau. */
+    private function fiche(object $pivot): array
+    {
+        $services = $pivot->services ?? null;
+
+        return [
+            'specialite' => $pivot->specialite,
+            'services' => is_array($services) ? $services : (json_decode((string) $services, true) ?: []),
+            'zone' => $pivot->zone,
+            'disponibilites' => $pivot->disponibilites,
+            'telephone_visible' => (bool) $pivot->telephone_visible,
+        ];
     }
 
     /** Rejoint un groupe (ou met à jour sa spécialité s'il en est déjà membre). */
@@ -57,7 +72,13 @@ class GroupController extends Controller
 
         $validator = Validator::make($request->all(), [
             'specialite' => 'required|string|min:10|max:600',
+            'services' => 'nullable|array|max:10',
+            'services.*' => 'string|min:2|max:80',
+            'zone' => 'nullable|string|max:255',
+            'disponibilites' => 'nullable|string|max:255',
+            'telephone_visible' => 'boolean',
         ], [
+            'services.max' => 'Indiquez au plus 10 services.',
             'specialite.required' => 'Décrivez votre spécialité dans ce domaine pour rejoindre le groupe.',
             'specialite.min' => 'Décrivez votre spécialité en quelques mots de plus (10 caractères minimum).',
         ]);
@@ -66,8 +87,15 @@ class GroupController extends Controller
             return response()->json(['ok' => false, 'message' => $validator->errors()->first()], 422);
         }
 
+        $d = $validator->validated();
         $request->user()->groups()->syncWithoutDetaching([
-            $group->id => ['specialite' => $validator->validated()['specialite']],
+            $group->id => [
+                'specialite' => trim($d['specialite']),
+                'services' => json_encode(collect($d['services'] ?? [])->map(fn ($s) => trim($s))->filter()->unique()->values()->all()),
+                'zone' => isset($d['zone']) ? trim($d['zone']) ?: null : null,
+                'disponibilites' => isset($d['disponibilites']) ? trim($d['disponibilites']) ?: null : null,
+                'telephone_visible' => (bool) ($d['telephone_visible'] ?? false),
+            ],
         ]);
 
         return response()->json(['ok' => true, 'members' => $group->users()->where('users.is_active', true)->count()]);
@@ -110,13 +138,15 @@ class GroupController extends Controller
                     ->orWhere('users.nom', 'like', "%{$q}%")
                     ->orWhere('users.ville', 'like', "%{$q}%")
                     ->orWhere('users.organisation', 'like', "%{$q}%")
-                    ->orWhere('group_user.specialite', 'like', "%{$q}%");
+                    ->orWhere('group_user.specialite', 'like', "%{$q}%")
+                    ->orWhere('group_user.zone', 'like', "%{$q}%");
             });
         }
 
         $page = $query->paginate(24, [
             'users.id', 'users.prenom', 'users.nom', 'users.ville', 'users.secteur',
-            'users.organisation', 'users.photo', 'users.role', 'users.titre', 'users.created_at', 'group_user.specialite',
+            'users.organisation', 'users.photo', 'users.role', 'users.titre', 'users.created_at',
+            'group_user.specialite', 'group_user.services', 'group_user.zone', 'group_user.disponibilites',
         ]);
 
         $members = collect($page->items())->map(fn (User $u) => [
@@ -131,6 +161,9 @@ class GroupController extends Controller
             'titre' => $u->titre,
             'nouveau' => $u->created_at?->gt(now()->subDays(30)) ?? false,
             'specialite' => $u->specialite,
+            'services' => array_slice(json_decode((string) $u->services, true) ?: [], 0, 4),
+            'zone' => $u->zone,
+            'disponibilites' => $u->disponibilites,
         ]);
 
         return response()->json([
@@ -144,5 +177,34 @@ class GroupController extends Controller
                 'per_page' => $page->perPage(),
             ],
         ]);
+    }
+
+    /**
+     * GET /groups/{id}/members/{userId} — fiche professionnelle complète d'un
+     * membre du groupe : profil, spécialité, services, zone, disponibilités,
+     * téléphone (si le membre l'a autorisé) et ses autres groupes.
+     */
+    public function fichePro(Request $request, int $id, int $userId)
+    {
+        $group = Group::find($id);
+        $membre = $group ? $this->visibles(User::query())->whereKey($userId)->first() : null;
+        $lien = $membre?->groups()->where('groups.id', $id)->first();
+        if (! $group || ! $membre || ! $lien) {
+            return response()->json(['ok' => false, 'message' => 'Membre introuvable dans ce groupe.'], 404);
+        }
+
+        $fiche = $this->fiche($lien->pivot);
+        $profil = \App\Support\MemberProfile::payload($membre);
+        if ($fiche['telephone_visible'] && $membre->telephone) {
+            $profil['telephone'] = $membre->telephone;
+        }
+
+        return response()->json(['ok' => true, 'fiche' => [
+            'groupe' => ['id' => $group->id, 'nom' => $group->name],
+            'membre' => $profil,
+            'pro' => $fiche,
+            'autres_groupes' => $membre->groups()->where('groups.id', '!=', $id)->orderBy('ordre')->get()
+                ->map(fn ($g) => ['id' => $g->id, 'nom' => $g->name, 'specialite' => $g->pivot->specialite])->values(),
+        ]]);
     }
 }

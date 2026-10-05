@@ -66,7 +66,7 @@ class User extends Authenticatable
     /** Groupes sectoriels rejoints (adhésion multiple libre). */
     public function groups(): BelongsToMany
     {
-        return $this->belongsToMany(Group::class)->withPivot('specialite')->withTimestamps();
+        return $this->belongsToMany(Group::class)->withPivot(Group::FICHE)->withTimestamps();
     }
 
     /** Historique des paiements (adhésion + abonnements annuels). */

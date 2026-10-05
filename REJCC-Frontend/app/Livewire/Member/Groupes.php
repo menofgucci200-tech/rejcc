@@ -22,17 +22,33 @@ class Groupes extends Component
 
     public string $specialite = '';
 
-    public function ouvrirFormulaire(int $id, ?string $specialiteActuelle = null): void
+    /** Services proposés, séparés par des virgules. */
+    public string $services = '';
+
+    public string $zone = '';
+
+    public string $disponibilites = '';
+
+    public bool $telephoneVisible = false;
+
+    public function ouvrirFormulaire(int $id): void
     {
+        $groupe = collect(Api::get('/groups', [], Api::token())['groups'] ?? [])->firstWhere('id', $id);
+        $fiche = $groupe['ma_fiche'] ?? null;
+
         $this->formGroupId = $id;
-        $this->specialite = $specialiteActuelle ?? '';
+        $this->specialite = (string) ($fiche['specialite'] ?? '');
+        $this->services = implode(', ', $fiche['services'] ?? []);
+        $this->zone = (string) ($fiche['zone'] ?? (\App\Support\Api::user()->ville ?? ''));
+        $this->disponibilites = (string) ($fiche['disponibilites'] ?? '');
+        $this->telephoneVisible = (bool) ($fiche['telephone_visible'] ?? false);
         $this->resetValidation();
     }
 
     public function fermerFormulaire(): void
     {
         $this->formGroupId = null;
-        $this->specialite = '';
+        $this->reset(['specialite', 'services', 'zone', 'disponibilites', 'telephoneVisible']);
     }
 
     public function confirmerAdhesion(): void
@@ -44,7 +60,13 @@ class Groupes extends Component
             'specialite.min' => 'Décrivez votre spécialité en quelques mots de plus (10 caractères minimum).',
         ]);
 
-        $result = Api::post("/groups/{$this->formGroupId}/join", ['specialite' => $this->specialite], Api::token());
+        $result = Api::post("/groups/{$this->formGroupId}/join", [
+            'specialite' => trim($this->specialite),
+            'services' => array_values(array_filter(array_map('trim', explode(',', $this->services)))),
+            'zone' => trim($this->zone) ?: null,
+            'disponibilites' => trim($this->disponibilites) ?: null,
+            'telephone_visible' => $this->telephoneVisible,
+        ], Api::token());
 
         if (! ($result['ok'] ?? false)) {
             $this->addError('specialite', $result['message'] ?? 'Une erreur est survenue.');

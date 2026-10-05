@@ -19,7 +19,7 @@
         @if ($formGroupId)
             @php $groupeForm = $groups->firstWhere('id', $formGroupId); @endphp
             <div class="fixed inset-0 z-[90] flex items-center justify-center bg-brand/40 p-4" wire:click.self="fermerFormulaire" @keydown.escape.window="$wire.fermerFormulaire()">
-                <div data-test="form-groupe" role="dialog" aria-modal="true" class="panel-enter w-full max-w-[520px] rounded-[20px] bg-white p-6 shadow-2xl">
+                <div data-test="form-groupe" role="dialog" aria-modal="true" class="panel-enter max-h-[92vh] w-full max-w-[560px] overflow-y-auto rounded-[20px] bg-white p-6 shadow-2xl">
                     <div class="mb-3 flex items-start justify-between gap-3">
                         <div>
                             <p class="text-[11px] font-bold uppercase tracking-[0.08em] text-[#9AA6B8]">{{ ($groupeForm['joined'] ?? false) ? 'Ma fiche dans le groupe' : 'Rejoindre le groupe' }}</p>
@@ -30,6 +30,23 @@
                     <label for="groupe-specialite" class="mb-1 block text-xs font-semibold text-[#5B677A]">Votre spécialité dans ce domaine <span class="font-normal text-[#9AA6B8]">(visible des membres abonnés)</span></label>
                     <textarea id="groupe-specialite" wire:model="specialite" rows="3" autofocus placeholder="Ex : Plombier spécialisé en dépannage sanitaire et chauffage central, intervention rapide à domicile." class="w-full rounded-[10px] border border-brand/15 px-3 py-2.5 text-sm outline-none focus:border-azure"></textarea>
                     @error('specialite') <p data-test="erreur-specialite" class="mt-1 text-xs font-medium text-accent">{{ $message }}</p> @enderror
+
+                    <label for="groupe-services" class="mb-1 mt-3 block text-xs font-semibold text-[#5B677A]">Services proposés <span class="font-normal text-[#9AA6B8]">(séparés par des virgules)</span></label>
+                    <input id="groupe-services" wire:model="services" type="text" placeholder="Ex : Dépannage urgent, Pose de chauffe-eau, Devis gratuit" class="w-full rounded-[10px] border border-brand/15 px-3 py-2.5 text-sm outline-none focus:border-azure" />
+                    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                        <div>
+                            <label for="groupe-zone" class="mb-1 block text-xs font-semibold text-[#5B677A]">Zone d'intervention</label>
+                            <input id="groupe-zone" wire:model="zone" type="text" placeholder="Ex : Cocody, Bingerville" class="w-full rounded-[10px] border border-brand/15 px-3 py-2.5 text-sm outline-none focus:border-azure" />
+                        </div>
+                        <div>
+                            <label for="groupe-dispo" class="mb-1 block text-xs font-semibold text-[#5B677A]">Disponibilités</label>
+                            <input id="groupe-dispo" wire:model="disponibilites" type="text" placeholder="Ex : du lundi au samedi, 8h-18h" class="w-full rounded-[10px] border border-brand/15 px-3 py-2.5 text-sm outline-none focus:border-azure" />
+                        </div>
+                    </div>
+                    <label class="mt-3 flex cursor-pointer items-start gap-2.5 rounded-[10px] bg-cloud/60 p-3 text-[12.5px] text-ink">
+                        <input type="checkbox" wire:model="telephoneVisible" class="mt-0.5 size-4 shrink-0 rounded border-brand/30 text-brand">
+                        <span><span class="font-semibold">Afficher mon téléphone aux membres de ce groupe</span><span class="block text-[11.5px] text-[#5B677A]">Pour être joint directement par les membres abonnés qui consultent votre fiche dans ce groupe.</span></span>
+                    </label>
                     <div class="mt-4 flex gap-2">
                         <button wire:click="confirmerAdhesion" wire:loading.attr="disabled" data-test="valider-groupe" class="btn-tap rounded-full bg-brand px-5 py-2.5 text-[13px] font-bold text-white hover:bg-brand/90 disabled:opacity-60">{{ ($groupeForm['joined'] ?? false) ? 'Enregistrer' : 'Rejoindre le groupe' }}</button>
                         <button wire:click="fermerFormulaire" class="btn-tap rounded-full border border-brand/15 px-5 py-2.5 text-[13px] font-bold text-brand hover:bg-cloud">Annuler</button>
@@ -88,9 +105,9 @@
                             @if ($g['joined'])
                                 <button
                                     type="button"
-                                    wire:click="ouvrirFormulaire({{ $g['id'] }}, {{ \Illuminate\Support\Js::from($g['ma_specialite']) }})"
+                                    wire:click="ouvrirFormulaire({{ $g['id'] }})"
                                     class="btn-tap rounded-full border border-azure/25 bg-azure/10 px-3.5 py-1.5 text-[11.5px] font-bold text-azure hover:bg-azure/20"
-                                >Ma spécialité</button>
+                                >Ma fiche</button>
                                 <button
                                     type="button"
                                     wire:click="quitter({{ $g['id'] }})"

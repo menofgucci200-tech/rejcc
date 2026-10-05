@@ -138,4 +138,38 @@ class GroupTest extends TestCase
         $g = collect($this->withToken($plain)->getJson('/api/groups')->json('groups'))->firstWhere('id', $groupe->id);
         $this->assertSame(2, $g['members']);
     }
+
+    public function test_la_fiche_professionnelle_du_membre_dans_le_groupe(): void
+    {
+        $groupe = \App\Models\Group::where('slug', 'btp-construction')->first();
+        $pro = User::factory()->create(['prenom' => 'Yao', 'telephone' => '0707070707', 'subscription_expires_at' => now()->addYear()]);
+        $plainPro = Str::random(60);
+        ApiToken::create(['user_id' => $pro->id, 'token' => hash('sha256', $plainPro), 'name' => 'test']);
+
+        $this->withToken($plainPro)->postJson("/api/groups/{$groupe->id}/join", [
+            'specialite' => 'Plombier : dépannage sanitaire, chauffe-eau, fuites.',
+            'services' => ['Dépannage urgent', ' Pose de chauffe-eau ', 'Dépannage urgent'],
+            'zone' => 'Cocody, Bingerville',
+            'disponibilites' => '7j/7, 7h-20h',
+            'telephone_visible' => true,
+        ])->assertOk();
+
+        $mine = collect($this->withToken($plainPro)->getJson('/api/groups')->json('groups'))->firstWhere('id', $groupe->id);
+        $this->assertSame(['Dépannage urgent', 'Pose de chauffe-eau'], $mine['ma_fiche']['services']);
+
+        $client = User::factory()->create(['subscription_expires_at' => now()->addYear()]);
+        $plain = Str::random(60);
+        ApiToken::create(['user_id' => $client->id, 'token' => hash('sha256', $plain), 'name' => 'test']);
+
+        $liste = $this->withToken($plain)->getJson("/api/groups/{$groupe->id}/members?q=bingerville")->json('members');
+        $this->assertSame('Cocody, Bingerville', $liste[0]['zone']);
+
+        $fiche = $this->withToken($plain)->getJson("/api/groups/{$groupe->id}/members/{$pro->id}")->assertOk()->json('fiche');
+        $this->assertSame('7j/7, 7h-20h', $fiche['pro']['disponibilites']);
+        // Téléphone affiché car autorisé pour ce groupe (même si masqué dans l'annuaire).
+        $this->assertSame('0707070707', $fiche['membre']['telephone']);
+
+        // Hors du groupe : pas de fiche.
+        $this->withToken($plain)->getJson("/api/groups/{$groupe->id}/members/{$client->id}")->assertStatus(404);
+    }
 }

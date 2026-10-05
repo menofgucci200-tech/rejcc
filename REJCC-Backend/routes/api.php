@@ -170,6 +170,7 @@ Route::middleware('auth.token')->group(function () {
     // Trombinoscope d'un groupe (fiche + coordonnées des membres) — réservé aux abonnés à jour
     Route::middleware('sub.active')->group(function () {
         Route::get('/groups/{id}/members', [\App\Http\Controllers\Api\GroupController::class, 'members']);
+        Route::get('/groups/{id}/members/{userId}', [\App\Http\Controllers\Api\GroupController::class, 'fichePro'])->whereNumber(['id', 'userId']);
     });
 
     // Marketplace : consultation libre pour tout membre connecté, publication réservée aux abonnés à jour
