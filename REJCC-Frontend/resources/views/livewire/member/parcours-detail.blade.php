@@ -27,8 +27,15 @@
                 <p class="mb-6 text-[13px] leading-relaxed text-[#5B677A]">{{ $path['description'] }}</p>
             @endif
 
-            @if ($message)
-                <p class="panel-enter mb-5 inline-flex items-center gap-1.5 rounded-full bg-[#22A85A]/10 px-3.5 py-1.5 text-xs font-semibold text-[#22A85A]"><x-ui.icon name="check-circle" class="size-3.5" /> {{ $message }}</p>
+            @if ($erreur)
+                <div data-test="erreur-parcours" role="alert" class="panel-enter mb-5 flex items-start gap-2.5 rounded-[14px] border border-accent/20 bg-accent/5 px-4 py-3 text-[12.5px] font-semibold text-accent">
+                    <x-ui.icon name="alert-circle" class="mt-px size-4 shrink-0" />
+                    <span>{{ $erreur }}
+                        @if ($abonnementRequis)
+                            <a href="{{ route('espace-membre.abonnement') }}" wire:navigate class="ml-1 underline">Voir mon abonnement</a>
+                        @endif
+                    </span>
+                </div>
             @endif
 
             @if ($path['badge_obtenu'])

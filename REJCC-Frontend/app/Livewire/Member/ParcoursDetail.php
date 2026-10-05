@@ -12,7 +12,9 @@ class ParcoursDetail extends Component
 {
     public int $pathId;
 
-    public ?string $message = null;
+    public ?string $erreur = null;
+
+    public bool $abonnementRequis = false;
 
     public function mount(int $pathId): void
     {
@@ -21,10 +23,19 @@ class ParcoursDetail extends Component
 
     public function demarrer(int $formationId): void
     {
+        $this->erreur = null;
+        $this->abonnementRequis = false;
         $result = Api::post("/formations/{$formationId}/enroll", [], Api::token());
-        $this->message = ($result['ok'] ?? false)
-            ? 'Formation ajoutée à « Mes formations » !'
-            : ($result['message'] ?? 'Une erreur est survenue.');
+
+        if (! ($result['ok'] ?? false)) {
+            $this->erreur = $result['message'] ?? 'Inscription impossible, réessayez.';
+            $this->abonnementRequis = ($result['code'] ?? null) === 'subscription_required';
+
+            return;
+        }
+
+        // Inscription faite : on ouvre directement la formation.
+        $this->redirectRoute('espace-membre.formations.detail', $formationId, navigate: true);
     }
 
     public function render()
