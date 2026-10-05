@@ -21,13 +21,37 @@
             </div>
         @endif
 
-        @if (trim($q) !== '')
-            <div data-test="filtre-recherche" class="mb-4 flex flex-wrap items-center gap-2 text-[13px] text-[#5B677A]">
-                <x-ui.icon name="search" class="size-4" />
-                {{ $cours->count() }} résultat{{ $cours->count() > 1 ? 's' : '' }} pour <strong class="text-brand">« {{ $q }} »</strong>
-                <button type="button" wire:click="effacerRecherche" class="ml-1 inline-flex items-center gap-1 rounded-full border border-brand/10 bg-white px-2.5 py-1 text-xs font-semibold text-brand hover:bg-cloud">
-                    <x-ui.icon name="x" class="size-3" /> Tout afficher
-                </button>
+        {{-- Recherche, catégorie et tri --}}
+        <div class="mb-5 flex flex-wrap items-center gap-2.5" data-test="outils-catalogue">
+            <label class="flex min-w-[220px] flex-1 items-center gap-2 rounded-[10px] border border-brand/10 bg-white px-3 py-2 focus-within:border-azure/50">
+                <x-ui.icon name="search" class="size-4 shrink-0 text-[#9AA6B8]" />
+                <input wire:model.live.debounce.300ms="q" type="search" data-test="recherche-catalogue" placeholder="Rechercher une formation (titre, thème, mot-clé)…" class="rj-search-input w-full min-w-0 border-none bg-transparent text-[13px] outline-none placeholder:text-[#9AA6B8]" />
+            </label>
+            <select wire:model.live="categorie" data-test="categorie" class="rounded-[10px] border border-brand/10 bg-white px-3 py-2 text-[13px] text-ink outline-none focus:border-azure">
+                <option value="">Toutes les catégories</option>
+                @foreach ($categories as $cat)
+                    <option value="{{ $cat }}">{{ $cat }}</option>
+                @endforeach
+            </select>
+            <select wire:model.live="tri" data-test="tri" class="rounded-[10px] border border-brand/10 bg-white px-3 py-2 text-[13px] text-ink outline-none focus:border-azure">
+                <option value="recentes">Plus récentes</option>
+                <option value="populaires">Plus suivies</option>
+                <option value="az">De A à Z</option>
+            </select>
+        </div>
+
+        @if ($filtresActifs && $cours->isNotEmpty())
+            <p class="mb-3 text-[12.5px] text-[#5B677A]" data-test="nb-resultats">{{ $cours->count() }} formation{{ $cours->count() > 1 ? 's' : '' }} trouvée{{ $cours->count() > 1 ? 's' : '' }}</p>
+        @endif
+
+        @if ($aucuneFormation)
+            <p class="rounded-[16px] border border-brand/10 bg-white py-12 text-center text-sm text-[#5B677A]" data-test="catalogue-vide">Aucune formation n'est encore publiée. Revenez bientôt : le REJCC prépare son catalogue.</p>
+        @elseif ($cours->isEmpty())
+            <div class="flex flex-col items-center gap-2 rounded-[16px] border border-brand/10 bg-white py-12 text-center" data-test="aucun-resultat">
+                <x-ui.icon name="search" class="size-7 text-[#9AA6B8]" />
+                <p class="text-[14px] font-bold text-brand">Aucune formation ne correspond{{ trim($q) !== '' ? ' à « '.$q.' »' : '' }}</p>
+                <p class="text-[12.5px] text-[#5B677A]">Essayez un autre mot-clé ou une autre catégorie.</p>
+                <button type="button" wire:click="reinitialiser" class="mt-1 rounded-full border border-brand/15 px-4 py-1.5 text-[12.5px] font-bold text-brand hover:bg-cloud">Voir toutes les formations</button>
             </div>
         @endif
 

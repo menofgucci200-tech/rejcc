@@ -19,9 +19,21 @@ class Catalogue extends Component
     #[Url(except: '')]
     public string $q = '';
 
+    #[Url(as: 'categorie', except: '')]
+    public string $categorie = '';
+
+    #[Url(except: 'recentes')]
+    public string $tri = 'recentes';
+
     public function effacerRecherche(): void
     {
         $this->q = '';
+    }
+
+    public function reinitialiser(): void
+    {
+        $this->reset(['q', 'categorie', 'filtre']);
+        $this->tri = 'recentes';
     }
 
     public function setFiltre(string $filtre): void
@@ -39,7 +51,10 @@ class Catalogue extends Component
 
     public function render()
     {
-        $cours = Collection::make(Api::get('/formations', [], Api::token())['formations'] ?? [])
+        $toutes = Collection::make(Api::get('/formations', [], Api::token())['formations'] ?? []);
+        $categories = $toutes->pluck('category')->filter()->unique()->sort()->values()->all();
+
+        $cours = $toutes
             ->map(function (array $f) {
                 $palette = CategoryPalette::for($f['category']);
 
@@ -57,6 +72,9 @@ class Catalogue extends Component
                     'inscrit' => (bool) $f['enrolled'],
                     'has_modules' => (bool) ($f['has_modules'] ?? false),
                     'termine' => (bool) ($f['completed'] ?? false),
+                    'description' => $f['description'] ?? '',
+                    'inscrits' => (int) ($f['inscrits'] ?? 0),
+                    'publiee_le' => $f['publiee_le'] ?? '',
                 ];
             })
             ->when($this->filtre === 'gratuit', fn ($c) => $c->where('gratuit', true))
@@ -64,10 +82,21 @@ class Catalogue extends Component
             ->when(trim($this->q) !== '', function ($c) {
                 $q = Str::lower(Str::ascii(trim($this->q)));
 
-                return $c->filter(fn ($f) => str_contains(Str::lower(Str::ascii($f['titre'].' '.$f['tag'])), $q));
+                return $c->filter(fn ($f) => str_contains(Str::lower(Str::ascii($f['titre'].' '.$f['tag'].' '.$f['description'])), $q));
+            })
+            ->when($this->categorie !== '', fn ($c) => $c->where('tag', $this->categorie))
+            ->pipe(fn ($c) => match ($this->tri) {
+                'populaires' => $c->sortByDesc('inscrits'),
+                'az' => $c->sortBy(fn ($f) => Str::lower(Str::ascii($f['titre']))),
+                default => $c->sortByDesc('publiee_le'),
             })
             ->values();
 
-        return view('livewire.member.catalogue', ['cours' => $cours]);
+        return view('livewire.member.catalogue', [
+            'cours' => $cours,
+            'categories' => $categories,
+            'aucuneFormation' => $toutes->isEmpty(),
+            'filtresActifs' => trim($this->q) !== '' || $this->categorie !== '' || $this->filtre !== 'toutes',
+        ]);
     }
 }
