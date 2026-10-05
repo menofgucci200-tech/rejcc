@@ -26,4 +26,14 @@ class NavCompteurs
     {
         session()->forget('nav_compteurs');
     }
+
+    /** Met à jour un compteur connu (ex. messages non lus recalculés par la messagerie). */
+    public static function fixer(string $cle, int $valeur): void
+    {
+        $cache = session('nav_compteurs');
+        if (is_array($cache)) {
+            $cache['data'][$cle] = $valeur;
+            session(['nav_compteurs' => $cache]);
+        }
+    }
 }

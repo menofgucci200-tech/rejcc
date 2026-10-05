@@ -3,7 +3,7 @@
     $tabs = [
         ['label' => 'Accueil', 'icon' => 'nav-home', 'route' => 'espace-membre.dashboard'],
         ['label' => 'Formations', 'icon' => 'graduation-cap', 'route' => 'espace-membre.formations'],
-        ['label' => 'Messages', 'icon' => 'message-circle', 'route' => 'espace-membre.messaging', 'badge' => $compteurs['messages'] ?? 0],
+        ['label' => 'Messages', 'icon' => 'message-circle', 'route' => 'espace-membre.messaging', 'cle' => 'messages', 'badge' => $compteurs['messages'] ?? 0],
         ['label' => 'Événements', 'icon' => 'calendar-days', 'route' => 'espace-membre.evenements'],
     ];
 
@@ -24,7 +24,10 @@
             @endif
             <span class="relative">
                 <x-ui.icon :name="$item['icon']" class="size-[21px] transition-transform duration-200 {{ $active ? '-translate-y-0.5' : '' }}" />
-                @if ($item['badge'] ?? 0)
+                @if (($item['cle'] ?? null) === 'messages')
+                    <span x-data="{ n: {{ (int) ($item['badge'] ?? 0) }} }" x-on:compteur-messages.window="n = $event.detail.n" x-show="n > 0" @if (! ($item['badge'] ?? 0)) style="display: none" @endif x-text="n > 99 ? '99+' : n"
+                        data-test="pastille-mobile" class="absolute -right-2.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-white bg-accent px-1 text-[9px] font-bold text-white">{{ ($item['badge'] ?? 0) > 99 ? '99+' : ($item['badge'] ?? 0) }}</span>
+                @elseif ($item['badge'] ?? 0)
                     <span data-test="pastille-mobile" class="absolute -right-2.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-white bg-accent px-1 text-[9px] font-bold text-white">{{ $item['badge'] > 99 ? '99+' : $item['badge'] }}</span>
                 @endif
             </span>

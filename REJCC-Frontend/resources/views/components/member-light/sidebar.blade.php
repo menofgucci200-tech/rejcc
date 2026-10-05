@@ -24,7 +24,7 @@
             ['label' => 'Mentorat', 'icon' => 'hand-heart', 'route' => 'espace-membre.mentorat', 'badge' => $compteurs['mentorat'] ?? 0],
             ['label' => 'Annuaire', 'icon' => 'users', 'route' => 'espace-membre.directory', 'locked' => true],
             ['label' => 'Groupes sectoriels', 'icon' => 'network', 'route' => 'espace-membre.groupes'],
-            ['label' => 'Messagerie', 'icon' => 'message-circle', 'route' => 'espace-membre.messaging', 'locked' => true, 'badge' => $compteurs['messages'] ?? 0],
+            ['label' => 'Messagerie', 'icon' => 'message-circle', 'route' => 'espace-membre.messaging', 'locked' => true, 'cle' => 'messages', 'badge' => $compteurs['messages'] ?? 0],
             ['label' => 'Événements', 'icon' => 'calendar-days', 'route' => 'espace-membre.evenements'],
         ],
         'Opportunités' => [
@@ -99,7 +99,11 @@
                         @endif
                     </span>
                     <span class="min-w-0 flex-1 truncate" @if ($reductible) x-show="! reduit" @endif>{{ $item['label'] }}</span>
-                    @if ($badge)
+                    @if (($item['cle'] ?? null) === 'messages' && ! $verrouille)
+                        {{-- Pastille mise à jour en direct par la messagerie (évènement compteur-messages) --}}
+                        <span x-data="{ n: {{ $badge }} }" x-on:compteur-messages.window="n = $event.detail.n" x-show="n > 0{{ $reductible ? ' && ! reduit' : '' }}" @if (! $badge) style="display: none" @endif
+                            data-test="pastille" class="shrink-0 rounded-full bg-accent px-1.5 py-px text-[10.5px] font-bold leading-4 text-white" x-text="n > 99 ? '99+' : n">{{ $badge > 99 ? '99+' : $badge }}</span>
+                    @elseif ($badge)
                         <span data-test="pastille" class="shrink-0 rounded-full bg-accent px-1.5 py-px text-[10.5px] font-bold leading-4 text-white" @if ($reductible) x-show="! reduit" @endif>{{ $badge > 99 ? '99+' : $badge }}</span>
                     @elseif ($verrouille)
                         <span class="shrink-0" @if ($reductible) x-show="! reduit" @endif><x-ui.icon name="lock" class="size-[13px] text-[#F5A623]" /></span>

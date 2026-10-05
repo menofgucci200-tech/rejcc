@@ -3,9 +3,15 @@
 namespace App\Livewire\Member;
 
 use App\Support\Api;
+use App\Support\NavCompteurs;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
+/**
+ * Messagerie privée : liste des conversations et fil de discussion.
+ * Rafraîchie toutes les 4 s ; seuls les nouveaux messages du fil ouvert
+ * sont demandés à l'API (paramètre `after`).
+ */
 #[Layout('layouts.member-light')]
 class Messaging extends Component
 {
@@ -15,7 +21,14 @@ class Messaging extends Component
 
     public array $messages = [];
 
+    /** Dernier de mes messages lu par l'interlocuteur (« Vu »). */
+    public int $vuJusqua = 0;
+
+    public bool $peutEcrire = true;
+
     public string $body = '';
+
+    public ?string $erreur = null;
 
     public function mount(): void
     {
@@ -35,37 +48,57 @@ class Messaging extends Component
         return ! (Api::user()->subscription_active ?? false);
     }
 
-    public function getConversationsProperty()
+    public function getConversationsProperty(): array
     {
         if ($this->locked()) {
             return [];
         }
 
-        $result = Api::get('/messages', [], Api::token());
-
-        return $result['conversations'] ?? [];
+        return Api::get('/messages', [], Api::token())['conversations'] ?? [];
     }
 
     public function openThread(int $userId): void
     {
         $this->activeId = $userId;
+        $this->erreur = null;
+        $this->body = '';
 
         $result = Api::get("/messages/{$userId}", [], Api::token());
-        \App\Support\NavCompteurs::oublier(); // les messages ouverts sont lus
 
-        $this->partner = $result['partner'] ?? null;
-        $this->messages = $result['messages'] ?? [];
-    }
+        if (! ($result['ok'] ?? false)) {
+            $this->partner = null;
+            $this->messages = [];
+            $this->peutEcrire = false;
+            $this->erreur = $result['message'] ?? 'Cette conversation est indisponible.';
 
-    public function refreshThread(): void
-    {
-        if (! $this->activeId) {
             return;
         }
 
-        $result = Api::get("/messages/{$this->activeId}", [], Api::token());
-
+        $this->partner = $result['partner'];
         $this->messages = $result['messages'] ?? [];
+        $this->vuJusqua = (int) ($result['vu_jusqua'] ?? 0);
+        $this->peutEcrire = (bool) ($result['peut_ecrire'] ?? true);
+        NavCompteurs::oublier(); // les messages ouverts sont lus
+    }
+
+    /** Rafraîchissement périodique : seuls les nouveaux messages du fil ouvert. */
+    public function rafraichir(): void
+    {
+        if (! $this->activeId || ! $this->partner) {
+            return;
+        }
+
+        $dernier = (int) (end($this->messages)['id'] ?? 0);
+        $result = Api::get("/messages/{$this->activeId}", ['after' => $dernier], Api::token());
+        if (! ($result['ok'] ?? false)) {
+            return;
+        }
+
+        foreach ($result['messages'] ?? [] as $m) {
+            $this->messages[] = $m;
+        }
+        $this->vuJusqua = (int) ($result['vu_jusqua'] ?? $this->vuJusqua);
+        $this->peutEcrire = (bool) ($result['peut_ecrire'] ?? true);
     }
 
     public function closeThread(): void
@@ -73,27 +106,53 @@ class Messaging extends Component
         $this->activeId = null;
         $this->partner = null;
         $this->messages = [];
+        $this->erreur = null;
     }
 
     public function send(): void
     {
-        $this->validate(['body' => 'required|string|min:1|max:2000']);
+        $this->erreur = null;
+        $texte = trim($this->body);
 
-        if (! $this->activeId) {
+        if (! $this->activeId || ! $this->partner) {
+            return;
+        }
+        if ($texte === '') {
+            $this->erreur = "Écrivez votre message avant de l'envoyer.";
+
+            return;
+        }
+        if (mb_strlen($texte) > 2000) {
+            $this->erreur = 'Votre message est trop long (2000 caractères maximum).';
+
             return;
         }
 
-        Api::post('/messages', [
+        $result = Api::post('/messages', [
             'recipient_id' => $this->activeId,
-            'body' => $this->body,
+            'body' => $texte,
         ], Api::token());
 
+        if (! ($result['ok'] ?? false)) {
+            $this->erreur = $result['message'] ?? "Votre message n'a pas pu être envoyé. Réessayez.";
+
+            return;
+        }
+
         $this->body = '';
-        $this->openThread($this->activeId);
+        $this->rafraichir();
+        $this->dispatch('message-envoye');
     }
 
     public function render()
     {
-        return view('livewire.member.messaging');
+        $conversations = $this->conversations;
+
+        // Pastilles du menu à jour sans recharger la page.
+        $nonLus = array_sum(array_column($conversations, 'unread'));
+        NavCompteurs::fixer('messages', $nonLus);
+        $this->dispatch('compteur-messages', n: $nonLus);
+
+        return view('livewire.member.messaging', ['conversations' => $conversations]);
     }
 }
