@@ -49,6 +49,8 @@ class AuthController extends Controller
             'subscription_paid' => $u->hasPaidSubscription(),
             'subscriptions_enforced' => \App\Support\SubscriptionMode::enforced(),
             'subscription_expires_at' => $u->subscription_expires_at?->toDateString(),
+            'subscription_exempt' => $u->isExemptFromSubscription(),
+            'mentor' => $u->role === 'mentor' ? \App\Support\MemberProfile::mentor($u) : null,
         ];
     }
 
@@ -319,10 +321,16 @@ class AuthController extends Controller
         $q = trim((string) $request->query('q', ''));
         $profil = $request->query('profil');
 
-        $query = User::where('role', 'member')
+        // Membres et mentors du réseau (les mentors sont signalés par leur rôle).
+        $query = User::whereIn('role', ['member', 'mentor'])
+            ->where('is_active', true)
             ->where('id', '!=', $request->user()->id)
             ->orderBy('prenom')
             ->orderBy('nom');
+
+        if ($request->boolean('mentors')) {
+            $query->where('role', 'mentor');
+        }
 
         if (in_array($profil, ['etudiant', 'porteur', 'entrepreneur'], true)) {
             $query->where('profil', $profil);
@@ -340,7 +348,7 @@ class AuthController extends Controller
             });
         }
 
-        $page = $query->paginate(24, ['id', 'prenom', 'nom', 'ville', 'secteur', 'profil', 'organisation', 'photo']);
+        $page = $query->paginate(24, ['id', 'prenom', 'nom', 'ville', 'secteur', 'profil', 'organisation', 'photo', 'role', 'mentor_expertises']);
 
         return response()->json([
             'ok' => true,
@@ -357,7 +365,7 @@ class AuthController extends Controller
     /** Fiche détaillée d'un membre (clic depuis l'annuaire ou le trombinoscope d'un groupe). */
     public function show(int $id)
     {
-        $user = User::where('role', 'member')->find($id);
+        $user = User::whereIn('role', ['member', 'mentor'])->find($id);
 
         if (! $user) {
             return response()->json(['ok' => false, 'message' => 'Membre introuvable.'], 404);

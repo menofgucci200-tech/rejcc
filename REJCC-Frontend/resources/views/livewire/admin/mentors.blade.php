@@ -14,13 +14,13 @@
         <div class="rounded-[18px] border border-brand/10 bg-white px-5 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
             @forelse ($mentors as $m)
                 <div class="row-hover -mx-5 flex flex-wrap items-center gap-4 border-t border-[#EDF0F5] px-5 py-3.5 first:border-t-0 {{ $m['actif'] ? '' : 'opacity-55' }}">
-                    <span class="flex size-10 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white" style="background: linear-gradient(135deg, #F5A623, #F7C873)">{{ $m['initiales'] }}</span>
+                    <span class="flex size-10 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white" style="background: linear-gradient(135deg, #AC0100, #D95B5A)">{{ $m['initiales'] }}</span>
                     <div class="min-w-[200px] flex-1">
                         <p class="text-[13.5px] font-bold text-brand">{{ $m['nom'] }}</p>
                         <p class="text-xs text-[#5B677A]">{{ $m['email'] }} · {{ $m['telephone'] }}@if ($m['ville']) · {{ $m['ville'] }}@endif</p>
                         <p class="mt-0.5 text-[11px] text-[#9AA6B8]">Mentor depuis le {{ $m['depuis'] }}@if ($m['secteur']) · {{ $m['secteur'] }}@endif</p>
                     </div>
-                    <a href="{{ route('admin.members') }}" wire:navigate class="shrink-0 rounded-[9px] border border-[#C9D3E6] px-3 py-1.5 text-xs font-bold text-brand hover:bg-cloud">Gérer dans Membres</a>
+                    <a href="{{ route('admin.members', ['role' => 'mentor', 'q' => $m['email']]) }}" wire:navigate class="shrink-0 rounded-[9px] border border-[#C9D3E6] px-3 py-1.5 text-xs font-bold text-brand hover:bg-cloud">Gérer dans Membres</a>
                 </div>
             @empty
                 <p class="py-12 text-center text-sm text-[#5B677A]">Aucun mentor pour le moment. Inscrivez-en un via « Nouvelle inscription » (type Mentor).</p>

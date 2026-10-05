@@ -72,6 +72,8 @@ class Abonnement extends Component
             // Abonnements obligatoires ? (interrupteur du tableau de bord admin)
             'enforced' => (bool) ($status['enforced'] ?? true),
             'expiresAt' => $status['expires_at'] ?? null,
+            'exempt' => (bool) ($status['exempt'] ?? false),
+            'role' => $status['role'] ?? 'member',
             'amount' => $status['amount'] ?? 10000,
             'history' => $status['history'] ?? [],
         ]);

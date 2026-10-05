@@ -15,6 +15,7 @@
                 @foreach ($profiles as $p)
                     <button wire:click="setFiltre('{{ $p['id'] }}')" class="btn-tap rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors duration-200 {{ $filtre === $p['id'] ? 'border-brand bg-brand text-white' : 'border-brand/10 bg-white text-[#5B677A]' }}">{{ $p['label'] }}</button>
                 @endforeach
+                <button wire:click="setFiltre('mentors')" data-test="filtre-mentors" class="btn-tap inline-flex items-center gap-1 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors duration-200 {{ $filtre === 'mentors' ? 'border-accent bg-accent text-white' : 'border-accent/25 bg-white text-accent' }}"><x-ui.icon name="nav-mentor" class="size-3.5" /> Mentors</button>
             </div>
         </div>
 
@@ -29,22 +30,35 @@
         </div>
 
         @if ($members->isEmpty())
-            <p class="py-10 text-center text-sm text-[#5B677A]">Aucun membre trouvé.</p>
+            <p class="py-10 text-center text-sm text-[#5B677A]">{{ $filtre === 'mentors' ? 'Aucun mentor pour le moment.' : 'Aucun membre trouvé.' }}</p>
         @else
             <div class="grid gap-4" style="grid-template-columns: repeat(auto-fill, minmax(240px, 1fr))" wire:key="dir-page-{{ $meta['current_page'] ?? 1 }}">
                 @foreach ($members as $m)
-                    <article wire:click="voirProfil({{ $m->id }})" class="card-hover cursor-pointer rounded-[16px] border border-brand/10 bg-white p-[18px] shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                    @php $estMentor = ($m->role ?? 'member') === 'mentor'; @endphp
+                    <article data-test="carte-annuaire" wire:click="voirProfil({{ $m->id }})" class="card-hover cursor-pointer rounded-[16px] border bg-white p-[18px] shadow-[0_2px_8px_rgba(3,29,89,.05)] {{ $estMentor ? 'border-accent/30' : 'border-brand/10' }}">
                         <div class="flex items-center gap-3">
-                            <span class="flex size-11 shrink-0 items-center justify-center rounded-xl text-sm font-bold text-white" style="background: linear-gradient(135deg, #4F6FBF, #AC0100)">
-                                {{ mb_substr($m->prenom, 0, 1) }}{{ mb_substr($m->nom, 0, 1) }}
-                            </span>
+                            @if ($m->photo ?? null)
+                                <img src="{{ $m->photo }}" alt="" class="size-11 shrink-0 rounded-xl object-cover">
+                            @else
+                                <span class="flex size-11 shrink-0 items-center justify-center rounded-xl text-sm font-bold text-white" style="background: linear-gradient(135deg, {{ $estMentor ? '#AC0100, #D95B5A' : '#4F6FBF, #AC0100' }})">
+                                    {{ mb_substr($m->prenom, 0, 1) }}{{ mb_substr($m->nom, 0, 1) }}
+                                </span>
+                            @endif
                             <div class="min-w-0">
-                                <p class="truncate text-sm font-bold text-brand">{{ $m->prenom }} {{ $m->nom }}</p>
+                                <p class="flex items-center gap-1.5 truncate text-sm font-bold text-brand">{{ $m->prenom }} {{ $m->nom }}
+                                    @if ($estMentor)
+                                        <span class="shrink-0 rounded-full bg-accent px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.06em] text-white">Mentor</span>
+                                    @endif
+                                </p>
                                 @if ($m->secteur)
                                     <p class="mt-0.5 truncate text-xs text-[#5B677A]">{{ $m->secteur }}</p>
                                 @endif
                             </div>
                         </div>
+
+                        @if ($estMentor && ! empty($m->mentor_expertises))
+                            <p class="mt-2.5 truncate text-[11.5px] font-semibold text-accent">{{ implode(' · ', array_slice($m->mentor_expertises, 0, 3)) }}</p>
+                        @endif
 
                         @if ($m->ville || $m->organisation)
                             <p class="mt-3 flex items-center gap-1.5 text-xs text-[#9AA6B8]">

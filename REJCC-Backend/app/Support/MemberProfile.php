@@ -24,6 +24,26 @@ class MemberProfile
      *                        (accessible sans connexion) : les coordonnées n'y
      *                        figurent que si le membre l'a explicitement choisi.
      */
+    public const FORMATS_MENTORAT = [
+        'visio' => 'En visio',
+        'presentiel' => 'En présentiel',
+        'les_deux' => 'Visio ou présentiel',
+    ];
+
+    /** Profil de mentor (expertises, présentation, disponibilités, format, capacité). */
+    public static function mentor(User $user): array
+    {
+        return [
+            'expertises' => $user->mentor_expertises ?? [],
+            'bio' => $user->mentor_bio,
+            'disponibilites' => $user->mentor_disponibilites,
+            'format' => $user->mentor_format,
+            'format_label' => static::FORMATS_MENTORAT[$user->mentor_format] ?? null,
+            'capacite' => (int) $user->mentor_capacite,
+            'accepte' => (bool) $user->mentor_accepte,
+        ];
+    }
+
     public static function payload(User $user, bool $public = false): array
     {
         $prefs = $user->preferences ?? $user->defaultPreferences();
@@ -59,6 +79,7 @@ class MemberProfile
             'photo' => $user->photo,
             'role' => $user->role,
             'role_label' => $user->roleLabel(),
+            'mentor' => $user->role === 'mentor' ? static::mentor($user) : null,
             'ville' => $user->ville,
             'secteur' => $user->secteur,
             'is_active' => (bool) $user->is_active,

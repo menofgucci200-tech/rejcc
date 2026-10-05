@@ -35,7 +35,17 @@
             </div>
         @endif
 
-        @if ($enforced)
+        @if ($exempt)
+            <div data-test="abonnement-dispense" class="mb-5 flex items-start gap-3.5 rounded-[16px] border border-[#22A85A]/30 bg-[#F2FBF5] p-5">
+                <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#22A85A]/15 text-[#1C8F4C]"><x-ui.icon name="shield-check" class="size-5" /></span>
+                <div>
+                    <p class="text-[14px] font-bold text-brand">Dispensé d'abonnement</p>
+                    <p class="mt-0.5 text-[12.5px] leading-relaxed text-[#5B677A]">{{ $role === 'mentor' ? 'En tant que mentor du réseau, vous avez accès à toutes les fonctionnalités sans cotisation : merci pour le temps que vous donnez aux membres.' : 'Votre statut d\'administrateur vous donne accès à toutes les fonctionnalités sans cotisation.' }}</p>
+                </div>
+            </div>
+        @endif
+
+        @if ($enforced && ! $exempt)
         <div class="rounded-[16px] border border-brand/10 bg-white p-6 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
             <div class="flex flex-wrap items-center justify-between gap-4">
                 <div class="flex items-center gap-3.5">

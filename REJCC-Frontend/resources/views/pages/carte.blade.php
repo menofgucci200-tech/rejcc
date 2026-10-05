@@ -2,7 +2,7 @@
     @php
         $fullName = trim(($card->prenom ?? '').' '.($card->nom ?? '')) ?: ($card->name ?? 'Membre');
         $accent = match ($card->role ?? 'member') {
-            'mentor' => '#F5A623',
+            'mentor' => '#AC0100',
             'admin' => '#4F6FBF',
             default => '#AC0100',
         };
@@ -127,6 +127,14 @@
             <div class="mt-6 grid items-start gap-6 lg:grid-cols-[1.6fr_1fr]">
                 {{-- ═════ Colonne principale ═════ --}}
                 <div class="flex min-w-0 flex-col gap-6">
+                    @if ($card->mentor ?? null)
+                        <section data-test="bio-mentor" class="rounded-3xl border border-accent/20 bg-white p-6 shadow-[0_2px_8px_rgba(3,29,89,.05)] sm:p-8">
+                            <h2 class="text-[15px] font-extrabold text-brand">Mentor du REJCC</h2>
+                            <div class="mb-4 mt-1 h-[3px] w-9 rounded bg-accent"></div>
+                            <x-mentorat.profil :mentor="(array) $card->mentor" />
+                        </section>
+                    @endif
+
                     @if ($card->bio ?? null)
                         <section data-test="bio-apropos" class="rounded-3xl border border-brand/10 bg-white p-6 shadow-[0_2px_8px_rgba(3,29,89,.05)] sm:p-8">
                             <h2 class="text-[15px] font-extrabold text-brand">À propos</h2>

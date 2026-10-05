@@ -47,6 +47,9 @@ class SubscriptionController extends Controller
         return response()->json([
             'ok' => true,
             'active' => $user->hasPaidSubscription(),
+            // Administrateurs et mentors : dispensés d'abonnement.
+            'exempt' => $user->isExemptFromSubscription(),
+            'role' => $user->role,
             // Abonnements obligatoires ? (interrupteur du tableau de bord admin)
             'enforced' => \App\Support\SubscriptionMode::enforced(),
             'expires_at' => $user->subscription_expires_at?->toDateString(),
@@ -72,8 +75,10 @@ class SubscriptionController extends Controller
         // Renouvellement possible dans les 30 derniers jours : l'année suivante
         // part de l'échéance actuelle (date anniversaire conservée, cf. verify()).
         if ($user->hasPaidSubscription()
-            && ($user->role === 'admin' || $user->subscription_expires_at->gt(now()->addDays(30)))) {
-            return response()->json(['ok' => false, 'message' => 'Votre abonnement est déjà actif. Le renouvellement sera possible dans les 30 jours avant son échéance.'], 422);
+            && ($user->isExemptFromSubscription() || $user->subscription_expires_at->gt(now()->addDays(30)))) {
+            return response()->json(['ok' => false, 'message' => $user->isExemptFromSubscription()
+                ? 'Votre statut vous dispense d\'abonnement : vous avez accès à toutes les fonctionnalités.'
+                : 'Votre abonnement est déjà actif. Le renouvellement sera possible dans les 30 jours avant son échéance.'], 422);
         }
 
         $apiKey = $this->cinetpayApiKey();

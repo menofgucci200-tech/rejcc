@@ -7,18 +7,21 @@ use App\Support\Api;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 #[Layout('layouts.admin-light')]
 class Members extends Component
 {
     // ── Filtres ──────────────────────────────────────────────────────────
+    #[Url(as: 'role', except: 'tous')]
     public string $filtreRole = 'tous';
 
     public string $filtreStatut = 'tous';
 
     public string $periode = 'toutes';
 
+    #[Url(as: 'q', except: '')]
     public string $recherche = '';
 
     public int $page = 1;

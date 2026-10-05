@@ -15,6 +15,7 @@ class Directory extends Component
     #[Url(as: 'q', except: '')]
     public string $query = '';
 
+    #[Url(as: 'filtre', except: 'tous')]
     public string $filtre = 'tous';
 
     public int $page = 1;
@@ -60,7 +61,9 @@ class Directory extends Component
         if (trim($this->query) !== '') {
             $params['q'] = trim($this->query);
         }
-        if ($this->filtre !== 'tous') {
+        if ($this->filtre === 'mentors') {
+            $params['mentors'] = 1;
+        } elseif ($this->filtre !== 'tous') {
             $params['profil'] = $this->filtre;
         }
 

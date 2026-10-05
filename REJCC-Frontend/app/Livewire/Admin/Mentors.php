@@ -13,9 +13,16 @@ class Mentors extends Component
 {
     public function render()
     {
-        $mentors = Collection::make(Api::get('/admin/members', [], Api::token())['members'] ?? [])
-            ->where('role', 'mentor')
-            ->values()
+        // Tous les mentors, page après page (l'API pagine par 30).
+        $liste = collect();
+        $page = 1;
+        do {
+            $result = Api::get('/admin/members', ['role' => 'mentor', 'page' => $page], Api::token());
+            $liste = $liste->merge($result['members'] ?? []);
+            $page++;
+        } while ($page <= (int) ($result['meta']['last_page'] ?? 1) && $page <= 50);
+
+        $mentors = Collection::make($liste)
             ->map(fn ($m) => [
                 'id' => $m['id'],
                 'nom' => trim(($m['prenom'] ?? '').' '.($m['nom'] ?? '')) ?: $m['email'],

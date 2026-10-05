@@ -85,7 +85,7 @@
             @keydown.escape.window="open && hide()"
         >
             <div x-show="open" x-cloak x-transition.opacity data-test="mode-presenter" role="dialog" aria-modal="true" aria-label="Carte membre à présenter"
-                class="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-5 overflow-y-auto bg-[#1D2556] px-6 py-10 text-center text-white">
+                class="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-5 overflow-y-auto {{ $role === 'mentor' ? 'bg-[#AC0100]' : 'bg-[#1D2556]' }} px-6 py-10 text-center text-white">
                 <button type="button" @click="hide()" aria-label="Fermer" class="absolute right-4 top-4 flex size-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20">
                     <x-ui.icon name="x" class="size-5" />
                 </button>

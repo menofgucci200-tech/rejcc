@@ -15,18 +15,21 @@
     // Design officiel « Carte Standard REJCC » (PDF de la charte).
     // Fond navy #1D2556 et accent #A44B4B extraits du fichier source ;
     // les visuels carte-logo.png et carte-cathedrale.png en sont découpés.
-    // Les statuts non-membres gardent la même carte avec un accent distinct.
+    // Les mentors ont une carte rouge (rouge de la charte, #AC0100) avec les
+    // mêmes visuels recolorés ; les administrateurs gardent un accent distinct.
+    $mentor = $role === 'mentor';
     $accent = match ($role) {
-        'mentor' => '#F5A623',
+        'mentor' => '#FFD9D4',
         'admin' => '#4F6FBF',
         default => '#A44B4B',
     };
-    $navy = '#1D2556';
+    $navy = $mentor ? '#AC0100' : '#1D2556';
+    $suffixe = $mentor ? '-rouge' : '';
     $qrUrl = url('/carte/'.$code);
     // Unités cqw/cqh : proportionnelles à la carte (container queries).
 @endphp
 
-<div {{ $attributes->merge(['class' => 'mx-auto grid w-full max-w-[1060px] gap-6 lg:grid-cols-2']) }}>
+<div data-carte-role="{{ $role }}" {{ $attributes->merge(['class' => 'mx-auto grid w-full max-w-[1060px] gap-6 lg:grid-cols-2']) }}>
 
     {{-- ═══════════════ RECTO ═══════════════ --}}
     <div class="relative aspect-[1586/1000] overflow-hidden rounded-[4.5cqw] shadow-[0_24px_60px_-24px_rgba(3,29,89,.55)]"
@@ -58,7 +61,7 @@
         </div>
 
         {{-- Lockup logo officiel (monogramme + REJCC + filet), découpé du PDF --}}
-        <img src="{{ asset('brand/carte-logo.png') }}" alt="REJCC"
+        <img src="{{ asset('brand/carte-logo'.$suffixe.'.png') }}" alt="REJCC"
              class="absolute left-1/2 top-[7cqh] w-[30cqw] -translate-x-1/2">
 
         {{-- Nom + statut --}}
@@ -75,7 +78,7 @@
          style="container-type: size; background: {{ $navy }}">
 
         {{-- Cathédrale + liseré monogramme (moitié droite), découpés du PDF --}}
-        <img src="{{ asset('brand/carte-cathedrale.png') }}" alt="" aria-hidden="true"
+        <img src="{{ asset('brand/carte-cathedrale'.$suffixe.'.png') }}" alt="" aria-hidden="true"
              class="pointer-events-none absolute bottom-0 right-0 h-[82cqh] w-[66cqw] object-cover object-right-bottom">
 
         {{-- Colonne gauche, centrée sur ~18 % de la largeur --}}
@@ -84,7 +87,7 @@
                  photo) réécrit les attributs du canvas, ce qui efface son dessin. --}}
             <div wire:ignore class="mt-[12cqh] rounded-[2.6cqw] bg-white p-[1.4cqw] shadow-lg">
                 {{-- la lib qrcode pose width/height inline : on les retire après rendu et la classe !size garde la main --}}
-                <canvas x-data x-init="window.QRCode && window.QRCode.toCanvas($el, '{{ $qrUrl }}', { width: 220, margin: 0, color: { dark: '{{ $navy }}', light: '#ffffff' } }, () => { $el.style.width = ''; $el.style.height = ''; })"
+                <canvas x-data x-init="window.QRCode && window.QRCode.toCanvas($el, '{{ $qrUrl }}', { width: 220, margin: 0, color: { dark: '#1D2556', light: '#ffffff' } }, () => { $el.style.width = ''; $el.style.height = ''; })"
                         class="!block !size-[15cqw]"></canvas>
             </div>
 

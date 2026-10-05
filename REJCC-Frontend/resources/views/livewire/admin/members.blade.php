@@ -48,7 +48,7 @@
                     @php
                         $roleBadge = fn ($r) => match ($r) {
                             'admin' => ['Administrateur', '#AC0100', '#F9E9E9', '#AC0100, #D95B5A'],
-                            'mentor' => ['Mentor', '#B87A0D', '#FCF1DD', '#F5A623, #F7C873'],
+                            'mentor' => ['Mentor', '#AC0100', '#FBE9E8', '#AC0100, #D95B5A'],
                             default => ['Membre', '#031D59', '#E8EDF8', '#031D59, #4F6FBF'],
                         };
                     @endphp

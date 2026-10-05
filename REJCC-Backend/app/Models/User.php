@@ -48,6 +48,12 @@ class User extends Authenticatable
         'reference',
         'is_active',
         'subscription_expires_at',
+        'mentor_expertises',
+        'mentor_bio',
+        'mentor_disponibilites',
+        'mentor_format',
+        'mentor_capacite',
+        'mentor_accepte',
     ];
 
     public function tokens(): HasMany
@@ -77,11 +83,20 @@ class User extends Authenticatable
         return ! \App\Support\SubscriptionMode::enforced() || $this->hasPaidSubscription();
     }
 
-    /** Abonnement annuel (10 000 F) réellement payé et en cours (ou administrateur). */
+    /**
+     * Abonnement annuel (10 000 F) réellement payé et en cours. Les
+     * administrateurs et les mentors en sont exemptés : les mentors donnent
+     * de leur temps au réseau et doivent pouvoir échanger avec leurs mentorés.
+     */
     public function hasPaidSubscription(): bool
     {
-        return $this->role === 'admin'
+        return $this->isExemptFromSubscription()
             || ($this->subscription_expires_at !== null && $this->subscription_expires_at->isFuture());
+    }
+
+    public function isExemptFromSubscription(): bool
+    {
+        return in_array($this->role, ['admin', 'mentor'], true);
     }
 
     /**
@@ -112,6 +127,9 @@ class User extends Authenticatable
             'permissions' => 'array',
             'is_active' => 'boolean',
             'subscription_expires_at' => 'datetime',
+            'mentor_expertises' => 'array',
+            'mentor_capacite' => 'integer',
+            'mentor_accepte' => 'boolean',
         ];
     }
 

@@ -14,11 +14,13 @@
                     @endif
                     <div class="min-w-0">
                         <p class="truncate text-[15px] font-bold text-brand">{{ trim(($member['prenom'] ?? '').' '.($member['nom'] ?? '')) }}</p>
-                        <p class="text-[11.5px] font-bold uppercase tracking-[0.06em] text-azure">{{ $member['role_label'] ?? 'Membre officiel' }}</p>
+                        <p class="text-[11.5px] font-bold uppercase tracking-[0.06em] {{ ($member['role'] ?? '') === 'mentor' ? 'text-accent' : 'text-azure' }}">{{ $member['role_label'] ?? 'Membre officiel' }}</p>
                     </div>
                 </div>
                 <button type="button" wire:click="fermerProfil" class="icon-btn shrink-0 rounded-lg p-1.5 hover:bg-cloud"><x-ui.icon name="x" class="size-4 text-[#5B677A]" /></button>
             </div>
+
+            <x-mentorat.profil :mentor="$member['mentor'] ?? null" class="mb-4" />
 
             @if ($member['specialite'] ?? null)
                 <p class="mb-4 rounded-[12px] bg-cloud/60 px-4 py-3 text-[13px] italic leading-relaxed text-ink">« {{ $member['specialite'] }} »</p>
@@ -28,7 +30,7 @@
                 @foreach ([
                     'Profil' => $member['profil_label'] ?? null, 'Secteur' => $member['secteur'] ?? null,
                     'Ville' => $member['ville'] ?? null, 'Entreprise / activité' => $member['organisation'] ?? null,
-                    'Paroisse' => $member['paroisse'] ?? null, 'Membre depuis' => $member['membre_depuis'] ?? null,
+                    'Paroisse' => $member['paroisse'] ?? null, 'Membre depuis' => ($member['membre_depuis'] ?? null) ? \Carbon\Carbon::parse($member['membre_depuis'])->translatedFormat('F Y') : null,
                 ] as $label => $value)
                     @if ($value)
                         <div>

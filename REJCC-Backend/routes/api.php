@@ -92,6 +92,9 @@ Route::middleware('auth.token')->group(function () {
         Route::post('/messages', [MessageController::class, 'send']);
     });
 
+    // Mentorat
+    Route::put('/mentorat/profil', [\App\Http\Controllers\Api\MentoratController::class, 'updateProfil']);
+
     // Notifications
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead']);
