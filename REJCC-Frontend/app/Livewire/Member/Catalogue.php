@@ -53,10 +53,10 @@ class Catalogue extends Component
                     'from' => $palette['from'],
                     'to' => $palette['to'],
                     'gratuit' => (bool) $f['is_free'],
-                    'certifiante' => (bool) $f['is_certifying'],
+                    'certifiante' => (bool) ($f['certifiante'] ?? false),
                     'inscrit' => (bool) $f['enrolled'],
                     'has_modules' => (bool) ($f['has_modules'] ?? false),
-                    'media' => $f['media_url'] ?? null,
+                    'termine' => (bool) ($f['completed'] ?? false),
                 ];
             })
             ->when($this->filtre === 'gratuit', fn ($c) => $c->where('gratuit', true))

@@ -21,7 +21,7 @@ class FormationController extends Controller
             ->keyBy('formation_id');
 
         $formations = Formation::where('is_published', true)
-            ->withCount(['modules as modules_reelles_count'])
+            ->withCount(['modules as modules_reelles_count', 'enrollments'])
             ->orderBy('category')->orderBy('title')
             ->get()
             ->map(function (Formation $f) use ($enrollments) {
@@ -30,15 +30,72 @@ class FormationController extends Controller
                 return [
                     ...$f->only([
                         'id', 'title', 'category', 'description', 'duration',
-                        'level', 'is_free', 'is_certifying', 'modules_count', 'media_url', 'media_name',
+                        'level', 'is_free', 'is_certifying', 'modules_count',
                     ]),
                     'has_modules' => $f->modules_reelles_count > 0,
+                    // « Certifiante » seulement si la formation peut réellement délivrer un certificat.
+                    'certifiante' => $f->is_certifying && $f->modules_reelles_count > 0,
+                    'a_examen' => ! empty($f->examen),
+                    'inscrits' => $f->enrollments_count,
+                    'publiee_le' => $f->created_at?->toIso8601String(),
+                    // Le support n'est plus transmis en lien libre : il se consulte sur la fiche.
+                    'a_support' => (bool) $f->media_url,
                     'enrolled' => (bool) $e,
                     'progress' => $e?->progress,
+                    'completed' => $e?->completed_at !== null,
                 ];
             });
 
         return response()->json(['ok' => true, 'formations' => $formations]);
+    }
+
+    /**
+     * GET /formations/{id}/fiche — présentation d'une formation avant inscription :
+     * description, programme (titres et durées des modules, sans leur contenu),
+     * quiz et examen final, nombre d'inscrits, support consultable sur la
+     * plateforme (téléchargeable par les abonnés).
+     */
+    public function fiche(Request $request, int $id)
+    {
+        $user = $request->user();
+        $e = FormationEnrollment::where('formation_id', $id)->where('user_id', $user->id)->first();
+        $f = Formation::withCount('enrollments')->find($id);
+
+        if (! $f || (! $f->is_published && ! $e)) {
+            return response()->json(['ok' => false, 'message' => 'Formation introuvable.'], 404);
+        }
+
+        $modules = $f->modules()->get(['titre', 'description', 'duree', 'quiz', 'ressources']);
+        $peutTelecharger = $user->hasActiveSubscription();
+        $support = null;
+        if ($f->media_url) {
+            $estPdf = (bool) preg_match('~\.pdf(\?.*)?$~i', $f->media_url);
+            $support = [
+                'nom' => $f->media_name ?: 'Support de la formation',
+                'pdf' => $estPdf,
+                // Un PDF se consulte dans la page ; les autres formats ne sont transmis qu'aux abonnés.
+                'url' => ($estPdf || $peutTelecharger) ? $f->media_url : null,
+                'telechargeable' => $peutTelecharger,
+            ];
+        }
+
+        return response()->json(['ok' => true, 'formation' => [
+            ...$f->only(['id', 'title', 'category', 'description', 'duration', 'level', 'is_free', 'is_certifying', 'seuil_reussite']),
+            'certifiante' => $f->is_certifying && $modules->isNotEmpty(),
+            'inscrits' => $f->enrollments_count,
+            'programme' => $modules->map(fn ($m) => [
+                'titre' => $m->titre,
+                'description' => $m->description,
+                'duree' => $m->duree,
+                'quiz' => ! empty($m->quiz),
+                'ressources' => count($m->ressources ?? []),
+            ])->values(),
+            'examen' => empty($f->examen) ? null : ['nb_questions' => count($f->examen), 'seuil' => (int) $f->seuil_reussite],
+            'support' => $support,
+            'enrolled' => (bool) $e,
+            'completed' => $e?->completed_at !== null,
+            'progress' => $e?->progress,
+        ]]);
     }
 
     /** Les formations auxquelles le membre courant est inscrit. */

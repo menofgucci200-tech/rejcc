@@ -87,6 +87,7 @@ Route::middleware('api.auth')->prefix('espace-membre')->name('espace-membre.')->
     Route::get('/formations', MemberFormations::class)->name('formations');
     Route::get('/formations/{formationId}', \App\Livewire\Member\FormationDetail::class)->name('formations.detail');
     Route::get('/catalogue', MemberCatalogue::class)->name('catalogue');
+    Route::get('/catalogue/{formationId}', \App\Livewire\Member\FormationFiche::class)->whereNumber('formationId')->name('catalogue.fiche');
     Route::get('/parcours', MemberParcours::class)->name('parcours');
     Route::get('/parcours/{pathId}', \App\Livewire\Member\ParcoursDetail::class)->name('parcours.detail');
     Route::get('/mentorat', MemberMentorat::class)->name('mentorat');

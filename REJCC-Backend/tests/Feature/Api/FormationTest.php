@@ -386,4 +386,29 @@ class FormationTest extends TestCase
         // Le nouveau module apparaît pour celui qui n'avait pas fini (0 sur 2).
         $this->assertSame(0, FormationEnrollment::where('user_id', $enCours->id)->first()->progress);
     }
+
+    public function test_la_fiche_presente_la_formation_sans_devoiler_le_contenu(): void
+    {
+        \App\Support\SubscriptionMode::set(true);
+        $formation = $this->formation(['description' => 'Apprendre à pitcher.', 'is_certifying' => true, 'media_url' => 'https://exemple.ci/programme.docx',
+            'examen' => [['question' => 'E1', 'choix' => ['A', 'B'], 'bonne' => 0]]]);
+        $formation->modules()->create(['titre' => 'Module 1', 'ordre' => 1, 'duree' => '15 min', 'contenu' => 'Secret', 'quiz' => [['question' => 'Q', 'choix' => ['A', 'B'], 'bonne' => 1]]]);
+        $nonAbonne = $this->tokenFor(User::factory()->create(['subscription_expires_at' => null]));
+
+        $fiche = $this->withToken($nonAbonne)->getJson("/api/formations/{$formation->id}/fiche")->assertOk()->json('formation');
+        $this->assertSame('Apprendre à pitcher.', $fiche['description']);
+        $this->assertSame(['titre' => 'Module 1', 'description' => null, 'duree' => '15 min', 'quiz' => true, 'ressources' => 0], $fiche['programme'][0]);
+        $this->assertSame(['nb_questions' => 1, 'seuil' => 70], $fiche['examen']);
+        $this->assertTrue($fiche['certifiante']);
+        $this->assertNull($fiche['support']['url']);           // document non PDF : réservé aux abonnés
+        $this->assertFalse($fiche['support']['telechargeable']);
+
+        // Le catalogue ne transmet plus le lien du support.
+        $carte = $this->withToken($nonAbonne)->getJson('/api/formations')->json('formations.0');
+        $this->assertArrayNotHasKey('media_url', $carte);
+        $this->assertTrue($carte['a_support']);
+
+        $formation->update(['is_published' => false]);
+        $this->withToken($nonAbonne)->getJson("/api/formations/{$formation->id}/fiche")->assertStatus(404);
+    }
 }

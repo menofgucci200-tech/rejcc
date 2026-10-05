@@ -46,7 +46,7 @@
                                 </span>
                             @endif
                         </div>
-                        <p class="mb-2 text-[13.5px] font-bold leading-snug text-brand">{{ $c['titre'] }}</p>
+                        <a href="{{ route('espace-membre.catalogue.fiche', $c['id']) }}" wire:navigate class="mb-2 block text-[13.5px] font-bold leading-snug text-brand hover:underline">{{ $c['titre'] }}</a>
                         @unless ($c['has_modules'])
                             <p class="mb-2 inline-flex items-center gap-1 rounded-full bg-cloud px-2 py-0.5 text-[10.5px] font-semibold text-[#5B677A]"><x-ui.icon name="clock" class="size-3" /> Contenu en préparation</p>
                         @endunless
@@ -68,11 +68,9 @@
                                 <button wire:click="inscrire({{ $c['id'] }})" wire:loading.attr="disabled" class="btn-tap rounded-full bg-brand px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-brand/90 disabled:opacity-60">S'inscrire</button>
                             @endif
                         </div>
-                        @if ($c['media'])
-                            <a href="{{ $c['media'] }}" target="_blank" rel="noopener" class="mt-3 inline-flex items-center gap-1.5 text-[11.5px] font-semibold text-azure hover:underline">
-                                <x-ui.icon name="download" class="size-3.5" /> Support de la formation
-                            </a>
-                        @endif
+                        <a href="{{ route('espace-membre.catalogue.fiche', $c['id']) }}" wire:navigate data-test="voir-fiche" class="mt-3 inline-flex items-center gap-1.5 text-[12px] font-semibold text-azure hover:underline">
+                            Voir le programme <x-ui.icon name="arrow-right" class="size-3.5" />
+                        </a>
                     </div>
                 </article>
             @endforeach

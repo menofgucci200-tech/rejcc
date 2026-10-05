@@ -106,6 +106,7 @@ Route::middleware('auth.token')->group(function () {
 
     // Formations
     Route::get('/formations', [FormationController::class, 'catalogue']);
+    Route::get('/formations/{id}/fiche', [FormationController::class, 'fiche']);
     Route::get('/my-formations', [FormationController::class, 'mine']);
     Route::post('/formations/{id}/enroll', [FormationController::class, 'enroll']);
     Route::delete('/formations/{id}/enroll', [FormationController::class, 'unenroll']);
