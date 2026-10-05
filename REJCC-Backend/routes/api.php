@@ -183,6 +183,8 @@ Route::middleware('auth.token')->group(function () {
 // `permissions` est null accède à tout, sinon uniquement aux sections listées.
 Route::middleware(['auth.token', 'audit.log'])->prefix('admin')->group(function () {
     Route::get('/stats', [AdminController::class, 'stats'])->middleware('auth.admin');
+    Route::get('/a-traiter', [\App\Http\Controllers\Api\AdminNavController::class, 'aTraiter'])->middleware('auth.admin');
+    Route::get('/recherche', [\App\Http\Controllers\Api\AdminNavController::class, 'recherche'])->middleware('auth.admin');
 
     // Interrupteur général des abonnements (obligatoires ou non)
     Route::get('/subscription-mode', [AdminController::class, 'subscriptionMode'])->middleware('auth.admin');

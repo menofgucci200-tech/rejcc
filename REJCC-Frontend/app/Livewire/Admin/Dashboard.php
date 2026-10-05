@@ -54,12 +54,13 @@ class Dashboard extends Component
             ['icon' => 'nav-projects', 'label' => 'Projets proposés', 'value' => $stats['projets'] ?? 0, 'sub' => 'toutes formes confondues', 'subColor' => '#5B677A'],
         ];
 
-        $enAttente = array_values(array_filter([
-            ($stats['candidatures_attente'] ?? 0) > 0 ? ['texte' => ($stats['candidatures_attente']).' demande(s) d\'adhésion en attente de traitement', 'dot' => '#F5A623', 'route' => 'admin.adhesions'] : null,
-            ($stats['non_traites'] ?? 0) > 0 ? ['texte' => ($stats['non_traites']).' message(s) de contact non traités', 'dot' => '#AC0100', 'route' => 'admin.contacts'] : null,
-            ($stats['partenariats_attente'] ?? 0) > 0 ? ['texte' => ($stats['partenariats_attente']).' demande(s) de partenariat à étudier', 'dot' => '#4F6FBF', 'route' => 'admin.partenariats'] : null,
-            ($stats['marketplace_attente'] ?? 0) > 0 ? ['texte' => ($stats['marketplace_attente']).' annonce(s) marketplace à valider', 'dot' => '#22A85A', 'route' => 'admin.marketplace'] : null,
-        ]));
+        // Même source que la cloche « À traiter » (filtrée selon les permissions).
+        $couleurs = ['adhesions' => '#F5A623', 'contacts' => '#AC0100', 'partenariats' => '#4F6FBF', 'marketplace' => '#22A85A', 'projets' => '#031D59', 'mentorat' => '#AC0100', 'mentorat_retard' => '#B27007'];
+        \App\Support\AdminNav::oublier();
+        $enAttente = collect(\App\Support\AdminNav::aTraiter()['elements'])
+            ->where('nombre', '>', 0)
+            ->map(fn ($e) => ['texte' => $e['libelle'].' : '.$e['nombre'], 'dot' => $couleurs[$e['cle']] ?? '#4F6FBF', 'route' => $e['route']])
+            ->values()->all();
 
         // Répartition réelle des inscriptions par formation (top 6).
         $palette = [

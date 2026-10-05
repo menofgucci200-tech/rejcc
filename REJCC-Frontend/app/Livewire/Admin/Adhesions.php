@@ -6,6 +6,7 @@ use App\Support\Api;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 #[Layout('layouts.admin-light')]
@@ -13,6 +14,7 @@ class Adhesions extends Component
 {
     public ?int $expanded = null;
 
+    #[Url(as: 'q', except: '')]
     public string $recherche = '';
 
     public string $filtreStatut = 'tous'; // tous | en_attente | accepte | refuse
