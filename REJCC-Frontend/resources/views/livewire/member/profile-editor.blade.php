@@ -145,10 +145,10 @@
                     </form>
                 </div>
 
-                <div>
+                <div id="preferences" class="scroll-mt-24">
                     <p class="mb-3.5 text-[13px] font-bold text-brand">Préférences</p>
                     @foreach ($preferenceRows as $pref)
-                        <div class="flex items-center justify-between border-t border-cloud-200 py-[11px] first:border-t-0">
+                        <div data-test="pref-{{ $pref['key'] }}" class="flex items-center justify-between border-t border-cloud-200 py-[11px] first:border-t-0">
                             <div>
                                 <p class="text-[13px] font-semibold text-ink">{{ $pref['label'] }}</p>
                                 <p class="text-[11.5px] text-[#9AA6B8]">{{ $pref['detail'] }}</p>
@@ -156,6 +156,7 @@
                             <button
                                 type="button"
                                 wire:click="togglePreference('{{ $pref['key'] }}')"
+                                role="switch" aria-checked="{{ $pref['on'] ? 'true' : 'false' }}" aria-label="{{ $pref['label'] }}"
                                 class="relative h-6 w-[42px] shrink-0 rounded-full transition-colors duration-200 active:scale-95"
                                 style="background: {{ $pref['on'] ? '#22A85A' : '#E6EAF0' }}"
                             >

@@ -47,10 +47,10 @@ class MemberProfile
 
     public static function payload(User $user, bool $public = false): array
     {
-        $prefs = $user->preferences ?? $user->defaultPreferences();
+        $prefs = $user->preferencesEffectives();
         $contactVisible = $public
             ? (bool) ($prefs['coordonnees_publiques'] ?? false)
-            : (bool) ($prefs['visibilite_profil'] ?? true);
+            : (bool) ($prefs['visibilite_profil'] ?? false);
 
         $certificats = FormationEnrollment::with('formation:id,title,category,is_certifying')
             ->where('user_id', $user->id)

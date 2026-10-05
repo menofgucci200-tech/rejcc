@@ -167,12 +167,21 @@ class User extends Authenticatable
         };
     }
 
+    /** Préférences enregistrées, complétées par les valeurs par défaut des réglages ajoutés depuis. */
+    public function preferencesEffectives(): array
+    {
+        return array_merge($this->defaultPreferences(), $this->preferences ?? []);
+    }
+
     public function defaultPreferences(): array
     {
         return [
             'notifications_email' => true,
             'rappels_quotidiens' => true,
-            'visibilite_profil' => true,
+            // Présence dans l'annuaire des membres (désactivable).
+            'apparaitre_annuaire' => true,
+            // Téléphone et e-mail montrés aux membres : sur choix explicite.
+            'visibilite_profil' => false,
             // Coordonnées sur la page publique du QR code : uniquement sur choix explicite.
             'coordonnees_publiques' => false,
             'newsletter' => true,

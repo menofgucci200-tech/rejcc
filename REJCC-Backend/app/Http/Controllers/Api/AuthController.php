@@ -43,7 +43,7 @@ class AuthController extends Controller
             'code' => $u->cardCode(),
             'role_label' => $u->roleLabel(),
             'date_naissance' => $u->date_naissance?->toDateString(),
-            'preferences' => $u->preferences ?? $u->defaultPreferences(),
+            'preferences' => $u->preferencesEffectives(),
             'date_adhesion' => $u->created_at?->toDateString(),
             'subscription_active' => $u->hasActiveSubscription(),
             'subscription_paid' => $u->hasPaidSubscription(),
@@ -310,7 +310,7 @@ class AuthController extends Controller
             return response()->json(['ok' => false, 'message' => $validator->errors()->first()], 422);
         }
 
-        $user->preferences = array_merge($user->preferences ?? $user->defaultPreferences(), $request->preferences);
+        $user->preferences = array_merge($user->preferencesEffectives(), $request->preferences);
         $user->save();
 
         return response()->json(['ok' => true, 'preferences' => $user->preferences]);
@@ -331,6 +331,11 @@ class AuthController extends Controller
         if ($request->boolean('mentors')) {
             $query->where('role', 'mentor');
         }
+
+        // Les membres qui ont choisi de ne pas apparaître dans l'annuaire en sont exclus.
+        $query->where(fn ($w) => $w->whereNull('preferences')
+            ->orWhereNull('preferences->apparaitre_annuaire')
+            ->orWhere('preferences->apparaitre_annuaire', true));
 
         if (in_array($profil, ['etudiant', 'porteur', 'entrepreneur'], true)) {
             $query->where('profil', $profil);

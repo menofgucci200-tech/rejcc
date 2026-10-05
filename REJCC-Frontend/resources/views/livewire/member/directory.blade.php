@@ -10,6 +10,47 @@
             <div class="h-[3px] w-9 rounded bg-accent"></div>
         </div>
 
+        {{-- Votre fiche telle que les autres membres la voient --}}
+        @php $initialesMoi = mb_strtoupper(mb_substr($moi->prenom ?? '', 0, 1).mb_substr($moi->nom ?? '', 0, 1)); @endphp
+        <section data-test="ma-fiche-annuaire" x-data="{ ouvert: $persist(true).as('rejcc-annuaire-ma-fiche') }" class="mb-5 rounded-[16px] border {{ $visibleAnnuaire ? 'border-azure/20 bg-azure/[.04]' : 'border-[#F5A623]/40 bg-[#FFF8EC]' }} p-4">
+            <div class="flex flex-wrap items-center gap-3">
+                <span x-data="{ erreur: false }" class="relative shrink-0">
+                    @if ($moi->photo ?? null)
+                        <img x-show="! erreur" x-on:error="erreur = true" x-init="$el.complete && ! $el.naturalWidth && (erreur = true)" src="{{ $moi->photo }}" alt="" class="size-10 rounded-xl object-cover">
+                    @endif
+                    <span @if ($moi->photo ?? null) x-show="erreur" style="display: none; background: linear-gradient(135deg, #4F6FBF, #AC0100)" @else style="background: linear-gradient(135deg, #4F6FBF, #AC0100)" @endif class="flex size-10 items-center justify-center rounded-xl text-xs font-bold text-white">{{ $initialesMoi }}</span>
+                </span>
+                <div class="min-w-0 flex-1">
+                    <p class="text-[13px] font-bold text-brand">Votre fiche dans l'annuaire</p>
+                    <p data-test="statut-visibilite" class="text-[12px] text-[#5B677A]">
+                        @if ($visibleAnnuaire)
+                            Visible par les membres · coordonnées {{ $coordonneesVisibles ? 'affichées' : 'masquées' }} · profil complété à <strong class="text-brand">{{ $completion }} %</strong>
+                        @else
+                            <strong class="text-[#8A5A00]">Vous n'apparaissez pas dans l'annuaire.</strong> Les autres membres ne peuvent pas vous trouver.
+                        @endif
+                    </p>
+                </div>
+                <div class="flex shrink-0 flex-wrap gap-2">
+                    @if ($completion < 100)
+                        <a href="{{ route('espace-membre.profile') }}" wire:navigate class="btn-tap rounded-full bg-brand px-3.5 py-1.5 text-[12px] font-bold text-white hover:bg-brand/90">Compléter mon profil</a>
+                    @endif
+                    <a href="{{ route('espace-membre.profile') }}#preferences" wire:navigate class="btn-tap rounded-full border border-brand/15 bg-white px-3.5 py-1.5 text-[12px] font-bold text-brand hover:bg-cloud">Gérer ma visibilité</a>
+                    <button type="button" @click="ouvert = ! ouvert" :aria-expanded="ouvert" :aria-label="ouvert ? 'Masquer l\'aperçu' : 'Voir l\'aperçu'" class="flex size-8 items-center justify-center rounded-full text-[#5B677A] hover:bg-white">
+                        <x-ui.icon name="chevron-down" class="size-4 transition-transform" x-bind:class="ouvert ? 'rotate-180' : ''" />
+                    </button>
+                </div>
+            </div>
+            <div x-show="ouvert" x-collapse class="mt-3">
+                @if ($visibleAnnuaire && $manquants)
+                    <p class="text-[12px] text-[#5B677A]">Pour être mieux trouvé·e, ajoutez : <span class="font-semibold text-brand">{{ implode(', ', $manquants) }}</span>. Votre métier et vos compétences apparaissent aussi sur votre carte.</p>
+                @elseif ($visibleAnnuaire)
+                    <p class="text-[12px] text-[#5B677A]">Votre profil est complet : merci, il aide les membres à vous trouver.</p>
+                @else
+                    <p class="text-[12px] text-[#8A5A00]">Réactivez « Apparaître dans l'annuaire » dans vos préférences pour que les membres puissent vous trouver et vous écrire.</p>
+                @endif
+            </div>
+        </section>
+
         {{-- Profils : ligne défilante sur mobile --}}
         <div class="-mx-8 mb-4 flex gap-2 overflow-x-auto px-8 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0" data-test="filtres-profil">
             <button wire:click="setFiltre('tous')" class="btn-tap shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors duration-200 {{ $filtre === 'tous' ? 'border-brand bg-brand text-white' : 'border-brand/10 bg-white text-[#5B677A]' }}">Tous</button>

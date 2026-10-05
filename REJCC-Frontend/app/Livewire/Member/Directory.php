@@ -99,7 +99,15 @@ class Directory extends Component
         $members = Collection::make($result['members'] ?? [])
             ->map(fn ($m) => (object) $m);
 
+        $moi = Api::user();
+        $prefs = (array) ($moi->preferences ?? []);
+
         return view('livewire.member.directory', [
+            'moi' => $moi,
+            'visibleAnnuaire' => (bool) ($prefs['apparaitre_annuaire'] ?? true),
+            'coordonneesVisibles' => (bool) ($prefs['visibilite_profil'] ?? false),
+            'completion' => \App\Support\ProfileCompletion::percent($moi),
+            'manquants' => \App\Support\ProfileCompletion::missing($moi),
             'members' => $members,
             'meta' => $result['meta'] ?? [],
             'filtres' => $result['filtres'] ?? ['secteurs' => [], 'villes' => [], 'groupes' => []],

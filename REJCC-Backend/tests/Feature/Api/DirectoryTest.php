@@ -62,4 +62,28 @@ class DirectoryTest extends TestCase
         $this->assertContains('Bouaké', $filtres['villes']);
         $this->assertContains('Agriculture', array_column($filtres['groupes'], 'nom'));
     }
+
+    public function test_un_membre_peut_se_retirer_de_l_annuaire_et_ses_coordonnees_sont_masquees_par_defaut(): void
+    {
+        $discret = $this->abonne(['prenom' => 'Discret', 'preferences' => ['apparaitre_annuaire' => false]]);
+        $ouvert = $this->abonne(['prenom' => 'Ouvert', 'telephone' => '0700000001', 'preferences' => ['visibilite_profil' => true]]);
+        $parDefaut = $this->abonne(['prenom' => 'Defaut', 'telephone' => '0700000002', 'preferences' => null]);
+        $token = $this->tokenFor($this->abonne());
+
+        $prenoms = array_column($this->withToken($token)->getJson('/api/members')->json('members'), 'prenom');
+        $this->assertNotContains('Discret', $prenoms);
+        $this->assertContains('Ouvert', $prenoms);
+        $this->assertContains('Defaut', $prenoms);
+
+        // Coordonnées : affichées seulement sur choix explicite.
+        $this->assertSame('0700000001', $this->withToken($token)->getJson("/api/members/{$ouvert->id}")->json('member.telephone'));
+        $this->assertNull($this->withToken($token)->getJson("/api/members/{$parDefaut->id}")->json('member.telephone'));
+
+        // Le réglage est exposé (avec sa valeur par défaut) et modifiable.
+        $tDiscret = $this->tokenFor($discret);
+        $this->assertFalse($this->withToken($tDiscret)->getJson('/api/auth/me')->json('user.preferences.apparaitre_annuaire'));
+        $this->assertFalse($this->withToken($tDiscret)->getJson('/api/auth/me')->json('user.preferences.visibilite_profil'));
+        $this->withToken($tDiscret)->putJson('/api/auth/preferences', ['preferences' => ['apparaitre_annuaire' => true]])->assertOk();
+        $this->assertContains('Discret', array_column($this->withToken($token)->getJson('/api/members')->json('members'), 'prenom'));
+    }
 }

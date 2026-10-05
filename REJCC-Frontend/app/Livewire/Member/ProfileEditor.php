@@ -85,7 +85,8 @@ class ProfileEditor extends Component
         return [
             'notifications_email' => ['label' => 'Notifications par e-mail', 'detail' => 'Rappels de formation et événements'],
             'rappels_quotidiens' => ['label' => 'Rappels quotidiens', 'detail' => 'Un rappel pour continuer votre parcours'],
-            'visibilite_profil' => ['label' => 'Coordonnées visibles par les membres', 'detail' => 'Téléphone et e-mail affichés aux membres abonnés connectés (annuaire, groupes)'],
+            'apparaitre_annuaire' => ['label' => "Apparaître dans l'annuaire", 'detail' => 'Les membres abonnés peuvent vous trouver, voir votre fiche et vous écrire'],
+            'visibilite_profil' => ['label' => 'Coordonnées visibles par les membres', 'detail' => 'Téléphone et e-mail affichés sur votre fiche (annuaire, groupes) — masqués par défaut'],
             'coordonnees_publiques' => ['label' => 'Coordonnées sur ma page publique', 'detail' => 'Téléphone et e-mail visibles par toute personne qui scanne le QR code de votre carte'],
             'newsletter' => ['label' => 'Newsletter REJCC', 'detail' => 'Actualités mensuelles du réseau'],
             'telechargement_hors_ligne' => ['label' => 'Téléchargement hors-ligne automatique', 'detail' => 'Enregistrer les nouveaux modules pour un accès sans connexion'],
