@@ -98,7 +98,7 @@ class EventSignup extends Component
         $this->validate($rules, [
             'prenom.required' => 'Indiquez votre prénom.',
             'nom.required' => 'Indiquez votre nom.',
-            'telephone.required' => 'Indiquez votre numéro de téléphone / WhatsApp.',
+            'telephone.required' => 'Indiquez votre numéro de téléphone.',
             'telephone.min' => 'Le numéro de téléphone est trop court.',
             'email.email' => 'L\'adresse e-mail n\'est pas valide.',
         ], $names);

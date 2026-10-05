@@ -55,7 +55,6 @@ class SiteConfig
             ['label' => 'LinkedIn', 'key' => 'social.linkedin', 'icon' => 'linkedin'],
             ['label' => 'YouTube', 'key' => 'social.youtube', 'icon' => 'youtube'],
             ['label' => 'TikTok', 'key' => 'social.tiktok', 'icon' => 'tiktok'],
-            ['label' => 'WhatsApp', 'key' => 'social.whatsapp', 'icon' => 'whatsapp'],
         ];
 
         $links = [];

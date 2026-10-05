@@ -5,7 +5,7 @@
             <x-ui.icon name="check" class="size-9" />
         </span>
         <h1 class="mb-2.5 text-2xl font-extrabold text-brand">Merci pour votre demande !</h1>
-        <p class="mb-2 max-w-[380px] text-sm leading-relaxed text-[#5B677A]">Votre adhésion au REJCC a bien été enregistrée. Notre équipe vous contactera prochainement sur WhatsApp ou par e-mail.</p>
+        <p class="mb-2 max-w-[380px] text-sm leading-relaxed text-[#5B677A]">Votre adhésion au REJCC a bien été enregistrée. Notre équipe vous contactera prochainement par e-mail ou par téléphone.</p>
         <p class="mb-7 max-w-[380px] font-serif text-[13.5px] italic text-[#5B677A]">« Tout ce que vous faites, faites-le de bon cœur, comme pour le Seigneur. » — Colossiens 3:23</p>
         <div class="flex flex-wrap justify-center gap-2.5">
             <a href="{{ route('home') }}" wire:navigate class="rounded-[10px] bg-brand px-[22px] py-3 text-[13.5px] font-bold text-white hover:bg-brand/90">Retour à l'accueil</a>
@@ -68,7 +68,7 @@
                     </div>
 
                     <div class="mb-4 flex flex-col gap-1.5">
-                        <label for="ma-whatsapp" class="text-[13px] font-bold text-brand">Numéro WhatsApp *</label>
+                        <label for="ma-whatsapp" class="text-[13px] font-bold text-brand">Téléphone *</label>
                         <input wire:model="whatsapp" id="ma-whatsapp" type="tel" placeholder="+225 07 00 00 00 00" class="rounded-[9px] border border-brand/15 px-3.5 py-2.5 text-sm text-ink outline-none focus:border-azure" />
                         @error('whatsapp') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
                     </div>

@@ -48,7 +48,6 @@ class Reglages extends Component
 
     public string $tiktok = '';
 
-    public string $whatsapp = '';
 
     // Bandeau d'annonce
     public bool $bannerEnabled = false;
@@ -89,7 +88,6 @@ class Reglages extends Component
         $this->linkedin = (string) SiteRemote::setting('social.linkedin', '');
         $this->youtube = (string) SiteRemote::setting('social.youtube', '');
         $this->tiktok = (string) SiteRemote::setting('social.tiktok', '');
-        $this->whatsapp = (string) SiteRemote::setting('social.whatsapp', '');
 
         $this->bannerEnabled = (bool) SiteRemote::setting('banner.enabled', false);
         $this->bannerText = (string) SiteRemote::setting('banner.text', '');
@@ -152,7 +150,6 @@ class Reglages extends Component
             'linkedin' => 'nullable|url|max:300',
             'youtube' => 'nullable|url|max:300',
             'tiktok' => 'nullable|url|max:300',
-            'whatsapp' => 'nullable|url|max:300',
         ], [
             '*.url' => 'Collez l\'adresse complète (https://…).',
         ]);
@@ -163,7 +160,6 @@ class Reglages extends Component
             'social.linkedin' => $this->linkedin,
             'social.youtube' => $this->youtube,
             'social.tiktok' => $this->tiktok,
-            'social.whatsapp' => $this->whatsapp,
         ]);
     }
 

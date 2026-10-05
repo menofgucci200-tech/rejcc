@@ -116,7 +116,7 @@
                         </div>
 
                         <div class="flex flex-col gap-1.5">
-                            <label class="text-xs font-semibold text-[#5B677A]">Téléphone / WhatsApp</label>
+                            <label class="text-xs font-semibold text-[#5B677A]">Téléphone</label>
                             <input wire:model="telephone" type="tel" inputmode="tel" placeholder="Ex : 0700000000" class="rounded-xl border border-brand/15 bg-white px-3.5 py-2.5 text-sm text-brand outline-none focus:border-azure focus:ring-2 focus:ring-accent/15" />
                             @error('telephone') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
                         </div>

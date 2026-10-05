@@ -153,7 +153,7 @@
                                             <p class="mb-2.5 mt-4 text-[11.5px] font-bold uppercase tracking-[0.05em] text-brand">Formulaire d'adhésion</p>
                                             <div class="grid grid-cols-1 gap-x-6 gap-y-2.5 sm:grid-cols-3">
                                                 @foreach ([
-                                                    'Sexe' => $app['sexe'] ?? null, "Tranche d'âge" => $app['tranche_age'] ?? null, 'WhatsApp' => $app['whatsapp'] ?? null,
+                                                    'Sexe' => $app['sexe'] ?? null, "Tranche d'âge" => $app['tranche_age'] ?? null, 'Téléphone' => $app['whatsapp'] ?? null,
                                                     'Diocèse' => $app['diocese'] ?? null, 'Paroisse' => $app['paroisse'] ?? null,
                                                     'Statut actuel' => implode(', ', $app['statut_actuel'] ?? []), "Niveau d'études" => $app['niveau_etudes'] ?? null,
                                                     'Domaines de formation' => $app['domaines_formation'] ?? null, 'Compétences' => implode(', ', $app['competences'] ?? []),

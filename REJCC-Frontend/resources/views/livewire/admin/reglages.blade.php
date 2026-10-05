@@ -84,7 +84,7 @@
                     <div class="grid gap-3 sm:grid-cols-2">
                         @foreach ([
                             'facebook' => 'Facebook', 'instagram' => 'Instagram', 'linkedin' => 'LinkedIn',
-                            'youtube' => 'YouTube', 'tiktok' => 'TikTok', 'whatsapp' => 'WhatsApp (lien wa.me)',
+                            'youtube' => 'YouTube', 'tiktok' => 'TikTok',
                         ] as $field => $label)
                             <label class="flex flex-col gap-1 text-xs font-semibold text-[#5B677A]">{{ $label }}
                                 <input wire:model="{{ $field }}" type="url" placeholder="https://…" class="rounded-[9px] border border-brand/15 px-3 py-2 text-sm font-normal outline-none focus:border-azure" />

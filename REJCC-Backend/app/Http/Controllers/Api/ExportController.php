@@ -64,7 +64,7 @@ class ExportController extends Controller
     private function candidatures(): array
     {
         return [
-            'columns' => ['Prénom', 'Nom', 'Sexe', 'Âge', 'WhatsApp', 'Email', 'Diocèse', 'Paroisse', 'Ville', 'Niveau études', 'Domaines formation', 'Statut', 'Soumise le'],
+            'columns' => ['Prénom', 'Nom', 'Sexe', 'Âge', 'Téléphone', 'Email', 'Diocèse', 'Paroisse', 'Ville', 'Niveau études', 'Domaines formation', 'Statut', 'Soumise le'],
             'rows' => MembershipApplication::orderBy('created_at')->get()->map(fn ($a) => [
                 $a->prenom, $a->nom, $a->sexe, $a->tranche_age, $a->whatsapp, $a->email,
                 $a->diocese, $a->paroisse, $a->ville, $a->niveau_etudes, $a->domaines_formation,

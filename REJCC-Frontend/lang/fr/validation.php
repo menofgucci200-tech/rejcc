@@ -52,5 +52,8 @@ return [
         'string' => 'Ce champ doit contenir :size caractères.',
     ],
 
-    'attributes' => [],
+    'attributes' => [
+        'whatsapp' => 'téléphone',
+        'telephone' => 'téléphone',
+    ],
 ];
