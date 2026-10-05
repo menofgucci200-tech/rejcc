@@ -30,24 +30,50 @@ class GroupController extends Controller
 
     public function index(Request $request)
     {
-        $mesFiches = $request->user()->groups()->get()->keyBy('id');
+        $moi = $request->user();
+        $mesFiches = $moi->groups()->get()->keyBy('id');
 
-        $groups = Group::withCount(['users' => fn ($q) => $q->where('users.is_active', true)])
+        $groups = Group::with('referent:id,prenom,nom,photo,role')
+            ->withCount(['users' => fn ($q) => $q->where('users.is_active', true)])
             ->orderBy('ordre')
             ->orderBy('id')
-            ->get(['id', 'name', 'slug', 'description', 'ordre'])
-            ->map(fn (Group $g) => [
-                'id' => $g->id,
-                'name' => $g->name,
+            ->get()
+            ->map(fn (Group $g) => $this->identite($g, $moi, $mesFiches->has($g->id)) + [
                 'slug' => $g->slug,
                 'description' => $g->description,
                 'members' => $g->users_count,
                 'joined' => $mesFiches->has($g->id),
+                'suggere' => ! $mesFiches->has($g->id) && $g->correspondA($moi),
                 'ma_specialite' => $mesFiches->get($g->id)?->pivot->specialite,
                 'ma_fiche' => $mesFiches->has($g->id) ? $this->fiche($mesFiches->get($g->id)->pivot) : null,
+                'derniers' => $this->visibles($g->users())->latest('group_user.created_at')->limit(4)
+                    ->get(['users.id', 'users.prenom', 'users.nom', 'users.photo', 'users.role'])
+                    ->map(fn (User $u) => ['initiales' => mb_strtoupper(mb_substr($u->prenom, 0, 1).mb_substr($u->nom, 0, 1)), 'photo' => $u->photo, 'mentor' => $u->role === 'mentor'])
+                    ->values(),
             ]);
 
         return response()->json(['ok' => true, 'groups' => $groups]);
+    }
+
+    /**
+     * Identité d'un groupe : icône, couleur, référent, annonce épinglée et
+     * lien WhatsApp — ce dernier seulement pour les membres du groupe à jour
+     * de leur abonnement.
+     */
+    private function identite(Group $g, User $moi, bool $membre): array
+    {
+        $r = $g->referent;
+
+        return [
+            'id' => $g->id,
+            'name' => $g->name,
+            'icone' => $g->icone ?: 'network',
+            'couleur' => $g->couleur ?: '#031D59',
+            'referent' => $r ? ['id' => $r->id, 'prenom' => $r->prenom, 'nom' => $r->nom, 'photo' => $r->photo, 'role' => $r->role] : null,
+            'annonce' => $g->annonce,
+            'annonce_at' => $g->annonce_at?->toIso8601String(),
+            'whatsapp' => $g->whatsapp_url ? ($membre && $moi->hasActiveSubscription() ? $g->whatsapp_url : 'verrouille') : null,
+        ];
     }
 
     /** Fiche professionnelle (colonnes du pivot) sous forme de tableau. */
@@ -244,7 +270,8 @@ class GroupController extends Controller
 
         return response()->json([
             'ok' => true,
-            'group' => ['id' => $group->id, 'name' => $group->name, 'description' => $group->description],
+            'group' => $this->identite($group->load('referent:id,prenom,nom,photo,role'), $request->user(), $request->user()->groups()->where('groups.id', $group->id)->exists())
+                + ['description' => $group->description],
             'members' => $members,
             'meta' => [
                 'current_page' => $page->currentPage(),

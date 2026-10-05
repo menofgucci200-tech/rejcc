@@ -172,4 +172,55 @@ class GroupTest extends TestCase
         // Hors du groupe : pas de fiche.
         $this->withToken($plain)->getJson("/api/groups/{$groupe->id}/members/{$client->id}")->assertStatus(404);
     }
+
+    public function test_identite_suggestions_et_derniers_membres(): void
+    {
+        $token = $this->memberToken($moi);
+        $moi->update(['secteur' => 'Plomberie', 'titre' => 'Plombier indépendant']);
+        $masque = User::factory()->create(['preferences' => ['apparaitre_annuaire' => false]]);
+        $masque->groups()->attach(8, ['specialite' => 'Spécialité de test assez longue']);
+        $visible = User::factory()->create(['prenom' => 'Awa', 'nom' => 'Traoré']);
+        $visible->groups()->attach(8, ['specialite' => 'Spécialité de test assez longue']);
+
+        $groups = collect($this->withToken($token)->getJson('/api/groups')->assertOk()->json('groups'))->keyBy('id');
+
+        $btp = $groups[8];
+        $this->assertSame('building-2', $btp['icone']);
+        $this->assertSame('#E07B24', $btp['couleur']);
+        $this->assertTrue($btp['suggere']);
+        $this->assertFalse($groups[2]['suggere']);
+        // Les membres masqués de l'annuaire n'apparaissent pas parmi les derniers arrivés.
+        $this->assertSame([['initiales' => 'AT', 'photo' => $visible->photo, 'mentor' => false]], $btp['derniers']);
+    }
+
+    public function test_lien_whatsapp_reserve_aux_membres_abonnes_du_groupe(): void
+    {
+        \App\Support\SubscriptionMode::set(true);
+        $referent = User::factory()->create(['prenom' => 'Paul']);
+        \App\Models\Group::whereKey(8)->update([
+            'whatsapp_url' => 'https://chat.whatsapp.com/abc123',
+            'referent_id' => $referent->id,
+            'annonce' => 'Réunion du groupe samedi à 10h.',
+            'annonce_at' => now(),
+        ]);
+
+        $token = $this->memberToken($moi);
+        $voir = fn () => collect($this->withToken($token)->getJson('/api/groups')->json('groups'))->firstWhere('id', 8);
+
+        // Ni membre du groupe ni abonné : le lien existe mais reste verrouillé.
+        $this->assertSame('verrouille', $voir()['whatsapp']);
+        $this->assertSame('Paul', $voir()['referent']['prenom']);
+        $this->assertSame('Réunion du groupe samedi à 10h.', $voir()['annonce']);
+
+        // Membre du groupe mais pas abonné : toujours verrouillé.
+        $moi->groups()->attach(8, ['specialite' => 'Spécialité de test assez longue']);
+        $this->assertSame('verrouille', $voir()['whatsapp']);
+
+        // Membre du groupe et abonné : le lien est donné.
+        $moi->update(['subscription_expires_at' => now()->addYear()]);
+        $this->assertSame('https://chat.whatsapp.com/abc123', $voir()['whatsapp']);
+        $this->withToken($token)->getJson('/api/groups/8/members')->assertOk()
+            ->assertJsonPath('group.whatsapp', 'https://chat.whatsapp.com/abc123')
+            ->assertJsonPath('group.referent.prenom', 'Paul');
+    }
 }

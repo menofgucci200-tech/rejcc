@@ -129,8 +129,24 @@
                 <div class="flex flex-wrap gap-2">
                     @foreach ($mesGroupes as $g)
                         <a href="{{ route('espace-membre.groupes.membres', $g['id']) }}" wire:navigate class="inline-flex items-center gap-1.5 rounded-full bg-brand/[.06] px-3 py-1.5 text-[12px] font-semibold text-brand transition-colors hover:bg-brand hover:text-white">
-                            <x-ui.icon name="network" class="size-3.5" /> {{ $g['name'] }}
+                            <x-ui.icon :name="$g['icone']" class="size-3.5" /> {{ $g['name'] }}
                         </a>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
+        @php $suggeres = $groups->where('suggere', true)->values(); @endphp
+        @if ($suggeres->isNotEmpty())
+            <div data-test="groupes-suggeres" class="mb-6 rounded-[16px] border border-dashed border-azure/40 bg-azure/[.04] p-4">
+                <p class="mb-2.5 flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-[0.1em] text-azure"><x-ui.icon name="sparkles" class="size-3.5" /> Suggérés pour votre profil</p>
+                <div class="flex flex-wrap gap-2">
+                    @foreach ($suggeres as $g)
+                        <span class="inline-flex items-center gap-2 rounded-full border border-brand/10 bg-white py-1 pl-1 pr-1 text-[12px] font-semibold text-brand">
+                            <span class="flex size-6 items-center justify-center rounded-full" style="background: {{ $g['couleur'] }}1A; color: {{ $g['couleur'] }}"><x-ui.icon :name="$g['icone']" class="size-3.5" /></span>
+                            {{ $g['name'] }}
+                            <button type="button" wire:click="ouvrirFormulaire({{ $g['id'] }})" class="rounded-full bg-brand px-2.5 py-0.5 text-[11px] font-bold text-white hover:bg-brand/90">Rejoindre</button>
+                        </span>
                     @endforeach
                 </div>
             </div>
@@ -138,33 +154,60 @@
 
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             @foreach ($groups as $g)
-                <div class="card-hover flex flex-col rounded-[16px] border bg-white p-5 shadow-[0_2px_8px_rgba(3,29,89,.05)] {{ $g['joined'] ? 'border-azure/40' : 'border-brand/10' }}" wire:key="groupe-{{ $g['id'] }}">
+                <div data-test="carte-secteur" class="card-hover relative flex flex-col overflow-hidden rounded-[16px] border bg-white p-5 pt-6 shadow-[0_2px_8px_rgba(3,29,89,.05)] {{ $g['joined'] ? 'border-azure/40' : 'border-brand/10' }}" wire:key="groupe-{{ $g['id'] }}">
+                    <span class="absolute inset-x-0 top-0 h-1" style="background: {{ $g['couleur'] }}"></span>
                     <div class="mb-2.5 flex items-start justify-between gap-2">
-                        <span class="flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-brand/[.06] text-brand">
-                            <x-ui.icon name="network" class="size-5" />
+                        <span class="flex size-11 shrink-0 items-center justify-center rounded-[12px]" style="background: {{ $g['couleur'] }}1A; color: {{ $g['couleur'] }}">
+                            <x-ui.icon :name="$g['icone']" class="size-[22px]" />
                         </span>
-                        @if ($g['joined'])
-                            <span class="inline-flex items-center gap-1 rounded-full bg-[#22A85A]/10 px-2.5 py-1 text-[10.5px] font-bold text-[#1C8F4C]">
-                                <x-ui.icon name="check" class="size-3" /> Membre
-                            </span>
-                        @endif
+                        <div class="flex flex-wrap justify-end gap-1">
+                            @if ($g['joined'])
+                                <span class="inline-flex items-center gap-1 rounded-full bg-[#22A85A]/10 px-2.5 py-1 text-[10.5px] font-bold text-[#1C8F4C]">
+                                    <x-ui.icon name="check" class="size-3" /> Membre
+                                </span>
+                            @elseif ($g['suggere'] ?? false)
+                                <span class="inline-flex items-center gap-1 rounded-full bg-azure/10 px-2.5 py-1 text-[10.5px] font-bold text-azure">
+                                    <x-ui.icon name="sparkles" class="size-3" /> Pour vous
+                                </span>
+                            @endif
+                        </div>
                     </div>
 
                     <p class="text-[14px] font-bold leading-snug text-brand">{{ $g['name'] }}</p>
                     <p class="mt-1.5 flex-1 text-[12px] leading-relaxed text-[#5B677A]">{{ $g['description'] }}</p>
 
+                    @if ($g['annonce'] ?? null)
+                        <p data-test="annonce-groupe" class="mt-2.5 flex items-start gap-1.5 rounded-[10px] bg-[#F5A623]/10 px-3 py-2 text-[11.5px] leading-relaxed text-[#7A4E05]">
+                            <x-ui.icon name="pin" class="mt-px size-3.5 shrink-0" /> <span class="line-clamp-2">{{ $g['annonce'] }}</span>
+                        </p>
+                    @endif
+
                     @if ($g['joined'] && $g['ma_specialite'])
                         <p class="mt-2 rounded-[10px] bg-cloud/60 px-3 py-2 text-[11.5px] italic leading-relaxed text-[#5B677A]">« {{ $g['ma_specialite'] }} »</p>
                     @endif
 
-                    <div class="mt-4 flex flex-wrap items-center justify-between gap-2">
+                    @if ($g['referent'] ?? null)
+                        <p data-test="referent-groupe" class="mt-2.5 flex items-center gap-1.5 text-[11.5px] text-[#5B677A]">
+                            <x-ui.icon name="award" class="size-3.5 shrink-0" style="color: {{ $g['couleur'] }}" /> Référent : <span class="font-semibold text-brand">{{ $g['referent']['prenom'] }} {{ $g['referent']['nom'] }}</span>
+                        </p>
+                    @endif
+
+                    <div class="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-cloud-200 pt-3.5">
                         @if ($g['members'] > 0)
-                            <a
-                                href="{{ route('espace-membre.groupes.membres', $g['id']) }}"
-                                wire:navigate
-                                class="inline-flex items-center gap-1.5 text-[11.5px] font-semibold text-azure hover:underline"
-                            >
-                                <x-ui.icon name="users" class="size-3.5" /> {{ $g['members'] }} membre{{ $g['members'] > 1 ? 's' : '' }} · Voir les membres
+                            <a href="{{ route('espace-membre.groupes.membres', $g['id']) }}" wire:navigate class="group/lien inline-flex items-center gap-2 text-[11.5px] font-semibold text-azure">
+                                @if (! empty($g['derniers']))
+                                    <span class="flex -space-x-2" aria-hidden="true">
+                                        @foreach ($g['derniers'] as $d)
+                                            <span x-data="{ erreur: false }" class="relative">
+                                                @if ($d['photo'])
+                                                    <img x-show="! erreur" x-on:error="erreur = true" x-init="$el.complete && ! $el.naturalWidth && (erreur = true)" src="{{ $d['photo'] }}" alt="" class="size-6 rounded-full object-cover ring-2 ring-white">
+                                                @endif
+                                                <span @if ($d['photo']) x-show="erreur" style="display: none; background: linear-gradient(135deg, {{ $d['mentor'] ? '#AC0100, #D95B5A' : '#4F6FBF, #AC0100' }})" @else style="background: linear-gradient(135deg, {{ $d['mentor'] ? '#AC0100, #D95B5A' : '#4F6FBF, #AC0100' }})" @endif class="flex size-6 items-center justify-center rounded-full text-[8.5px] font-bold text-white ring-2 ring-white">{{ $d['initiales'] }}</span>
+                                            </span>
+                                        @endforeach
+                                    </span>
+                                @endif
+                                <span class="group-hover/lien:underline">{{ $g['members'] }} membre{{ $g['members'] > 1 ? 's' : '' }} · Voir</span>
                             </a>
                         @else
                             <span class="text-[11.5px] text-[#9AA6B8]">Aucun membre pour l'instant</span>
