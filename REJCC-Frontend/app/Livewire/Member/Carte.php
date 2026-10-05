@@ -71,7 +71,11 @@ class Carte extends Component
             'code' => $user->code ?? '',
             'photo' => $user->photo ?? null,
             'dateAdhesion' => ($user->date_adhesion ?? null)
-                ? \Carbon\Carbon::parse($user->date_adhesion)->translatedFormat('d F Y')
+                ? \Carbon\Carbon::parse($user->date_adhesion)->format('d/m/Y')
+                : null,
+            // Abonnement annuel renouvelable à date anniversaire.
+            'validite' => ($user->subscription_expires_at ?? null)
+                ? \Carbon\Carbon::parse($user->subscription_expires_at)
                 : null,
         ]);
     }

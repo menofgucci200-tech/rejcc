@@ -6,6 +6,7 @@
     'code',
     'photo' => null,
     'dateAdhesion' => null,
+    'validite' => null,
     'editable' => false,
     'uploadId' => null,
 ])
@@ -92,10 +93,21 @@
             <div class="mt-auto w-full pb-[7cqh] text-center">
                 <p class="text-[1.6cqw] font-bold uppercase tracking-[0.28em] text-white">N° Membre</p>
                 <p class="mt-[1.6cqh] text-[1.75cqw] font-semibold uppercase tracking-[0.14em]" style="color: {{ $accent }}">{{ $numero }}</p>
-                @if ($dateAdhesion)
-                    <p class="mt-[5.5cqh] text-[1.6cqw] font-bold uppercase tracking-[0.28em] text-white">Date d'adhésion</p>
-                    <p class="mt-[1.6cqh] text-[1.75cqw] font-semibold uppercase tracking-[0.14em]" style="color: {{ $accent }}">{{ $dateAdhesion }}</p>
-                @endif
+                {{-- Adhésion et validité (abonnement annuel, date anniversaire) côte à côte --}}
+                <div class="mt-[5.5cqh] grid grid-cols-2 gap-[1cqw]">
+                    @if ($dateAdhesion)
+                        <div>
+                            <p class="text-[1.35cqw] font-bold uppercase tracking-[0.16em] text-white">Adhésion</p>
+                            <p class="mt-[1.6cqh] text-[1.6cqw] font-semibold tracking-[0.08em]" style="color: {{ $accent }}">{{ $dateAdhesion }}</p>
+                        </div>
+                    @endif
+                    @if ($validite)
+                        <div class="{{ $dateAdhesion ? '' : 'col-span-2' }}">
+                            <p class="text-[1.35cqw] font-bold uppercase tracking-[0.16em] text-white">Valable jusqu'au</p>
+                            <p class="mt-[1.6cqh] text-[1.6cqw] font-semibold tracking-[0.08em]" style="color: {{ $accent }}">{{ $validite }}</p>
+                        </div>
+                    @endif
+                </div>
             </div>
         </div>
     </div>

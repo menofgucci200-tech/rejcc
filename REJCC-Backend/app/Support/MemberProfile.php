@@ -47,6 +47,9 @@ class MemberProfile
             'secteur' => $user->secteur,
             'is_active' => (bool) $user->is_active,
             'membre_depuis' => $user->created_at?->toDateString(),
+            // Abonnement annuel, renouvelable à date anniversaire.
+            'a_jour' => $user->hasActiveSubscription(),
+            'valable_jusqu' => $user->subscription_expires_at?->toDateString(),
 
             'profil' => $user->profil,
             'profil_label' => match ($user->profil) {

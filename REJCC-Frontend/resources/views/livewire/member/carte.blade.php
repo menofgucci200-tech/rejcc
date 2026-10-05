@@ -30,10 +30,20 @@
                 :code="$code"
                 :photo="$photo"
                 :dateAdhesion="$dateAdhesion"
+                :validite="$validite?->format('d/m/Y')"
                 :editable="true"
                 uploadId="card-photo-input"
             />
         </div>
+
+        @if ($validite)
+            <p data-test="validite" class="mt-5 text-center text-[13px] text-[#5B677A]">
+                Carte valable jusqu'au <strong class="text-brand">{{ $validite->translatedFormat('j F Y') }}</strong> — abonnement annuel renouvelable à cette date anniversaire.
+                @if ($validite->lte(now()->addDays(30)))
+                    <a href="{{ route('espace-membre.abonnement') }}" wire:navigate class="font-bold text-accent hover:underline">Renouveler maintenant</a>
+                @endif
+            </p>
+        @endif
 
         @error('photoUpload') <p class="mt-4 text-center text-xs font-medium text-accent">{{ $message }}</p> @enderror
 

@@ -137,8 +137,9 @@
                     <p class="text-[11px] font-bold uppercase tracking-[0.12em] text-[#9AA6B8]">N° membre</p>
                     <p class="mt-0.5 text-[14px] font-bold tracking-[0.06em] text-brand">{{ $card->numero ?? '—' }}</p>
                 </div>
-                <span class="inline-flex items-center gap-1.5 rounded-full bg-[#22A85A]/10 px-3.5 py-1.5 text-[11.5px] font-bold text-[#1C8F4C]">
-                    <x-ui.icon name="shield-check" class="size-3.5" /> Profil vérifié — REJCC
+                <span data-test="statut-public" class="inline-flex items-center gap-1.5 rounded-full bg-[#22A85A]/10 px-3.5 py-1.5 text-[11.5px] font-bold text-[#1C8F4C]">
+                    <x-ui.icon name="shield-check" class="size-3.5" />
+                    Membre à jour{{ ($card->valable_jusqu ?? null) ? ' — carte valable jusqu\'au '.\Carbon\Carbon::parse($card->valable_jusqu)->translatedFormat('j F Y') : '' }}
                 </span>
             </div>
 
