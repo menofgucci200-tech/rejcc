@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Group;
 use App\Models\MemberReview;
 use App\Models\User;
+use App\Support\RechercheMots;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -114,47 +115,43 @@ class GroupController extends Controller
         return response()->json(['ok' => true, 'members' => $group->users()->count()]);
     }
 
-    /** Trombinoscope du groupe : liste des membres avec leur spécialité (réservé aux abonnés). */
-    public function members(Request $request, int $id)
+    /** Champs texte interrogés par la recherche dans les groupes. */
+    private const CHAMPS_RECHERCHE = [
+        'users.prenom', 'users.nom', 'users.ville', 'users.organisation', 'users.titre',
+        'group_user.specialite', 'group_user.zone',
+    ];
+
+    /** Colonnes de la carte d'un membre + note moyenne et nombre d'avis visibles. */
+    private function avecNotes($query)
     {
-        $group = Group::find($id);
-        if (! $group) {
-            return response()->json(['ok' => false, 'message' => 'Groupe introuvable.'], 404);
-        }
-
-        $q = trim((string) $request->query('q', ''));
-
-        // Jointure explicite (plutôt que $group->users()->paginate()) : la
-        // pagination sur une relation BelongsToMany ne réhydrate pas
-        // toujours proprement les colonnes du pivot.
-        $query = $this->visibles(User::query()
-            ->join('group_user', 'group_user.user_id', '=', 'users.id')
-            ->where('group_user.group_id', $group->id))
-            ->orderBy('users.prenom')
-            ->orderBy('users.nom');
-
-        if ($q !== '') {
-            $query->where(function ($qb) use ($q) {
-                $qb->where('users.prenom', 'like', "%{$q}%")
-                    ->orWhere('users.nom', 'like', "%{$q}%")
-                    ->orWhere('users.ville', 'like', "%{$q}%")
-                    ->orWhere('users.organisation', 'like', "%{$q}%")
-                    ->orWhere('group_user.specialite', 'like', "%{$q}%")
-                    ->orWhere('group_user.zone', 'like', "%{$q}%");
-            });
-        }
-
         // select() puis addSelect() : paginate($colonnes) écraserait les sous-requêtes.
-        $page = $query->select([
+        return $query->select([
             'users.id', 'users.prenom', 'users.nom', 'users.ville', 'users.secteur',
             'users.organisation', 'users.photo', 'users.role', 'users.titre', 'users.created_at',
             'group_user.specialite', 'group_user.services', 'group_user.zone', 'group_user.disponibilites',
         ])->addSelect([
             'note_moyenne' => MemberReview::selectRaw('avg(note)')->whereColumn('reviewed_id', 'users.id')->where('masque', false),
             'nb_avis' => MemberReview::selectRaw('count(*)')->whereColumn('reviewed_id', 'users.id')->where('masque', false),
-        ])->paginate(24);
+        ]);
+    }
 
-        $members = collect($page->items())->map(fn (User $u) => [
+    /** Tri : par nom (défaut), par note (les mieux notés d'abord) ou par arrivée dans le groupe. */
+    private function trier($query, string $tri): void
+    {
+        if ($tri === 'note') {
+            $query->orderByRaw('(select avg(note) from member_reviews where reviewed_id = users.id and masque = ?) is null', [false])
+                ->orderByDesc(MemberReview::selectRaw('avg(note)')->whereColumn('reviewed_id', 'users.id')->where('masque', false))
+                ->orderByDesc(MemberReview::selectRaw('count(*)')->whereColumn('reviewed_id', 'users.id')->where('masque', false));
+        } elseif ($tri === 'recents') {
+            $query->orderByDesc('group_user.created_at');
+        }
+        $query->orderBy('users.prenom')->orderBy('users.nom');
+    }
+
+    /** Carte d'un membre dans un groupe (trombinoscope, recherche). */
+    private function carte(User $u): array
+    {
+        return [
             'id' => $u->id,
             'prenom' => $u->prenom,
             'nom' => $u->nom,
@@ -171,7 +168,79 @@ class GroupController extends Controller
             'disponibilites' => $u->disponibilites,
             'note_moyenne' => $u->note_moyenne !== null ? round((float) $u->note_moyenne, 1) : null,
             'nb_avis' => (int) $u->nb_avis,
+        ];
+    }
+
+    /**
+     * GET /groups/recherche?q= — « Je cherche… » : trouve les professionnels
+     * dans tous les groupes à la fois (« plombier Cocody »). Les abonnés
+     * voient les fiches, les autres seulement le nombre de résultats par
+     * groupe (pour leur montrer ce que l'abonnement débloque).
+     */
+    public function recherche(Request $request)
+    {
+        $q = trim((string) $request->query('q', ''));
+        if (RechercheMots::mots($q) === []) {
+            return response()->json(['ok' => true, 'q' => $q, 'total' => 0, 'par_groupe' => [], 'members' => [], 'verrouille' => false]);
+        }
+
+        $base = fn () => tap($this->visibles(User::query()
+            ->join('group_user', 'group_user.user_id', '=', 'users.id')
+            ->join('groups', 'groups.id', '=', 'group_user.group_id')),
+            fn ($query) => RechercheMots::appliquer($query, $q, [...self::CHAMPS_RECHERCHE, 'groups.name'], ['group_user.services']));
+
+        $parGroupe = $base()->selectRaw('groups.id, groups.name, count(*) as n')
+            ->groupBy('groups.id', 'groups.name')->orderByDesc('n')->get()
+            ->map(fn ($g) => ['id' => $g->id, 'nom' => $g->name, 'nombre' => (int) $g->n])->values();
+
+        $abonne = $request->user()->hasActiveSubscription();
+        $members = [];
+        $meta = null;
+        if ($abonne) {
+            $query = $base();
+            $this->trier($query, (string) $request->query('tri', 'note'));
+            $page = $this->avecNotes($query)->addSelect(['groups.id as groupe_id', 'groups.name as groupe_nom'])->paginate(24);
+            $members = collect($page->items())->map(fn (User $u) => $this->carte($u) + [
+                'groupe' => ['id' => $u->groupe_id, 'nom' => $u->groupe_nom],
+            ])->values();
+            $meta = ['current_page' => $page->currentPage(), 'last_page' => $page->lastPage(), 'total' => $page->total(), 'per_page' => $page->perPage()];
+        }
+
+        return response()->json([
+            'ok' => true,
+            'q' => $q,
+            'total' => $parGroupe->sum('nombre'),
+            'par_groupe' => $parGroupe,
+            'members' => $members,
+            'meta' => $meta,
+            'verrouille' => ! $abonne,
         ]);
+    }
+
+    /** Trombinoscope du groupe : liste des membres avec leur spécialité (réservé aux abonnés). */
+    public function members(Request $request, int $id)
+    {
+        $group = Group::find($id);
+        if (! $group) {
+            return response()->json(['ok' => false, 'message' => 'Groupe introuvable.'], 404);
+        }
+
+        $q = trim((string) $request->query('q', ''));
+
+        // Jointure explicite (plutôt que $group->users()->paginate()) : la
+        // pagination sur une relation BelongsToMany ne réhydrate pas
+        // toujours proprement les colonnes du pivot.
+        $query = $this->visibles(User::query()
+            ->join('group_user', 'group_user.user_id', '=', 'users.id')
+            ->where('group_user.group_id', $group->id));
+
+        RechercheMots::appliquer($query, $q, self::CHAMPS_RECHERCHE, ['group_user.services']);
+
+        $this->trier($query, (string) $request->query('tri', 'nom'));
+
+        $page = $this->avecNotes($query)->paginate(24);
+
+        $members = collect($page->items())->map(fn (User $u) => $this->carte($u));
 
         return response()->json([
             'ok' => true,

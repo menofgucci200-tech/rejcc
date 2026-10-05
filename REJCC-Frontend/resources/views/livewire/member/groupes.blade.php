@@ -6,7 +6,7 @@
             <div>
                 <h1 class="mb-1 text-[17px] font-bold text-brand">Groupes sectoriels</h1>
                 <div class="h-[3px] w-9 rounded bg-accent"></div>
-                <p class="mt-3 max-w-2xl text-[13px] text-[#5B677A]">Ces pôles regroupent les membres par domaine d'activité pour des échanges ciblés et des synergies sectorielles. Rejoignez autant de groupes que vous voulez — par exemple pour suivre plusieurs formations en parallèle.</p>
+                <p class="mt-3 max-w-2xl text-[13px] text-[#5B677A]">Chaque groupe réunit les membres d'un même domaine pour les retrouver facilement : un plombier, une comptable, un traiteur… Consultez leur fiche (services, zone, disponibilités, avis des membres) et contactez-les. Rejoignez les groupes de vos métiers pour être trouvé à votre tour.</p>
             </div>
             @if ($message)
                 <span class="panel-enter inline-flex items-center gap-1.5 rounded-full bg-[#22A85A]/10 px-3.5 py-1.5 text-xs font-semibold text-[#22A85A]">
@@ -53,6 +53,74 @@
                     </div>
                 </div>
             </div>
+        @endif
+
+        {{-- « Je cherche… » : trouver un professionnel dans tous les groupes à la fois --}}
+        <div class="mb-6 overflow-hidden rounded-[18px] bg-gradient-to-br from-brand to-[#0A2C6E] p-5 text-white shadow-[0_12px_32px_-16px_rgba(3,29,89,.6)] sm:p-6">
+            <label for="je-cherche" class="block text-[15px] font-extrabold">Je cherche…</label>
+            <p class="mt-0.5 text-[12.5px] text-white/70">Un métier, un service, un quartier : trouvez le bon professionnel parmi les membres de tous les groupes.</p>
+            <div class="relative mt-3.5">
+                <x-ui.icon name="search" class="pointer-events-none absolute left-4 top-1/2 size-[17px] -translate-y-1/2 text-[#9AA6B8]" />
+                <input id="je-cherche" type="search" wire:model.live.debounce.400ms="cherche" data-test="je-cherche"
+                    placeholder="Ex : un plombier à Cocody, une comptable, un traiteur…"
+                    class="w-full rounded-[14px] border-0 bg-white py-3.5 pl-11 pr-4 text-[14px] text-ink shadow-inner outline-none ring-2 ring-transparent focus:ring-[#8FA3D9]" />
+            </div>
+            <div class="mt-3 flex flex-wrap items-center gap-1.5">
+                <span class="text-[11.5px] font-semibold text-white/60">Exemples :</span>
+                @foreach (['Plombier', 'Électricien', 'Comptable', 'Traiteur', 'Informaticien', 'Couturière'] as $exemple)
+                    <button type="button" wire:click="$set('cherche', '{{ $exemple }}')" class="rounded-full bg-white/10 px-2.5 py-1 text-[11.5px] font-semibold text-white transition-colors hover:bg-white/20">{{ $exemple }}</button>
+                @endforeach
+            </div>
+        </div>
+
+        @if ($resultats)
+            <section data-test="resultats-je-cherche" class="mb-8" wire:key="resultats-{{ md5($cherche) }}">
+                <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+                    <p data-test="nb-resultats" class="text-[14px] font-bold text-brand">
+                        @if ($resultats['total'] ?? 0)
+                            {{ $resultats['total'] }} professionnel{{ $resultats['total'] > 1 ? 's' : '' }} pour « {{ trim($cherche) }} »
+                        @else
+                            Aucun professionnel pour « {{ trim($cherche) }} »
+                        @endif
+                    </p>
+                    <button type="button" wire:click="$set('cherche', '')" class="inline-flex items-center gap-1 text-[12px] font-semibold text-[#5B677A] hover:text-brand"><x-ui.icon name="x" class="size-3.5" /> Effacer la recherche</button>
+                </div>
+
+                @if (! empty($resultats['par_groupe']))
+                    <div class="mb-4 flex flex-wrap gap-1.5">
+                        @foreach ($resultats['par_groupe'] as $pg)
+                            <a href="{{ route('espace-membre.groupes.membres', ['groupId' => $pg['id'], 'q' => trim($cherche)]) }}" wire:navigate data-test="resultat-groupe"
+                                class="inline-flex items-center gap-1.5 rounded-full border border-brand/10 bg-white px-3 py-1.5 text-[12px] font-semibold text-brand hover:border-brand hover:bg-brand hover:text-white">
+                                {{ $pg['nom'] }} <span class="rounded-full bg-brand/[.08] px-1.5 text-[11px]">{{ $pg['nombre'] }}</span>
+                            </a>
+                        @endforeach
+                    </div>
+                @endif
+
+                @if ($resultats['verrouille'] ?? false)
+                    @if ($resultats['total'] ?? 0)
+                        <div data-test="je-cherche-verrou" class="flex flex-wrap items-center gap-4 rounded-[16px] border border-dashed border-brand/20 bg-white p-5">
+                            <span class="flex size-11 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent"><x-ui.icon name="lock" class="size-5" /></span>
+                            <div class="min-w-0 flex-1">
+                                <p class="text-[14px] font-bold text-brand">Les fiches des professionnels sont réservées aux membres abonnés</p>
+                                <p class="text-[12.5px] text-[#5B677A]">Abonnez-vous (10 000 F / an) pour voir leurs services, zones d'intervention, avis et les contacter.</p>
+                            </div>
+                            <a href="{{ route('espace-membre.abonnement') }}" wire:navigate class="btn-tap rounded-full bg-accent px-5 py-2.5 text-[13px] font-bold text-white hover:bg-accent-600">M'abonner</a>
+                        </div>
+                    @endif
+                @elseif (! empty($resultats['members']))
+                    <div class="grid gap-4" style="grid-template-columns: repeat(auto-fill, minmax(260px, 1fr))">
+                        @foreach ($resultats['members'] as $m)
+                            <x-groupes.carte-membre :m="$m" :groupe="$m['groupe']['nom']" wire:key="jc-{{ $m['groupe']['id'] }}-{{ $m['id'] }}" wire:click="voirFiche({{ $m['groupe']['id'] }}, {{ $m['id'] }})" />
+                        @endforeach
+                    </div>
+                    @if (($resultats['meta']['total'] ?? 0) > count($resultats['members']))
+                        <p class="mt-3 text-center text-[12px] text-[#9AA6B8]">{{ count($resultats['members']) }} premiers résultats affichés, les mieux notés d'abord. Précisez votre recherche ou ouvrez un groupe ci-dessus.</p>
+                    @endif
+                @else
+                    <p class="rounded-[14px] bg-white p-5 text-center text-[13px] text-[#5B677A]">Essayez un autre mot (métier, service, quartier) ou parcourez les groupes ci-dessous.</p>
+                @endif
+            </section>
         @endif
 
         @if ($mesGroupes->isNotEmpty())
@@ -129,4 +197,6 @@
             @endforeach
         </div>
     </div>
+
+    <x-groupes.fiche-pro :fiche="$detail" :erreur="$avisErreur" />
 </div>

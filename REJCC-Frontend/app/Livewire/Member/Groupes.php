@@ -2,8 +2,10 @@
 
 namespace App\Livewire\Member;
 
+use App\Livewire\Concerns\GereFichePro;
 use App\Support\Api;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 /**
@@ -15,6 +17,12 @@ use Livewire\Component;
 #[Layout('layouts.member-light')]
 class Groupes extends Component
 {
+    use GereFichePro;
+
+    /** Recherche transversale « Je cherche… » (ex. « plombier Cocody »). */
+    #[Url(as: 'cherche', except: '')]
+    public string $cherche = '';
+
     public ?string $message = null;
 
     /** Groupe pour lequel le formulaire d'adhésion/modification est ouvert. */
@@ -88,8 +96,14 @@ class Groupes extends Component
     {
         $groups = collect(Api::get('/groups', [], Api::token())['groups'] ?? []);
 
+        $resultats = null;
+        if (trim($this->cherche) !== '') {
+            $resultats = Api::get('/groups/recherche', ['q' => trim($this->cherche)], Api::token());
+        }
+
         return view('livewire.member.groupes', [
             'groups' => $groups,
+            'resultats' => $resultats,
             'mesGroupes' => $groups->where('joined', true)->values(),
         ]);
     }

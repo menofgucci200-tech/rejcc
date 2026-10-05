@@ -164,6 +164,7 @@ Route::middleware('auth.token')->group(function () {
 
     // Groupes sectoriels (adhésion libre, multiple, gratuite)
     Route::get('/groups', [\App\Http\Controllers\Api\GroupController::class, 'index']);
+    Route::get('/groups/recherche', [\App\Http\Controllers\Api\GroupController::class, 'recherche']);
     Route::post('/groups/{id}/join', [\App\Http\Controllers\Api\GroupController::class, 'join']);
     Route::post('/groups/{id}/leave', [\App\Http\Controllers\Api\GroupController::class, 'leave']);
 

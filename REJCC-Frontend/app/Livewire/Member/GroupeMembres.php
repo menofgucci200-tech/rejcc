@@ -2,9 +2,11 @@
 
 namespace App\Livewire\Member;
 
+use App\Livewire\Concerns\GereFichePro;
 use App\Support\Api;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 /**
@@ -16,13 +18,18 @@ use Livewire\Component;
 #[Layout('layouts.member-light')]
 class GroupeMembres extends Component
 {
+    use GereFichePro;
+
     public int $groupId;
 
+    #[Url(as: 'q', except: '')]
     public string $query = '';
 
-    public int $page = 1;
+    /** Tri : nom (défaut), note, recents. */
+    #[Url(except: 'nom')]
+    public string $tri = 'nom';
 
-    public ?array $detail = null;
+    public int $page = 1;
 
     public function mount(int $groupId): void
     {
@@ -30,6 +37,11 @@ class GroupeMembres extends Component
     }
 
     public function updatedQuery(): void
+    {
+        $this->page = 1;
+    }
+
+    public function updatedTri(): void
     {
         $this->page = 1;
     }
@@ -42,47 +54,7 @@ class GroupeMembres extends Component
     /** Ouvre la fiche professionnelle complète du membre dans ce groupe. */
     public function voirProfil(int $id): void
     {
-        $result = Api::get("/groups/{$this->groupId}/members/{$id}", [], Api::token());
-        $this->detail = ($result['ok'] ?? false) ? $result['fiche'] : null;
-    }
-
-    public function fermerProfil(): void
-    {
-        $this->detail = null;
-        $this->avisErreur = null;
-    }
-
-    public ?string $avisErreur = null;
-
-    /** Donne ou modifie son avis (note 1-5 + commentaire) sur le membre affiché. */
-    public function noter(int $note, string $commentaire = ''): void
-    {
-        if (! $this->detail) {
-            return;
-        }
-        $result = Api::post("/members/{$this->detail['membre']['id']}/avis", [
-            'note' => $note,
-            'commentaire' => $commentaire,
-            'group_id' => $this->groupId,
-        ], Api::token());
-
-        if ($result['ok'] ?? false) {
-            $this->detail['avis'] = $result['avis'];
-            $this->avisErreur = null;
-        } else {
-            $this->avisErreur = $result['message'] ?? "Impossible d'enregistrer votre avis.";
-        }
-    }
-
-    public function retirerAvis(): void
-    {
-        if (! $this->detail) {
-            return;
-        }
-        $result = Api::delete("/members/{$this->detail['membre']['id']}/avis", Api::token());
-        if ($result['ok'] ?? false) {
-            $this->detail['avis'] = $result['avis'];
-        }
+        $this->voirFiche($this->groupId, $id);
     }
 
     public function render()
@@ -91,7 +63,7 @@ class GroupeMembres extends Component
             return view('livewire.member.groupe-membres', ['locked' => true, 'members' => collect(), 'meta' => [], 'groupe' => null]);
         }
 
-        $params = ['page' => $this->page];
+        $params = ['page' => $this->page, 'tri' => $this->tri];
         if (trim($this->query) !== '') {
             $params['q'] = trim($this->query);
         }
