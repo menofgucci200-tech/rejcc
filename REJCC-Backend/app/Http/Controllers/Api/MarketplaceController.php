@@ -261,7 +261,7 @@ class MarketplaceController extends Controller
 
         $l->fill($d);
         $revalidation = false;
-        if ($l->statut === 'refuse' || (in_array($l->statut, ['approuve', 'indisponible'], true) && $contenuModifie)) {
+        if (in_array($l->statut, ['refuse', 'retiree'], true) || (in_array($l->statut, ['approuve', 'indisponible'], true) && $contenuModifie)) {
             $l->statut = 'en_attente';
             $l->reject_reason = null;
             $revalidation = true;
@@ -318,16 +318,133 @@ class MarketplaceController extends Controller
         return response()->json(['ok' => true]);
     }
 
-    /** GET /admin/marketplace — toutes les annonces pour modération. */
-    public function adminIndex()
-    {
-        $listings = MarketplaceListing::with(['user:id,prenom,nom,email,ville,telephone,photo,role', 'group:id,name,icone,couleur'])
-            ->orderByRaw("statut = 'en_attente' DESC")
-            ->latest()
-            ->get()
-            ->map(fn ($l) => $this->payload($l, withStatus: true, withEmail: true));
+    /** Statuts proposés en filtre dans l'administration. */
+    private const FILTRES_ADMIN = ['en_attente', 'signalees', 'approuve', 'refuse', 'indisponible', 'expiree', 'retiree', 'tous'];
 
-        return response()->json(['ok' => true, 'listings' => $listings]);
+    /**
+     * GET /admin/marketplace?filtre=&q=&page= — annonces à modérer, avec
+     * recherche (titre, vendeur, e-mail), signalements et statistiques.
+     */
+    public function adminIndex(Request $request)
+    {
+        $filtre = in_array($request->query('filtre'), self::FILTRES_ADMIN, true) ? $request->query('filtre') : 'en_attente';
+        $signalees = DB::table('listing_reports')->where('statut', 'nouveau')->select('listing_id');
+
+        $query = MarketplaceListing::with(['user:id,prenom,nom,email,ville,telephone,photo,role', 'group:id,name,icone,couleur'])
+            ->select('marketplace_listings.*');
+        match ($filtre) {
+            'tous' => null,
+            'signalees' => $query->whereIn('marketplace_listings.id', $signalees),
+            default => $query->where('statut', $filtre),
+        };
+        if (($q = trim((string) $request->query('q', ''))) !== '') {
+            $query->where(fn ($w) => $w->where('title', 'like', "%{$q}%")
+                ->orWhereHas('user', fn ($u) => $u->where('prenom', 'like', "%{$q}%")->orWhere('nom', 'like', "%{$q}%")->orWhere('email', 'like', "%{$q}%")));
+        }
+        $page = $query->latest('updated_at')->paginate(20);
+
+        $rapports = DB::table('listing_reports')->where('statut', 'nouveau')
+            ->whereIn('listing_id', collect($page->items())->pluck('id'))->get()->groupBy('listing_id');
+
+        $compteurs = MarketplaceListing::selectRaw('statut, count(*) as n')->groupBy('statut')->pluck('n', 'statut');
+
+        return response()->json([
+            'ok' => true,
+            'listings' => collect($page->items())->map(fn ($l) => $this->payload($l, withStatus: true, withEmail: true) + [
+                'vues' => $l->vues,
+                'contacts' => $l->contacts,
+                'expire_le' => $l->expire_le?->toIso8601String(),
+                'updated_at' => $l->updated_at?->toIso8601String(),
+                'signalements' => ($rapports[$l->id] ?? collect())->map(fn ($r) => ['motif' => $r->motif, 'date' => $r->created_at])->values(),
+            ])->values(),
+            'meta' => ['current_page' => $page->currentPage(), 'last_page' => $page->lastPage(), 'total' => $page->total(), 'per_page' => $page->perPage()],
+            'compteurs' => [
+                'en_attente' => (int) ($compteurs['en_attente'] ?? 0),
+                'signalees' => DB::table('listing_reports')->where('statut', 'nouveau')->distinct()->count('listing_id'),
+                'approuve' => (int) ($compteurs['approuve'] ?? 0),
+                'refuse' => (int) ($compteurs['refuse'] ?? 0),
+                'indisponible' => (int) ($compteurs['indisponible'] ?? 0),
+                'expiree' => (int) ($compteurs['expiree'] ?? 0),
+                'retiree' => (int) ($compteurs['retiree'] ?? 0),
+                'tous' => (int) $compteurs->sum(),
+            ],
+            'categories' => $this->categories(),
+        ]);
+    }
+
+    /**
+     * PUT /admin/marketplace/{id} — petite correction par l'administration
+     * (faute, catégorie, prix…). Le vendeur est prévenu.
+     */
+    public function adminUpdate(Request $request, int $id)
+    {
+        $l = MarketplaceListing::find($id);
+        if (! $l) {
+            return response()->json(['ok' => false, 'message' => 'Annonce introuvable.'], 404);
+        }
+        $v = Validator::make($request->all(), [
+            'type' => 'required|in:service,produit',
+            'title' => 'required|string|min:3|max:120',
+            'group_id' => 'required|integer|exists:groups,id',
+            'description' => 'required|string|min:20|max:2000',
+            'price' => 'nullable|string|max:80',
+            'note' => 'nullable|string|max:300',
+        ], ['title.required' => 'Le titre est obligatoire.', 'description.min' => 'La description doit faire au moins 20 caractères.']);
+        if ($v->fails()) {
+            return response()->json(['ok' => false, 'message' => $v->errors()->first()], 422);
+        }
+        $d = $v->validated();
+        $l->update([
+            'type' => $d['type'], 'title' => $d['title'], 'group_id' => $d['group_id'],
+            'category' => Group::find($d['group_id'])->name, 'description' => $d['description'], 'price' => $d['price'] ?? null,
+        ]);
+
+        $note = trim((string) ($d['note'] ?? ''));
+        MemberNotification::create([
+            'user_id' => $l->user_id,
+            'type' => 'info',
+            'title' => 'Votre annonce a été corrigée',
+            'body' => "L'administration a apporté une correction à « {$l->title} ».".($note !== '' ? " {$note}" : ''),
+            'link' => "/espace-membre/marketplace?onglet=mes-annonces",
+        ]);
+
+        return response()->json(['ok' => true]);
+    }
+
+    /**
+     * PUT /admin/marketplace/{id}/retirer — retire une annonce du catalogue
+     * avec un motif transmis au vendeur ; les signalements sont traités.
+     */
+    public function retirer(Request $request, int $id)
+    {
+        $l = MarketplaceListing::find($id);
+        if (! $l) {
+            return response()->json(['ok' => false, 'message' => 'Annonce introuvable.'], 404);
+        }
+        $motif = trim((string) $request->input('motif'));
+        if (mb_strlen($motif) < 5) {
+            return response()->json(['ok' => false, 'message' => 'Indiquez le motif du retrait : il sera transmis au vendeur.'], 422);
+        }
+        $l->update(['statut' => 'retiree', 'reject_reason' => mb_substr($motif, 0, 300)]);
+        DB::table('listing_reports')->where('listing_id', $l->id)->where('statut', 'nouveau')->update(['statut' => 'traite', 'updated_at' => now()]);
+
+        MemberNotification::create([
+            'user_id' => $l->user_id,
+            'type' => 'warning',
+            'title' => 'Annonce retirée par l\'administration',
+            'body' => "« {$l->title} » a été retirée de la Marketplace. Motif : {$motif}",
+            'link' => '/espace-membre/marketplace?onglet=mes-annonces',
+        ]);
+
+        return response()->json(['ok' => true]);
+    }
+
+    /** PUT /admin/marketplace/{id}/signalements — classer les signalements sans suite. */
+    public function classerSignalements(int $id)
+    {
+        DB::table('listing_reports')->where('listing_id', $id)->where('statut', 'nouveau')->update(['statut' => 'traite', 'updated_at' => now()]);
+
+        return response()->json(['ok' => true]);
     }
 
     /** PUT /admin/marketplace/{id}/approve — publier l'annonce. */
@@ -354,7 +471,10 @@ class MarketplaceController extends Controller
     public function reject(Request $request, int $id)
     {
         $validator = Validator::make($request->all(), [
-            'motif' => 'nullable|string|max:300',
+            'motif' => 'required|string|min:5|max:300',
+        ], [
+            'motif.required' => 'Indiquez le motif du refus : il aide le membre à corriger son annonce.',
+            'motif.min' => 'Indiquez le motif du refus : il aide le membre à corriger son annonce.',
         ]);
 
         if ($validator->fails()) {
@@ -379,7 +499,15 @@ class MarketplaceController extends Controller
     /** DELETE /admin/marketplace/{id} — suppression définitive. */
     public function adminDestroy(int $id)
     {
-        MarketplaceListing::findOrFail($id)->delete();
+        $l = MarketplaceListing::findOrFail($id);
+        MemberNotification::create([
+            'user_id' => $l->user_id,
+            'type' => 'warning',
+            'title' => 'Annonce supprimée',
+            'body' => "« {$l->title} » a été supprimée définitivement de la Marketplace par l'administration.",
+            'link' => '/espace-membre/marketplace?onglet=mes-annonces',
+        ]);
+        $l->delete();
 
         return response()->json(['ok' => true]);
     }

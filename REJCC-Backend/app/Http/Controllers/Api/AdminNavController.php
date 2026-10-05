@@ -41,6 +41,8 @@ class AdminNavController extends Controller
                 'nombre' => PartnershipRequest::where('statut', 'nouveau')->count()],
             ['cle' => 'marketplace', 'section' => 'communaute', 'route' => 'admin.marketplace', 'libelle' => 'Annonces Marketplace à valider',
                 'nombre' => MarketplaceListing::where('statut', 'en_attente')->count()],
+            ['cle' => 'annonces_signalees', 'section' => 'communaute', 'route' => 'admin.marketplace', 'libelle' => 'Annonces Marketplace signalées',
+                'nombre' => \Illuminate\Support\Facades\DB::table('listing_reports')->where('statut', 'nouveau')->distinct()->count('listing_id')],
             ['cle' => 'projets', 'section' => 'projets', 'route' => 'admin.projets', 'libelle' => 'Projets en évaluation',
                 'nombre' => Project::where('status', 'En évaluation')->count()],
             ['cle' => 'mentorat', 'section' => 'mentors', 'route' => 'admin.mentors', 'libelle' => 'Candidatures de mentors',

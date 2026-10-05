@@ -364,6 +364,9 @@ Route::middleware(['auth.token', 'audit.log'])->prefix('admin')->group(function 
         Route::get('/marketplace', [\App\Http\Controllers\Api\MarketplaceController::class, 'adminIndex']);
         Route::put('/marketplace/{id}/approve', [\App\Http\Controllers\Api\MarketplaceController::class, 'approve']);
         Route::put('/marketplace/{id}/reject', [\App\Http\Controllers\Api\MarketplaceController::class, 'reject']);
+        Route::put('/marketplace/{id}', [\App\Http\Controllers\Api\MarketplaceController::class, 'adminUpdate'])->whereNumber('id');
+        Route::put('/marketplace/{id}/retirer', [\App\Http\Controllers\Api\MarketplaceController::class, 'retirer'])->whereNumber('id');
+        Route::put('/marketplace/{id}/signalements', [\App\Http\Controllers\Api\MarketplaceController::class, 'classerSignalements'])->whereNumber('id');
         Route::delete('/marketplace/{id}', [\App\Http\Controllers\Api\MarketplaceController::class, 'adminDestroy']);
     });
 });

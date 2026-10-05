@@ -4,6 +4,7 @@
         'refuse' => ['#AC0100', '#F9E9E9', 'Refusée'],
         'indisponible' => ['#5B677A', '#EEF1F6', 'Vendu / indisponible'],
         'expiree' => ['#5B677A', '#EEF1F6', 'Expirée'],
+        'retiree' => ['#AC0100', '#F9E9E9', "Retirée par l'administration"],
         default => ['#F5A623', '#FCF1DD', 'En attente de validation'],
     };
     // Prix saisi en chiffres seuls (« 5000 ») : affiché « 5 000 F ».
@@ -239,8 +240,8 @@
                                         @endif
                                     </p>
                                 @endif
-                                @if ($l['statut'] === 'refuse' && $l['reject_reason'])
-                                    <p class="mt-1 text-[11.5px] text-accent">Motif du refus : {{ $l['reject_reason'] }}</p>
+                                @if (in_array($l['statut'], ['refuse', 'retiree'], true) && $l['reject_reason'])
+                                    <p class="mt-1 text-[11.5px] text-accent">{{ $l['statut'] === 'retiree' ? 'Motif du retrait' : 'Motif du refus' }} : {{ $l['reject_reason'] }} — corrigez l'annonce pour la soumettre à nouveau.</p>
                                 @endif
                             </div>
                             <span class="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold" style="color: {{ $b[0] }}; background: {{ $b[1] }}">{{ $b[2] }}</span>
@@ -257,7 +258,7 @@
                                     <button wire:click="voir({{ $l['id'] }})" title="Voir l'annonce" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-brand/10 hover:text-brand"><x-ui.icon name="eye" class="size-4" /></button>
                                 @endif
                                 @if ($l['statut'] !== 'expiree' && $abonnementActif)
-                                    <button wire:click="modifier({{ $l['id'] }})" data-test="modifier-annonce" title="{{ $l['statut'] === 'refuse' ? 'Corriger et resoumettre' : 'Modifier' }}" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-brand/10 hover:text-brand"><x-ui.icon name="pencil" class="size-4" /></button>
+                                    <button wire:click="modifier({{ $l['id'] }})" data-test="modifier-annonce" title="{{ in_array($l['statut'], ['refuse', 'retiree'], true) ? 'Corriger et resoumettre' : 'Modifier' }}" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-brand/10 hover:text-brand"><x-ui.icon name="pencil" class="size-4" /></button>
                                 @endif
                                 <button wire:click="retirer({{ $l['id'] }})" wire:confirm="Retirer définitivement « {{ $l['title'] }} » de la Marketplace ?" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-accent/10 hover:text-accent" title="Retirer l'annonce">
                                     <x-ui.icon name="trash-2" class="size-4" />
