@@ -10,7 +10,7 @@ class MarketplaceListing extends Model
     protected $fillable = [
         'user_id', 'type', 'title', 'category', 'group_id', 'description',
         'price', 'prix_valeur', 'contact', 'photo', 'statut', 'reject_reason', 'vues', 'contacts',
-        'publie_le', 'expire_le', 'rappel_expiration_at',
+        'publie_le', 'expire_le', 'rappel_expiration_at', 'suspension_notifiee_at',
     ];
 
     /** Durée de publication d'une annonce, en jours. */
@@ -21,14 +21,32 @@ class MarketplaceListing extends Model
 
     protected function casts(): array
     {
-        return ['publie_le' => 'datetime', 'expire_le' => 'datetime', 'rappel_expiration_at' => 'datetime'];
+        return ['publie_le' => 'datetime', 'expire_le' => 'datetime', 'rappel_expiration_at' => 'datetime', 'suspension_notifiee_at' => 'datetime'];
     }
 
-    /** Annonces visibles dans le catalogue : validées et non expirées. */
+    /**
+     * Annonces visibles dans le catalogue : validées, non expirées, d'un
+     * vendeur actif et à jour de son abonnement (mentors et admins dispensés).
+     */
     public function scopeEnLigne($query)
     {
-        return $query->where('statut', 'approuve')
-            ->where(fn ($q) => $q->whereNull('expire_le')->orWhere('expire_le', '>', now()));
+        return $query->where('marketplace_listings.statut', 'approuve')
+            ->where(fn ($q) => $q->whereNull('marketplace_listings.expire_le')->orWhere('marketplace_listings.expire_le', '>', now()))
+            ->whereHas('user', fn ($u) => self::vendeurEnRegle($u));
+    }
+
+    /** Condition « vendeur actif et abonné » sur une requête de User. */
+    public static function vendeurEnRegle($u)
+    {
+        return $u->where('is_active', true)->when(\App\Support\SubscriptionMode::enforced(), fn ($q) => $q->where(
+            fn ($w) => $w->whereIn('role', ['admin', 'mentor'])->orWhere('subscription_expires_at', '>', now())
+        ));
+    }
+
+    /** Annonce validée mais masquée parce que l'abonnement du vendeur a expiré. */
+    public function suspendue(): bool
+    {
+        return $this->statut === 'approuve' && $this->user && ! $this->user->hasActiveSubscription();
     }
 
     /**
@@ -66,7 +84,33 @@ class MarketplaceListing extends Model
             $expirees++;
         }
 
-        return ['rappels' => $rappels, 'expirees' => $expirees];
+        // Abonnement du vendeur expiré : ses annonces sont masquées, il est prévenu une fois.
+        $suspendues = 0;
+        if (\App\Support\SubscriptionMode::enforced()) {
+            $concernees = (clone $base)->whereNull('suspension_notifiee_at')
+                ->whereHas('user', fn ($u) => $u->where('is_active', true)->whereNotIn('role', ['admin', 'mentor'])
+                    ->where(fn ($w) => $w->whereNull('subscription_expires_at')->orWhere('subscription_expires_at', '<=', now())))
+                ->get()->groupBy('user_id');
+            foreach ($concernees as $vendeurId => $annonces) {
+                MemberNotification::create([
+                    'user_id' => $vendeurId,
+                    'type' => 'warning',
+                    'title' => 'Vos annonces sont suspendues',
+                    'body' => $annonces->count() > 1
+                        ? "Votre abonnement annuel a expiré : vos {$annonces->count()} annonces ne sont plus visibles sur la Marketplace. Elles réapparaîtront automatiquement dès le renouvellement de votre abonnement."
+                        : "Votre abonnement annuel a expiré : votre annonce « {$annonces->first()->title} » n'est plus visible sur la Marketplace. Elle réapparaîtra automatiquement dès le renouvellement de votre abonnement.",
+                    'link' => '/espace-membre/abonnement',
+                ]);
+                static::whereIn('id', $annonces->pluck('id'))->update(['suspension_notifiee_at' => now()]);
+                $suspendues += $annonces->count();
+            }
+            // Abonnement renouvelé : l'avis pourra être renvoyé lors d'une prochaine expiration.
+            static::whereNotNull('suspension_notifiee_at')
+                ->whereHas('user', fn ($u) => $u->where('subscription_expires_at', '>', now()))
+                ->update(['suspension_notifiee_at' => null]);
+        }
+
+        return ['rappels' => $rappels, 'expirees' => $expirees, 'suspendues' => $suspendues];
     }
 
     /**

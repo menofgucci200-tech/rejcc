@@ -188,17 +188,18 @@ Route::middleware('auth.token')->group(function () {
 
     // Marketplace : consultation libre pour tout membre connecté, publication réservée aux abonnés à jour
     Route::get('/marketplace', [\App\Http\Controllers\Api\MarketplaceController::class, 'index']);
+    // Ses propres annonces : consultables et retirables même sans abonnement à jour.
+    Route::get('/marketplace/mine', [\App\Http\Controllers\Api\MarketplaceController::class, 'mine']);
+    Route::delete('/marketplace/{id}', [\App\Http\Controllers\Api\MarketplaceController::class, 'destroy'])->whereNumber('id');
     Route::get('/marketplace/{id}', [\App\Http\Controllers\Api\MarketplaceController::class, 'show'])->whereNumber('id');
     Route::post('/marketplace/{id}/favori', [\App\Http\Controllers\Api\MarketplaceController::class, 'favori'])->whereNumber('id');
     Route::post('/marketplace/{id}/signaler', [\App\Http\Controllers\Api\MarketplaceController::class, 'signaler'])->whereNumber('id');
 
     Route::middleware('sub.active')->group(function () {
-        Route::get('/marketplace/mine', [\App\Http\Controllers\Api\MarketplaceController::class, 'mine']);
         Route::post('/marketplace', [\App\Http\Controllers\Api\MarketplaceController::class, 'store']);
         Route::put('/marketplace/{id}', [\App\Http\Controllers\Api\MarketplaceController::class, 'update'])->whereNumber('id');
         Route::post('/marketplace/{id}/disponibilite', [\App\Http\Controllers\Api\MarketplaceController::class, 'disponibilite'])->whereNumber('id');
         Route::post('/marketplace/{id}/renouveler', [\App\Http\Controllers\Api\MarketplaceController::class, 'renouveler'])->whereNumber('id');
-        Route::delete('/marketplace/{id}', [\App\Http\Controllers\Api\MarketplaceController::class, 'destroy']);
     });
 });
 

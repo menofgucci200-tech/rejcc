@@ -11,7 +11,7 @@ Artisan::command('inspire', function () {
 // Marketplace : rappels avant expiration et annonces expirées (chaque matin).
 Artisan::command('marketplace:echeances', function () {
     $r = \App\Models\MarketplaceListing::traiterEcheances();
-    $this->info("{$r['rappels']} rappel(s), {$r['expirees']} annonce(s) expirée(s).");
+    $this->info("{$r['rappels']} rappel(s), {$r['expirees']} annonce(s) expirée(s), {$r['suspendues']} annonce(s) suspendue(s).");
 })->purpose("Rappels et expiration des annonces de la Marketplace");
 
 Schedule::command('marketplace:echeances')->dailyAt('07:00');

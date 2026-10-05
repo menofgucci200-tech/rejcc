@@ -15,7 +15,7 @@ class MarketplaceConfidentialiteTest extends TestCase
 
     public function test_le_catalogue_ne_divulgue_pas_le_telephone_personnel_du_vendeur(): void
     {
-        $vendeur = User::factory()->create(['telephone' => '0700000000', 'photo' => 'https://exemple.ci/p.jpg', 'role' => 'mentor']);
+        $vendeur = User::factory()->create(['telephone' => '0700000000', 'photo' => 'https://exemple.ci/p.jpg', 'role' => 'mentor']); // mentor : dispensé d'abonnement
         MarketplaceListing::create(['user_id' => $vendeur->id, 'type' => 'produit', 'title' => 'Jus de bissap', 'category' => 'Autre',
             'description' => 'Jus naturels faits maison, livraison à Cocody.', 'statut' => 'approuve']);
 

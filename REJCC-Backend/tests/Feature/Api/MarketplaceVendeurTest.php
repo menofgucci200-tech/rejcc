@@ -110,8 +110,8 @@ class MarketplaceVendeurTest extends TestCase
 
     public function test_catalogue_recherche_filtres_tri_et_favoris(): void
     {
-        $abidjan = User::factory()->create(['prenom' => 'Awa', 'ville' => 'Abidjan']);
-        $bouake = User::factory()->create(['prenom' => 'Yao', 'ville' => 'Bouaké']);
+        $abidjan = User::factory()->create(['prenom' => 'Awa', 'ville' => 'Abidjan', 'subscription_expires_at' => now()->addYear()]);
+        $bouake = User::factory()->create(['prenom' => 'Yao', 'ville' => 'Bouaké', 'subscription_expires_at' => now()->addYear()]);
         $creer = fn (User $u, string $titre, ?string $prix, int $groupe, string $type = 'service') => MarketplaceListing::create([
             'user_id' => $u->id, 'type' => $type, 'title' => $titre, 'category' => 'x', 'group_id' => $groupe, 'price' => $prix,
             'description' => 'Description suffisamment longue pour le test.', 'statut' => 'approuve', 'publie_le' => now(), 'expire_le' => now()->addDays(90),
@@ -140,5 +140,41 @@ class MarketplaceVendeurTest extends TestCase
         $this->assertSame(['Traiteur pour mariages'], $titres('favoris=1'));
         $this->withToken($t)->postJson("/api/marketplace/{$traiteur->id}/favori")->assertOk()->assertJsonPath('favori', false);
         $this->assertSame([], $titres('favoris=1'));
+    }
+
+    public function test_annonces_suspendues_quand_l_abonnement_du_vendeur_expire(): void
+    {
+        \App\Support\SubscriptionMode::set(true);
+        $v = User::factory()->create(['subscription_expires_at' => now()->addDays(10)]);
+        $l = $this->enLigne($v);
+        $mentor = User::factory()->create(['role' => 'mentor']);
+        MarketplaceListing::create(['user_id' => $mentor->id, 'type' => 'service', 'title' => 'Coaching', 'category' => 'x', 'group_id' => 5,
+            'description' => 'Accompagnement des jeunes entrepreneurs.', 'statut' => 'approuve', 'publie_le' => now(), 'expire_le' => now()->addDays(90)]);
+
+        $this->travel(11)->days();
+        $lecteur = $this->tokenFor(User::factory()->create());
+        // L'annonce du vendeur non à jour disparaît ; celle du mentor (dispensé) reste.
+        $this->assertSame(['Coaching'], array_column($this->withToken($lecteur)->getJson('/api/marketplace')->json('listings'), 'title'));
+        $this->withToken($lecteur)->getJson("/api/marketplace/{$l->id}")->assertStatus(404);
+
+        $this->artisan('marketplace:echeances');
+        $this->artisan('marketplace:echeances');
+        $this->assertSame(1, MemberNotification::where('user_id', $v->id)->where('title', 'Vos annonces sont suspendues')->count());
+
+        $t = $this->tokenFor($v);
+        $mes = $this->withToken($t)->getJson('/api/marketplace/mine')->assertOk()->json();
+        $this->assertTrue($mes['listings'][0]['suspendue']);
+        $this->assertFalse($mes['abonne']);
+        $this->withToken($t)->putJson("/api/marketplace/{$l->id}", $this->donnees())->assertStatus(402);
+
+        // Renouvellement de l'abonnement : l'annonce revient automatiquement.
+        $v->update(['subscription_expires_at' => now()->addYear()]);
+        $this->assertCount(2, $this->withToken($lecteur)->getJson('/api/marketplace')->json('listings'));
+        $this->artisan('marketplace:echeances');
+        $this->assertNull($l->fresh()->suspension_notifiee_at);
+
+        // Retirer son annonce reste possible sans abonnement.
+        $v->update(['subscription_expires_at' => now()->subDay()]);
+        $this->withToken($t)->deleteJson("/api/marketplace/{$l->id}")->assertOk();
     }
 }

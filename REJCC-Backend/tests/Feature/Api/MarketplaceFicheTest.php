@@ -34,7 +34,7 @@ class MarketplaceFicheTest extends TestCase
     public function test_fiche_complete_vues_et_telephone_reserve_aux_abonnes(): void
     {
         SubscriptionMode::set(true);
-        $vendeur = User::factory()->create(['prenom' => 'Awa', 'titre' => 'Productrice']);
+        $vendeur = User::factory()->create(['prenom' => 'Awa', 'titre' => 'Productrice', 'subscription_expires_at' => now()->addYear()]);
         $vendeur->groups()->attach(1, ['specialite' => 'Transformation de produits vivriers']);
         MemberReview::create(['reviewer_id' => User::factory()->create()->id, 'reviewed_id' => $vendeur->id, 'note' => 4]);
         $l = $this->annonce($vendeur);
@@ -64,7 +64,7 @@ class MarketplaceFicheTest extends TestCase
 
     public function test_contact_par_messagerie_avec_annonce_rattachee(): void
     {
-        $vendeur = User::factory()->create();
+        $vendeur = User::factory()->create(['subscription_expires_at' => now()->addYear()]);
         $l = $this->annonce($vendeur);
         $acheteur = User::factory()->create(['prenom' => 'Koffi', 'nom' => 'Yao', 'subscription_expires_at' => now()->addYear()]);
         $t = $this->tokenFor($acheteur);
@@ -80,7 +80,7 @@ class MarketplaceFicheTest extends TestCase
 
     public function test_signaler_une_annonce(): void
     {
-        $vendeur = User::factory()->create();
+        $vendeur = User::factory()->create(['subscription_expires_at' => now()->addYear()]);
         $l = $this->annonce($vendeur);
         $this->withToken($this->tokenFor($vendeur))->postJson("/api/marketplace/{$l->id}/signaler")->assertStatus(422);
 

@@ -38,7 +38,7 @@ class MarketplaceTest extends TestCase
         $this->assertSame('Dépannage plomberie', $listings[0]['title']);
     }
 
-    public function test_un_membre_sans_abonnement_ne_peut_pas_publier_ni_gerer_ses_annonces(): void
+    public function test_un_membre_sans_abonnement_ne_peut_pas_publier_mais_voit_ses_annonces(): void
     {
         $membre = User::factory()->create(); // pas d'abonnement
         $token = $this->tokenFor($membre);
@@ -48,7 +48,8 @@ class MarketplaceTest extends TestCase
             'description' => 'Une description suffisamment longue pour passer la validation.',
         ])->assertStatus(402);
 
-        $this->withToken($token)->getJson('/api/marketplace/mine')->assertStatus(402);
+        // Ses annonces restent consultables (et retirables) sans abonnement.
+        $this->withToken($token)->getJson('/api/marketplace/mine')->assertOk()->assertJsonPath('abonne', false);
     }
 
     public function test_un_abonne_peut_publier_une_annonce(): void

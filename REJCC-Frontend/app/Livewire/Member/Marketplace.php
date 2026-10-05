@@ -289,7 +289,8 @@ class Marketplace extends Component
         $categories = $data['categories'] ?? [];
         $listings = collect($data['listings'] ?? []);
 
-        $mesAnnonces = ($this->onglet === 'mes-annonces' && $abonnementActif)
+        // Ses annonces restent visibles même sans abonnement (suspendues, retirables).
+        $mesAnnonces = $this->onglet === 'mes-annonces'
             ? collect(Api::get('/marketplace/mine', [], Api::token())['listings'] ?? [])
             : collect();
 

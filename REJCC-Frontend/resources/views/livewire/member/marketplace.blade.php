@@ -203,15 +203,22 @@
             @endif
         @else
             {{-- Mes annonces --}}
-            @if (! $abonnementActif)
+            @if (! $abonnementActif && $mesAnnonces->isEmpty())
                 <x-member-light.paywall description="Pour publier vos propres services ou produits sur la Marketplace, un abonnement annuel actif (10 000 F) est nécessaire. La consultation du catalogue reste libre pour tous les membres." />
             @elseif ($mesAnnonces->isEmpty())
                 <p class="rounded-[16px] border border-brand/10 bg-white py-10 text-center text-sm text-[#5B677A]">Vous n'avez pas encore d'annonce. Cliquez sur « Proposer un service / produit » pour vendre sur la Marketplace.</p>
             @else
+                @if (! $abonnementActif)
+                    <div data-test="annonces-suspendues" class="mb-4 flex flex-wrap items-center gap-3 rounded-[16px] border border-[#F5A623]/40 bg-[#FFF8EC] p-4">
+                        <span class="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#F5A623]/15 text-[#B27007]"><x-ui.icon name="lock" class="size-5" /></span>
+                        <p class="min-w-[220px] flex-1 text-[13px] leading-relaxed text-ink"><span class="font-bold text-brand">Votre abonnement n'est plus à jour : vos annonces sont suspendues.</span> Elles ne sont plus visibles sur la Marketplace et réapparaîtront automatiquement dès le renouvellement.</p>
+                        <a href="{{ route('espace-membre.abonnement') }}" wire:navigate class="btn-tap shrink-0 rounded-full bg-accent px-4 py-2 text-[12.5px] font-bold text-white hover:bg-accent-600">Renouveler mon abonnement</a>
+                    </div>
+                @endif
                 <div class="space-y-3">
                     @foreach ($mesAnnonces as $l)
                         @php
-                            $b = $statutBadge($l['statut']);
+                            $b = ($l['suspendue'] ?? false) ? ['#B27007', '#FCF1DD', 'Suspendue (abonnement)'] : $statutBadge($l['statut']);
                             $expire = $l['expire_le'] ? \Illuminate\Support\Carbon::parse($l['expire_le']) : null;
                             $joursRestants = $expire && $expire->isFuture() ? (int) ceil(now()->diffInHours($expire) / 24) : null;
                             $renouvelable = in_array($l['statut'], ['approuve', 'indisponible', 'expiree'], true) && ($l['statut'] === 'expiree' || ($joursRestants !== null && $joursRestants <= 7));
@@ -238,18 +245,18 @@
                             </div>
                             <span class="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold" style="color: {{ $b[0] }}; background: {{ $b[1] }}">{{ $b[2] }}</span>
                             <div class="flex shrink-0 flex-wrap items-center gap-1.5">
-                                @if ($renouvelable)
+                                @if ($renouvelable && $abonnementActif)
                                     <button wire:click="renouveler({{ $l['id'] }})" data-test="renouveler" class="btn-tap rounded-full bg-accent px-3 py-1.5 text-[11.5px] font-bold text-white hover:bg-accent-600">Renouveler 90 jours</button>
                                 @endif
-                                @if ($l['statut'] === 'approuve')
+                                @if ($l['statut'] === 'approuve' && $abonnementActif)
                                     <button wire:click="basculerDisponibilite({{ $l['id'] }}, false)" data-test="marquer-vendu" class="btn-tap rounded-full border border-brand/15 px-3 py-1.5 text-[11.5px] font-bold text-brand hover:bg-cloud">Vendu / indisponible</button>
-                                @elseif ($l['statut'] === 'indisponible')
+                                @elseif ($l['statut'] === 'indisponible' && $abonnementActif)
                                     <button wire:click="basculerDisponibilite({{ $l['id'] }}, true)" data-test="remettre-en-ligne" class="btn-tap rounded-full border border-[#22A85A]/30 bg-[#22A85A]/10 px-3 py-1.5 text-[11.5px] font-bold text-[#1C8F4C] hover:bg-[#22A85A]/20">Remettre en ligne</button>
                                 @endif
-                                @if ($l['statut'] === 'approuve')
+                                @if ($l['statut'] === 'approuve' && ! ($l['suspendue'] ?? false))
                                     <button wire:click="voir({{ $l['id'] }})" title="Voir l'annonce" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-brand/10 hover:text-brand"><x-ui.icon name="eye" class="size-4" /></button>
                                 @endif
-                                @if ($l['statut'] !== 'expiree')
+                                @if ($l['statut'] !== 'expiree' && $abonnementActif)
                                     <button wire:click="modifier({{ $l['id'] }})" data-test="modifier-annonce" title="{{ $l['statut'] === 'refuse' ? 'Corriger et resoumettre' : 'Modifier' }}" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-brand/10 hover:text-brand"><x-ui.icon name="pencil" class="size-4" /></button>
                                 @endif
                                 <button wire:click="retirer({{ $l['id'] }})" wire:confirm="Retirer définitivement « {{ $l['title'] }} » de la Marketplace ?" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-accent/10 hover:text-accent" title="Retirer l'annonce">

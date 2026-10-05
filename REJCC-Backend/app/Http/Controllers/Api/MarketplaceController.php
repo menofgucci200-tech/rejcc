@@ -107,7 +107,7 @@ class MarketplaceController extends Controller
     {
         $moi = $request->user();
         $l = MarketplaceListing::with(['user', 'group'])->find($id);
-        $enLigne = $l && $l->statut === 'approuve' && (! $l->expire_le || $l->expire_le->isFuture());
+        $enLigne = $l && MarketplaceListing::enLigne()->whereKey($l->id)->exists();
         if (! $l || (! $enLigne && $l->user_id !== $moi->id)) {
             return response()->json(['ok' => false, 'message' => "Cette annonce n'est plus disponible."], 404);
         }
@@ -167,17 +167,18 @@ class MarketplaceController extends Controller
         MarketplaceListing::traiterEcheances($request->user()->id);
 
         $listings = MarketplaceListing::where('user_id', $request->user()->id)
-            ->with('group:id,name,icone,couleur')
+            ->with(['group:id,name,icone,couleur', 'user'])
             ->latest()
             ->get()
             ->map(fn ($l) => $this->payload($l, withStatus: true) + [
                 'vues' => $l->vues,
                 'contacts' => $l->contacts,
+                'suspendue' => $l->suspendue(),
                 'publie_le' => $l->publie_le?->toIso8601String(),
                 'expire_le' => $l->expire_le?->toIso8601String(),
             ]);
 
-        return response()->json(['ok' => true, 'listings' => $listings]);
+        return response()->json(['ok' => true, 'listings' => $listings, 'abonne' => $request->user()->hasActiveSubscription()]);
     }
 
     /** POST /marketplace — soumettre une annonce (statut en attente). */
