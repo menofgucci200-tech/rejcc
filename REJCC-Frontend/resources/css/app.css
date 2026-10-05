@@ -431,3 +431,8 @@ html.app-loaded #page-loader {
 .lecon a { color: var(--color-azure); text-decoration: underline; }
 .lecon blockquote { border-left: 3px solid var(--color-accent); padding-left: .9em; color: #5B677A; font-style: italic; }
 .lecon strong { color: var(--color-brand); }
+
+/* Pages légales : texte long, titres plus marqués et ancres sous la barre fixe */
+.legal-texte { font-size: 15.5px; }
+.legal-texte h2 { font-size: 21px; margin-top: 1.8em; padding-top: .4em; scroll-margin-top: 110px; }
+.legal-texte h3 { font-size: 17px; }

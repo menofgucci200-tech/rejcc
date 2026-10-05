@@ -31,6 +31,8 @@ Route::get('/testimonials', [TestimonialController::class, 'index']);
 Route::get('/partners', [PartnerController::class, 'index']);
 Route::get('/home-content', [HomeContentController::class, 'index']);
 Route::get('/site-settings', [\App\Http\Controllers\Api\SiteSettingsController::class, 'index']);
+Route::get('/legal-pages', [\App\Http\Controllers\Api\LegalPageController::class, 'index']);
+Route::get('/legal-pages/{slug}', [\App\Http\Controllers\Api\LegalPageController::class, 'show']);
 Route::get('/gallery', fn () => response()->json(['ok' => true, 'photos' => \App\Models\GalleryPhoto::orderBy('ordre')->orderBy('id')->get()]));
 Route::get('/news', [NewsArticleController::class, 'index']);
 Route::get('/news/{slug}', [NewsArticleController::class, 'show']);
@@ -301,6 +303,8 @@ Route::middleware(['auth.token', 'audit.log'])->prefix('admin')->group(function 
         Route::get('/site-settings', [\App\Http\Controllers\Api\SiteSettingsController::class, 'adminIndex']);
         Route::put('/site-settings', [\App\Http\Controllers\Api\SiteSettingsController::class, 'update']);
         Route::put('/page-sections/{page}/{section}', [\App\Http\Controllers\Api\SiteSettingsController::class, 'updateSection']);
+        Route::get('/legal-pages', [\App\Http\Controllers\Api\LegalPageController::class, 'adminIndex']);
+        Route::put('/legal-pages/{slug}', [\App\Http\Controllers\Api\LegalPageController::class, 'update']);
     });
 
     Route::middleware('auth.admin:partenariats')->group(function () {

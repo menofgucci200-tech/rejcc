@@ -21,7 +21,8 @@ class SiteConfig
                 'country' => "Côte d'Ivoire",
                 'address' => SiteRemote::setting('contact.address', "Abidjan, Côte d'Ivoire"),
                 'email' => SiteRemote::setting('contact.email', 'contact@rejcc.site'),
-                'phone' => SiteRemote::setting('contact.phone', '+225 00 00 00 00'),
+                // Pas de numéro fictif : affiché seulement une fois renseigné dans les Réglages.
+                'phone' => SiteRemote::setting('contact.phone', ''),
             ],
         ];
     }

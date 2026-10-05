@@ -2,6 +2,7 @@
     $site = \App\Support\Content\SiteConfig::get();
     $nav = \App\Support\Content\SiteConfig::nav();
     $socials = \App\Support\Content\SiteConfig::socials();
+    $legal = \App\Support\Content\LegalPages::all();
     $exploreLinks = [
         ['label' => 'Adhérer', 'href' => '/adhesion'],
         ['label' => 'Devenir partenaire', 'href' => '/partenaires'],
@@ -18,7 +19,8 @@
         <div class="grid gap-12 border-b border-white/10 py-16 md:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1.3fr]">
             <div>
                 <x-ui.logo-mark kind="lockup-white" class="h-16" />
-                <p class="mt-5 max-w-xs text-sm leading-relaxed text-white/65">{{ $site['about'] }}</p>
+                <p data-test="nom-officiel" class="mt-4 max-w-xs text-[13px] font-semibold uppercase leading-snug tracking-[0.08em] text-white/85">{{ $site['fullName'] }}</p>
+                <p class="mt-3 max-w-xs text-sm leading-relaxed text-white/65">{{ $site['about'] }}</p>
                 <div class="mt-6 flex gap-2.5">
                     @foreach ($socials as $s)
                         <a href="{{ $s['href'] }}" aria-label="{{ $s['label'] }}"
@@ -54,10 +56,12 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="size-4 shrink-0 text-azure"><path d="m4 6 8 6 8-6"/><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
                         {{ $site['contact']['email'] }}
                     </li>
+                    @if ($site['contact']['phone'])
                     <li class="flex items-center gap-2.5">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="size-4 shrink-0 text-azure"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92Z"/></svg>
                         {{ $site['contact']['phone'] }}
                     </li>
+                    @endif
                 </ul>
             </div>
 
@@ -68,15 +72,18 @@
             </div>
         </div>
 
-        <div class="flex flex-col items-center justify-between gap-4 py-7 text-sm text-white/55 md:flex-row">
+        {{-- Bas de page : copyright + informations légales. Marge à droite pour le
+             bouton vidéo flottant, qui ne doit pas recouvrir les liens. --}}
+        <div class="flex flex-col gap-5 py-7 text-sm text-white/55 lg:flex-row lg:items-center lg:justify-between lg:pr-28">
             <p>
                 © {{ now()->year }} {{ $site['name'] }} —
                 <span class="font-serif italic text-white/75">{{ $site['slogan'] }}</span>
             </p>
-            <div class="flex items-center gap-6">
-                <a href="{{ url('/contact') }}" wire:navigate class="transition-colors hover:text-white">Mentions légales</a>
-                <a href="{{ url('/contact') }}" wire:navigate class="transition-colors hover:text-white">Confidentialité</a>
-            </div>
+            <nav aria-label="Informations légales" data-test="liens-legaux" class="flex flex-wrap gap-x-5 gap-y-2 pr-24 lg:pr-0">
+                @foreach ($legal as $l)
+                    <a href="{{ $l['url'] }}" wire:navigate class="transition-colors hover:text-white">{{ $l['court'] }}</a>
+                @endforeach
+            </nav>
         </div>
     </div>
 </footer>

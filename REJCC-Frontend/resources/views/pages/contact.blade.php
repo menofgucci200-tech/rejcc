@@ -7,6 +7,7 @@
         ['icon' => 'mail', 'label' => 'E-mail', 'value' => $site['contact']['email']],
         ['icon' => 'phone', 'label' => 'Téléphone', 'value' => $site['contact']['phone']],
     ];
+    $infos = array_values(array_filter($infos, fn ($i) => trim((string) $i['value']) !== ''));
     $socials = \App\Support\Content\SiteConfig::socials();
     $headerTitle = SiteRemote::field('contact', 'header', 'title');
     $headerSubtitle = SiteRemote::field('contact', 'header', 'subtitle', "Une question, un projet, une envie de collaborer ? L'équipe du REJCC vous répond.");

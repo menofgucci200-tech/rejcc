@@ -54,6 +54,9 @@ Route::get('/actualites', [NewsController::class, 'index']);
 Route::get('/actualites/{slug}', [NewsController::class, 'show']);
 
 Route::view('/partenaires', 'pages.partenaires');
+// Pages légales (contenu rédigé depuis l'admin)
+Route::get('/{slug}', \App\Http\Controllers\LegalPageController::class)
+    ->whereIn('slug', \App\Support\Content\LegalPages::SLUGS)->name('legal');
 Route::get('/carte/{code}', [\App\Http\Controllers\CardController::class, 'show'])->name('carte');
 Route::get('/carte/{code}/contact.vcf', [\App\Http\Controllers\CardController::class, 'vcard'])->name('carte.vcard');
 Route::get('/participer/{slug}', \App\Livewire\EventSignup::class)->name('event.signup');
@@ -122,6 +125,7 @@ Route::middleware(['api.auth', 'admin.web'])->prefix('admin')->name('admin.')->g
     Route::get('/contenu', AdminContenu::class)->name('contenu');
     Route::get('/pages', \App\Livewire\Admin\Pages::class)->name('pages');
     Route::get('/reglages', \App\Livewire\Admin\Reglages::class)->name('reglages');
+    Route::get('/pages-legales', \App\Livewire\Admin\PagesLegales::class)->name('legal');
     Route::get('/mediatheque', \App\Livewire\Admin\Mediatheque::class)->name('mediatheque');
     Route::get('/newsletter', AdminNewsletter::class)->name('newsletter');
     Route::get('/documents', AdminDocuments::class)->name('documents');

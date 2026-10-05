@@ -22,6 +22,10 @@ class SitemapController extends Controller
                 ['loc' => url('/contact'), 'priority' => '0.6'],
             ];
 
+            foreach (\App\Support\Content\LegalPages::SLUGS as $slug) {
+                $urls[] = ['loc' => url('/'.$slug), 'priority' => '0.3'];
+            }
+
             foreach (Api::get('/news')['articles'] ?? [] as $article) {
                 $urls[] = ['loc' => url('/actualites/'.$article['slug']), 'priority' => '0.6'];
             }

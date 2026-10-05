@@ -39,6 +39,7 @@
                 ['label' => 'Blocs de contenu', 'icon' => 'layout-dashboard', 'route' => 'admin.contenu'],
                 ['label' => 'Médiathèque', 'icon' => 'image', 'route' => 'admin.mediatheque'],
                 ['label' => 'Réglages du site', 'icon' => 'settings', 'route' => 'admin.reglages'],
+                ['label' => 'Pages légales', 'icon' => 'shield-check', 'route' => 'admin.legal'],
                 ['label' => 'Newsletter', 'icon' => 'send', 'route' => 'admin.newsletter'],
                 ['label' => 'Documents', 'icon' => 'folder-open', 'route' => 'admin.documents'],
             ],

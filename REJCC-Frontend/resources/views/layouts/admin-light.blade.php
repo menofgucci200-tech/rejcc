@@ -34,7 +34,7 @@
                     {{ $slot }}
                 </main>
 
-                <x-member-light.footer />
+                <x-member-light.footer variant="admin" />
             </div>
         </div>
 
