@@ -3,14 +3,19 @@
 <div>
     <x-member-light.topbar title="Messagerie" />
 
-    @if ($this->locked())
-        <x-member-light.paywall description="La messagerie privée entre membres est réservée aux membres à jour de leur abonnement annuel (10 000 F)." />
-    @else
     <div class="mx-auto max-w-[1280px] px-8 py-8">
         <div class="mb-5">
             <h1 class="mb-1 text-[17px] font-bold text-brand">Messagerie</h1>
             <div class="h-[3px] w-9 rounded bg-accent"></div>
         </div>
+
+        @if ($this->restreint())
+            <div data-test="bandeau-restreint" class="mb-4 flex flex-wrap items-center gap-3 rounded-[16px] border border-[#F5A623]/40 bg-[#FFF8EC] p-4">
+                <span class="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#F5A623]/15 text-[#B27007]"><x-ui.icon name="lock" class="size-5" /></span>
+                <p class="min-w-[220px] flex-1 text-[13px] leading-relaxed text-ink"><span class="font-bold text-brand">Vous pouvez lire et répondre aux messages que l'on vous adresse.</span> Pour écrire à n'importe quel membre du réseau, abonnez-vous (10&nbsp;000&nbsp;F / an).</p>
+                <a href="{{ route('espace-membre.abonnement') }}" wire:navigate class="btn-tap shrink-0 rounded-full bg-accent px-4 py-2 text-[12.5px] font-bold text-white hover:bg-accent-600">M'abonner</a>
+            </div>
+        @endif
 
         @if ($info)
             <p data-test="info-messagerie" class="panel-enter mb-3 inline-flex items-center gap-1.5 rounded-full bg-azure/10 px-3.5 py-1.5 text-xs font-semibold text-azure"><x-ui.icon name="info" class="size-3.5" /> {{ $info }}</p>
@@ -24,8 +29,8 @@
                         <input wire:model.live.debounce.300ms="recherche" type="search" data-test="recherche-conversations" aria-label="Rechercher une conversation" placeholder="Rechercher…"
                             class="w-full rounded-[10px] border border-brand/10 bg-cloud py-2 pl-9 pr-3 text-[13px] text-ink outline-none focus:border-azure" />
                     </div>
-                    <button type="button" wire:click="ouvrirNouveau" data-test="nouveau-message" title="Nouveau message" aria-label="Nouveau message"
-                        class="btn-tap flex size-9 shrink-0 items-center justify-center rounded-[10px] bg-accent text-white hover:bg-accent-600"><x-ui.icon name="pencil" class="size-4" /></button>
+                    <button type="button" wire:click="ouvrirNouveau" data-test="nouveau-message" title="{{ $this->restreint() ? 'Nouveau message — réservé aux abonnés' : 'Nouveau message' }}" aria-label="Nouveau message"
+                        class="btn-tap flex size-9 shrink-0 items-center justify-center rounded-[10px] {{ $this->restreint() ? 'border border-brand/15 bg-white text-[#9AA6B8]' : 'bg-accent text-white hover:bg-accent-600' }}"><x-ui.icon :name="$this->restreint() ? 'lock' : 'pencil'" class="size-4" /></button>
                 </div>
 
                 @if ($voirArchives)
@@ -42,7 +47,7 @@
                         @if (trim($recherche) !== '')
                             <p class="text-[13.5px] text-[#5B677A]">Aucune conversation avec « {{ trim($recherche) }} ».</p>
                         @else
-                            <p class="mb-4 text-[13.5px] text-[#5B677A]">Aucune conversation pour l'instant. Écrivez à un membre trouvé dans l'annuaire ou dans un groupe.</p>
+                            <p class="mb-4 text-[13.5px] text-[#5B677A]">{{ $this->restreint() ? "Aucun message reçu pour l'instant. Les membres abonnés peuvent vous écrire : vous pourrez leur répondre ici." : "Aucune conversation pour l'instant. Écrivez à un membre trouvé dans l'annuaire ou dans un groupe." }}</p>
                             <button type="button" wire:click="ouvrirNouveau" class="btn-tap inline-flex items-center gap-1.5 rounded-[10px] border border-azure/25 bg-azure/10 px-4 py-2 text-[12.5px] font-semibold text-azure hover:bg-azure/20">
                                 <x-ui.icon name="pencil" class="size-[13px]" /> Nouveau message
                             </button>
@@ -103,6 +108,9 @@
                     <div data-test="fil-introuvable" class="flex flex-1 flex-col items-center justify-center gap-3 p-10 text-center">
                         <x-ui.icon name="user-x" class="size-8 text-[#9AA6B8]" />
                         <p class="text-sm text-[#5B677A]">{{ $erreur ?? 'Cette conversation est indisponible.' }}</p>
+                        @if ($this->restreint())
+                            <a href="{{ route('espace-membre.abonnement') }}" wire:navigate class="btn-tap rounded-full bg-accent px-4 py-2 text-[12.5px] font-bold text-white hover:bg-accent-600">M'abonner pour lui écrire</a>
+                        @endif
                         <button wire:click="closeThread" class="text-[12.5px] font-semibold text-azure hover:underline">Retour aux conversations</button>
                     </div>
                 @else
@@ -230,7 +238,6 @@
             </section>
         </div>
     </div>
-    @endif
     <x-member-light.profile-modal :member="$profil" />
 
     @if ($fenetreSignalement && $partner)

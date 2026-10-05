@@ -24,6 +24,20 @@ class MessageController extends Controller
     /** Nouvelles conversations démarrées au plus en 24 h. */
     public const MAX_NOUVELLES_PAR_JOUR = 20;
 
+    /** Message renvoyé à un non-abonné qui veut démarrer une conversation. */
+    private const RESERVE_ABONNES = "Démarrer une conversation est réservé aux membres abonnés. Vous pouvez lire et répondre aux messages que l'on vous adresse.";
+
+    /** L'interlocuteur m'a-t-il déjà écrit ? (condition pour un non-abonné) */
+    private function aEcritA(int $auteur, int $destinataire): bool
+    {
+        return Message::where('sender_id', $auteur)->where('recipient_id', $destinataire)->exists();
+    }
+
+    private function refusNonAbonne()
+    {
+        return response()->json(['ok' => false, 'code' => 'subscription_required', 'message' => self::RESERVE_ABONNES], 402);
+    }
+
     private function bloque(int $auteur, int $cible): bool
     {
         return DB::table('message_blocks')->where('user_id', $auteur)->where('blocked_id', $cible)->exists();
@@ -62,6 +76,10 @@ class MessageController extends Controller
             ->selectRaw('sender_id, count(*) as n')->groupBy('sender_id')->pluck('n', 'sender_id');
         $users = User::whereIn('id', $lignes->pluck('autre'))->get()->keyBy('id');
 
+        // Un non-abonné ne voit que les conversations qu'on lui a adressées.
+        $abonne = $request->user()->hasActiveSubscription();
+        $mEcrivent = $abonne ? null : Message::where('recipient_id', $me)->distinct()->pluck('sender_id')->flip();
+
         $q = mb_strtolower(trim((string) $request->query('q', '')));
         $voirArchives = $request->boolean('archives');
         $archives = DB::table('conversation_archives')->where('user_id', $me)->pluck('archived_at', 'other_id');
@@ -73,6 +91,9 @@ class MessageController extends Controller
             $u = $users[$l->autre] ?? null;
             $m = $derniers[$l->dernier] ?? null;
             if (! $u || ! $m) {
+                continue;
+            }
+            if ($mEcrivent !== null && ! isset($mEcrivent[$u->id])) {
                 continue;
             }
             // Archivée tant qu'aucun message n'est arrivé depuis l'archivage.
@@ -96,7 +117,7 @@ class MessageController extends Controller
             ];
         }
 
-        return response()->json(['ok' => true, 'conversations' => $out, 'archives' => $nbArchives]);
+        return response()->json(['ok' => true, 'conversations' => $out, 'archives' => $nbArchives, 'restreint' => ! $abonne]);
     }
 
     /**
@@ -109,6 +130,9 @@ class MessageController extends Controller
         $partner = User::find($userId);
         if (! $partner || $partner->id === $me) {
             return response()->json(['ok' => false, 'message' => 'Ce membre est introuvable.'], 404);
+        }
+        if (! $request->user()->hasActiveSubscription() && ! $this->aEcritA($userId, $me)) {
+            return $this->refusNonAbonne();
         }
 
         Message::where('sender_id', $userId)->where('recipient_id', $me)
@@ -169,6 +193,9 @@ class MessageController extends Controller
             return response()->json(['ok' => false, 'message' => "Ce compte est suspendu : il ne peut pas recevoir de messages."], 422);
         }
 
+        if (! $me->hasActiveSubscription() && ! $this->aEcritA($destinataire->id, $me->id)) {
+            return $this->refusNonAbonne();
+        }
         if ($this->bloque($me->id, $destinataire->id)) {
             return response()->json(['ok' => false, 'message' => 'Vous avez bloqué ce membre. Débloquez-le pour lui écrire.'], 422);
         }

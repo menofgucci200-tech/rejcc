@@ -195,4 +195,32 @@ class MessagingTest extends TestCase
         $this->assertSame(1, \App\Models\MemberNotification::where('user_id', $awa->id)->where('title', 'Votre signalement a été traité')->count());
         $this->withToken($admin)->getJson('/api/admin/signalements-messages')->assertJsonCount(0, 'signalements');
     }
+
+    public function test_non_abonne_lit_et_repond_mais_ne_demarre_pas(): void
+    {
+        \App\Support\SubscriptionMode::set(true);
+        $awa = $this->abonne(['prenom' => 'Awa']);
+        $koffi = User::factory()->create(['role' => 'member', 'prenom' => 'Koffi']); // non abonné
+        $paul = User::factory()->create(['role' => 'member']);
+        $tK = $this->tokenFor($koffi);
+
+        // Koffi ne peut pas démarrer de conversation.
+        $this->withToken($tK)->postJson('/api/messages', ['recipient_id' => $paul->id, 'body' => 'Bonjour'])
+            ->assertStatus(402)->assertJsonPath('code', 'subscription_required');
+        $this->withToken($tK)->getJson("/api/messages/{$paul->id}")->assertStatus(402);
+
+        // Awa (abonnée) lui écrit : Koffi voit la conversation, la lit et répond.
+        $this->withToken($this->tokenFor($awa))->postJson('/api/messages', ['recipient_id' => $koffi->id, 'body' => 'Bonjour Koffi'])->assertOk();
+        // Une conversation que Koffi aurait commencée avant de ne plus être abonné reste masquée.
+        Message::create(['sender_id' => $koffi->id, 'recipient_id' => $paul->id, 'body' => 'Ancien message']);
+
+        $this->withToken($tK)->getJson('/api/messages')->assertOk()
+            ->assertJsonPath('restreint', true)->assertJsonCount(1, 'conversations')->assertJsonPath('conversations.0.prenom', 'Awa');
+        $this->withToken($tK)->getJson("/api/messages/{$awa->id}")->assertOk()->assertJsonPath('messages.0.body', 'Bonjour Koffi');
+        $this->withToken($tK)->postJson('/api/messages', ['recipient_id' => $awa->id, 'body' => 'Merci Awa !'])->assertOk();
+
+        // Les mentors sont dispensés d'abonnement : ils démarrent librement.
+        $mentor = User::factory()->create(['role' => 'mentor']);
+        $this->withToken($this->tokenFor($mentor))->postJson('/api/messages', ['recipient_id' => $paul->id, 'body' => 'Bienvenue'])->assertOk();
+    }
 }

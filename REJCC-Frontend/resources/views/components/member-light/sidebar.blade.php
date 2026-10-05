@@ -24,7 +24,7 @@
             ['label' => 'Mentorat', 'icon' => 'hand-heart', 'route' => 'espace-membre.mentorat', 'badge' => $compteurs['mentorat'] ?? 0],
             ['label' => 'Annuaire', 'icon' => 'users', 'route' => 'espace-membre.directory', 'locked' => true],
             ['label' => 'Groupes sectoriels', 'icon' => 'network', 'route' => 'espace-membre.groupes'],
-            ['label' => 'Messagerie', 'icon' => 'message-circle', 'route' => 'espace-membre.messaging', 'locked' => true, 'cle' => 'messages', 'badge' => $compteurs['messages'] ?? 0],
+            ['label' => 'Messagerie', 'icon' => 'message-circle', 'route' => 'espace-membre.messaging', 'cle' => 'messages', 'badge' => $compteurs['messages'] ?? 0],
             ['label' => 'Événements', 'icon' => 'calendar-days', 'route' => 'espace-membre.evenements'],
         ],
         'Opportunités' => [

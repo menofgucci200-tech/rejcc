@@ -86,20 +86,22 @@ Route::middleware('auth.token')->group(function () {
     // Aperçu chiffré de l'annuaire, ouvert à tout membre connecté
     Route::get('/members-apercu', [AuthController::class, 'apercuAnnuaire']);
 
-    // Annuaire & messagerie — réservés aux abonnés à jour
+    // Messagerie : ouverte à tous les membres connectés ; un non-abonné peut
+    // seulement lire et répondre aux conversations qu'on lui a adressées
+    // (règle appliquée dans MessageController).
+    Route::get('/messages', [MessageController::class, 'conversations']);
+    Route::get('/messages/{userId}', [MessageController::class, 'thread']);
+    Route::post('/messages', [MessageController::class, 'send']);
+    Route::post('/messages/{id}/bloquer', [MessageController::class, 'bloquer'])->whereNumber('id');
+    Route::delete('/messages/{id}/bloquer', [MessageController::class, 'debloquer'])->whereNumber('id');
+    Route::post('/messages/{id}/archiver', [MessageController::class, 'archiver'])->whereNumber('id');
+    Route::delete('/messages/{id}/archiver', [MessageController::class, 'desarchiver'])->whereNumber('id');
+    Route::post('/messages/{id}/signaler', [MessageController::class, 'signaler'])->whereNumber('id');
+
+    // Annuaire — réservé aux abonnés à jour
     Route::middleware('sub.active')->group(function () {
         Route::get('/members', [AuthController::class, 'directory']);
         Route::get('/members/{id}', [AuthController::class, 'show']);
-
-        // Messagerie
-        Route::get('/messages', [MessageController::class, 'conversations']);
-        Route::get('/messages/{userId}', [MessageController::class, 'thread']);
-        Route::post('/messages', [MessageController::class, 'send']);
-        Route::post('/messages/{id}/bloquer', [MessageController::class, 'bloquer'])->whereNumber('id');
-        Route::delete('/messages/{id}/bloquer', [MessageController::class, 'debloquer'])->whereNumber('id');
-        Route::post('/messages/{id}/archiver', [MessageController::class, 'archiver'])->whereNumber('id');
-        Route::delete('/messages/{id}/archiver', [MessageController::class, 'desarchiver'])->whereNumber('id');
-        Route::post('/messages/{id}/signaler', [MessageController::class, 'signaler'])->whereNumber('id');
     });
 
     // Mentorat

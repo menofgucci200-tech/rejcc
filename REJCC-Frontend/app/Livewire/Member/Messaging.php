@@ -61,10 +61,6 @@ class Messaging extends Component
 
     public function mount(): void
     {
-        if ($this->locked()) {
-            return;
-        }
-
         $to = request()->integer('to');
 
         if ($to) {
@@ -72,17 +68,17 @@ class Messaging extends Component
         }
     }
 
-    public function locked(): bool
+    /**
+     * Membre non abonné : il lit et répond aux conversations qu'on lui a
+     * adressées, mais ne peut pas en démarrer (règle appliquée par l'API).
+     */
+    public function restreint(): bool
     {
         return ! (Api::user()->subscription_active ?? false);
     }
 
     public function getConversationsProperty(): array
     {
-        if ($this->locked()) {
-            return [];
-        }
-
         $params = trim($this->recherche) !== '' ? ['q' => trim($this->recherche)] : [];
         if ($this->voirArchives) {
             $params['archives'] = 1;
@@ -109,6 +105,11 @@ class Messaging extends Component
 
     public function ouvrirNouveau(): void
     {
+        if ($this->restreint()) {
+            $this->redirectRoute('espace-membre.abonnement', navigate: true);
+
+            return;
+        }
         $this->nouveau = true;
         $this->rechercheMembre = '';
     }
@@ -239,7 +240,7 @@ class Messaging extends Component
 
     public function voirProfil(): void
     {
-        if (! $this->activeId) {
+        if (! $this->activeId || $this->restreint()) {
             return;
         }
         $result = Api::get("/members/{$this->activeId}", [], Api::token());
