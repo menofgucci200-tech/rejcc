@@ -1,4 +1,4 @@
-<x-site-layout :title="'Profil membre — '.trim(($card->prenom ?? '').' '.($card->nom ?? ''))" description="Profil professionnel vérifié d'un membre du REJCC — Réseau Entrepreneurial des Jeunes Chrétiens Catholiques.">
+<x-site-layout :title="($card->locked ?? false) ? 'Carte membre REJCC' : 'Profil membre — '.trim(($card->prenom ?? '').' '.($card->nom ?? ''))" description="Profil professionnel vérifié d'un membre du REJCC — Réseau Entrepreneurial des Jeunes Chrétiens Catholiques.">
     @php
         $fullName = trim(($card->prenom ?? '').' '.($card->nom ?? '')) ?: ($card->name ?? 'Membre');
         $accent = match ($card->role ?? 'member') {
@@ -25,9 +25,9 @@
                     <div class="mx-auto flex size-14 items-center justify-center rounded-2xl bg-[#F5A623]/10">
                         <x-ui.icon name="shield" class="size-6 text-[#B27007]" />
                     </div>
-                    <h1 class="mt-5 text-lg font-extrabold text-brand">{{ trim(($card->prenom ?? '').' '.($card->nom ?? '')) ?: 'Ce membre' }}</h1>
+                    <h1 data-test="carte-indisponible" class="mt-5 text-lg font-extrabold text-brand">Carte non valide actuellement</h1>
                     <p class="mt-2 text-[13.5px] leading-relaxed text-[#5B677A]">
-                        La carte de membre officielle n'est délivrée qu'aux membres à jour de leur abonnement annuel REJCC. Elle n'est pas encore disponible pour ce profil.
+                        Ce titulaire n'est pas à jour de son abonnement annuel au REJCC : sa carte de membre n'est pas valide en ce moment. Elle le redeviendra dès le renouvellement de l'abonnement.
                     </p>
                 </div>
             </div>

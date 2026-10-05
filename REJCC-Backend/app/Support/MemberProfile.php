@@ -9,15 +9,23 @@ use App\Models\User;
  * Fiche complète d'un membre (profil « CV professionnel ») : utilisée par la
  * carte membre publique (/carte/{code}), la fiche détaillée de l'annuaire
  * (GET /members/{id}) et le trombinoscope des groupes sectoriels. Les
- * coordonnées (e-mail, téléphone) ne sont exposées que si le membre a laissé
- * la préférence « visibilité du profil » activée.
+ * coordonnées (e-mail, téléphone) ne sont montrées aux membres connectés que
+ * si la préférence « visibilite_profil » est active, et sur la page publique
+ * que si le membre a activé « coordonnees_publiques » (désactivée par défaut).
  */
 class MemberProfile
 {
-    public static function payload(User $user): array
+    /**
+     * @param  bool  $public  true pour la page publique ouverte par le QR code
+     *                        (accessible sans connexion) : les coordonnées n'y
+     *                        figurent que si le membre l'a explicitement choisi.
+     */
+    public static function payload(User $user, bool $public = false): array
     {
         $prefs = $user->preferences ?? $user->defaultPreferences();
-        $contactVisible = (bool) ($prefs['visibilite_profil'] ?? true);
+        $contactVisible = $public
+            ? (bool) ($prefs['coordonnees_publiques'] ?? false)
+            : (bool) ($prefs['visibilite_profil'] ?? true);
 
         $listings = MarketplaceListing::where('user_id', $user->id)
             ->where('statut', 'approuve')

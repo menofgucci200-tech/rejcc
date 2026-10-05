@@ -28,14 +28,13 @@ class MemberCardController extends Controller
         // La carte (preuve d'adhésion) n'est délivrée qu'aux membres à jour
         // de leur abonnement annuel.
         if (! $user->hasActiveSubscription()) {
+            // Aucune donnée personnelle : on ne révèle même pas le nom.
             return response()->json(['ok' => true, 'card' => [
                 'code' => $user->cardCode(),
                 'locked' => true,
-                'prenom' => $user->prenom,
-                'nom' => $user->nom,
             ]]);
         }
 
-        return response()->json(['ok' => true, 'card' => MemberProfile::payload($user)]);
+        return response()->json(['ok' => true, 'card' => MemberProfile::payload($user, public: true)]);
     }
 }

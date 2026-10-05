@@ -131,6 +131,8 @@ class User extends Authenticatable
             'notifications_email' => true,
             'rappels_quotidiens' => true,
             'visibilite_profil' => true,
+            // Coordonnées sur la page publique du QR code : uniquement sur choix explicite.
+            'coordonnees_publiques' => false,
             'newsletter' => true,
             'telechargement_hors_ligne' => false,
         ];
