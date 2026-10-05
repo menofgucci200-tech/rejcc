@@ -93,8 +93,13 @@
                         <button wire:click="closeThread" class="icon-btn rounded-lg p-1 text-[#5B677A] lg:hidden" aria-label="Retour">
                             <x-ui.icon name="arrow-left" class="size-[18px]" />
                         </button>
-                        <x-messagerie.avatar :personne="$partner" taille="size-[38px]" texte="text-xs" />
-                        <p data-test="fil-nom" class="text-sm font-bold text-brand">{{ $partner['prenom'].' '.$partner['nom'] }}</p>
+                        <button type="button" wire:click="voirProfil" data-test="fil-entete" title="Voir la fiche de {{ $partner['prenom'] }}" class="flex min-w-0 items-center gap-3 rounded-[12px] py-1 pl-1 pr-3 text-left hover:bg-cloud">
+                            <x-messagerie.avatar :personne="$partner" taille="size-[38px]" texte="text-xs" />
+                            <span class="min-w-0">
+                                <span data-test="fil-nom" class="block truncate text-sm font-bold text-brand">{{ $partner['prenom'].' '.$partner['nom'] }}</span>
+                                <span class="block truncate text-[11.5px] {{ $partner['role'] === 'mentor' ? 'font-semibold text-accent' : 'text-[#5B677A]' }}">{{ collect([$partner['role_label'] ?? null, $partner['titre'] ?? null, $partner['ville'] ?? null])->filter()->join(' · ') }}</span>
+                            </span>
+                        </button>
                     </div>
 
                     {{-- Fil : se place sur le dernier message, suit les nouveaux si l'on est déjà en bas --}}
@@ -104,15 +109,38 @@
                             new MutationObserver(() => { if ($el.scrollHeight - $el.scrollTop - $el.clientHeight < 200) $el.scrollTop = $el.scrollHeight }).observe($el, { childList: true, subtree: true })"
                         x-on:message-envoye.window="$nextTick(() => $el.scrollTop = $el.scrollHeight)"
                         class="flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto px-[18px] py-4">
+                        @php
+                            $jourPrecedent = null;
+                            $dernierMienId = collect($messages)->where('sender_id', $me)->max('id');
+                        @endphp
                         @forelse ($messages as $m)
-                            @php $mine = $m['sender_id'] === $me; @endphp
+                            @php
+                                $mine = $m['sender_id'] === $me;
+                                $date = \Illuminate\Support\Carbon::parse($m['created_at'])->setTimezone(config('app.timezone'))->locale('fr');
+                                $jour = $date->toDateString();
+                            @endphp
+                            @if ($jour !== $jourPrecedent)
+                                <div wire:key="jour-{{ $jour }}" data-test="separateur-jour" class="my-1 flex items-center gap-3 text-[11px] font-semibold text-[#9AA6B8]">
+                                    <span class="h-px flex-1 bg-cloud-200"></span>
+                                    {{ $date->isToday() ? "Aujourd'hui" : ($date->isYesterday() ? 'Hier' : ucfirst($date->isoFormat($date->year === now()->year ? 'dddd D MMMM' : 'D MMMM YYYY'))) }}
+                                    <span class="h-px flex-1 bg-cloud-200"></span>
+                                </div>
+                                @php $jourPrecedent = $jour; @endphp
+                            @endif
                             <div wire:key="msg-{{ $m['id'] }}" data-test="message" class="flex flex-col {{ $mine ? 'items-end' : 'items-start' }}">
                                 <div
                                     class="max-w-[78%] whitespace-pre-line break-words rounded-[14px] px-3.5 py-2.5 text-[13.5px] leading-relaxed {{ $mine ? 'text-white' : 'border border-cloud-200 bg-cloud text-ink' }}"
                                     style="{{ $mine ? 'background: linear-gradient(135deg, #4F6FBF, #031D59);' : '' }}"
-                                >{{ $m['body'] }}</div>
+                                >{!! \App\Support\Texte::liens($m['body'], $mine ? 'underline underline-offset-2 text-white' : 'font-semibold text-azure underline underline-offset-2') !!}</div>
                                 <span class="mt-1 px-1 text-[11px] text-[#9AA6B8]">
-                                    {{ \Illuminate\Support\Carbon::parse($m['created_at'])->setTimezone(config('app.timezone'))->locale('fr')->translatedFormat('d/m H:i') }}
+                                    {{ $date->format('H:i') }}
+                                    @if ($mine && $m['id'] === $dernierMienId)
+                                        @if ($vuJusqua >= $m['id'])
+                                            <span data-test="vu" class="font-semibold text-azure">· Vu</span>
+                                        @else
+                                            <span data-test="envoye">· Envoyé</span>
+                                        @endif
+                                    @endif
                                 </span>
                             </div>
                         @empty
@@ -159,6 +187,8 @@
         </div>
     </div>
     @endif
+    <x-member-light.profile-modal :member="$profil" />
+
     {{-- Nouveau message : choisir un membre --}}
     @if ($nouveau)
         <div class="fixed inset-0 z-[90] flex items-start justify-center bg-brand/40 p-4 pt-[12vh]" wire:click.self="fermerNouveau" x-on:keydown.escape.window="$wire.fermerNouveau()">

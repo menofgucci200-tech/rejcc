@@ -141,6 +141,23 @@ class Messaging extends Component
         $this->peutEcrire = (bool) ($result['peut_ecrire'] ?? true);
     }
 
+    /** Fiche du membre (fenêtre de l'annuaire), ouverte depuis l'en-tête du fil. */
+    public ?array $profil = null;
+
+    public function voirProfil(): void
+    {
+        if (! $this->activeId) {
+            return;
+        }
+        $result = Api::get("/members/{$this->activeId}", [], Api::token());
+        $this->profil = ($result['ok'] ?? false) ? $result['member'] : null;
+    }
+
+    public function fermerProfil(): void
+    {
+        $this->profil = null;
+    }
+
     public function closeThread(): void
     {
         $this->activeId = null;
