@@ -17,11 +17,20 @@ use Illuminate\Support\Facades\Validator;
  */
 class GroupController extends Controller
 {
+    /** Membres affichés dans un groupe : comptes actifs qui n'ont pas choisi de se retirer de l'annuaire. */
+    private function visibles($query)
+    {
+        return $query->where('users.is_active', true)
+            ->where(fn ($w) => $w->whereNull('users.preferences')
+                ->orWhereNull('users.preferences->apparaitre_annuaire')
+                ->orWhere('users.preferences->apparaitre_annuaire', true));
+    }
+
     public function index(Request $request)
     {
         $mesSpecialites = $request->user()->groups()->pluck('group_user.specialite', 'groups.id');
 
-        $groups = Group::withCount('users')
+        $groups = Group::withCount(['users' => fn ($q) => $q->where('users.is_active', true)])
             ->orderBy('ordre')
             ->orderBy('id')
             ->get(['id', 'name', 'slug', 'description', 'ordre'])
@@ -61,7 +70,7 @@ class GroupController extends Controller
             $group->id => ['specialite' => $validator->validated()['specialite']],
         ]);
 
-        return response()->json(['ok' => true, 'members' => $group->users()->count()]);
+        return response()->json(['ok' => true, 'members' => $group->users()->where('users.is_active', true)->count()]);
     }
 
     public function leave(Request $request, int $id)
@@ -89,9 +98,9 @@ class GroupController extends Controller
         // Jointure explicite (plutôt que $group->users()->paginate()) : la
         // pagination sur une relation BelongsToMany ne réhydrate pas
         // toujours proprement les colonnes du pivot.
-        $query = User::query()
+        $query = $this->visibles(User::query()
             ->join('group_user', 'group_user.user_id', '=', 'users.id')
-            ->where('group_user.group_id', $group->id)
+            ->where('group_user.group_id', $group->id))
             ->orderBy('users.prenom')
             ->orderBy('users.nom');
 
@@ -107,7 +116,7 @@ class GroupController extends Controller
 
         $page = $query->paginate(24, [
             'users.id', 'users.prenom', 'users.nom', 'users.ville', 'users.secteur',
-            'users.organisation', 'users.photo', 'group_user.specialite',
+            'users.organisation', 'users.photo', 'users.role', 'users.titre', 'users.created_at', 'group_user.specialite',
         ]);
 
         $members = collect($page->items())->map(fn (User $u) => [
@@ -118,6 +127,9 @@ class GroupController extends Controller
             'secteur' => $u->secteur,
             'organisation' => $u->organisation,
             'photo' => $u->photo,
+            'role' => $u->role,
+            'titre' => $u->titre,
+            'nouveau' => $u->created_at?->gt(now()->subDays(30)) ?? false,
             'specialite' => $u->specialite,
         ]);
 

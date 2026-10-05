@@ -118,4 +118,24 @@ class GroupTest extends TestCase
 
         return $plain;
     }
+
+    public function test_le_trombinoscope_exclut_les_comptes_suspendus_et_les_membres_masques(): void
+    {
+        $groupe = \App\Models\Group::first();
+        $visible = User::factory()->create(['prenom' => 'Visible', 'subscription_expires_at' => now()->addYear()]);
+        $suspendu = User::factory()->create(['prenom' => 'Suspendu', 'is_active' => false]);
+        $masque = User::factory()->create(['prenom' => 'Masque', 'preferences' => ['apparaitre_annuaire' => false]]);
+        foreach ([$visible, $suspendu, $masque] as $u) {
+            $u->groups()->attach($groupe->id, ['specialite' => 'Spécialité de test assez longue']);
+        }
+        $plain = Str::random(60);
+        ApiToken::create(['user_id' => $visible->id, 'token' => hash('sha256', $plain), 'name' => 'test']);
+
+        $r = $this->withToken($plain)->getJson("/api/groups/{$groupe->id}/members")->assertOk()->json();
+        $this->assertSame(['Visible'], array_column($r['members'], 'prenom'));
+
+        // Le compteur ignore les comptes suspendus (le membre masqué reste compté).
+        $g = collect($this->withToken($plain)->getJson('/api/groups')->json('groups'))->firstWhere('id', $groupe->id);
+        $this->assertSame(2, $g['members']);
+    }
 }

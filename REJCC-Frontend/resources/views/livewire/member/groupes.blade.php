@@ -1,7 +1,7 @@
 <div>
     <x-member-light.topbar title="Groupes sectoriels" />
 
-    <div class="mx-auto max-w-[1120px] px-8 py-8">
+    <div class="mx-auto max-w-[1280px] px-8 py-8">
         <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
             <div>
                 <h1 class="mb-1 text-[17px] font-bold text-brand">Groupes sectoriels</h1>
@@ -15,20 +15,26 @@
             @endif
         </div>
 
-        {{-- Formulaire d'adhésion / modification de la spécialité --}}
+        {{-- Formulaire d'adhésion / modification : fenêtre centrée, visible où que l'on soit dans la page --}}
         @if ($formGroupId)
             @php $groupeForm = $groups->firstWhere('id', $formGroupId); @endphp
-            <div class="panel-enter mb-6 rounded-[16px] border border-brand/10 bg-white p-5 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
-                <div class="mb-3 flex items-center justify-between">
-                    <p class="text-sm font-bold text-brand">{{ $groupeForm['joined'] ?? false ? 'Modifier ma spécialité' : 'Rejoindre' }} — {{ $groupeForm['name'] ?? '' }}</p>
-                    <button wire:click="fermerFormulaire" class="icon-btn rounded-lg p-1 hover:bg-cloud hover:text-brand"><x-ui.icon name="x" class="size-4 text-[#5B677A]" /></button>
+            <div class="fixed inset-0 z-[90] flex items-center justify-center bg-brand/40 p-4" wire:click.self="fermerFormulaire" @keydown.escape.window="$wire.fermerFormulaire()">
+                <div data-test="form-groupe" role="dialog" aria-modal="true" class="panel-enter w-full max-w-[520px] rounded-[20px] bg-white p-6 shadow-2xl">
+                    <div class="mb-3 flex items-start justify-between gap-3">
+                        <div>
+                            <p class="text-[11px] font-bold uppercase tracking-[0.08em] text-[#9AA6B8]">{{ ($groupeForm['joined'] ?? false) ? 'Ma fiche dans le groupe' : 'Rejoindre le groupe' }}</p>
+                            <p class="text-[16px] font-bold text-brand">{{ $groupeForm['name'] ?? '' }}</p>
+                        </div>
+                        <button type="button" wire:click="fermerFormulaire" aria-label="Fermer" class="icon-btn rounded-lg p-1.5 hover:bg-cloud"><x-ui.icon name="x" class="size-4 text-[#5B677A]" /></button>
+                    </div>
+                    <label for="groupe-specialite" class="mb-1 block text-xs font-semibold text-[#5B677A]">Votre spécialité dans ce domaine <span class="font-normal text-[#9AA6B8]">(visible des membres abonnés)</span></label>
+                    <textarea id="groupe-specialite" wire:model="specialite" rows="3" autofocus placeholder="Ex : Plombier spécialisé en dépannage sanitaire et chauffage central, intervention rapide à domicile." class="w-full rounded-[10px] border border-brand/15 px-3 py-2.5 text-sm outline-none focus:border-azure"></textarea>
+                    @error('specialite') <p data-test="erreur-specialite" class="mt-1 text-xs font-medium text-accent">{{ $message }}</p> @enderror
+                    <div class="mt-4 flex gap-2">
+                        <button wire:click="confirmerAdhesion" wire:loading.attr="disabled" data-test="valider-groupe" class="btn-tap rounded-full bg-brand px-5 py-2.5 text-[13px] font-bold text-white hover:bg-brand/90 disabled:opacity-60">{{ ($groupeForm['joined'] ?? false) ? 'Enregistrer' : 'Rejoindre le groupe' }}</button>
+                        <button wire:click="fermerFormulaire" class="btn-tap rounded-full border border-brand/15 px-5 py-2.5 text-[13px] font-bold text-brand hover:bg-cloud">Annuler</button>
+                    </div>
                 </div>
-                <label class="flex flex-col gap-1 text-xs font-semibold text-[#5B677A]">
-                    Décrivez votre spécialité dans ce domaine (visible des autres membres abonnés)
-                    <textarea wire:model="specialite" rows="3" placeholder="Ex : Plombier spécialisé en dépannage sanitaire et chauffage central, intervention rapide à domicile." class="rounded-[9px] border border-brand/15 px-3 py-2 text-sm font-normal outline-none focus:border-azure"></textarea>
-                    @error('specialite') <span class="font-medium text-accent">{{ $message }}</span> @enderror
-                </label>
-                <button wire:click="confirmerAdhesion" wire:loading.attr="disabled" class="btn-tap mt-3 w-fit rounded-full bg-brand px-5 py-2 text-[12.5px] font-bold text-white hover:bg-brand/90 disabled:opacity-60">Enregistrer</button>
             </div>
         @endif
 
@@ -37,9 +43,9 @@
                 <p class="mb-2.5 text-[12px] font-bold uppercase tracking-[0.1em] text-[#9AA6B8]">Mes groupes ({{ $mesGroupes->count() }})</p>
                 <div class="flex flex-wrap gap-2">
                     @foreach ($mesGroupes as $g)
-                        <span class="inline-flex items-center gap-1.5 rounded-full bg-brand/[.06] px-3 py-1.5 text-[12px] font-semibold text-brand">
-                            <x-ui.icon name="network" class="size-3.5 text-azure" /> {{ $g['name'] }}
-                        </span>
+                        <a href="{{ route('espace-membre.groupes.membres', $g['id']) }}" wire:navigate class="inline-flex items-center gap-1.5 rounded-full bg-brand/[.06] px-3 py-1.5 text-[12px] font-semibold text-brand transition-colors hover:bg-brand hover:text-white">
+                            <x-ui.icon name="network" class="size-3.5" /> {{ $g['name'] }}
+                        </a>
                     @endforeach
                 </div>
             </div>
@@ -67,13 +73,17 @@
                     @endif
 
                     <div class="mt-4 flex flex-wrap items-center justify-between gap-2">
-                        <a
-                            href="{{ route('espace-membre.groupes.membres', $g['id']) }}"
-                            wire:navigate
-                            class="inline-flex items-center gap-1.5 text-[11.5px] font-semibold text-azure hover:underline"
-                        >
-                            <x-ui.icon name="users" class="size-3.5" /> {{ $g['members'] }} membre{{ $g['members'] > 1 ? 's' : '' }} · Voir le trombinoscope
-                        </a>
+                        @if ($g['members'] > 0)
+                            <a
+                                href="{{ route('espace-membre.groupes.membres', $g['id']) }}"
+                                wire:navigate
+                                class="inline-flex items-center gap-1.5 text-[11.5px] font-semibold text-azure hover:underline"
+                            >
+                                <x-ui.icon name="users" class="size-3.5" /> {{ $g['members'] }} membre{{ $g['members'] > 1 ? 's' : '' }} · Voir les membres
+                            </a>
+                        @else
+                            <span class="text-[11.5px] text-[#9AA6B8]">Aucun membre pour l'instant</span>
+                        @endif
                         <div class="flex items-center gap-2">
                             @if ($g['joined'])
                                 <button
@@ -84,6 +94,7 @@
                                 <button
                                     type="button"
                                     wire:click="quitter({{ $g['id'] }})"
+                                    wire:confirm="Quitter le groupe « {{ $g['name'] }} » ? Votre fiche n'y apparaîtra plus."
                                     wire:loading.attr="disabled"
                                     wire:target="quitter({{ $g['id'] }})"
                                     class="btn-tap rounded-full border border-brand/15 px-3.5 py-1.5 text-[11.5px] font-bold text-[#5B677A] hover:border-accent/40 hover:text-accent disabled:opacity-60"
