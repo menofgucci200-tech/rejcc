@@ -7,6 +7,44 @@ import { initTourPlayer } from './tour-player';
 // Génération de QR codes côté client (cartes membres de l'admin).
 window.QRCode = QRCode;
 
+// « Télécharger en image » de la carte membre : recto + verso en un PNG
+// (bibliothèque chargée à la demande, uniquement quand on clique).
+// On exporte une copie hors écran : les attributs Livewire/Alpine (wire:…, x-…,
+// @…) rendraient l'image SVG intermédiaire invalide, et les QR codes (canvas)
+// sont remplacés par leur image.
+window.carteEnImage = async (el, fichier) => {
+    const { toPng } = await import('html-to-image');
+    const copie = el.cloneNode(true);
+    const originaux = el.querySelectorAll('canvas');
+    copie.querySelectorAll('canvas').forEach((c, i) => {
+        const img = document.createElement('img');
+        img.src = originaux[i].toDataURL('image/png');
+        img.className = c.className;
+        c.replaceWith(img);
+    });
+    [copie, ...copie.querySelectorAll('*')].forEach((n) => {
+        [...n.attributes].forEach((a) => {
+            if (/[:@]/.test(a.name) || a.name.startsWith('x-') || a.name.startsWith('wire')) n.removeAttribute(a.name);
+        });
+    });
+    const hote = document.createElement('div');
+    hote.style.cssText = `position:fixed;left:-10000px;top:0;width:${el.offsetWidth}px`;
+    hote.appendChild(copie);
+    document.body.appendChild(hote);
+    try {
+        await Promise.all([...copie.querySelectorAll('img')].map((i) => (i.complete ? null : new Promise((r) => { i.onload = i.onerror = r; }))));
+        // imagePlaceholder : une image indisponible (photo hors ligne…) ne bloque pas l'export.
+        const transparent = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
+        const url = await toPng(copie, { pixelRatio: 3, backgroundColor: '#ffffff', imagePlaceholder: transparent });
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fichier;
+        a.click();
+    } finally {
+        hote.remove();
+    }
+};
+
 function initLenis() {
     const lenis = new Lenis({ duration: 1.1, smoothWheel: true });
     window.__lenis = lenis;
