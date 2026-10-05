@@ -61,7 +61,7 @@
             </span>
             <span x-data="{ erreur: false }" class="relative">
                 @if ($user->photo ?? null)
-                    <img x-show="! erreur" x-on:error="erreur = true" src="{{ $user->photo }}" alt="" class="size-8 rounded-[9px] object-cover">
+                    <img x-show="! erreur" x-on:error="erreur = true" x-init="$el.complete && ! $el.naturalWidth && (erreur = true)" src="{{ $user->photo }}" alt="" class="size-8 rounded-[9px] object-cover">
                     <span x-show="erreur" style="display: none; background: linear-gradient(135deg, {{ $estMentor ? '#AC0100, #D95B5A' : '#4F6FBF, #AC0100' }})" class="flex size-8 items-center justify-center rounded-[9px] text-[11px] font-bold text-white">{{ $initiales }}</span>
                 @else
                     <span class="flex size-8 items-center justify-center rounded-[9px] text-[11px] font-bold text-white" style="background: linear-gradient(135deg, {{ $estMentor ? '#AC0100, #D95B5A' : '#4F6FBF, #AC0100' }})">{{ $initiales }}</span>

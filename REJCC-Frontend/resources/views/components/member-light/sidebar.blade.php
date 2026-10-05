@@ -135,7 +135,7 @@
             @if ($reductible) :class="reduit ? 'justify-center' : ''" @endif>
             <span x-data="{ erreur: false }" class="relative shrink-0">
                 @if ($user->photo ?? null)
-                    <img x-show="! erreur" x-on:error="erreur = true" src="{{ $user->photo }}" alt="" class="size-10 rounded-full object-cover ring-2 ring-white/15">
+                    <img x-show="! erreur" x-on:error="erreur = true" x-init="$el.complete && ! $el.naturalWidth && (erreur = true)" src="{{ $user->photo }}" alt="" class="size-10 rounded-full object-cover ring-2 ring-white/15">
                 @endif
                 <span x-show="{{ ($user->photo ?? null) ? 'erreur' : 'true' }}" @if ($user->photo ?? null) style="display: none" @endif class="flex size-10 items-center justify-center rounded-full text-xs font-bold text-white ring-2 ring-white/15" style="background: linear-gradient(135deg, {{ $estMentor ? '#AC0100, #D95B5A' : '#4F6FBF, #AC0100' }})">{{ $initiales }}</span>
             </span>

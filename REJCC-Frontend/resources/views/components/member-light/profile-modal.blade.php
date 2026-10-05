@@ -5,16 +5,22 @@
         <div class="max-h-[88vh] w-full max-w-[560px] overflow-y-auto rounded-[20px] bg-white p-6 shadow-2xl">
             <div class="mb-4 flex items-start justify-between gap-3">
                 <div class="flex min-w-0 items-center gap-3">
-                    @if ($member['photo'] ?? null)
-                        <img src="{{ $member['photo'] }}" alt="" class="size-14 shrink-0 rounded-2xl object-cover">
-                    @else
-                        <div class="flex size-14 shrink-0 items-center justify-center rounded-2xl text-lg font-bold text-white" style="background: linear-gradient(135deg, #4F6FBF, #AC0100)">
-                            {{ mb_strtoupper(mb_substr(trim(($member['prenom'] ?? '').' '.($member['nom'] ?? '')), 0, 2)) }}
-                        </div>
-                    @endif
+                    @php
+                        $initiales = mb_strtoupper(mb_substr($member['prenom'] ?? '', 0, 1).mb_substr($member['nom'] ?? '', 0, 1));
+                        $degrade = ($member['role'] ?? '') === 'mentor' ? '#AC0100, #D95B5A' : '#4F6FBF, #AC0100';
+                    @endphp
+                    <span x-data="{ erreur: false }" class="relative shrink-0">
+                        @if ($member['photo'] ?? null)
+                            <img x-show="! erreur" x-on:error="erreur = true" x-init="$el.complete && ! $el.naturalWidth && (erreur = true)" src="{{ $member['photo'] }}" alt="" class="size-14 rounded-2xl object-cover">
+                        @endif
+                        <span @if ($member['photo'] ?? null) x-show="erreur" style="display: none; background: linear-gradient(135deg, {{ $degrade }})" @else style="background: linear-gradient(135deg, {{ $degrade }})" @endif class="flex size-14 items-center justify-center rounded-2xl text-lg font-bold text-white">{{ $initiales }}</span>
+                    </span>
                     <div class="min-w-0">
                         <p class="truncate text-[15px] font-bold text-brand">{{ trim(($member['prenom'] ?? '').' '.($member['nom'] ?? '')) }}</p>
                         <p class="text-[11.5px] font-bold uppercase tracking-[0.06em] {{ ($member['role'] ?? '') === 'mentor' ? 'text-accent' : 'text-azure' }}">{{ $member['role_label'] ?? 'Membre officiel' }}</p>
+                        @if ($member['titre'] ?? null)
+                            <p class="mt-0.5 text-[12.5px] text-[#5B677A]">{{ $member['titre'] }}</p>
+                        @endif
                     </div>
                 </div>
                 <button type="button" wire:click="fermerProfil" class="icon-btn shrink-0 rounded-lg p-1.5 hover:bg-cloud"><x-ui.icon name="x" class="size-4 text-[#5B677A]" /></button>
@@ -71,6 +77,21 @@
                         </a>
                     @endif
                 </div>
+            @endif
+
+            @if (! empty($member['competences']))
+                <div class="mt-4 flex flex-wrap gap-1.5">
+                    @foreach (array_slice($member['competences'], 0, 8) as $c)
+                        <span class="rounded-full bg-brand/[.05] px-2.5 py-1 text-[11.5px] font-semibold text-brand">{{ $c }}</span>
+                    @endforeach
+                </div>
+            @endif
+
+            @if ($member['code'] ?? null)
+                <a href="{{ url('/carte/'.$member['code']) }}" target="_blank" rel="noopener" data-test="voir-page-complete"
+                    class="mt-4 inline-flex items-center gap-1.5 text-[12.5px] font-bold text-azure hover:underline">
+                    <x-ui.icon name="external-link" class="size-3.5" /> Voir la page complète (certificats, projets, badges)
+                </a>
             @endif
 
             <a

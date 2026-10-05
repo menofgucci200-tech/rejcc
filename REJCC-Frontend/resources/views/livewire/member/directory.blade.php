@@ -29,43 +29,62 @@
             />
         </div>
 
+        <p data-test="nb-resultats" class="mb-3 text-[12.5px] font-semibold text-[#5B677A]">
+            @php $total = $meta['total'] ?? $members->count(); @endphp
+            {{ $total }} {{ $filtre === 'mentors' ? 'mentor'.($total > 1 ? 's' : '') : 'membre'.($total > 1 ? 's' : '') }}{{ trim($query) !== '' ? ' pour « '.trim($query).' »' : '' }}
+        </p>
+
         @if ($members->isEmpty())
             <p class="py-10 text-center text-sm text-[#5B677A]">{{ $filtre === 'mentors' ? 'Aucun mentor pour le moment.' : 'Aucun membre trouvé.' }}</p>
         @else
             <div class="grid gap-4" style="grid-template-columns: repeat(auto-fill, minmax(240px, 1fr))" wire:key="dir-page-{{ $meta['current_page'] ?? 1 }}">
                 @foreach ($members as $m)
-                    @php $estMentor = ($m->role ?? 'member') === 'mentor'; @endphp
-                    <article data-test="carte-annuaire" wire:click="voirProfil({{ $m->id }})" class="card-hover cursor-pointer rounded-[16px] border bg-white p-[18px] shadow-[0_2px_8px_rgba(3,29,89,.05)] {{ $estMentor ? 'border-accent/30' : 'border-brand/10' }}">
-                        <div class="flex items-center gap-3">
-                            @if ($m->photo ?? null)
-                                <img src="{{ $m->photo }}" alt="" class="size-11 shrink-0 rounded-xl object-cover">
-                            @else
-                                <span class="flex size-11 shrink-0 items-center justify-center rounded-xl text-sm font-bold text-white" style="background: linear-gradient(135deg, {{ $estMentor ? '#AC0100, #D95B5A' : '#4F6FBF, #AC0100' }})">
-                                    {{ mb_substr($m->prenom, 0, 1) }}{{ mb_substr($m->nom, 0, 1) }}
-                                </span>
-                            @endif
-                            <div class="min-w-0">
-                                <p class="flex items-center gap-1.5 truncate text-sm font-bold text-brand">{{ $m->prenom }} {{ $m->nom }}
+                    @php
+                        $estMentor = ($m->role ?? 'member') === 'mentor';
+                        $initiales = mb_strtoupper(mb_substr($m->prenom, 0, 1).mb_substr($m->nom, 0, 1));
+                        $sousTitre = $m->titre ?: ($m->secteur ?: null);
+                        $tags = $estMentor ? array_slice($m->mentor_expertises ?? [], 0, 3) : ($m->competences ?? []);
+                    @endphp
+                    <article data-test="carte-annuaire" wire:key="membre-{{ $m->id }}" wire:click="voirProfil({{ $m->id }})" class="card-hover flex cursor-pointer flex-col rounded-[16px] border bg-white p-[18px] shadow-[0_2px_8px_rgba(3,29,89,.05)] {{ $estMentor ? 'border-accent/30' : 'border-brand/10' }}">
+                        <div class="flex items-start gap-3">
+                            <span x-data="{ erreur: false }" class="relative shrink-0">
+                                @if ($m->photo ?? null)
+                                    <img x-show="! erreur" x-on:error="erreur = true" x-init="$el.complete && ! $el.naturalWidth && (erreur = true)" src="{{ $m->photo }}" alt="" class="size-12 rounded-xl object-cover">
+                                @endif
+                                <span @if ($m->photo ?? null) x-show="erreur" style="display: none; background: linear-gradient(135deg, {{ $estMentor ? '#AC0100, #D95B5A' : '#4F6FBF, #AC0100' }})" @else style="background: linear-gradient(135deg, {{ $estMentor ? '#AC0100, #D95B5A' : '#4F6FBF, #AC0100' }})" @endif class="flex size-12 items-center justify-center rounded-xl text-sm font-bold text-white">{{ $initiales }}</span>
+                            </span>
+                            <div class="min-w-0 flex-1">
+                                <p class="truncate text-sm font-bold text-brand">{{ $m->prenom }} {{ $m->nom }}</p>
+                                <div class="mt-0.5 flex flex-wrap gap-1">
                                     @if ($estMentor)
-                                        <span class="shrink-0 rounded-full bg-accent px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.06em] text-white">Mentor</span>
+                                        <span class="rounded-full bg-accent px-2 py-px text-[9.5px] font-bold uppercase tracking-[0.06em] text-white">Mentor</span>
                                     @endif
-                                </p>
-                                @if ($m->secteur)
-                                    <p class="mt-0.5 truncate text-xs text-[#5B677A]">{{ $m->secteur }}</p>
+                                    @if ($m->nouveau ?? false)
+                                        <span data-test="badge-nouveau" class="rounded-full bg-[#22A85A]/12 px-2 py-px text-[9.5px] font-bold uppercase tracking-[0.06em] text-[#1C8F4C]">Nouveau</span>
+                                    @endif
+                                </div>
+                                @if ($sousTitre)
+                                    <p class="mt-1 line-clamp-2 text-xs leading-snug text-[#5B677A]">{{ $sousTitre }}</p>
                                 @endif
                             </div>
                         </div>
 
-                        @if ($estMentor && ! empty($m->mentor_expertises))
-                            <p class="mt-2.5 truncate text-[11.5px] font-semibold text-accent">{{ implode(' · ', array_slice($m->mentor_expertises, 0, 3)) }}</p>
+                        @if ($tags)
+                            <div class="mt-3 flex flex-wrap gap-1.5">
+                                @foreach ($tags as $tag)
+                                    <span class="max-w-full truncate rounded-full px-2 py-0.5 text-[11px] font-semibold {{ $estMentor ? 'bg-accent/[.06] text-accent' : 'bg-brand/[.05] text-brand' }}">{{ $tag }}</span>
+                                @endforeach
+                            </div>
                         @endif
 
-                        @if ($m->ville || $m->organisation)
-                            <p class="mt-3 flex items-center gap-1.5 text-xs text-[#9AA6B8]">
-                                <x-ui.icon name="map-pin" class="size-3" />
-                                {{ collect([$m->ville, $m->organisation])->filter()->join(' · ') }}
-                            </p>
-                        @endif
+                        <p class="mt-3 flex flex-1 items-start gap-1.5 text-xs text-[#9AA6B8]">
+                            @if ($m->ville || $m->organisation)
+                                <x-ui.icon name="map-pin" class="mt-px size-3 shrink-0" />
+                                <span class="truncate">{{ collect([$m->ville, $m->organisation])->filter()->join(' · ') }}</span>
+                            @else
+                                <span class="italic">Profil à compléter</span>
+                            @endif
+                        </p>
 
                         <a
                             href="{{ route('espace-membre.messaging', ['to' => $m->id]) }}"

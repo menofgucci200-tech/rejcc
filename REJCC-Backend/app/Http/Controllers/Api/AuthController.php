@@ -348,11 +348,26 @@ class AuthController extends Controller
             });
         }
 
-        $page = $query->paginate(24, ['id', 'prenom', 'nom', 'ville', 'secteur', 'profil', 'organisation', 'photo', 'role', 'mentor_expertises']);
+        $page = $query->paginate(24, ['id', 'prenom', 'nom', 'ville', 'secteur', 'profil', 'organisation', 'titre', 'competences', 'photo', 'role', 'mentor_expertises', 'created_at']);
 
         return response()->json([
             'ok' => true,
-            'members' => $page->items(),
+            'members' => collect($page->items())->map(fn (User $u) => [
+                'id' => $u->id,
+                'prenom' => $u->prenom,
+                'nom' => $u->nom,
+                'ville' => $u->ville,
+                'secteur' => $u->secteur,
+                'profil' => $u->profil,
+                'organisation' => $u->organisation,
+                'titre' => $u->titre,
+                'competences' => array_slice($u->competences ?? [], 0, 3),
+                'photo' => $u->photo,
+                'role' => $u->role,
+                'mentor_expertises' => $u->mentor_expertises,
+                // Arrivé il y a moins de 30 jours : à accueillir.
+                'nouveau' => $u->created_at?->gt(now()->subDays(30)) ?? false,
+            ])->values(),
             'meta' => [
                 'current_page' => $page->currentPage(),
                 'last_page' => $page->lastPage(),
