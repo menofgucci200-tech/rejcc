@@ -18,12 +18,32 @@ class Directory extends Component
     #[Url(as: 'filtre', except: 'tous')]
     public string $filtre = 'tous';
 
+    #[Url(as: 'secteur', except: '')]
+    public string $secteur = '';
+
+    #[Url(as: 'ville', except: '')]
+    public string $ville = '';
+
+    #[Url(as: 'groupe', except: '')]
+    public string $groupe = '';
+
+    #[Url(as: 'tri', except: 'nom')]
+    public string $tri = 'nom';
+
     public int $page = 1;
 
     public ?array $detail = null;
 
-    public function updatedQuery(): void
+    public function updated(string $propriete): void
     {
+        if (in_array($propriete, ['query', 'secteur', 'ville', 'groupe', 'tri'], true)) {
+            $this->page = 1;
+        }
+    }
+
+    public function reinitialiser(): void
+    {
+        $this->reset(['query', 'filtre', 'secteur', 'ville', 'groupe', 'tri']);
         $this->page = 1;
     }
 
@@ -67,6 +87,13 @@ class Directory extends Component
             $params['profil'] = $this->filtre;
         }
 
+        $params += array_filter([
+            'secteur' => $this->secteur,
+            'ville' => $this->ville,
+            'groupe' => $this->groupe,
+            'tri' => $this->tri === 'recents' ? 'recents' : null,
+        ]);
+
         $result = Api::get('/members', $params, Api::token());
 
         $members = Collection::make($result['members'] ?? [])
@@ -75,6 +102,8 @@ class Directory extends Component
         return view('livewire.member.directory', [
             'members' => $members,
             'meta' => $result['meta'] ?? [],
+            'filtres' => $result['filtres'] ?? ['secteurs' => [], 'villes' => [], 'groupes' => []],
+            'filtresActifs' => trim($this->query) !== '' || $this->filtre !== 'tous' || $this->secteur !== '' || $this->ville !== '' || $this->groupe !== '',
             'profiles' => MembershipContent::profiles(),
         ]);
     }

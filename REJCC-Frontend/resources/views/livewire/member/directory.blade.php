@@ -5,34 +5,66 @@
         <x-member-light.paywall description="L'annuaire des membres est réservé aux membres à jour de leur abonnement annuel (10 000 F)." />
     @else
     <div class="mx-auto max-w-[1280px] px-8 py-8">
-        <div class="mb-5 flex flex-wrap items-end justify-between gap-4">
-            <div>
-                <h1 class="mb-1 text-[17px] font-bold text-brand">Annuaire des membres</h1>
-                <div class="h-[3px] w-9 rounded bg-accent"></div>
-            </div>
-            <div class="flex flex-wrap gap-2">
-                <button wire:click="setFiltre('tous')" class="btn-tap rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors duration-200 {{ $filtre === 'tous' ? 'border-brand bg-brand text-white' : 'border-brand/10 bg-white text-[#5B677A]' }}">Tous</button>
-                @foreach ($profiles as $p)
-                    <button wire:click="setFiltre('{{ $p['id'] }}')" class="btn-tap rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors duration-200 {{ $filtre === $p['id'] ? 'border-brand bg-brand text-white' : 'border-brand/10 bg-white text-[#5B677A]' }}">{{ $p['label'] }}</button>
-                @endforeach
-                <button wire:click="setFiltre('mentors')" data-test="filtre-mentors" class="btn-tap inline-flex items-center gap-1 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors duration-200 {{ $filtre === 'mentors' ? 'border-accent bg-accent text-white' : 'border-accent/25 bg-white text-accent' }}"><x-ui.icon name="nav-mentor" class="size-3.5" /> Mentors</button>
-            </div>
+        <div class="mb-5">
+            <h1 class="mb-1 text-[17px] font-bold text-brand">Annuaire des membres</h1>
+            <div class="h-[3px] w-9 rounded bg-accent"></div>
         </div>
 
-        <div class="relative mb-6 max-w-[420px]">
-            <x-ui.icon name="search" class="pointer-events-none absolute left-3.5 top-1/2 size-[15px] -translate-y-1/2 text-[#9AA6B8]" />
-            <input
-                wire:model.live.debounce.300ms="query"
-                type="text"
-                placeholder="Rechercher (nom, domaine, ville)…"
-                class="w-full rounded-xl border border-brand/10 bg-white py-2.5 pl-10 pr-4 text-[13.5px] text-ink outline-none focus:border-azure"
-            />
+        {{-- Profils : ligne défilante sur mobile --}}
+        <div class="-mx-8 mb-4 flex gap-2 overflow-x-auto px-8 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0" data-test="filtres-profil">
+            <button wire:click="setFiltre('tous')" class="btn-tap shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors duration-200 {{ $filtre === 'tous' ? 'border-brand bg-brand text-white' : 'border-brand/10 bg-white text-[#5B677A]' }}">Tous</button>
+            @foreach ($profiles as $p)
+                <button wire:click="setFiltre('{{ $p['id'] }}')" class="btn-tap shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors duration-200 {{ $filtre === $p['id'] ? 'border-brand bg-brand text-white' : 'border-brand/10 bg-white text-[#5B677A]' }}">{{ $p['label'] }}</button>
+            @endforeach
+            <button wire:click="setFiltre('mentors')" data-test="filtre-mentors" class="btn-tap inline-flex shrink-0 items-center gap-1 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors duration-200 {{ $filtre === 'mentors' ? 'border-accent bg-accent text-white' : 'border-accent/25 bg-white text-accent' }}"><x-ui.icon name="hand-heart" class="size-3.5" /> Mentors</button>
         </div>
 
-        <p data-test="nb-resultats" class="mb-3 text-[12.5px] font-semibold text-[#5B677A]">
+        @php $nbFiltres = collect([$secteur, $ville, $groupe])->filter()->count() + ($tri === 'recents' ? 1 : 0); @endphp
+        <div x-data="{ filtres: false }" class="mb-5 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.6fr)_repeat(4,minmax(0,1fr))]">
+            <div class="flex gap-2 sm:col-span-2 lg:col-span-1">
+            <div class="relative min-w-0 flex-1">
+                <x-ui.icon name="search" class="pointer-events-none absolute left-3.5 top-1/2 size-[15px] -translate-y-1/2 text-[#9AA6B8]" />
+                <input
+                    wire:model.live.debounce.300ms="query"
+                    type="text"
+                    data-test="recherche-annuaire"
+                    placeholder="Rechercher (nom, compétence, métier, ville)…"
+                    aria-label="Rechercher dans l'annuaire"
+                    class="h-10 w-full rounded-xl border border-brand/10 bg-white pl-10 pr-4 text-[13.5px] text-ink outline-none focus:border-azure"
+                />
+            </div>
+            <button type="button" @click="filtres = ! filtres" :aria-expanded="filtres" data-test="bouton-filtres" class="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-xl border px-3 text-[13px] font-semibold sm:hidden {{ $nbFiltres ? 'border-brand bg-brand text-white' : 'border-brand/10 bg-white text-brand' }}">
+                Filtres{{ $nbFiltres ? ' ('.$nbFiltres.')' : '' }}
+                <x-ui.icon name="chevron-down" class="size-3.5 transition-transform" x-bind:class="filtres ? 'rotate-180' : ''" />
+            </button>
+            </div>
+            @foreach ([
+                ['secteur', 'Tous les secteurs', collect($filtres['secteurs'])->map(fn ($v) => [$v, $v])],
+                ['ville', 'Toutes les villes', collect($filtres['villes'])->map(fn ($v) => [$v, $v])],
+                ['groupe', 'Tous les groupes', collect($filtres['groupes'])->map(fn ($g) => [(string) $g['id'], $g['nom']])],
+            ] as [$champ, $tous, $options])
+                <select x-show="filtres || window.innerWidth >= 640" x-cloak wire:model.live="{{ $champ }}" data-test="filtre-{{ $champ }}" aria-label="{{ $tous }}" class="h-10 w-full truncate rounded-xl border bg-white pl-3 pr-9 text-[13px] outline-none focus:border-azure {{ $this->{$champ} !== '' ? 'border-brand font-semibold text-brand' : 'border-brand/10 text-[#5B677A]' }}">
+                    <option value="">{{ $tous }}</option>
+                    @foreach ($options as [$valeur, $libelle])
+                        <option value="{{ $valeur }}">{{ $libelle }}</option>
+                    @endforeach
+                </select>
+            @endforeach
+            <select x-show="filtres || window.innerWidth >= 640" x-cloak wire:model.live="tri" data-test="tri" aria-label="Trier" class="h-10 w-full rounded-xl border border-brand/10 bg-white pl-3 pr-9 text-[13px] text-[#5B677A] outline-none focus:border-azure">
+                <option value="nom">Ordre alphabétique</option>
+                <option value="recents">Plus récents</option>
+            </select>
+        </div>
+
+        <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <p data-test="nb-resultats" class="text-[12.5px] font-semibold text-[#5B677A]">
             @php $total = $meta['total'] ?? $members->count(); @endphp
             {{ $total }} {{ $filtre === 'mentors' ? 'mentor'.($total > 1 ? 's' : '') : 'membre'.($total > 1 ? 's' : '') }}{{ trim($query) !== '' ? ' pour « '.trim($query).' »' : '' }}
         </p>
+        @if ($filtresActifs)
+            <button wire:click="reinitialiser" data-test="reinitialiser" class="inline-flex items-center gap-1 text-[12px] font-semibold text-azure hover:underline"><x-ui.icon name="x" class="size-3.5" /> Réinitialiser les filtres</button>
+        @endif
+        </div>
 
         @if ($members->isEmpty())
             <p class="py-10 text-center text-sm text-[#5B677A]">{{ $filtre === 'mentors' ? 'Aucun mentor pour le moment.' : 'Aucun membre trouvé.' }}</p>

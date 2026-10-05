@@ -37,4 +37,29 @@ class DirectoryTest extends TestCase
         $this->assertFalse($membres['Ancien']['nouveau']);
         $this->assertTrue($membres['Nouveau']['nouveau']);
     }
+
+    public function test_recherche_elargie_filtres_et_tri(): void
+    {
+        $awa = $this->abonne(['prenom' => 'Awa', 'secteur' => 'Agro', 'ville' => 'Abidjan', 'competences' => ['Fiscalité', 'Export'], 'paroisse' => 'Saint-Jacques', 'created_at' => now()->subMonths(2)]);
+        $this->abonne(['prenom' => 'Jean', 'secteur' => 'BTP', 'ville' => 'Bouaké', 'titre' => 'Architecte', 'bio' => 'Passionné de construction durable.', 'created_at' => now()->subDay()]);
+        $groupe = \App\Models\Group::create(['name' => 'Agriculture', 'slug' => 'agriculture-test', 'ordre' => 99]);
+        $awa->groups()->attach($groupe->id);
+        $token = $this->tokenFor($this->abonne(['prenom' => 'Moi', 'created_at' => now()->subYear()]));
+
+        $prenoms = fn (string $qs) => array_column($this->withToken($token)->getJson('/api/members'.$qs)->json('members'), 'prenom');
+
+        $this->assertSame(['Awa'], $prenoms('?q=fiscalité'));       // compétence avec accent
+        $this->assertSame(['Jean'], $prenoms('?q=architecte'));      // titre
+        $this->assertSame(['Jean'], $prenoms('?q=durable'));         // biographie
+        $this->assertSame(['Awa'], $prenoms('?q=jacques'));          // paroisse
+        $this->assertSame(['Jean'], $prenoms('?secteur=BTP'));
+        $this->assertSame(['Awa'], $prenoms('?ville=Abidjan'));
+        $this->assertSame(['Awa'], $prenoms('?groupe='.$groupe->id));
+        $this->assertSame(['Jean', 'Awa'], $prenoms('?tri=recents'));
+
+        $filtres = $this->withToken($token)->getJson('/api/members')->json('filtres');
+        $this->assertContains('BTP', $filtres['secteurs']);
+        $this->assertContains('Bouaké', $filtres['villes']);
+        $this->assertContains('Agriculture', array_column($filtres['groupes'], 'nom'));
+    }
 }

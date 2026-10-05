@@ -336,16 +336,38 @@ class AuthController extends Controller
             $query->where('profil', $profil);
         }
 
+        if ($secteur = trim((string) $request->query('secteur', ''))) {
+            $query->where('secteur', $secteur);
+        }
+        if ($ville = trim((string) $request->query('ville', ''))) {
+            $query->where('ville', $ville);
+        }
+        if ($groupe = (int) $request->query('groupe')) {
+            $query->whereHas('groups', fn ($g) => $g->where('groups.id', $groupe));
+        }
+
         // Chaque mot doit se retrouver dans au moins un champ : « Koffi Yao »
-        // trouve le membre dont le prénom est Koffi et le nom Yao.
+        // trouve le membre dont le prénom est Koffi et le nom Yao. Les listes
+        // JSON (compétences, expertises) stockent les accents échappés : on
+        // cherche aussi la forme échappée.
+        $mysql = \Illuminate\Support\Facades\DB::connection()->getDriverName() === 'mysql';
         foreach (preg_split('/\s+/', $q, -1, PREG_SPLIT_NO_EMPTY) as $mot) {
-            $query->where(function ($qb) use ($mot) {
-                $qb->where('prenom', 'like', "%{$mot}%")
-                    ->orWhere('nom', 'like', "%{$mot}%")
-                    ->orWhere('secteur', 'like', "%{$mot}%")
-                    ->orWhere('ville', 'like', "%{$mot}%")
-                    ->orWhere('organisation', 'like', "%{$mot}%");
+            $echappe = trim(json_encode(mb_strtolower($mot)), '"');
+            if ($mysql) {
+                $echappe = str_replace('\\', '\\\\', $echappe);
+            }
+            $query->where(function ($qb) use ($mot, $echappe) {
+                foreach (['prenom', 'nom', 'secteur', 'ville', 'organisation', 'titre', 'bio', 'paroisse'] as $champ) {
+                    $qb->orWhere($champ, 'like', "%{$mot}%");
+                }
+                foreach (['competences', 'mentor_expertises'] as $champ) {
+                    $qb->orWhereRaw("LOWER({$champ}) like ?", ["%{$echappe}%"]);
+                }
             });
+        }
+
+        if ($request->query('tri') === 'recents') {
+            $query->reorder()->orderByDesc('created_at')->orderByDesc('id');
         }
 
         $page = $query->paginate(24, ['id', 'prenom', 'nom', 'ville', 'secteur', 'profil', 'organisation', 'titre', 'competences', 'photo', 'role', 'mentor_expertises', 'created_at']);
@@ -368,6 +390,12 @@ class AuthController extends Controller
                 // Arrivé il y a moins de 30 jours : à accueillir.
                 'nouveau' => $u->created_at?->gt(now()->subDays(30)) ?? false,
             ])->values(),
+            // Valeurs disponibles pour les filtres (membres et mentors actifs).
+            'filtres' => [
+                'secteurs' => User::whereIn('role', ['member', 'mentor'])->where('is_active', true)->whereNotNull('secteur')->where('secteur', '!=', '')->distinct()->orderBy('secteur')->pluck('secteur'),
+                'villes' => User::whereIn('role', ['member', 'mentor'])->where('is_active', true)->whereNotNull('ville')->where('ville', '!=', '')->distinct()->orderBy('ville')->pluck('ville'),
+                'groupes' => \App\Models\Group::orderBy('ordre')->get(['id', 'name'])->map(fn ($g) => ['id' => $g->id, 'nom' => $g->name]),
+            ],
             'meta' => [
                 'current_page' => $page->currentPage(),
                 'last_page' => $page->lastPage(),
