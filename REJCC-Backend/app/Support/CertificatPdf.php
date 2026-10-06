@@ -31,7 +31,7 @@ class CertificatPdf
     /** @return array{0: string, 1: bool} contenu du PDF, signé électroniquement ou non */
     public static function generer(Certificate $c): array
     {
-        $pdf = new TCPDF('L', 'mm', 'A4', true, 'UTF-8', false);
+        $pdf = self::document();
         $pdf->setPrintHeader(false);
         $pdf->setPrintFooter(false);
         $pdf->SetMargins(0, 0, 0);
@@ -50,7 +50,7 @@ class CertificatPdf
         }
 
         $pdf->AddPage();
-        $pdf->Image(resource_path('certificats/prestige-fond.jpg'), 0, 0, self::W, self::H, 'JPG', '', '', false, 300);
+        self::fond($pdf);
 
         $graine = hash('sha256', $c->code.'|'.$c->reference, true);
         self::filigrane($pdf, $c);
@@ -68,6 +68,101 @@ class CertificatPdf
         }
 
         return [$pdf->Output('certificat.pdf', 'S'), $signe];
+    }
+
+    /** TCPDF avec dégradés à plusieurs couleurs dans une zone ou un polygone quelconque. */
+    private static function document(): TCPDF
+    {
+        return new class('L', 'mm', 'A4', true, 'UTF-8', false) extends TCPDF
+        {
+            /**
+             * Dégradé dans un polygone : coordonnées du dégradé exprimées dans le
+             * cadre [x, y, w, h] (0 à 1, l'axe vertical partant du bas).
+             *
+             * @param  array<int, float>  $points  x1, y1, x2, y2…
+             */
+            public function degrade(int $type, array $coords, array $stops, array $points, array $cadre): void
+            {
+                [$x, $y, $w, $h] = $cadre;
+                $k = $this->k;
+                $chemin = [];
+                foreach (array_chunk($points, 2) as $i => [$px, $py]) {
+                    $chemin[] = sprintf('%F %F %s', $px * $k, ($this->h - $py) * $k, $i ? 'l' : 'm');
+                }
+                $this->_out('q '.implode(' ', $chemin).' h W n '
+                    .sprintf('%F 0 0 %F %F %F cm', $w * $k, $h * $k, $x * $k, ($this->h - ($y + $h)) * $k));
+                $this->Gradient($type, $coords, $stops, [], true);
+            }
+
+            /**
+             * Tracé vectoriel (opérateurs PDF en pixels, axe vertical vers le bas)
+             * placé dans le cadre [x, y, w, h] en mm, rempli (pair-impair) par un
+             * dégradé radial dont le cadre [gx, gy, gw, gh] est en pixels.
+             */
+            public function traceDegrade(string $chemin, int $pw, int $ph, array $cadre, array $stops, array $cadreDegrade): void
+            {
+                [$x, $y, $w, $h] = $cadre;
+                [$gx, $gy, $gw, $gh] = $cadreDegrade;
+                $k = $this->k;
+                $this->_out(sprintf('q %F 0 0 %F %F %F cm', $w * $k / $pw, -$h * $k / $ph, $x * $k, ($this->h - $y) * $k));
+                $this->_out($chemin.' W* n');
+                $this->_out(sprintf('%F 0 0 %F %F %F cm', $gw, -$gh, $gx, $gy + $gh));
+                $this->Gradient(3, [0.5, 0.5, 0.5, 0.5, 0.5], $stops, [], true);
+            }
+        };
+    }
+
+    /**
+     * Fond « Prestige » entièrement vectoriel (net à tous les zooms et à
+     * l'impression) : dégradé nuit, hachures fines, double cadre, ruban et
+     * monogrammes ; seule la cathédrale est une image (haute définition).
+     */
+    private static function fond(TCPDF $pdf): void
+    {
+        $stop = fn (string $hex, float $o) => ['color' => sscanf($hex, '#%02x%02x%02x'), 'offset' => $o, 'exponent' => 1];
+        $page = [0, 0, self::W, 0, self::W, self::H, 0, self::H];
+
+        // Dégradé elliptique partant du haut de la page (rayons 210 × 297 mm).
+        $pdf->degrade(3, [0.5, 0.5, 0.5, 0.5, 0.5], [$stop('#0a2c6e', 0), $stop('#031d59', 0.45), $stop('#021541', 1)],
+            $page, [self::W / 2 - 210, -297, 420, 594]);
+
+        // Hachures diagonales très fines.
+        $pdf->StartTransform();
+        $pdf->Rect(0, 0, self::W, self::H, 'CNZ');
+        $pdf->SetLineStyle(['width' => 0.2646, 'cap' => 'butt', 'color' => [79, 111, 191]]);
+        $pdf->SetAlpha(0.036);
+        for ($c = 0; $c <= self::W + self::H; $c += 4.1155) {
+            $pdf->Line($c, 0, 0, $c);
+        }
+        $pdf->SetAlpha(1);
+        $pdf->StopTransform();
+
+        // Cathédrale au trait (vectorisée), fondue vers le haut et les côtés.
+        [$dims, $chemin] = explode("\n", (string) file_get_contents(resource_path('certificats/cathedrale.trace')), 2);
+        [$pw, $ph] = array_map('intval', explode(' ', $dims));
+        $azur = fn (float $o, float $a) => ['color' => self::AZUR, 'offset' => $o, 'exponent' => 1, 'opacity' => $a];
+        $pdf->traceDegrade(str_replace("\n", ' ', $chemin), $pw, $ph, [self::W / 2 - 100, self::H + 4 - 156.71, 200, 156.71],
+            [$azur(0, 0.11), $azur(0.3, 0.11), $azur(0.72, 0), $azur(1, 0)],
+            [-0.1 * $pw, 0.05 * $ph, 1.2 * $pw, 1.4 * $ph]);
+
+        // Double cadre.
+        $pdf->SetAlpha(0.55);
+        $pdf->SetLineStyle(['width' => 0.3, 'color' => self::AZUR]);
+        $pdf->Rect(8.15, 8.15, self::W - 16.3, self::H - 16.3, 'D');
+        $pdf->SetAlpha(0.25);
+        $pdf->SetLineStyle(['width' => 0.15, 'color' => self::AZUR]);
+        $pdf->Rect(10.275, 10.275, self::W - 20.55, self::H - 20.55, 'D');
+        $pdf->SetAlpha(1);
+
+        // Ruban rouge à droite, monogramme blanc.
+        $rx = self::W - 48;
+        $pdf->degrade(2, [0, 1, 0, 0], [$stop('#c8160f', 0), $stop('#ac0100', 1)],
+            [$rx, 0, $rx + 24, 0, $rx + 24, 46, $rx + 12, 39.56, $rx, 46], [$rx, 0, 24, 46]);
+        $svg = resource_path('certificats/monogramme-blanc.svg');
+        $pdf->ImageSVG($svg, $rx + 12 - 17 * 428 / 646 / 2, 12, 0, 17);
+
+        // Monogramme au centre, en tête.
+        $pdf->ImageSVG($svg, self::W / 2 - 20 * 428 / 646 / 2, 17, 0, 20);
     }
 
     // ── Textes ──────────────────────────────────────────────────────────
