@@ -147,13 +147,58 @@
                 @if ($aCorriger) <span class="rounded-full bg-[#B27007] px-1.5 text-[10px] leading-4 text-white">{{ $aCorriger }}</span> @endif
             </button>
             <button wire:click="setOnglet('candidatures')" data-test="onglet-candidatures" class="btn-tap rounded-full px-4 py-1.5 text-xs font-bold {{ $onglet === 'candidatures' ? 'bg-brand text-white' : 'border border-brand/15 bg-white text-brand hover:bg-cloud' }}">Mes candidatures</button>
-            @if ($onglet === 'offres')
-                <span class="mx-1 hidden h-5 w-px bg-brand/10 sm:block"></span>
-                @foreach (['tous' => 'Toutes'] + $types as $value => $label)
-                    <button wire:click="setFiltre('{{ $value }}')" class="btn-tap rounded-full border px-3 py-1 text-[11.5px] font-semibold {{ $filtre === $value ? 'border-azure bg-azure/10 text-azure' : 'border-brand/10 bg-white text-[#5B677A] hover:border-brand/30' }}">{{ $label }}</button>
-                @endforeach
-            @endif
         </div>
+
+        @if ($onglet === 'offres')
+            <div class="mb-4 rounded-[16px] border border-brand/10 bg-white p-3 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                <div class="grid grid-cols-2 gap-2 md:grid-cols-[1fr_140px_170px_140px_130px_140px]">
+                    <input wire:model.live.debounce.400ms="recherche" type="search" placeholder="Métier, entreprise, compétence…" data-test="recherche-offres" class="col-span-2 rounded-full border border-brand/15 px-4 py-2 text-xs outline-none focus:border-azure md:col-span-1" />
+                    <select wire:model.live="filtre" data-test="filtre-type" class="rounded-full border border-brand/15 bg-white px-3 py-2 text-xs text-brand outline-none">
+                        <option value="tous">Tous les types</option>
+                        @foreach ($types as $k => $v) <option value="{{ $k }}">{{ $v }}</option> @endforeach
+                    </select>
+                    <select wire:model.live="groupe" class="rounded-full border border-brand/15 bg-white px-3 py-2 text-xs text-brand outline-none">
+                        <option value="">Tous les secteurs</option>
+                        @foreach ($categories as $c) <option value="{{ $c['id'] }}">{{ $c['nom'] }}</option> @endforeach
+                    </select>
+                    <select wire:model.live="villeFiltre" class="rounded-full border border-brand/15 bg-white px-3 py-2 text-xs text-brand outline-none">
+                        <option value="">Toutes les villes</option>
+                        @foreach ($villes as $v) <option value="{{ $v }}">{{ $v }}</option> @endforeach
+                    </select>
+                    <select wire:model.live="modeFiltre" class="rounded-full border border-brand/15 bg-white px-3 py-2 text-xs text-brand outline-none">
+                        <option value="">Tout mode</option>
+                        @foreach ($modesTravail as $k => $v) <option value="{{ $k }}">{{ $v }}</option> @endforeach
+                    </select>
+                    <select wire:model.live="tri" class="rounded-full border border-brand/15 bg-white px-3 py-2 text-xs text-brand outline-none">
+                        <option value="recents">Plus récentes</option>
+                        <option value="limite">Date limite proche</option>
+                        <option value="vues">Plus consultées</option>
+                    </select>
+                </div>
+                <div class="mt-2 flex flex-wrap items-center gap-2 px-1 text-[11.5px]">
+                    <label class="inline-flex cursor-pointer items-center gap-1.5 font-semibold text-[#5B677A]"><input wire:model.live="favoris" type="checkbox" class="size-3.5 rounded border-brand/25 text-accent" /> Mes offres sauvegardées ({{ $nbFavoris }})</label>
+                    @if ($filtresActifs)
+                        <span class="text-[#9AA6B8]">· {{ $offres->count() }} offre{{ $offres->count() > 1 ? 's' : '' }}</span>
+                        <button wire:click="effacerFiltres" class="font-semibold text-azure hover:underline">Effacer les filtres</button>
+                    @endif
+                    <span class="ml-auto flex items-center gap-2">
+                        <button wire:click="creerAlerte" data-test="creer-alerte" class="btn-tap inline-flex items-center gap-1 rounded-full border border-azure/30 bg-azure/[.06] px-3 py-1 font-bold text-azure hover:bg-azure/10"><x-ui.icon name="bell" class="size-3.5" /> M'alerter{{ $filtresActifs ? ' pour cette recherche' : ' des nouvelles offres' }}</button>
+                        @if (! empty($alertes))
+                            <button wire:click="$toggle('alertesOuvertes')" class="font-semibold text-brand hover:underline">Mes alertes ({{ count($alertes) }})</button>
+                        @endif
+                    </span>
+                </div>
+                @if ($alertesOuvertes && ! empty($alertes))
+                    <div wire:key="liste-alertes" class="mt-2 space-y-1 border-t border-[#EDF0F5] px-1 pt-2">
+                        @foreach ($alertes as $al)
+                            <p wire:key="al-{{ $al['id'] }}" data-test="alerte" class="flex items-center gap-2 text-[12px] text-brand"><x-ui.icon name="bell" class="size-3.5 text-azure" /> {{ $al['libelle'] }}
+                                <button wire:click="supprimerAlerte({{ $al['id'] }})" class="ml-auto text-[11.5px] font-semibold text-[#9AA6B8] hover:text-accent">Supprimer</button></p>
+                        @endforeach
+                        <p class="text-[11px] text-[#9AA6B8]">Vous recevez une notification dès qu'une offre correspondante est publiée.</p>
+                    </div>
+                @endif
+            </div>
+        @endif
 
         @if ($onglet === 'candidatures')
             <div class="space-y-3">
@@ -179,7 +224,7 @@
             @empty
                 <div class="rounded-[16px] border border-dashed border-brand/20 bg-white px-6 py-12 text-center">
                     <span class="mx-auto flex size-12 items-center justify-center rounded-full bg-brand/[.06] text-brand"><x-ui.icon name="nav-briefcase" class="size-6" /></span>
-                    <p class="mt-3 text-sm font-bold text-brand">{{ $onglet === 'mes' ? "Vous n'avez pas encore proposé d'offre" : 'Aucune offre en ligne'.($filtre !== 'tous' ? ' dans cette catégorie' : '').' pour le moment' }}</p>
+                    <p class="mt-3 text-sm font-bold text-brand">{{ $onglet === 'mes' ? "Vous n'avez pas encore proposé d'offre" : ($filtresActifs ? 'Aucune offre ne correspond à ces critères' : 'Aucune offre en ligne pour le moment') }}</p>
                     <p class="mx-auto mt-1 max-w-md text-xs text-[#5B677A]">Votre entreprise recrute ? Proposez l'offre aux membres du réseau : l'équipe la vérifie puis la publie.</p>
                 </div>
             @endforelse

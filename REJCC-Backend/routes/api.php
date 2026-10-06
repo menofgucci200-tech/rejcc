@@ -201,6 +201,9 @@ Route::middleware('auth.token')->group(function () {
     Route::get('/opportunities/{id}/candidatures', [OpportunityController::class, 'candidatures'])->whereNumber('id');
     Route::post('/opportunities/{id}/candidatures/{c}/statut', [OpportunityController::class, 'statutCandidature'])->whereNumber(['id', 'c']);
     Route::get('/mes-candidatures', [OpportunityController::class, 'mesCandidatures']);
+    Route::post('/opportunities/{id}/favori', [OpportunityController::class, 'favori'])->whereNumber('id');
+    Route::post('/job-alerts', [OpportunityController::class, 'creerAlerte']);
+    Route::delete('/job-alerts/{id}', [OpportunityController::class, 'supprimerAlerte'])->whereNumber('id');
 
     // Groupes sectoriels (adhésion libre, multiple, gratuite)
     Route::get('/groups', [\App\Http\Controllers\Api\GroupController::class, 'index']);

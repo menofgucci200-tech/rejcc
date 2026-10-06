@@ -4,11 +4,14 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Group;
+use App\Models\JobAlert;
 use App\Models\MemberNotification;
 use App\Models\Opportunity;
 use App\Models\OpportunityApplication;
 use App\Models\User;
+use App\Support\RechercheMots;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
@@ -165,19 +168,109 @@ class OpportunityController extends Controller
     // Espace membre
     // ------------------------------------------------------------------
 
-    /** GET /opportunities — offres en ligne + mes offres (tous statuts). */
+    /**
+     * GET /opportunities?q=&type=&groupe=&ville=&teletravail=&tri=&favoris=1 —
+     * offres en ligne filtrées + mes offres (tous statuts) + mes alertes.
+     */
     public function index(Request $request)
     {
         $moi = $request->user();
-        $offres = $this->avecRelations()->enLigne()->orderByDesc('publie_at')->get();
+        $query = $this->avecRelations()->select('opportunities.*')
+            ->leftJoin('groups', 'groups.id', '=', 'opportunities.group_id')
+            ->enLigne();
+        RechercheMots::appliquer($query, (string) $request->query('q', ''), [
+            'opportunities.title', 'opportunities.description', 'opportunities.entreprise', 'opportunities.lieu',
+            'opportunities.missions', 'opportunities.profil', 'groups.name',
+        ], ['opportunities.competences']);
+        if (isset(Opportunity::TYPES[$type = (string) $request->query('type')])) {
+            $query->where('opportunities.type', $type);
+        }
+        if ($groupe = (int) $request->query('groupe')) {
+            $query->where('opportunities.group_id', $groupe);
+        }
+        if ($ville = trim((string) $request->query('ville', ''))) {
+            $query->where('opportunities.lieu', 'like', "%{$ville}%");
+        }
+        if (isset(Opportunity::TELETRAVAIL[$tt = (string) $request->query('teletravail')])) {
+            $query->where('opportunities.teletravail', $tt);
+        }
+        $favoris = DB::table('opportunity_favoris')->where('user_id', $moi->id)->pluck('opportunity_id')->all();
+        if ($request->boolean('favoris')) {
+            $query->whereIn('opportunities.id', $favoris ?: [0]);
+        }
+        match ($request->query('tri')) {
+            'limite' => $query->orderByRaw('opportunities.deadline is null')->orderBy('opportunities.deadline'),
+            'vues' => $query->orderByDesc('opportunities.vues'),
+            default => $query->orderByDesc('opportunities.publie_at'),
+        };
+        $offres = $query->get();
         $mes = $this->avecRelations()->where('author_id', $moi->id)->orderByDesc('created_at')->get();
+        $villes = Opportunity::enLigne()->whereNotNull('lieu')->pluck('lieu')
+            ->map(fn ($l) => trim(explode(',', $l)[0]))->filter()->unique()->sort()->values();
 
         return response()->json([
             'ok' => true,
-            'opportunities' => $offres->map(fn ($o) => $this->payload($o, $moi))->values(),
+            'opportunities' => $offres->map(fn ($o) => $this->payload($o, $moi) + ['favori' => in_array($o->id, $favoris, true)])->values(),
             'mes_offres' => $mes->map(fn ($o) => $this->payload($o, $moi))->values(),
             'peut_publier' => $moi->hasActiveSubscription(),
+            'nb_favoris' => count($favoris),
+            'villes' => $villes,
+            'alertes' => JobAlert::with('groupe:id,name')->where('user_id', $moi->id)->latest()->get()
+                ->map(fn (JobAlert $a) => ['id' => $a->id, 'libelle' => $a->libelle()])->values(),
         ] + $this->referentiels());
+    }
+
+    /** POST /opportunities/{id}/favori — sauvegarder / retirer une offre. */
+    public function favori(Request $request, int $id)
+    {
+        $moi = $request->user();
+        if (! Opportunity::enLigne()->whereKey($id)->exists()) {
+            return response()->json(['ok' => false, 'message' => 'Offre introuvable.'], 404);
+        }
+        $existe = DB::table('opportunity_favoris')->where('user_id', $moi->id)->where('opportunity_id', $id);
+        if ($existe->exists()) {
+            $existe->delete();
+
+            return response()->json(['ok' => true, 'favori' => false]);
+        }
+        DB::table('opportunity_favoris')->insert(['user_id' => $moi->id, 'opportunity_id' => $id, 'created_at' => now(), 'updated_at' => now()]);
+
+        return response()->json(['ok' => true, 'favori' => true]);
+    }
+
+    /** POST /job-alerts — « M'alerter » pour une recherche (5 alertes au plus). */
+    public function creerAlerte(Request $request)
+    {
+        $moi = $request->user();
+        $v = Validator::make($request->all(), [
+            'type' => ['nullable', Rule::in(array_keys(Opportunity::TYPES))],
+            'group_id' => 'nullable|integer|exists:groups,id',
+            'ville' => 'nullable|string|max:80',
+            'q' => 'nullable|string|max:120',
+        ]);
+        if ($v->fails()) {
+            return response()->json(['ok' => false, 'message' => $v->errors()->first()], 422);
+        }
+        $d = array_map(fn ($x) => is_string($x) ? (trim($x) ?: null) : $x, $v->validated());
+        if (JobAlert::where('user_id', $moi->id)->count() >= 5) {
+            return response()->json(['ok' => false, 'message' => 'Vous avez déjà 5 alertes : supprimez-en une pour en créer une nouvelle.'], 422);
+        }
+        $existe = JobAlert::where('user_id', $moi->id)->where('type', $d['type'] ?? null)->where('group_id', $d['group_id'] ?? null)
+            ->where('ville', $d['ville'] ?? null)->where('q', $d['q'] ?? null)->exists();
+        if ($existe) {
+            return response()->json(['ok' => false, 'message' => 'Vous avez déjà une alerte pour cette recherche.'], 422);
+        }
+        $a = JobAlert::create($d + ['user_id' => $moi->id]);
+
+        return response()->json(['ok' => true, 'alerte' => ['id' => $a->id, 'libelle' => $a->load('groupe')->libelle()]], 201);
+    }
+
+    /** DELETE /job-alerts/{id} */
+    public function supprimerAlerte(Request $request, int $id)
+    {
+        JobAlert::where('user_id', $request->user()->id)->whereKey($id)->delete();
+
+        return response()->json(['ok' => true]);
     }
 
     /** GET /opportunities/{id} — fiche (offre en ligne, ou la mienne). */
@@ -193,7 +286,9 @@ class OpportunityController extends Controller
             $o->increment('vues');
         }
 
-        return response()->json(['ok' => true, 'opportunity' => $this->payload($o, $moi, true)] + $this->referentiels());
+        $favori = DB::table('opportunity_favoris')->where('user_id', $moi->id)->where('opportunity_id', $o->id)->exists();
+
+        return response()->json(['ok' => true, 'opportunity' => $this->payload($o, $moi, true) + ['favori' => $favori]] + $this->referentiels());
     }
 
     /** POST /opportunities — un membre abonné propose une offre (validée par l'équipe). */
@@ -483,8 +578,9 @@ class OpportunityController extends Controller
         $o = new Opportunity($d + ['author_id' => $request->user()->id, 'statut' => 'publiee', 'publie_at' => now(), 'decide_at' => now()]);
         $o->calculerExpiration();
         $o->save();
+        $alertes = JobAlert::prevenir($o);
 
-        return response()->json(['ok' => true, 'opportunity' => $this->payload($o->load('groupe'), $request->user(), true)], 201);
+        return response()->json(['ok' => true, 'alertes' => $alertes, 'opportunity' => $this->payload($o->load('groupe'), $request->user(), true)], 201);
     }
 
     /** PUT /admin/opportunities/{id} — correction par l'équipe (l'auteur est prévenu). */
@@ -528,6 +624,7 @@ class OpportunityController extends Controller
         $decision = $v->validated()['decision'];
         $motif = trim((string) $request->input('motif')) ?: null;
 
+        $premierePublication = $decision === 'publier' && $o->publie_at === null;
         if ($decision === 'publier') {
             $o->statut = 'publiee';
             $o->motif = null;
@@ -547,8 +644,9 @@ class OpportunityController extends Controller
             'retirer' => ["Offre retirée : {$o->title}", "Votre offre a été retirée par l'équipe. Motif : {$motif}"],
         };
         $this->notifier($o, $titre, $texte);
+        $alertes = $premierePublication ? JobAlert::prevenir($o) : 0;
 
-        return response()->json(['ok' => true, 'opportunity' => $this->payload($o->fresh(['groupe', 'author']), $request->user(), true)]);
+        return response()->json(['ok' => true, 'alertes' => $alertes, 'opportunity' => $this->payload($o->fresh(['groupe', 'author']), $request->user(), true)]);
     }
 
     public function adminDestroy(int $id)

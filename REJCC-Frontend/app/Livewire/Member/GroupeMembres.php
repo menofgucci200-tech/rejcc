@@ -159,6 +159,7 @@ class GroupeMembres extends Component
             'meta' => $result['meta'] ?? [],
             // Projets validés du secteur (lien vers la rubrique Projets filtrée).
             'nbProjets' => count(Api::get('/projects', ['groupe' => $this->groupId], Api::token())['projects'] ?? []),
+            'nbOffres' => count(Api::get('/opportunities', ['groupe' => $this->groupId], Api::token())['opportunities'] ?? []),
         ]);
     }
 }

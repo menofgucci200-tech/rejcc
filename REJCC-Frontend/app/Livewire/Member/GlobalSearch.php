@@ -30,7 +30,7 @@ class GlobalSearch extends Component
         ['label' => 'Marketplace', 'route' => 'espace-membre.marketplace', 'mots' => 'marketplace annonces produits services'],
         ['label' => 'Événements', 'route' => 'espace-membre.evenements', 'mots' => 'evenements agenda calendrier'],
         ['label' => 'Projets', 'route' => 'espace-membre.projets', 'mots' => 'projets equipe porteur partenaires'],
-        ['label' => 'Emploi & Stage', 'route' => 'espace-membre.emplois', 'mots' => 'emploi stage offres travail'],
+        ['label' => 'Emploi & Stage', 'route' => 'espace-membre.emplois', 'mots' => 'emploi stage offres travail alternance recrutement candidature'],
         ['label' => 'Documents', 'route' => 'espace-membre.documents', 'mots' => 'documents ressources telecharger'],
         ['label' => 'Certificats', 'route' => 'espace-membre.certificats', 'mots' => 'certificats attestations'],
         ['label' => 'Mon abonnement', 'route' => 'espace-membre.abonnement', 'mots' => 'abonnement paiement cotisation'],
@@ -100,6 +100,15 @@ class GlobalSearch extends Component
                     ])->values()->all();
             }
 
+            $offres = Collection::make(Api::get('/opportunities', ['q' => $q], $token)['opportunities'] ?? [])
+                ->take(4)
+                ->map(fn ($o) => [
+                    'titre' => $o['title'],
+                    'detail' => collect([$o['type_label'] ?? null, $o['entreprise'] ?? null, $o['lieu'] ?? null])->filter()->join(' · '),
+                    'url' => route('espace-membre.emplois', ['offre' => $o['id']]),
+                    'icon' => 'nav-briefcase',
+                ])->values()->all();
+
             $evenements = Collection::make(Api::get('/events', [], $token)['events'] ?? [])
                 ->filter(fn ($e) => static::matches($needle, $e['title'], $e['category'], $e['location']))
                 ->map(function ($e) {
@@ -127,6 +136,7 @@ class GlobalSearch extends Component
                 'Membres' => $membres,
                 'Événements' => $evenements,
                 'Projets' => $projets,
+                "Offres d'emploi et de stage" => $offres,
                 'Rubriques' => $rubriques,
             ]);
         }

@@ -203,6 +203,9 @@
                         @endif
                         <button type="button" wire:click="supprimer({{ $o['id'] }})" wire:confirm="Supprimer définitivement cette offre ?" class="ml-auto text-[12px] font-semibold text-[#9AA6B8] hover:text-accent">Supprimer</button>
                     @endif
+                    @if (! $o['mine'] && $o['statut'] === 'publiee')
+                        <button type="button" wire:click="basculerFavori({{ $o['id'] }})" data-test="favori-offre" class="btn-tap inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-[13px] font-bold {{ ($o['favori'] ?? false) ? 'border-accent/30 bg-accent/5 text-accent' : 'border-brand/15 text-brand hover:bg-cloud' }}">{{ ($o['favori'] ?? false) ? '♥ Sauvegardée' : '♡ Sauvegarder' }}</button>
+                    @endif
                     @if ($o['statut'] === 'publiee')
                         <button type="button" x-data="{ copie: false }"
                             x-on:click="navigator.clipboard?.writeText(@js($lienPartage)); copie = true; setTimeout(() => copie = false, 2000)"

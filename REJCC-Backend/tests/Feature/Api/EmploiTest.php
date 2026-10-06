@@ -230,4 +230,56 @@ class EmploiTest extends TestCase
         $this->withToken($this->tokenFor($tiers))->postJson('/api/messages', ['recipient_id' => $recruteur->id, 'body' => 'Bonjour', 'opportunity_id' => $o->id])->assertOk();
         $this->assertNull(\App\Models\Message::latest('id')->first()->opportunity_id);
     }
+
+    // ── Découverte et alertes ──────────────────────────────────────────
+
+    public function test_recherche_filtres_favoris(): void
+    {
+        $auteur = User::factory()->abonne()->create();
+        $agro = Group::create(['name' => 'Agriculture', 'slug' => 'agro']);
+        $base = ['author_id' => $auteur->id, 'statut' => 'publiee', 'publie_at' => now(), 'expire_le' => today()->addMonth()];
+        $dev = Opportunity::create($this->donnees(['competences' => ['Laravel']]) + $base + ['vues' => 3]);
+        $stage = Opportunity::create($this->donnees(['title' => 'Stage agronome', 'type' => 'stage', 'contrat' => null, 'group_id' => $agro->id, 'lieu' => 'Korhogo', 'teletravail' => 'sur_site', 'description' => 'Suivi des plantations de mangues.', 'missions' => null, 'profil' => null, 'competences' => []]) + $base + ['deadline' => today()->addDays(5)]);
+        $t = $this->tokenFor(User::factory()->create());
+        $titres = fn ($p) => array_column($this->withToken($t)->getJson('/api/opportunities?'.http_build_query($p))->json('opportunities'), 'title');
+
+        $this->assertSame(['Stage agronome'], $titres(['type' => 'stage']));
+        $this->assertSame(['Stage agronome'], $titres(['q' => 'plantations mangues']));
+        $this->assertSame(['Développeur web junior'], $titres(['q' => 'laravel']));
+        $this->assertSame(['Stage agronome'], $titres(['groupe' => $agro->id]));
+        $this->assertSame(['Stage agronome'], $titres(['ville' => 'korhogo']));
+        $this->assertSame(['Développeur web junior'], $titres(['teletravail' => 'hybride']));
+        $this->assertSame(['Stage agronome', 'Développeur web junior'], $titres(['tri' => 'limite']));
+        $this->assertSame(['Abidjan', 'Korhogo'], $this->withToken($t)->getJson('/api/opportunities')->json('villes'));
+
+        $this->withToken($t)->postJson("/api/opportunities/{$dev->id}/favori")->assertJsonPath('favori', true);
+        $this->assertSame(['Développeur web junior'], $titres(['favoris' => 1]));
+        $this->withToken($t)->postJson("/api/opportunities/{$dev->id}/favori")->assertJsonPath('favori', false);
+    }
+
+    public function test_alertes_notifiees_a_la_publication(): void
+    {
+        $auteur = User::factory()->abonne()->create();
+        $chercheur = User::factory()->create();
+        $autre = User::factory()->create();
+        $admin = $this->tokenFor(User::factory()->create(['role' => 'admin']));
+        $t = $this->tokenFor($chercheur);
+        $groupe = Group::firstOrCreate(['slug' => 'info'], ['name' => 'Informatique & Technologie']);
+
+        $this->withToken($t)->postJson('/api/job-alerts', ['type' => 'emploi', 'group_id' => $groupe->id, 'q' => 'développeur'])->assertCreated()
+            ->assertJsonPath('alerte.libelle', 'Emploi · Informatique & Technologie · « développeur »');
+        $this->withToken($t)->postJson('/api/job-alerts', ['type' => 'emploi', 'group_id' => $groupe->id, 'q' => 'développeur'])->assertStatus(422);
+        $this->withToken($this->tokenFor($autre))->postJson('/api/job-alerts', ['type' => 'stage'])->assertCreated();
+
+        $o = $this->withToken($this->tokenFor($auteur))->postJson('/api/opportunities', $this->donnees())->json('opportunity');
+        $this->withToken($admin)->postJson("/api/admin/opportunities/{$o['id']}/decision", ['decision' => 'publier'])->assertOk()->assertJsonPath('alertes', 1);
+        $this->assertTrue(MemberNotification::where('user_id', $chercheur->id)->where('title', 'Nouvelle offre : Développeur web junior')->exists());
+        $this->assertFalse(MemberNotification::where('user_id', $autre->id)->where('title', 'like', 'Nouvelle offre%')->exists());
+
+        // Les alertes sont listées et supprimables.
+        $alertes = $this->withToken($t)->getJson('/api/opportunities')->json('alertes');
+        $this->assertCount(1, $alertes);
+        $this->withToken($t)->deleteJson("/api/job-alerts/{$alertes[0]['id']}")->assertOk();
+        $this->assertSame([], $this->withToken($t)->getJson('/api/opportunities')->json('alertes'));
+    }
 }

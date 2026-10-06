@@ -30,6 +30,26 @@ class Emplois extends Component
     #[Url(as: 'type', except: 'tous')]
     public string $filtre = 'tous';
 
+    #[Url(as: 'q', except: '')]
+    public string $recherche = '';
+
+    #[Url(except: '')]
+    public string $groupe = '';
+
+    #[Url(as: 'ville', except: '')]
+    public string $villeFiltre = '';
+
+    #[Url(as: 'mode', except: '')]
+    public string $modeFiltre = '';
+
+    #[Url(except: 'recents')]
+    public string $tri = 'recents';
+
+    #[Url(except: false)]
+    public bool $favoris = false;
+
+    public bool $alertesOuvertes = false;
+
     public ?array $fiche = null;
 
     /** Ouvre directement les candidatures de l'offre (lien de notification). */
@@ -145,6 +165,41 @@ class Emplois extends Component
     public function setFiltre(string $filtre): void
     {
         $this->filtre = $filtre;
+    }
+
+    public function effacerFiltres(): void
+    {
+        $this->reset(['recherche', 'groupe', 'villeFiltre', 'modeFiltre', 'favoris']);
+        $this->filtre = 'tous';
+        $this->tri = 'recents';
+    }
+
+    public function basculerFavori(int $id): void
+    {
+        $r = Api::post("/opportunities/{$id}/favori", [], Api::token());
+        if ($this->fiche && $this->fiche['id'] === $id) {
+            $this->fiche['favori'] = (bool) ($r['favori'] ?? false);
+        }
+    }
+
+    /** « M'alerter » : crée une alerte à partir des filtres en cours. */
+    public function creerAlerte(): void
+    {
+        $r = Api::post('/job-alerts', array_filter([
+            'type' => $this->filtre !== 'tous' ? $this->filtre : null,
+            'group_id' => $this->groupe ? (int) $this->groupe : null,
+            'ville' => trim($this->villeFiltre) ?: null,
+            'q' => trim($this->recherche) ?: null,
+        ]), Api::token());
+        $this->alertesOuvertes = true;
+        $this->message = ($r['ok'] ?? false) ? 'Alerte créée : vous serez notifié(e) de chaque nouvelle offre « '.($r['alerte']['libelle'] ?? '').' ».' : null;
+        $this->erreur = ($r['ok'] ?? false) ? null : ($r['message'] ?? 'Une erreur est survenue.');
+    }
+
+    public function supprimerAlerte(int $id): void
+    {
+        Api::delete("/job-alerts/{$id}", Api::token());
+        $this->message = 'Alerte supprimée.';
     }
 
     public function setOnglet(string $o): void
@@ -405,9 +460,12 @@ class Emplois extends Component
 
     public function render()
     {
-        $data = Api::get('/opportunities', [], Api::token());
-        $offres = Collection::make($data['opportunities'] ?? [])
-            ->when($this->filtre !== 'tous', fn ($c) => $c->where('type', $this->filtre))->values();
+        $data = Api::get('/opportunities', array_filter([
+            'q' => trim($this->recherche), 'type' => $this->filtre !== 'tous' ? $this->filtre : null, 'groupe' => $this->groupe,
+            'ville' => $this->villeFiltre, 'teletravail' => $this->modeFiltre, 'tri' => $this->tri !== 'recents' ? $this->tri : null,
+            'favoris' => $this->favoris ? 1 : null,
+        ]), Api::token());
+        $offres = Collection::make($data['opportunities'] ?? []);
 
         $mesCandidatures = $this->onglet === 'candidatures'
             ? Collection::make(Api::get('/mes-candidatures', [], Api::token())['candidatures'] ?? [])
@@ -418,6 +476,10 @@ class Emplois extends Component
             'mesCandidatures' => $mesCandidatures,
             'mesOffres' => Collection::make($data['mes_offres'] ?? []),
             'peutPublier' => (bool) ($data['peut_publier'] ?? false),
+            'villes' => $data['villes'] ?? [],
+            'alertes' => $data['alertes'] ?? [],
+            'nbFavoris' => (int) ($data['nb_favoris'] ?? 0),
+            'filtresActifs' => trim($this->recherche) !== '' || $this->filtre !== 'tous' || $this->groupe !== '' || $this->villeFiltre !== '' || $this->modeFiltre !== '' || $this->favoris,
             'categories' => $data['categories'] ?? [],
             'types' => $data['types'] ?? [],
             'contrats' => $data['contrats'] ?? [],

@@ -150,6 +150,11 @@
                     <x-ui.icon name="nav-projects" class="size-4" /> Projets <span class="rounded-full bg-brand/10 px-1.5 text-[10.5px] leading-4 text-brand">{{ $nbProjets }}</span>
                 </a>
             @endif
+            @if (($nbOffres ?? 0) > 0)
+                <a href="{{ route('espace-membre.emplois', ['groupe' => $groupId]) }}" wire:navigate data-test="offres-du-groupe" class="-mb-px inline-flex items-center gap-1.5 border-b-2 border-transparent px-4 py-2.5 text-[13px] font-bold text-[#9AA6B8] transition-colors hover:text-brand">
+                    <x-ui.icon name="nav-briefcase" class="size-4" /> Offres <span class="rounded-full bg-brand/10 px-1.5 text-[10.5px] leading-4 text-brand">{{ $nbOffres }}</span>
+                </a>
+            @endif
         </div>
 
         @if ($vue === 'discussion')
