@@ -142,6 +142,13 @@ Route::middleware('auth.token')->group(function () {
     Route::post('/documents', [DocumentController::class, 'proposer'])->middleware('sub.active');
     Route::delete('/documents/{id}', [DocumentController::class, 'retirerProposition'])->whereNumber('id');
 
+    // Mes documents personnels (coffre-fort privé, sans condition d'abonnement)
+    Route::get('/mes-documents', [\App\Http\Controllers\Api\PersonalDocumentController::class, 'index']);
+    Route::post('/mes-documents', [\App\Http\Controllers\Api\PersonalDocumentController::class, 'store']);
+    Route::put('/mes-documents/{id}', [\App\Http\Controllers\Api\PersonalDocumentController::class, 'update'])->whereNumber('id');
+    Route::delete('/mes-documents/{id}', [\App\Http\Controllers\Api\PersonalDocumentController::class, 'destroy'])->whereNumber('id');
+    Route::get('/mes-documents/{id}/acces', [\App\Http\Controllers\Api\PersonalDocumentController::class, 'acces'])->whereNumber('id');
+
     // Événements
     Route::get('/events', [EventController::class, 'index']);
     Route::post('/events/{id}/register', [EventController::class, 'register']);
@@ -300,6 +307,7 @@ Route::middleware(['auth.token', 'audit.log'])->prefix('admin')->group(function 
         Route::get('/members/{id}', [AdminController::class, 'memberDetail']);
         Route::put('/members/{id}', [AdminController::class, 'updateMember']);
         Route::delete('/members/{id}', [AdminController::class, 'deleteMember']);
+        Route::get('/documents-personnels/{id}/acces', [\App\Http\Controllers\Api\PersonalDocumentController::class, 'adminAcces'])->whereNumber('id');
     });
 
     Route::middleware('auth.admin:adhesions')->group(function () {

@@ -209,8 +209,13 @@ class AdminController extends Controller
                 'completed' => $e->completed_at !== null,
             ]);
 
+        // Pièces que le membre a choisi de partager avec l'équipe (jamais les autres).
+        $partages = \App\Models\PersonalDocument::where('user_id', $user->id)->where('partage', true)->orderBy('type')->get()
+            ->map(fn ($d) => $d->payload())->values();
+
         return response()->json([
             'ok' => true,
+            'documents_partages' => $partages,
             'member' => [
                 ...$user->only([
                     'id', 'prenom', 'nom', 'email', 'telephone', 'genre', 'ville',

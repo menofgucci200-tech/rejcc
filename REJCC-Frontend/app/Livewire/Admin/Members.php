@@ -102,6 +102,7 @@ class Members extends Component
             'member' => $result['member'],
             'application' => $result['application'],
             'formations' => $result['formations'] ?? [],
+            'documents_partages' => $result['documents_partages'] ?? [],
         ];
     }
 
@@ -189,7 +190,11 @@ class Members extends Component
 
     public function delete(int $id): void
     {
-        Api::delete("/admin/members/{$id}", Api::token());
+        $r = Api::delete("/admin/members/{$id}", Api::token());
+        if ($r['ok'] ?? false) {
+            // Le coffre-fort personnel du membre disparaît avec son compte.
+            \App\Support\Coffre::vider($id);
+        }
     }
 
     public function render()

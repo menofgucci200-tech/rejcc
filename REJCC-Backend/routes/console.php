@@ -23,6 +23,13 @@ Artisan::command('emplois:echeances', function () {
 
 Schedule::command('emplois:echeances')->dailyAt('07:10');
 
+// Documents personnels : rappel au membre 30 jours avant l'expiration d'une pièce.
+Artisan::command('documents:expirations', function () {
+    $this->info(\App\Models\PersonalDocument::rappelsExpiration().' rappel(s) envoyé(s).');
+})->purpose("Rappels d'expiration des documents personnels des membres");
+
+Schedule::command('documents:expirations')->dailyAt('07:20');
+
 // Événements : rappel aux inscrits la veille (vérifié toutes les heures).
 Artisan::command('evenements:rappels', function () {
     $n = 0;

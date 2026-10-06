@@ -149,6 +149,17 @@
                                                 @endforeach
                                             </div>
                                         @endif
+                                        @if (! empty($dossier['documents_partages']))
+                                            <p class="mb-2 mt-4 text-[11.5px] font-bold uppercase tracking-[0.05em] text-brand">Documents partagés par le membre</p>
+                                            <div class="flex flex-wrap gap-2" data-test="docs-partages">
+                                                @foreach ($dossier['documents_partages'] as $pd)
+                                                    <a href="{{ route('admin.members.document', ['id' => $pd['id'], 'nom' => (\Illuminate\Support\Str::slug($pd['libelle']) ?: 'document').($pd['apercu'] === 'pdf' ? '.pdf' : '')]) }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 rounded-full border border-azure/25 bg-azure/[.06] px-3 py-1 text-[11.5px] font-semibold text-brand hover:bg-azure/10">
+                                                        <x-ui.icon name="lock" class="size-3" /> {{ $pd['libelle'] }}@if ($pd['expire_le']) <span class="{{ $pd['etat'] === 'expire' ? 'text-accent' : 'text-[#9AA6B8]' }}">· exp. {{ \Illuminate\Support\Carbon::parse($pd['expire_le'])->format('d/m/Y') }}</span>@endif
+                                                    </a>
+                                                @endforeach
+                                            </div>
+                                            <p class="mt-1 text-[11px] text-[#9AA6B8]">Chaque consultation est enregistrée et signalée au membre.</p>
+                                        @endif
                                         @if ($app)
                                             <p class="mb-2.5 mt-4 text-[11.5px] font-bold uppercase tracking-[0.05em] text-brand">Formulaire d'adhésion</p>
                                             <div class="grid grid-cols-1 gap-x-6 gap-y-2.5 sm:grid-cols-3">

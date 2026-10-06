@@ -13,7 +13,7 @@
             <div>
                 <h1 class="mb-1 text-[17px] font-bold text-brand">Documents &amp; ressources</h1>
                 <div class="h-[3px] w-9 rounded bg-accent"></div>
-                <p class="mt-2 max-w-xl text-xs text-[#5B677A]">Guides, modèles et ressources du réseau, à consulter directement sur la plateforme ou à télécharger.</p>
+                <p class="mt-2 max-w-xl text-xs text-[#5B677A]">{{ $onglet === 'personnels' ? 'Vos papiers importants, rangés en privé et accessibles partout.' : 'Guides, modèles et ressources du réseau, à consulter directement sur la plateforme ou à télécharger.' }}</p>
             </div>
             @if ($onglet !== 'personnels')
                 @if ($peutProposer)
@@ -31,6 +31,9 @@
                     Mes propositions <span class="{{ $onglet === 'propositions' ? 'text-white/70' : 'text-[#9AA6B8]' }}">{{ $propositions->count() }}</span>
                 </button>
             @endif
+            <button wire:click="setOnglet('personnels')" role="tab" data-test="onglet-personnels" class="btn-tap inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold {{ $onglet === 'personnels' ? 'bg-brand text-white' : 'border border-brand/15 bg-white text-brand hover:bg-cloud' }}">
+                <x-ui.icon name="lock" class="size-3.5" /> Mes documents personnels
+            </button>
         </div>
 
         @if ($message)
@@ -41,7 +44,7 @@
         @endif
 
         {{-- ══════════ Proposer un document ══════════ --}}
-        @if ($showProposer)
+        @if ($showProposer && $onglet !== 'personnels')
             <div wire:key="form-proposer" data-test="form-proposer" class="panel-enter mb-6 grid grid-cols-1 gap-3.5 rounded-[18px] border border-brand/10 bg-white p-5 shadow-[0_2px_8px_rgba(3,29,89,.05)] sm:grid-cols-2">
                 <div class="flex items-start justify-between gap-3 sm:col-span-2">
                     <div>
@@ -94,7 +97,10 @@
             </div>
         @endif
 
-        @if ($onglet === 'propositions')
+        @if ($onglet === 'personnels')
+            {{-- ══════════ Coffre-fort personnel ══════════ --}}
+            <livewire:member.coffre-fort wire:key="coffre-fort" />
+        @elseif ($onglet === 'propositions')
             {{-- ══════════ Mes propositions ══════════ --}}
             @if ($propositions->isEmpty())
                 <div class="rounded-[16px] border border-dashed border-brand/20 bg-white px-6 py-12 text-center">

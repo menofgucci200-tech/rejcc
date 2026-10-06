@@ -61,6 +61,7 @@ class Documents extends Component
     {
         $this->onglet = in_array($o, ['bibliotheque', 'propositions', 'personnels'], true) ? $o : 'bibliotheque';
         $this->ouvert = null;
+        $this->showProposer = false;
         $this->message = $this->erreur = null;
     }
 

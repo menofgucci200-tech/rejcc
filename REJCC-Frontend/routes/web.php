@@ -92,6 +92,7 @@ Route::middleware('api.auth')->prefix('espace-membre')->name('espace-membre.')->
     Route::get('/documents', MemberDocuments::class)->name('documents');
     // Fichier d'un document : servi après contrôle d'accès (jamais en accès public).
     Route::get('/documents/{id}/fichier/{nom?}', \App\Http\Controllers\DocumentFichierController::class)->whereNumber('id')->name('documents.fichier');
+    Route::get('/mes-documents/{id}/fichier/{nom?}', [\App\Http\Controllers\CoffreFichierController::class, 'membre'])->whereNumber('id')->name('mes-documents.fichier');
     Route::get('/profil', MemberProfileEditor::class)->name('profile');
 
     Route::get('/formations', MemberFormations::class)->name('formations');
@@ -116,6 +117,7 @@ Route::middleware('api.auth')->prefix('espace-membre')->name('espace-membre.')->
 Route::middleware(['api.auth', 'admin.web'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', AdminDashboard::class)->name('dashboard');
     Route::get('/membres', AdminMembers::class)->name('members');
+    Route::get('/membres/documents/{id}/fichier/{nom?}', [\App\Http\Controllers\CoffreFichierController::class, 'equipe'])->whereNumber('id')->name('members.document');
     Route::get('/export/{dataset}', [\App\Http\Controllers\ExportController::class, 'download'])->name('export');
     Route::get('/inscription', \App\Livewire\Admin\Inscription::class)->name('inscription');
     Route::get('/adhesions', AdminAdhesions::class)->name('adhesions');

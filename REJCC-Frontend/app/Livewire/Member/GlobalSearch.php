@@ -32,6 +32,7 @@ class GlobalSearch extends Component
         ['label' => 'Projets', 'route' => 'espace-membre.projets', 'mots' => 'projets equipe porteur partenaires'],
         ['label' => 'Emploi & Stage', 'route' => 'espace-membre.emplois', 'mots' => 'emploi stage offres travail alternance recrutement candidature'],
         ['label' => 'Documents', 'route' => 'espace-membre.documents', 'mots' => 'documents ressources telecharger'],
+        ['label' => 'Mes documents personnels', 'route' => 'espace-membre.documents', 'params' => ['onglet' => 'personnels'], 'mots' => 'documents personnels passeport identite cni extrait naissance casier diplome cv coffre'],
         ['label' => 'Certificats', 'route' => 'espace-membre.certificats', 'mots' => 'certificats attestations'],
         ['label' => 'Mon abonnement', 'route' => 'espace-membre.abonnement', 'mots' => 'abonnement paiement cotisation'],
         ['label' => 'Paramètres du profil', 'route' => 'espace-membre.profile', 'mots' => 'profil parametres mot de passe photo'],
@@ -137,7 +138,7 @@ class GlobalSearch extends Component
             $rubriques = collect(static::RUBRIQUES)
                 ->filter(fn ($r) => static::matches($needle, $r['label'], $r['mots']))
                 ->take(3)
-                ->map(fn ($r) => ['titre' => $r['label'], 'detail' => 'Rubrique de l\'espace membre', 'url' => route($r['route']), 'icon' => 'arrow-right'])
+                ->map(fn ($r) => ['titre' => $r['label'], 'detail' => 'Rubrique de l\'espace membre', 'url' => route($r['route'], $r['params'] ?? []), 'icon' => 'arrow-right'])
                 ->values()->all();
 
             $groupes = array_filter([
