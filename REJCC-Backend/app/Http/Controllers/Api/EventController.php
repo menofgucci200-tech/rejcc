@@ -65,6 +65,34 @@ class EventController extends Controller
         ];
     }
 
+    /**
+     * « Ils participent » : membres inscrits visibles dans l'annuaire (comptes
+     * actifs, sans masquage). La liste nominative est réservée aux membres à
+     * jour de leur abonnement, comme l'annuaire ; les autres voient le nombre.
+     */
+    private function participants(Event $e, User $moi): array
+    {
+        $visibles = User::query()
+            ->join('event_registrations', 'event_registrations.user_id', '=', 'users.id')
+            ->where('event_registrations.event_id', $e->id)
+            ->where('users.is_active', true)
+            ->where('users.id', '!=', $moi->id)
+            ->where(fn ($w) => $w->whereNull('users.preferences')
+                ->orWhereNull('users.preferences->apparaitre_annuaire')
+                ->orWhere('users.preferences->apparaitre_annuaire', true));
+
+        $total = (clone $visibles)->count();
+        $voir = $moi->hasActiveSubscription();
+
+        return [
+            'total' => $total,
+            'visible' => $voir,
+            'membres' => $voir ? $visibles->orderByDesc('event_registrations.created_at')->limit(30)
+                ->get(['users.id', 'users.prenom', 'users.nom', 'users.photo', 'users.role', 'users.titre', 'users.ville'])
+                ->map(fn (User $u) => $u->only(['id', 'prenom', 'nom', 'photo', 'role', 'titre', 'ville']))->values()->all() : [],
+        ];
+    }
+
     /** GET /events — événements publiés (et annulés) avec l'état d'inscription du membre. */
     public function index(Request $request)
     {
@@ -87,7 +115,9 @@ class EventController extends Controller
         }
         $inscrit = EventRegistration::where('event_id', $e->id)->where('user_id', $moi->id)->exists();
 
-        return response()->json(['ok' => true, 'event' => $this->payloadMembre($e, $moi, $inscrit)]);
+        return response()->json(['ok' => true, 'event' => $this->payloadMembre($e, $moi, $inscrit) + [
+            'participants' => $this->participants($e, $moi),
+        ]]);
     }
 
     /** POST /events/{id}/inscription — s'inscrire (règles : statut, date, capacité, abonnement). */

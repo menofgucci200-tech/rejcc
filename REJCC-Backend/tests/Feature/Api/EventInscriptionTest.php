@@ -85,4 +85,30 @@ class EventInscriptionTest extends TestCase
         $ouvert = $this->evenement();
         $this->withToken($this->tokenFor(User::factory()->create()))->postJson("/api/events/{$ouvert->id}/inscription")->assertOk();
     }
+
+    public function test_ils_participent_selon_l_annuaire_et_l_abonnement(): void
+    {
+        SubscriptionMode::set(true);
+        $e = $this->evenement();
+        $visible = User::factory()->create(['prenom' => 'Awa', 'subscription_expires_at' => now()->addYear()]);
+        $masque = User::factory()->create(['prenom' => 'Masque', 'preferences' => ['apparaitre_annuaire' => false]]);
+        $suspendu = User::factory()->create(['prenom' => 'Suspendu', 'is_active' => false]);
+        foreach ([$visible, $masque, $suspendu] as $u) {
+            EventRegistration::create(['event_id' => $e->id, 'user_id' => $u->id]);
+        }
+
+        $abonne = User::factory()->create(['subscription_expires_at' => now()->addYear()]);
+        $p = $this->withToken($this->tokenFor($abonne))->getJson("/api/events/{$e->id}")->assertOk()->json('event.participants');
+        $this->assertSame(1, $p['total']);
+        $this->assertSame(['Awa'], array_column($p['membres'], 'prenom'));
+
+        $p = $this->withToken($this->tokenFor(User::factory()->create()))->getJson("/api/events/{$e->id}")->json('event.participants');
+        $this->assertSame(1, $p['total']);
+        $this->assertFalse($p['visible']);
+        $this->assertSame([], $p['membres']);
+
+        // On ne se voit pas soi-même dans la liste.
+        $p = $this->withToken($this->tokenFor($visible))->getJson("/api/events/{$e->id}")->json('event.participants');
+        $this->assertSame(0, $p['total']);
+    }
 }

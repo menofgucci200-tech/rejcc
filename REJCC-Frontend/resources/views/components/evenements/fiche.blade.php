@@ -68,6 +68,36 @@
                 @if ($e['excerpt'])<p class="mt-4 text-[14px] font-semibold leading-relaxed text-ink">{{ $e['excerpt'] }}</p>@endif
                 @if ($e['description'])<p class="mt-3 whitespace-pre-line text-[13.5px] leading-relaxed text-[#3D4A60]">{!! \App\Support\Texte::liens($e['description'], 'font-semibold text-azure underline underline-offset-2') !!}</p>@endif
 
+                {{-- Ils participent : membres inscrits visibles dans l'annuaire --}}
+                @php $p = $e['participants'] ?? ['total' => 0, 'visible' => false, 'membres' => []]; @endphp
+                @if ($p['total'] > 0)
+                    <section data-test="ils-participent" class="mt-5 rounded-[14px] border border-brand/10 p-4" x-data="{ tous: false }">
+                        <p class="mb-2.5 text-[11px] font-bold uppercase tracking-[0.1em] text-[#9AA6B8]">
+                            {{ $e['passe'] ? 'Ils ont participé' : 'Ils participent' }} · {{ $p['total'] }} membre{{ $p['total'] > 1 ? 's' : '' }}{{ $e['registered'] ? ' en plus de vous' : '' }}
+                        </p>
+                        @if ($p['visible'])
+                            <ul class="grid gap-2 sm:grid-cols-2">
+                                @foreach ($p['membres'] as $i => $m)
+                                    <li @if ($i >= 6) x-show="tous" style="display: none" @endif class="flex items-center gap-2.5 rounded-[12px] p-1.5 hover:bg-cloud/60">
+                                        <x-messagerie.avatar :personne="$m" taille="size-9" texte="text-[11px]" />
+                                        <span class="min-w-0 flex-1">
+                                            <span class="block truncate text-[12.5px] font-bold text-brand">{{ $m['prenom'] }} {{ $m['nom'] }}@if ($m['role'] === 'mentor') <span class="ml-0.5 rounded-full bg-accent px-1.5 align-middle text-[8.5px] font-bold uppercase text-white">Mentor</span>@endif</span>
+                                            <span class="block truncate text-[11px] text-[#9AA6B8]">{{ collect([$m['titre'], $m['ville']])->filter()->join(' · ') }}</span>
+                                        </span>
+                                        <a href="{{ route('espace-membre.messaging', ['to' => $m['id']]) }}" wire:navigate data-test="ecrire-participant" title="Écrire à {{ $m['prenom'] }}" class="icon-btn shrink-0 rounded-lg p-1.5 text-azure hover:bg-azure/10"><x-ui.icon name="message-circle" class="size-4" /></a>
+                                    </li>
+                                @endforeach
+                            </ul>
+                            @if (count($p['membres']) > 6)
+                                <button type="button" x-show="! tous" x-on:click="tous = true" class="mt-2 text-[12px] font-semibold text-azure hover:underline">Voir les {{ count($p['membres']) }} participants</button>
+                            @endif
+                        @else
+                            <p class="text-[12.5px] text-[#5B677A]">Découvrez qui participe et prenez contact avant l'événement : réservé aux membres abonnés.
+                                <a href="{{ route('espace-membre.abonnement') }}" wire:navigate class="font-semibold text-accent hover:underline">M'abonner</a></p>
+                        @endif
+                    </section>
+                @endif
+
                 @if ($erreur)<p data-test="fiche-evenement-erreur" class="mt-4 rounded-[10px] bg-accent/5 px-3 py-2 text-[12.5px] font-semibold text-accent">{{ $erreur }}</p>@endif
 
                 <div class="mt-5 flex flex-wrap items-center gap-2">
