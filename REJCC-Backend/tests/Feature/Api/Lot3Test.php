@@ -66,17 +66,22 @@ class Lot3Test extends TestCase
     public function test_un_membre_propose_un_projet_qui_entre_en_evaluation(): void
     {
         $token = $this->tokenFor(User::factory()->abonne()->create());
+        $groupe = \App\Models\Group::create(['name' => 'Agriculture', 'slug' => 'agriculture']);
 
         $project = $this->withToken($token)->postJson('/api/projects', [
             'title' => 'Coopérative agricole jeunesse',
             'description' => 'Structurer un circuit court de vente de produits maraîchers.',
+            'group_id' => $groupe->id,
+            'stade' => 'idee',
             'members_count' => 6,
         ])->assertStatus(201)->json('project');
 
-        $this->assertSame('En évaluation', $project['status']);
+        $this->assertSame('evaluation', $project['statut']);
 
-        $liste = $this->withToken($token)->getJson('/api/projects')->assertOk()->json('projects');
-        $this->assertTrue($liste[0]['mine']);
+        // En évaluation : visible dans « Mes projets », pas dans les projets du réseau.
+        $res = $this->withToken($token)->getJson('/api/projects')->assertOk()->json();
+        $this->assertSame([], $res['projects']);
+        $this->assertTrue($res['mes_projets'][0]['mine']);
     }
 
     public function test_un_membre_sans_abonnement_ne_peut_pas_proposer_de_projet(): void
@@ -99,15 +104,9 @@ class Lot3Test extends TestCase
             'description' => 'Formation de jeunes femmes à la couture avec insertion professionnelle.',
         ]);
 
-        $admin = $this->adminToken();
-
-        $this->withToken($admin)->putJson("/api/admin/projects/{$project->id}", [
-            'title' => $project->title,
-            'description' => $project->description,
-            'status' => 'Lancé',
-        ])->assertOk()->assertJsonPath('project.status', 'Lancé');
-
-        $this->assertSame('Lancé', $project->fresh()->status);
+        $this->withToken($this->adminToken())->postJson("/api/admin/projects/{$project->id}/decision", [
+            'decision' => 'valider', 'stade' => 'lance',
+        ])->assertOk()->assertJsonPath('project.statut', 'valide')->assertJsonPath('project.stade', 'lance');
     }
 
     public function test_l_admin_supprime_un_projet(): void

@@ -44,7 +44,7 @@ class AdminNavController extends Controller
             ['cle' => 'annonces_signalees', 'section' => 'communaute', 'route' => 'admin.marketplace', 'libelle' => 'Annonces Marketplace signalées',
                 'nombre' => \Illuminate\Support\Facades\DB::table('listing_reports')->where('statut', 'nouveau')->distinct()->count('listing_id')],
             ['cle' => 'projets', 'section' => 'projets', 'route' => 'admin.projets', 'libelle' => 'Projets en évaluation',
-                'nombre' => Project::where('status', 'En évaluation')->count()],
+                'nombre' => Project::where('statut', 'evaluation')->count()],
             ['cle' => 'mentorat', 'section' => 'mentors', 'route' => 'admin.mentors', 'libelle' => 'Candidatures de mentors',
                 'nombre' => MentorApplication::where('statut', 'en_attente')->count()],
             ['cle' => 'mentorat_retard', 'section' => 'mentors', 'route' => 'admin.mentors', 'libelle' => 'Demandes de mentorat sans réponse (> 7 j)',
@@ -98,8 +98,8 @@ class AdminNavController extends Controller
                 ->map(fn ($e) => ['titre' => $e->title, 'detail' => trim(($e->starts_at?->translatedFormat('j M Y') ?? '').' · '.($e->location ?? ''), ' ·'), 'route' => 'admin.evenements', 'params' => [], 'icon' => 'calendar'])->all();
         }
         if ($this->autorise($me, 'projets')) {
-            $groupes['Projets'] = Project::where('title', 'like', $like)->limit(4)->get(['id', 'title', 'status'])
-                ->map(fn ($p) => ['titre' => $p->title, 'detail' => $p->status, 'route' => 'admin.projets', 'params' => [], 'icon' => 'nav-projects'])->all();
+            $groupes['Projets'] = Project::where('title', 'like', $like)->limit(4)->get(['id', 'title', 'statut'])
+                ->map(fn ($p) => ['titre' => $p->title, 'detail' => Project::STATUTS[$p->statut] ?? $p->statut, 'route' => 'admin.projets', 'params' => [], 'icon' => 'nav-projects'])->all();
         }
 
         return response()->json(['ok' => true, 'groupes' => array_filter($groupes)]);

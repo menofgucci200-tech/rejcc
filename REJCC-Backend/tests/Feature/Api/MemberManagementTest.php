@@ -131,8 +131,8 @@ class MemberManagementTest extends TestCase
             'parcours' => [['periode' => '2022 – auj.', 'titre' => 'Fondatrice', 'structure' => 'AgroVert']],
             'liens' => ['linkedin' => 'https://www.linkedin.com/in/test'],
         ]);
-        \App\Models\Project::create(['user_id' => $membre->id, 'title' => 'Séchage de mangues', 'description' => 'Unité de transformation.', 'status' => 'Recherche partenaires']);
-        \App\Models\Project::create(['user_id' => $membre->id, 'title' => 'Projet confidentiel', 'description' => 'Ne doit pas être public.', 'status' => 'En évaluation']);
+        \App\Models\Project::create(['user_id' => $membre->id, 'title' => 'Séchage de mangues', 'description' => 'Unité de transformation.', 'statut' => 'valide']);
+        \App\Models\Project::create(['user_id' => $membre->id, 'title' => 'Projet confidentiel', 'description' => 'Ne doit pas être public.', 'statut' => 'evaluation']);
 
         $card = $this->getJson('/api/member-card/'.$membre->id)->assertOk()->json('card');
 

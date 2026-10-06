@@ -169,6 +169,10 @@ Route::middleware('auth.token')->group(function () {
     Route::middleware('sub.active')->group(function () {
         Route::get('/projects', [\App\Http\Controllers\Api\ProjectController::class, 'index']);
         Route::post('/projects', [\App\Http\Controllers\Api\ProjectController::class, 'store']);
+        Route::get('/projects/{id}', [\App\Http\Controllers\Api\ProjectController::class, 'show'])->whereNumber('id');
+        Route::put('/projects/{id}', [\App\Http\Controllers\Api\ProjectController::class, 'update'])->whereNumber('id');
+        Route::post('/projects/{id}/retirer', [\App\Http\Controllers\Api\ProjectController::class, 'retirer'])->whereNumber('id');
+        Route::delete('/projects/{id}', [\App\Http\Controllers\Api\ProjectController::class, 'destroy'])->whereNumber('id');
     });
 
     // Opportunités & annonces
@@ -333,6 +337,7 @@ Route::middleware(['auth.token', 'audit.log'])->prefix('admin')->group(function 
     Route::middleware('auth.admin:projets')->group(function () {
         Route::get('/projects', [\App\Http\Controllers\Api\ProjectController::class, 'adminIndex']);
         Route::put('/projects/{id}', [\App\Http\Controllers\Api\ProjectController::class, 'adminUpdate']);
+        Route::post('/projects/{id}/decision', [\App\Http\Controllers\Api\ProjectController::class, 'decision'])->whereNumber('id');
         Route::delete('/projects/{id}', [\App\Http\Controllers\Api\ProjectController::class, 'adminDestroy']);
     });
 

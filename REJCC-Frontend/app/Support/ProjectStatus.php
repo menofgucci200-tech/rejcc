@@ -2,27 +2,30 @@
 
 namespace App\Support;
 
-/** Couleur d'étiquette associée au statut d'un projet. */
+/** Couleurs des statuts (circuit de validation) et des stades d'un projet. */
 class ProjectStatus
 {
-    private const COLORS = [
-        'En évaluation' => '#4F6FBF',
-        'En développement' => '#4F6FBF',
-        'Recherche partenaires' => '#F5A623',
-        'Financement en cours' => '#F5A623',
-        'Lancé' => '#22A85A',
-        'Financé' => '#22A85A',
-        'Refusé' => '#9AA6B8',
+    private const STATUTS = [
+        'evaluation' => '#4F6FBF',
+        'a_completer' => '#B27007',
+        'valide' => '#1C8F4C',
+        'refuse' => '#AC0100',
+        'retire' => '#9AA6B8',
     ];
 
-    /** Statuts proposés dans les formulaires admin. */
-    public const OPTIONS = [
-        'En évaluation', 'En développement', 'Recherche partenaires',
-        'Financement en cours', 'Lancé', 'Financé', 'Refusé',
+    private const STADES = [
+        'idee' => '#7C3AED',
+        'developpement' => '#4F6FBF',
+        'lance' => '#1C8F4C',
     ];
 
-    public static function color(string $status): string
+    public static function color(string $statut): string
     {
-        return self::COLORS[$status] ?? '#4F6FBF';
+        return self::STATUTS[$statut] ?? '#4F6FBF';
+    }
+
+    public static function stade(string $stade): string
+    {
+        return self::STADES[$stade] ?? '#4F6FBF';
     }
 }

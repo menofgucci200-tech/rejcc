@@ -122,9 +122,9 @@ class MemberProfile
                 ])->values(),
             'groupes' => $user->groups()->orderBy('ordre')->get(['groups.name'])
                 ->map(fn ($g) => ['nom' => $g->name, 'specialite' => $g->pivot->specialite])->values(),
-            'projets' => Project::where('user_id', $user->id)
-                ->whereNotIn('status', ['En évaluation', 'Refusé'])
-                ->latest()->limit(4)->get(['title', 'description', 'status']),
+            'projets' => Project::where('user_id', $user->id)->where('statut', 'valide')
+                ->latest()->limit(4)->get(['id', 'title', 'accroche', 'description', 'stade'])
+                ->map(fn (Project $p) => ['id' => $p->id, 'title' => $p->title, 'description' => $p->accroche ?: $p->description, 'status' => Project::STADES[$p->stade] ?? 'Validé'])->values(),
             'engagement' => [
                 'formations_terminees' => FormationEnrollment::where('user_id', $user->id)->whereNotNull('completed_at')->count(),
                 'evenements' => EventRegistration::where('user_id', $user->id)->count(),
