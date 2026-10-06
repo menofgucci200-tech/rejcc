@@ -160,6 +160,7 @@ class GroupeMembres extends Component
             // Projets validés du secteur (lien vers la rubrique Projets filtrée).
             'nbProjets' => count(Api::get('/projects', ['groupe' => $this->groupId], Api::token())['projects'] ?? []),
             'nbOffres' => count(Api::get('/opportunities', ['groupe' => $this->groupId], Api::token())['opportunities'] ?? []),
+            'nbDocuments' => count(Api::get('/documents', ['groupe' => $this->groupId], Api::token())['documents'] ?? []),
         ]);
     }
 }

@@ -99,6 +99,9 @@ class DocumentController extends Controller
         if ($cat = (int) $request->query('categorie')) {
             $query->where('documents.category_id', $cat);
         }
+        if ($groupe = (int) $request->query('groupe')) {
+            $query->where('documents.group_id', $groupe);
+        }
         match ($request->query('tri')) {
             'titre' => $query->orderBy('documents.title'),
             'populaires' => $query->orderByDesc('documents.telechargements')->orderByDesc('documents.vues'),
@@ -112,8 +115,8 @@ class DocumentController extends Controller
             'ok' => true,
             'documents' => $docs->map(fn ($d) => $this->payload($d, $moi))->values(),
             'categories' => $this->categories()->map(fn ($c) => $c->only(['id', 'nom', 'icone']) + ['nombre' => (int) ($comptes[$c->id] ?? 0)])->values(),
-            'mes_propositions' => $this->avecRelations()->where('auteur_id', $moi->id)->where('statut', '!=', 'publie')
-                ->latest()->get()->map(fn ($d) => $this->payload($d, $moi))->values(),
+            'mes_propositions' => $moi->role === 'admin' ? [] : $this->avecRelations()->where('auteur_id', $moi->id)
+                ->orderByRaw("CASE statut WHEN 'en_attente' THEN 0 WHEN 'refuse' THEN 1 ELSE 2 END")->latest()->get()->map(fn ($d) => $this->payload($d, $moi))->values(),
             'peut_proposer' => $moi->hasActiveSubscription(),
         ]);
     }
@@ -181,6 +184,11 @@ class DocumentController extends Controller
         $v = Validator::make($request->all(), $this->regles(false), $this->messages());
         if ($v->fails()) {
             return response()->json(['ok' => false, 'message' => $v->errors()->first()], 422);
+        }
+        // Le fichier doit avoir été déposé dans le dossier du membre (jamais le fichier d'un autre).
+        $fichier = (string) $request->input('fichier');
+        if ($fichier !== '' && (! str_starts_with($fichier, 'documents/propositions/'.$moi->id.'/') || str_contains($fichier, '..'))) {
+            return response()->json(['ok' => false, 'message' => 'Fichier invalide.'], 422);
         }
         if (Document::where('auteur_id', $moi->id)->where('statut', 'en_attente')->count() >= 5) {
             return response()->json(['ok' => false, 'message' => 'Vous avez déjà 5 documents en attente de validation.'], 422);

@@ -108,7 +108,10 @@ class DocumentTest extends TestCase
 
         $awa = User::factory()->abonne()->create(['prenom' => 'Awa', 'nom' => 'Traoré']);
         $t = $this->tokenFor($awa);
-        $p = $this->withToken($t)->postJson('/api/documents', ['title' => 'Modèle de facture', 'category_id' => $this->cat()->id, 'fichier' => 'documents/facture.xlsx', 'fichier_nom' => 'facture.xlsx'])
+        // Jamais le fichier d'un autre : le chemin doit être dans le dossier du membre.
+        $this->withToken($t)->postJson('/api/documents', ['title' => 'Modèle de facture', 'category_id' => $this->cat()->id, 'fichier' => 'documents/propositions/999/autre.pdf'])->assertStatus(422);
+        $this->withToken($t)->postJson('/api/documents', ['title' => 'Modèle de facture', 'category_id' => $this->cat()->id, 'fichier' => "documents/propositions/{$awa->id}/../999/autre.pdf"])->assertStatus(422);
+        $p = $this->withToken($t)->postJson('/api/documents', ['title' => 'Modèle de facture', 'category_id' => $this->cat()->id, 'fichier' => "documents/propositions/{$awa->id}/facture.xlsx", 'fichier_nom' => 'facture.xlsx'])
             ->assertCreated()->json('document');
         $this->assertSame(['en_attente', 'Excel'], [$p['statut'], $p['type']]);
         $autre = $this->tokenFor(User::factory()->create());

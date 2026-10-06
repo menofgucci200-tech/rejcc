@@ -10,7 +10,7 @@ use Livewire\Component;
 
 /**
  * Recherche de la barre du haut de l'espace membre : formations, membres
- * (abonnés uniquement), événements et rubriques de l'espace. Les résultats
+ * (abonnés uniquement), événements, projets, offres, documents et rubriques de l'espace. Les résultats
  * s'affichent pendant la frappe et mènent directement au bon écran.
  */
 class GlobalSearch extends Component
@@ -109,6 +109,15 @@ class GlobalSearch extends Component
                     'icon' => 'nav-briefcase',
                 ])->values()->all();
 
+            $documents = Collection::make(Api::get('/documents', ['q' => $q], $token)['documents'] ?? [])
+                ->take(4)
+                ->map(fn ($d) => [
+                    'titre' => $d['title'],
+                    'detail' => collect([$d['category'] ?? null, $d['type'] ?? null, $d['verrouille'] ? 'accès réservé' : null])->filter()->join(' · '),
+                    'url' => route('espace-membre.documents', ['document' => $d['id']]),
+                    'icon' => 'file-text',
+                ])->values()->all();
+
             $evenements = Collection::make(Api::get('/events', [], $token)['events'] ?? [])
                 ->filter(fn ($e) => static::matches($needle, $e['title'], $e['category'], $e['location']))
                 ->map(function ($e) {
@@ -137,6 +146,7 @@ class GlobalSearch extends Component
                 'Événements' => $evenements,
                 'Projets' => $projets,
                 "Offres d'emploi et de stage" => $offres,
+                'Documents' => $documents,
                 'Rubriques' => $rubriques,
             ]);
         }
