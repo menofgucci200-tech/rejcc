@@ -84,6 +84,9 @@ class Projets extends Component
 
     public int $membersCount = 1;
 
+    /** Accord du porteur pour l'affichage sur le site public du REJCC. */
+    public bool $publicOk = false;
+
     // ── Collaborer (fiche) ───────────────────────────────────────────────
     public bool $rejoindreOuvert = false;
 
@@ -258,6 +261,7 @@ class Projets extends Component
         $this->reset(['editingId', 'statutEdition', 'title', 'accroche', 'groupId', 'ville', 'description', 'probleme', 'solution', 'cible', 'impact', 'besoins', 'lien']);
         $this->stade = 'idee';
         $this->membersCount = 1;
+        $this->publicOk = false;
         $this->clearMedia();
         $this->resetValidation();
         $this->message = $this->erreur = null;
@@ -288,6 +292,7 @@ class Projets extends Component
         $this->besoins = $p['besoins'] ?? [];
         $this->lien = (string) ($p['lien'] ?? '');
         $this->membersCount = (int) $p['members_count'];
+        $this->publicOk = (bool) ($p['public_ok'] ?? false);
         $this->fillMedia($p['image'] ?? null);
         $this->resetValidation();
         $this->message = $this->erreur = null;
@@ -321,6 +326,7 @@ class Projets extends Component
             'lien' => trim($this->lien) ?: null,
             'image' => $this->mediaUrl ?: null,
             'members_count' => $this->membersCount,
+            'public_ok' => $this->publicOk,
         ];
         $r = $this->editingId
             ? Api::put("/projects/{$this->editingId}", $data, Api::token())

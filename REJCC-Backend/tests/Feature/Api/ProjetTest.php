@@ -311,4 +311,29 @@ class ProjetTest extends TestCase
         $ligne = collect($export['rows'])->firstWhere(0, 'BâtiJeunes');
         $this->assertSame(['Esther Kouamé', 'Validé', 'Un mentor', 'Oui', 'Oui'], [$ligne[1], $ligne[6], $ligne[8], $ligne[12], $ligne[13]]);
     }
+
+    // ── Site public ────────────────────────────────────────────────────
+
+    public function test_vitrine_publique_avec_accord_du_porteur(): void
+    {
+        $porteur = User::factory()->create(['prenom' => 'Esther', 'nom' => 'Kouamé', 'email' => 'esther@example.com']);
+        $ok = Project::create(['user_id' => $porteur->id, 'title' => 'BâtiJeunes', 'description' => str_repeat('a', 30), 'statut' => 'valide', 'public_ok' => true, 'besoins' => ['mentor'], 'solution' => 'Chantiers-écoles']);
+        Project::create(['user_id' => $porteur->id, 'title' => 'Une', 'description' => str_repeat('a', 30), 'statut' => 'valide', 'public_ok' => true, 'a_la_une' => true]);
+        $prive = Project::create(['user_id' => $porteur->id, 'title' => 'Sans accord', 'description' => str_repeat('b', 30), 'statut' => 'valide', 'public_ok' => false]);
+        Project::create(['user_id' => $porteur->id, 'title' => 'Non validé', 'description' => str_repeat('c', 30), 'statut' => 'evaluation', 'public_ok' => true]);
+
+        $liste = $this->getJson('/api/public-projects')->assertOk()->json('projects');
+        $this->assertSame(['Une', 'BâtiJeunes'], array_column($liste, 'title'));
+        $this->assertSame('Esther', $liste[1]['porteur']);
+        $this->assertStringNotContainsString('esther@example.com', json_encode($liste));
+        $this->assertStringNotContainsString('Kouamé', json_encode($liste));
+
+        $this->getJson("/api/public-projects/{$ok->id}")->assertOk()->assertJsonPath('project.solution', 'Chantiers-écoles')
+            ->assertJsonPath('project.besoins.0', 'Un mentor');
+        $this->getJson("/api/public-projects/{$prive->id}")->assertStatus(404);
+
+        // Le porteur donne son accord depuis son formulaire.
+        $t = $this->tokenFor(User::factory()->abonne()->create());
+        $this->assertTrue($this->withToken($t)->postJson('/api/projects', $this->donnees(['public_ok' => true]))->assertCreated()->json('project.public_ok'));
+    }
 }

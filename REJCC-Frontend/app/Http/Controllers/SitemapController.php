@@ -30,6 +30,11 @@ class SitemapController extends Controller
                 $urls[] = ['loc' => url('/actualites/'.$article['slug']), 'priority' => '0.6'];
             }
 
+            $urls[] = ['loc' => url('/projets'), 'priority' => '0.6'];
+            foreach (Api::get('/public-projects')['projects'] ?? [] as $projet) {
+                $urls[] = ['loc' => url('/projets/'.$projet['id']), 'priority' => '0.5'];
+            }
+
             foreach (Api::get('/public-events')['events'] ?? [] as $event) {
                 $urls[] = ['loc' => url('/evenements/'.$event['slug']), 'priority' => '0.6'];
             }

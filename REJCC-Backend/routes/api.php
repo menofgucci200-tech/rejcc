@@ -37,6 +37,8 @@ Route::get('/gallery', fn () => response()->json(['ok' => true, 'photos' => \App
 Route::get('/news', [NewsArticleController::class, 'index']);
 Route::get('/news/{slug}', [NewsArticleController::class, 'show']);
 Route::get('/public-events', [EventController::class, 'publicIndex']);
+Route::get('/public-projects', [\App\Http\Controllers\Api\ProjectController::class, 'publicIndex']);
+Route::get('/public-projects/{id}', [\App\Http\Controllers\Api\ProjectController::class, 'publicShow'])->whereNumber('id');
 Route::get('/public-events/{slug}', [EventController::class, 'publicShow']);
 
 // Carte membre publique (cible des QR codes), limitée contre l'énumération

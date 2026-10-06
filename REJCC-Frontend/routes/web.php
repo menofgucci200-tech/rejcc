@@ -49,6 +49,8 @@ Route::view('/domaines', 'pages.domaines');
 
 Route::get('/evenements', [EventController::class, 'index']);
 Route::get('/evenements/{slug}', [EventController::class, 'show']);
+Route::get('/projets', [\App\Http\Controllers\ProjetPublicController::class, 'index']);
+Route::get('/projets/{id}', [\App\Http\Controllers\ProjetPublicController::class, 'show'])->whereNumber('id');
 
 Route::get('/actualites', [NewsController::class, 'index']);
 Route::get('/actualites/{slug}', [NewsController::class, 'show']);

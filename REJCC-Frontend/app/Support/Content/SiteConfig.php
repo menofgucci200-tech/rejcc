@@ -35,6 +35,7 @@ class SiteConfig
             ['label' => 'Activités', 'href' => '/activites'],
             ['label' => 'Domaines', 'href' => '/domaines'],
             ['label' => 'Événements', 'href' => '/evenements'],
+            ['label' => 'Projets', 'href' => '/projets'],
             ['label' => 'Actualités', 'href' => '/actualites'],
             ['label' => 'Partenaires', 'href' => '/partenaires'],
             ['label' => 'Contact', 'href' => '/contact'],

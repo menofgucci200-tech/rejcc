@@ -150,6 +150,11 @@
                         <x-ui.media-field label="Visuel du projet (photo, logo — optionnel)" :media-url="$mediaUrl" :media-name="$mediaName" :media-size="$mediaSize" />
                         @error('mediaFile') <span class="text-xs text-accent">{{ $message }}</span> @enderror
                     </div>
+                    <label class="flex items-start gap-2.5 rounded-[9px] border border-brand/10 bg-cloud/50 px-3 py-2.5 text-sm text-ink/80 sm:col-span-2">
+                        <input wire:model="publicOk" type="checkbox" data-test="public-ok" class="mt-0.5 size-4 rounded border-brand/25 text-brand" />
+                        <span><span class="font-semibold text-brand">Présenter mon projet sur le site public du REJCC</span>
+                            <span class="block text-[11.5px] text-[#9AA6B8]">Une fois validé, le projet (titre, présentation, visuel, secteur, ville, besoins et votre prénom) peut être affiché sur le site pour attirer partenaires et nouveaux membres. Jamais vos coordonnées. Vous pouvez retirer votre accord à tout moment.</span></span>
+                    </label>
                     @if ($erreur)
                         <p wire:key="form-erreur" class="rounded-[9px] bg-accent/10 px-3 py-2 text-xs font-semibold text-accent sm:col-span-2">{{ $erreur }}</p>
                     @endif

@@ -164,6 +164,56 @@ class ProjectController extends Controller
     }
 
     // ------------------------------------------------------------------
+    // Site public (projets validés dont le porteur a donné son accord)
+    // ------------------------------------------------------------------
+
+    private function payloadPublic(Project $p, bool $complet = false): array
+    {
+        $data = [
+            'id' => $p->id,
+            'title' => $p->title,
+            'accroche' => $p->accroche,
+            'description' => $p->description,
+            'stade' => Project::STADES[$p->stade] ?? $p->stade,
+            'groupe' => $p->groupe ? ['nom' => $p->groupe->name, 'couleur' => $p->groupe->couleur ?: '#031D59', 'icone' => $p->groupe->icone ?: 'network'] : null,
+            'ville' => $p->ville,
+            'image' => $p->image,
+            'a_la_une' => (bool) $p->a_la_une,
+            // Prénom seulement : pas de nom complet ni de coordonnées sur la vitrine.
+            'porteur' => $p->porteur?->prenom,
+            'besoins' => array_values(array_map(fn ($b) => Project::BESOINS[$b] ?? $b, $p->besoins ?? [])),
+            'equipe_taille' => 1 + $p->equipe()->where('statut', 'membre')->count(),
+        ];
+        if ($complet) {
+            $data += ['probleme' => $p->probleme, 'solution' => $p->solution, 'cible' => $p->cible, 'impact' => $p->impact, 'lien' => $p->lien];
+        }
+
+        return $data;
+    }
+
+    /** GET /public-projects — vitrine : projets à la une d'abord. */
+    public function publicIndex()
+    {
+        $projets = Project::with(['porteur:id,prenom', 'groupe:id,name,couleur,icone'])
+            ->where('statut', 'valide')->where('public_ok', true)
+            ->orderByDesc('a_la_une')->orderByDesc('decide_at')->get();
+
+        return response()->json(['ok' => true, 'projects' => $projets->map(fn ($p) => $this->payloadPublic($p))->values()]);
+    }
+
+    /** GET /public-projects/{id} — fiche publique. */
+    public function publicShow(int $id)
+    {
+        $p = Project::with(['porteur:id,prenom', 'groupe:id,name,couleur,icone'])
+            ->where('statut', 'valide')->where('public_ok', true)->find($id);
+        if (! $p) {
+            return response()->json(['ok' => false, 'message' => 'Projet introuvable.'], 404);
+        }
+
+        return response()->json(['ok' => true, 'project' => $this->payloadPublic($p, true)]);
+    }
+
+    // ------------------------------------------------------------------
     // Espace membre
     // ------------------------------------------------------------------
 

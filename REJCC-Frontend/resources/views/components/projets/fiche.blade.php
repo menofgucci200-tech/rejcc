@@ -239,6 +239,9 @@
                                 <x-ui.icon name="pencil" class="size-4" /> {{ in_array($p['statut'], ['a_completer', 'refuse'], true) ? 'Compléter et renvoyer' : 'Modifier' }}
                             </button>
                         @endif
+                        @if ($p['statut'] === 'valide' && ($p['public_ok'] ?? false))
+                            <a href="{{ url('/projets/'.$p['id']) }}" target="_blank" class="text-[12px] font-semibold text-azure hover:underline">Voir sur le site public</a>
+                        @endif
                         @if ($p['statut'] === 'valide')
                             <span class="text-[12px] text-[#9AA6B8]">{{ $p['vues'] ?? 0 }} vue{{ ($p['vues'] ?? 0) > 1 ? 's' : '' }} par les membres</span>
                         @endif
