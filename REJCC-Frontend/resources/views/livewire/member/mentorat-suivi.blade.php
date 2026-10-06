@@ -123,7 +123,7 @@
                             @if ($s['statut'] === 'proposee' && ! $s['proposee_par_moi'])
                                 <button wire:click="confirmer({{ $s['id'] }})" data-test="confirmer-seance" class="btn-tap inline-flex items-center gap-1.5 rounded-full bg-[#1C8F4C] px-4 py-1.5 text-[12px] font-bold text-white hover:bg-[#1C8F4C]/90"><x-ui.icon name="check" class="size-3.5" /> Confirmer</button>
                             @endif
-                            <button x-data @click="const motif = prompt('Motif de l\'annulation (facultatif) :'); if (motif !== null) $wire.annuler({{ $s['id'] }}, motif)" data-test="annuler-seance" class="btn-tap rounded-full border border-brand/15 bg-white px-4 py-1.5 text-[12px] font-bold text-brand hover:bg-cloud">{{ $s['statut'] === 'proposee' && ! $s['proposee_par_moi'] ? 'Décliner' : 'Annuler' }}</button>
+                            <button x-data @click="const motif = await rjPrompt('{{ $s['statut'] === 'proposee' && ! $s['proposee_par_moi'] ? 'Décliner cette séance ?' : 'Annuler cette séance ?' }} L\'autre personne sera prévenue.', { placeholder: 'Motif (facultatif)', ok: '{{ $s['statut'] === 'proposee' && ! $s['proposee_par_moi'] ? 'Décliner' : 'Annuler la séance' }}', annuler: 'Retour', ton: 'danger' }); if (motif !== null) $wire.annuler({{ $s['id'] }}, motif)" data-test="annuler-seance" class="btn-tap rounded-full border border-brand/15 bg-white px-4 py-1.5 text-[12px] font-bold text-brand hover:bg-cloud">{{ $s['statut'] === 'proposee' && ! $s['proposee_par_moi'] ? 'Décliner' : 'Annuler' }}</button>
                         </div>
                     </article>
                 @empty

@@ -63,7 +63,7 @@
                 <x-ui.icon name="search" class="pointer-events-none absolute left-4 top-1/2 size-[17px] -translate-y-1/2 text-[#9AA6B8]" />
                 <input id="je-cherche" type="search" wire:model.live.debounce.400ms="cherche" data-test="je-cherche"
                     placeholder="Ex : un plombier à Cocody, une comptable, un traiteur…"
-                    class="w-full rounded-[14px] border-0 bg-white py-3.5 pl-11 pr-4 text-[14px] text-ink shadow-inner outline-none ring-2 ring-transparent focus:ring-[#8FA3D9]" />
+                    class="w-full rounded-[14px] border-0 bg-white py-3.5 pl-11 pr-4 text-[14px] text-ink shadow-inner outline-none" />
             </div>
             <div class="mt-3 flex flex-wrap items-center gap-1.5">
                 <span class="text-[11.5px] font-semibold text-white/60">Exemples :</span>

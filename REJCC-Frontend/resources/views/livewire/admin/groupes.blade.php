@@ -206,7 +206,7 @@
                                 </p>
                             </div>
                             <button type="button" data-test="retirer-membre"
-                                x-on:click="const motif = prompt('Retirer {{ addslashes($m['nom']) }} du groupe ? Indiquez le motif (il sera transmis au membre) :'); if (motif !== null) $wire.retirerMembre({{ $m['id'] }}, motif)"
+                                x-on:click="const motif = await rjPrompt('Retirer {{ addslashes($m['nom']) }} du groupe ? Indiquez le motif : il sera transmis au membre.', { placeholder: 'Motif du retrait', ok: 'Retirer du groupe', ton: 'danger' }); if (motif !== null) $wire.retirerMembre({{ $m['id'] }}, motif)"
                                 class="btn-tap shrink-0 rounded-full border border-accent/30 px-3 py-1.5 text-[11.5px] font-bold text-accent hover:bg-accent/5">Retirer</button>
                         </div>
                     @empty

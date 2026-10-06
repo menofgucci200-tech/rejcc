@@ -18,7 +18,7 @@
         <input x-ref="input" type="search" wire:model.live.debounce.300ms="q" @focus="open = true" @input="open = true"
             @keydown.enter.prevent="$refs.results?.querySelector('a')?.click()"
             placeholder="Rechercher…" aria-label="Rechercher dans l'administration" data-test="recherche-admin"
-            class="w-full min-w-0 appearance-none border-none bg-transparent text-[13px] text-ink outline-none placeholder:text-[#9AA6B8] focus:outline-none" />
+            class="rj-search-input w-full min-w-0 appearance-none border-none bg-transparent text-[13px] text-ink outline-none placeholder:text-[#9AA6B8] focus:outline-none" />
         <span wire:loading wire:target="q" class="size-3.5 shrink-0 animate-spin rounded-full border-2 border-azure/30 border-t-azure"></span>
         <kbd wire:loading.remove wire:target="q" class="hidden shrink-0 rounded-[6px] border border-brand/15 bg-white px-1.5 py-0.5 font-sans text-[10.5px] font-semibold text-[#9AA6B8] lg:inline">Ctrl K</kbd>
     </div>

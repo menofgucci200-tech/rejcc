@@ -101,7 +101,7 @@
                             <span class="ml-auto text-[11.5px] text-[#9AA6B8]">Annonce signalée</span>
                         @else
                             <button type="button" data-test="fiche-signaler"
-                                x-on:click="const motif = prompt('Pourquoi signalez-vous cette annonce ? (arnaque, contenu inapproprié, hors sujet…)'); if (motif !== null) $wire.signaler(motif)"
+                                x-on:click="const motif = await rjPrompt('Signaler cette annonce ? L\'équipe REJCC examinera votre signalement.', { placeholder: 'Ex. : arnaque, contenu inapproprié, hors sujet…', ok: 'Signaler', requis: true }); if (motif !== null) $wire.signaler(motif)"
                                 class="ml-auto text-[11.5px] font-semibold text-[#9AA6B8] hover:text-accent">Signaler</button>
                         @endif
                     @endunless

@@ -257,10 +257,35 @@ html.lenis body {
   color: #fff;
 }
 
+/* Focus clavier des liens et boutons : un contour fin et discret. */
 :focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 3px;
+  outline: 2px solid color-mix(in oklab, var(--color-azure) 45%, transparent);
+  outline-offset: 2px;
   border-radius: 4px;
+}
+
+/* Champs de saisie : un seul repère, doux (bordure bleutée + halo léger),
+   au lieu du double contour bleu (plugin forms) + rouge (focus-visible). */
+input:where(:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="submit"], [type="button"], [type="color"])):focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: color-mix(in oklab, var(--color-azure) 60%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-azure) 12%, transparent);
+}
+input[type="checkbox"]:focus,
+input[type="radio"]:focus,
+input[type="file"]:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-azure) 16%, transparent);
+}
+/* Champ en erreur : la bordure rouge reste, le halo devient rouge pâle. */
+input[aria-invalid="true"]:focus,
+textarea[aria-invalid="true"]:focus,
+select[aria-invalid="true"]:focus,
+.rj-invalide:focus {
+  border-color: color-mix(in oklab, var(--color-accent) 55%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-accent) 10%, transparent);
 }
 
 /* Champ de recherche de l'espace membre : le focus est porté par son cadre. */
@@ -436,3 +461,46 @@ html.app-loaded #page-loader {
 .legal-texte { font-size: 15.5px; }
 .legal-texte h2 { font-size: 21px; margin-top: 1.8em; padding-top: .4em; scroll-margin-top: 110px; }
 .legal-texte h3 { font-size: 17px; }
+
+/* ── Fenêtres de confirmation et notifications REJCC (rj-dialogs.js) ── */
+.rj-dialog {
+  animation: rj-fondu 0.16s ease-out;
+}
+.rj-dialog .rj-dialog-carte {
+  animation: rj-carte 0.22s var(--ease-smooth);
+}
+.rj-dialog.rj-dialog-sortie {
+  opacity: 0;
+  transition: opacity 0.15s ease-in;
+}
+html.rj-dialog-ouverte {
+  overflow: hidden;
+}
+.rj-toast {
+  animation: rj-toast 0.28s var(--ease-smooth);
+}
+.rj-toast.rj-toast-sortie {
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.18s ease-in, transform 0.18s ease-in;
+}
+.rj-erreur-champ {
+  animation: rj-fondu 0.18s ease-out;
+}
+input.rj-invalide,
+textarea.rj-invalide,
+select.rj-invalide {
+  border-color: color-mix(in oklab, var(--color-accent) 55%, transparent);
+}
+@keyframes rj-fondu {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes rj-carte {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes rj-toast {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}

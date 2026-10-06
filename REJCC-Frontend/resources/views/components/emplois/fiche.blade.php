@@ -210,7 +210,7 @@
                         @if ($o['deja_signalee'] ?? false)
                             <span class="order-last ml-auto text-[11.5px] text-[#9AA6B8]">Offre signalée</span>
                         @else
-                            <button type="button" data-test="signaler-offre" x-on:click="const m = prompt('Pourquoi signalez-vous cette offre ? (frais demandés aux candidats, fausse entreprise, contenu inapproprié…)'); if (m !== null) $wire.signaler(m)"
+                            <button type="button" data-test="signaler-offre" x-on:click="const m = await rjPrompt('Signaler cette offre ? L\'équipe REJCC examinera votre signalement.', { placeholder: 'Ex. : frais demandés aux candidats, fausse entreprise, contenu inapproprié…', ok: 'Signaler', requis: true }); if (m !== null) $wire.signaler(m)"
                                 class="order-last ml-auto text-[11.5px] font-semibold text-[#9AA6B8] hover:text-accent">Signaler</button>
                         @endif
                     @endif

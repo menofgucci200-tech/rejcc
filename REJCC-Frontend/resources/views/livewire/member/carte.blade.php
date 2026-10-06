@@ -55,12 +55,12 @@
             <label for="card-photo-input" class="btn-tap inline-flex cursor-pointer items-center gap-2 rounded-full bg-brand px-4 py-2 text-xs font-bold text-white hover:bg-brand/90">
                 <x-ui.icon name="image" class="size-3.5" /> {{ $photo ? 'Changer ma photo' : 'Ajouter ma photo' }}
             </label>
-            <button type="button" data-test="imprimer" onclick="{{ $photo ? 'window.print()' : "if (confirm('Votre carte n\\'a pas encore de photo. Imprimer quand même ?')) window.print()" }}" class="btn-tap inline-flex items-center gap-2 rounded-full border border-brand/15 bg-white px-4 py-2 text-xs font-bold text-brand hover:bg-cloud">
+            <button type="button" data-test="imprimer" x-data @click="{{ $photo ? 'window.print()' : "if (await rjConfirm('Imprimer sans photo ? Votre carte n\\'a pas encore de photo : vous pouvez en ajouter une depuis votre profil.', { ok: 'Imprimer quand même', ton: 'attention' })) window.print()" }}" class="btn-tap inline-flex items-center gap-2 rounded-full border border-brand/15 bg-white px-4 py-2 text-xs font-bold text-brand hover:bg-cloud">
                 <x-ui.icon name="download" class="size-3.5" /> Imprimer / enregistrer en PDF
             </button>
             <button type="button" data-test="telecharger-image"
                 x-data="{ busy: false }" :disabled="busy"
-                @click="busy = true; window.carteEnImage(document.querySelector('#carte-print-zone > .grid'), @js('carte-rejcc-'.\Illuminate\Support\Str::slug($name).'.png')).catch(() => alert('Le téléchargement a échoué, réessayez.')).finally(() => busy = false)"
+                @click="busy = true; window.carteEnImage(document.querySelector('#carte-print-zone > .grid'), @js('carte-rejcc-'.\Illuminate\Support\Str::slug($name).'.png')).catch(() => rjToast('Le téléchargement a échoué, réessayez.', { type: 'erreur' })).finally(() => busy = false)"
                 class="btn-tap inline-flex items-center gap-2 rounded-full border border-brand/15 bg-white px-4 py-2 text-xs font-bold text-brand hover:bg-cloud disabled:opacity-60">
                 <x-ui.icon name="image" class="size-3.5" /> <span x-text="busy ? 'Préparation…' : 'Télécharger en image'">Télécharger en image</span>
             </button>

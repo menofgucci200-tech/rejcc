@@ -68,7 +68,7 @@
                     </div>
                     <div class="flex shrink-0 gap-1">
                         <button type="button" @click="edition = true" data-test="avis-modifier" class="rounded-full px-3 py-1.5 text-[12px] font-bold text-azure hover:bg-azure/10">Modifier</button>
-                        <button type="button" @click="if (confirm('Retirer votre avis ?')) { await $wire.retirerAvis(); note = 0; commentaire = ''; edition = true }" data-test="avis-retirer" class="rounded-full px-3 py-1.5 text-[12px] font-bold text-accent hover:bg-accent/5">Retirer</button>
+                        <button type="button" @click="if (await rjConfirm('Retirer votre avis ?')) { await $wire.retirerAvis(); note = 0; commentaire = ''; edition = true }" data-test="avis-retirer" class="rounded-full px-3 py-1.5 text-[12px] font-bold text-accent hover:bg-accent/5">Retirer</button>
                     </div>
                 @endif
             </div>
@@ -119,7 +119,7 @@
                             <span data-test="avis-signale" class="shrink-0 self-start text-[11px] font-semibold text-[#9AA6B8]">Signalé</span>
                         @else
                             <button type="button" data-test="signaler-avis" title="Signaler cet avis à l'administration"
-                                x-on:click="const motif = prompt('Pourquoi signalez-vous cet avis ? (injurieux, faux, hors sujet…)'); if (motif !== null) $wire.signalerAvis({{ $a['id'] }}, motif)"
+                                x-on:click="const motif = await rjPrompt('Signaler cet avis ? L\'équipe REJCC examinera votre signalement.', { placeholder: 'Ex. : injurieux, faux, hors sujet…', ok: 'Signaler', requis: true }); if (motif !== null) $wire.signalerAvis({{ $a['id'] }}, motif)"
                                 class="shrink-0 self-start rounded-full px-2 py-0.5 text-[11px] font-semibold text-[#9AA6B8] hover:bg-accent/5 hover:text-accent">Signaler</button>
                         @endif
                     @endif
