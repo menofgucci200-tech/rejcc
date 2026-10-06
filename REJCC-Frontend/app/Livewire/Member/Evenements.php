@@ -21,6 +21,19 @@ class Evenements extends Component
     #[Url(as: 'evenement', except: null)]
     public ?int $focus = null;
 
+    /** Onglet : avenir | mes | passes. */
+    #[Url(except: 'avenir')]
+    public string $onglet = 'avenir';
+
+    #[Url(as: 'categorie', except: '')]
+    public string $categorie = '';
+
+    /** Mois affiché dans le calendrier (AAAA-MM). */
+    public string $mois = '';
+
+    /** Jour sélectionné dans le calendrier (AAAA-MM-JJ) : filtre la liste. */
+    public ?string $jour = null;
+
     public ?array $fiche = null;
 
     public ?string $message = null;
@@ -29,8 +42,34 @@ class Evenements extends Component
 
     public function mount(): void
     {
+        $this->mois = now()->format('Y-m');
         if ($this->focus) {
             $this->voir($this->focus);
+        }
+    }
+
+    public function setOnglet(string $onglet): void
+    {
+        $this->onglet = in_array($onglet, ['avenir', 'mes', 'passes'], true) ? $onglet : 'avenir';
+        $this->jour = null;
+    }
+
+    public function moisPrecedent(): void
+    {
+        $this->mois = Carbon::createFromFormat('Y-m-d', $this->mois.'-01')->subMonth()->format('Y-m');
+    }
+
+    public function moisSuivant(): void
+    {
+        $this->mois = Carbon::createFromFormat('Y-m-d', $this->mois.'-01')->addMonth()->format('Y-m');
+    }
+
+    /** Clic sur un jour du calendrier : n'affiche que les événements de ce jour. */
+    public function choisirJour(string $jour): void
+    {
+        $this->jour = $this->jour === $jour ? null : $jour;
+        if ($this->jour) {
+            $this->onglet = Carbon::parse($jour)->endOfDay()->isPast() ? 'passes' : 'avenir';
         }
     }
 
@@ -97,29 +136,46 @@ class Evenements extends Component
 
     public function render()
     {
-        $now = Carbon::now();
         $all = $this->evenements();
+        $categories = $all->pluck('category')->unique()->sort()->values();
 
-        $avenir = $all->filter(fn (array $e) => ! $e['passe'])->sortBy('starts_at')->values();
+        $liste = match ($this->onglet) {
+            'mes' => $all->filter(fn ($e) => $e['registered'])->sortBy(fn ($e) => [$e['passe'] ? 1 : 0, $e['passe'] ? -$e['debut']->timestamp : $e['debut']->timestamp]),
+            'passes' => $all->filter(fn ($e) => $e['passe'])->sortByDesc('starts_at'),
+            default => $all->filter(fn ($e) => ! $e['passe'])->sortBy('starts_at'),
+        };
+        if ($this->categorie !== '') {
+            $liste = $liste->filter(fn ($e) => $e['category'] === $this->categorie);
+        }
+        if ($this->jour) {
+            $liste = $liste->filter(fn ($e) => $e['debut']->toDateString() === $this->jour);
+        }
 
-        $eventDays = $all
-            ->filter(fn (array $e) => $e['debut']->isSameMonth($now))
-            ->map(fn (array $e) => $e['debut']->day)
-            ->values()
-            ->all();
-
-        $firstOfMonth = $now->copy()->startOfMonth();
-        $cells = array_fill(0, $firstOfMonth->dayOfWeekIso - 1, null);
-        for ($d = 1; $d <= $now->daysInMonth; $d++) {
-            $cells[] = $d;
+        // Calendrier du mois choisi : jours avec événement(s), dont ceux où je suis inscrit.
+        $mois = Carbon::createFromFormat('Y-m-d', ($this->mois ?: now()->format('Y-m')).'-01')->locale('fr');
+        $duMois = $all->filter(fn ($e) => $e['debut']->isSameMonth($mois) && $e['debut']->isSameYear($mois));
+        $jours = [];
+        foreach ($duMois as $e) {
+            $d = $e['debut']->toDateString();
+            $jours[$d] = ($jours[$d] ?? false) || $e['registered'];
+        }
+        $cells = array_fill(0, $mois->copy()->startOfMonth()->dayOfWeekIso - 1, null);
+        for ($d = 1; $d <= $mois->daysInMonth; $d++) {
+            $cells[] = $mois->copy()->day($d)->toDateString();
         }
 
         return view('livewire.member.evenements', [
-            'evenements' => $avenir,
+            'evenements' => $liste->values(),
+            'categories' => $categories,
+            'compteurs' => [
+                'avenir' => $all->filter(fn ($e) => ! $e['passe'])->count(),
+                'mes' => $all->filter(fn ($e) => $e['registered'] && ! $e['passe'])->count(),
+                'passes' => $all->filter(fn ($e) => $e['passe'])->count(),
+            ],
             'cells' => $cells,
-            'eventDays' => $eventDays,
-            'today' => $now->day,
-            'moisLabel' => ucfirst($now->translatedFormat('F Y')),
+            'joursEvenements' => $jours,
+            'aujourdhui' => now()->toDateString(),
+            'moisLabel' => ucfirst($mois->isoFormat('MMMM YYYY')),
         ]);
     }
 }
