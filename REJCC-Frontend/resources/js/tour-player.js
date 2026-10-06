@@ -1,4 +1,4 @@
-// Lecteur immersif du film « Le parcours d'adhésion ».
+// Lecteur immersif du film de présentation de la plateforme REJCC.
 // Ouvert par le bouton flottant [data-tour-open] : l'écran « plonge » dans la
 // vidéo par un cercle qui s'ouvre depuis le bouton. Choisit la version 9:16
 // sur un écran en hauteur (téléphone), 16:9 sinon. Échap ou ✕ pour fermer.
@@ -15,7 +15,7 @@ function buildOverlay(btn) {
     el.className = 'rj-tour';
     el.setAttribute('role', 'dialog');
     el.setAttribute('aria-modal', 'true');
-    el.setAttribute('aria-label', "Film : le parcours d'adhésion au REJCC");
+    el.setAttribute('aria-label', 'Film de présentation de la plateforme REJCC');
     el.innerHTML = `
         <video playsinline preload="auto" poster="${poster}">
             <source src="${src}" type="video/mp4">
