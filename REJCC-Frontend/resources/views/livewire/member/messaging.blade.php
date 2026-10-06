@@ -182,6 +182,16 @@
                                         </span>
                                     </a>
                                 @endif
+                                @if ($m['projet'] ?? null)
+                                    <a href="{{ route('espace-membre.projets', ['projet' => $m['projet']['id']]) }}" wire:navigate data-test="message-projet"
+                                        class="mb-1 flex max-w-[78%] items-center gap-2.5 rounded-[12px] border border-brand/10 bg-white p-2 pr-3 text-left hover:border-brand/30">
+                                        <x-ui.media-thumb :url="$m['projet']['image']" mode="thumb" fallback-icon="nav-projects" />
+                                        <span class="min-w-0">
+                                            <span class="block text-[10.5px] font-bold uppercase tracking-[0.08em] text-[#9AA6B8]">À propos du projet</span>
+                                            <span class="block truncate text-[12.5px] font-bold text-brand">{{ $m['projet']['title'] }}</span>
+                                        </span>
+                                    </a>
+                                @endif
                                 <div
                                     class="max-w-[78%] whitespace-pre-line break-words rounded-[14px] px-3.5 py-2.5 text-[13.5px] leading-relaxed {{ $mine ? 'text-white' : 'border border-cloud-200 bg-cloud text-ink' }}"
                                     style="{{ $mine ? 'background: linear-gradient(135deg, #4F6FBF, #031D59);' : '' }}"
@@ -215,6 +225,16 @@
                                         <span class="block truncate text-[12.5px] font-bold text-brand">{{ $annonceContexte['title'] }}</span>
                                     </span>
                                     <button type="button" wire:click="retirerAnnonce" aria-label="Ne plus rattacher l'annonce" class="icon-btn rounded-lg p-1 text-[#9AA6B8] hover:bg-white hover:text-brand"><x-ui.icon name="x" class="size-3.5" /></button>
+                                </div>
+                            @endif
+                            @if ($projetContexte)
+                                <div data-test="contexte-projet" class="mb-2 flex items-center gap-2.5 rounded-[12px] border border-azure/25 bg-azure/[.06] p-2 pr-2.5">
+                                    <x-ui.media-thumb :url="$projetContexte['image']" mode="thumb" fallback-icon="nav-projects" />
+                                    <span class="min-w-0 flex-1">
+                                        <span class="block text-[10.5px] font-bold uppercase tracking-[0.08em] text-azure">À propos du projet</span>
+                                        <span class="block truncate text-[12.5px] font-bold text-brand">{{ $projetContexte['title'] }}</span>
+                                    </span>
+                                    <button type="button" wire:click="retirerProjet" aria-label="Ne plus rattacher le projet" class="icon-btn rounded-lg p-1 text-[#9AA6B8] hover:bg-white hover:text-brand"><x-ui.icon name="x" class="size-3.5" /></button>
                                 </div>
                             @endif
                             @if ($erreur)

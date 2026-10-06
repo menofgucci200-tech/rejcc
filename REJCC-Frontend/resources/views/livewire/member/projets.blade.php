@@ -62,7 +62,7 @@
                         <input wire:model="ville" type="text" placeholder="Ex : Abidjan" class="{{ $input }}" />
                     </div>
                     <div>
-                        <label class="{{ $lab }}">Personnes impliquées</label>
+                        <label class="{{ $lab }}">Personnes impliquées au total</label>
                         <input wire:model="membersCount" type="number" min="1" class="{{ $input }}" />
                     </div>
                     <div class="sm:col-span-2">
@@ -127,13 +127,21 @@
                 Mes projets <span class="{{ $onglet === 'mes' ? 'text-white/70' : 'text-[#9AA6B8]' }}">{{ $mesProjets->count() }}</span>
                 @if ($aTraiter) <span class="rounded-full bg-[#B27007] px-1.5 text-[10px] leading-4 text-white" title="À compléter">{{ $aTraiter }}</span> @endif
             </button>
+            @php $invitations = $mesEquipes->where('relation', 'invite')->count(); @endphp
+            <button wire:click="setOnglet('equipes')" data-test="onglet-equipes" class="btn-tap inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold {{ $onglet === 'equipes' ? 'bg-brand text-white' : 'border border-brand/15 bg-white text-brand hover:bg-cloud' }}">
+                Mes équipes <span class="{{ $onglet === 'equipes' ? 'text-white/70' : 'text-[#9AA6B8]' }}">{{ $mesEquipes->count() }}</span>
+                @if ($invitations) <span class="rounded-full bg-accent px-1.5 text-[10px] leading-4 text-white" title="Invitations">{{ $invitations }}</span> @endif
+            </button>
+            <button wire:click="setOnglet('suivis')" class="btn-tap rounded-full px-4 py-1.5 text-xs font-bold {{ $onglet === 'suivis' ? 'bg-brand text-white' : 'border border-brand/15 bg-white text-brand hover:bg-cloud' }}">
+                Suivis <span class="{{ $onglet === 'suivis' ? 'text-white/70' : 'text-[#9AA6B8]' }}">{{ $suivis->count() }}</span>
+            </button>
         </div>
 
-        @php $liste = $onglet === 'mes' ? $mesProjets : $projets; @endphp
+        @php $liste = match ($onglet) { 'mes' => $mesProjets, 'equipes' => $mesEquipes, 'suivis' => $suivis, default => $projets }; @endphp
         @if ($liste->isEmpty())
             <div class="rounded-[16px] border border-dashed border-brand/20 bg-white px-6 py-12 text-center">
                 <span class="mx-auto flex size-12 items-center justify-center rounded-full bg-brand/[.06] text-brand"><x-ui.icon name="nav-projects" class="size-6" /></span>
-                <p class="mt-3 text-sm font-bold text-brand">{{ $onglet === 'mes' ? "Vous n'avez pas encore proposé de projet" : 'Aucun projet validé pour le moment' }}</p>
+                <p class="mt-3 text-sm font-bold text-brand">{{ ['mes' => "Vous n'avez pas encore proposé de projet", 'equipes' => "Vous ne faites partie d'aucune équipe", 'suivis' => 'Vous ne suivez aucun projet'][$onglet] ?? 'Aucun projet validé pour le moment' }}</p>
                 <p class="mx-auto mt-1 max-w-md text-xs text-[#5B677A]">Présentez votre projet : une fois validé par l'équipe, les membres du réseau pourront vous contacter pour y contribuer.</p>
                 <button wire:click="openForm" class="btn-tap mt-4 rounded-full bg-brand px-4 py-2 text-xs font-bold text-white hover:bg-brand/90">Proposer mon projet</button>
             </div>
@@ -146,6 +154,6 @@
         @endif
     </div>
 
-    <x-projets.fiche :fiche="$fiche" :besoins-labels="$listeBesoins" />
+    <x-projets.fiche :fiche="$fiche" :besoins-labels="$listeBesoins" :candidats="$candidats" :info="$infoFiche" :rejoindre-ouvert="$rejoindreOuvert" :recherche="$rechercheCandidat" />
     @endif
 </div>

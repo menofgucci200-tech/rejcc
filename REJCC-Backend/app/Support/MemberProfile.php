@@ -122,9 +122,17 @@ class MemberProfile
                 ])->values(),
             'groupes' => $user->groups()->orderBy('ordre')->get(['groups.name'])
                 ->map(fn ($g) => ['nom' => $g->name, 'specialite' => $g->pivot->specialite])->values(),
-            'projets' => Project::where('user_id', $user->id)->where('statut', 'valide')
-                ->latest()->limit(4)->get(['id', 'title', 'accroche', 'description', 'stade'])
-                ->map(fn (Project $p) => ['id' => $p->id, 'title' => $p->title, 'description' => $p->accroche ?: $p->description, 'status' => Project::STADES[$p->stade] ?? 'Validé'])->values(),
+            // Projets validés qu'il porte ou dont il fait partie de l'équipe.
+            'projets' => Project::where('statut', 'valide')
+                ->where(fn ($w) => $w->where('user_id', $user->id)
+                    ->orWhereHas('equipe', fn ($e) => $e->where('user_id', $user->id)->where('statut', 'membre')))
+                ->with(['equipe' => fn ($e) => $e->where('user_id', $user->id)])
+                ->latest()->limit(6)->get()
+                ->map(fn (Project $p) => [
+                    'id' => $p->id, 'title' => $p->title, 'description' => $p->accroche ?: $p->description,
+                    'status' => Project::STADES[$p->stade] ?? 'Validé',
+                    'role' => $p->user_id === $user->id ? 'Porteur du projet' : ($p->equipe->first()?->role ?: "Membre de l'équipe"),
+                ])->values(),
             'engagement' => [
                 'formations_terminees' => FormationEnrollment::where('user_id', $user->id)->whereNotNull('completed_at')->count(),
                 'evenements' => EventRegistration::where('user_id', $user->id)->count(),

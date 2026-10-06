@@ -54,6 +54,9 @@ class Messaging extends Component
     /** Annonce de la Marketplace dont on parle (contact depuis une annonce). */
     public ?array $annonceContexte = null;
 
+    /** Projet dont on parle (« Je veux contribuer » depuis la fiche d'un projet). */
+    public ?array $projetContexte = null;
+
     /** Recherche dans les conversations (nom de l'interlocuteur). */
     public string $recherche = '';
 
@@ -69,6 +72,7 @@ class Messaging extends Component
         if ($to) {
             $this->openThread($to);
             $this->rattacherAnnonce(request()->integer('annonce'));
+            $this->rattacherProjet(request()->integer('projet'));
         }
     }
 
@@ -150,10 +154,32 @@ class Messaging extends Component
         $this->annonceContexte = null;
     }
 
+    /** Contact depuis un projet : il est rappelé au-dessus du message et rattaché à l'envoi. */
+    private function rattacherProjet(int $projetId): void
+    {
+        if (! $projetId || ! $this->partner) {
+            return;
+        }
+        $p = Api::get("/projects/{$projetId}", [], Api::token())['project'] ?? null;
+        if (! $p || ($p['statut'] ?? '') !== 'valide') {
+            return;
+        }
+        $this->projetContexte = ['id' => $p['id'], 'title' => $p['title'], 'image' => $p['image'] ?? null];
+        if (trim($this->body) === '') {
+            $this->body = "Bonjour {$this->partner['prenom']}, votre projet « {$p['title']} » m'intéresse et j'aimerais y contribuer : ";
+        }
+    }
+
+    public function retirerProjet(): void
+    {
+        $this->projetContexte = null;
+    }
+
     public function openThread(int $userId): void
     {
         $this->activeId = $userId;
         $this->annonceContexte = null;
+        $this->projetContexte = null;
         $this->erreur = null;
         $this->body = '';
 
@@ -309,6 +335,7 @@ class Messaging extends Component
             'recipient_id' => $this->activeId,
             'body' => $texte,
             'listing_id' => $this->annonceContexte['id'] ?? null,
+            'project_id' => $this->projetContexte['id'] ?? null,
         ], Api::token());
 
         if (! ($result['ok'] ?? false)) {
@@ -319,6 +346,7 @@ class Messaging extends Component
 
         $this->body = '';
         $this->annonceContexte = null;
+        $this->projetContexte = null;
         $this->rafraichir();
         $this->dispatch('message-envoye');
     }

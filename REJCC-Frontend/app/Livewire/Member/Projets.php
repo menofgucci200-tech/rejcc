@@ -65,6 +65,21 @@ class Projets extends Component
 
     public int $membersCount = 1;
 
+    // ── Collaborer (fiche) ───────────────────────────────────────────────
+    public bool $rejoindreOuvert = false;
+
+    public string $messageRejoindre = '';
+
+    public string $roleRejoindre = '';
+
+    public string $rechercheCandidat = '';
+
+    public string $roleInvite = '';
+
+    public string $texteAvancee = '';
+
+    public ?string $infoFiche = null;
+
     public function mount(): void
     {
         if ($this->focus) {
@@ -103,13 +118,19 @@ class Projets extends Component
 
     public function setOnglet(string $o): void
     {
-        $this->onglet = in_array($o, ['reseau', 'mes'], true) ? $o : 'reseau';
+        $this->onglet = in_array($o, ['reseau', 'mes', 'equipes', 'suivis'], true) ? $o : 'reseau';
     }
 
     // ── Fiche ────────────────────────────────────────────────────────────
 
-    public function voir(int $id): void
+    public function voir(int $id, bool $garderInfo = false): void
     {
+        if (! $garderInfo) {
+            $this->infoFiche = null;
+            $this->rejoindreOuvert = false;
+            $this->rechercheCandidat = '';
+            $this->texteAvancee = '';
+        }
         $r = Api::get("/projects/{$id}", [], Api::token());
         if ($r['ok'] ?? false) {
             $this->fiche = $r['project'];
@@ -125,6 +146,90 @@ class Projets extends Component
     {
         $this->fiche = null;
         $this->focus = null;
+    }
+
+    // ── Collaborer ───────────────────────────────────────────────────────
+
+    /** Exécute une action sur le projet ouvert puis recharge sa fiche avec un message. */
+    private function action(array $r, string $succes): void
+    {
+        $id = $this->fiche['id'] ?? null;
+        if ($id) {
+            $this->voir($id, true);
+        }
+        $this->infoFiche = ($r['ok'] ?? false) ? $succes : ($r['message'] ?? 'Une erreur est survenue.');
+    }
+
+    public function suivre(): void
+    {
+        $r = Api::post("/projects/{$this->fiche['id']}/suivre", [], Api::token());
+        $this->action($r, ($r['suivi'] ?? false) ? 'Vous suivez ce projet : vous serez notifié(e) de ses avancées.' : 'Vous ne suivez plus ce projet.');
+    }
+
+    public function ouvrirRejoindre(): void
+    {
+        $this->rejoindreOuvert = ! $this->rejoindreOuvert;
+        $this->messageRejoindre = '';
+        $this->roleRejoindre = '';
+    }
+
+    public function rejoindre(): void
+    {
+        $r = Api::post("/projects/{$this->fiche['id']}/equipe/rejoindre", [
+            'message' => trim($this->messageRejoindre), 'role' => trim($this->roleRejoindre),
+        ], Api::token());
+        if ($r['ok'] ?? false) {
+            $this->rejoindreOuvert = false;
+        }
+        $this->action($r, ($r['statut'] ?? '') === 'membre' ? "Vous faites maintenant partie de l'équipe !" : "Demande envoyée : l'équipe du projet vous répondra.");
+    }
+
+    public function accepterLien(int $lienId): void
+    {
+        $r = Api::post("/projects/{$this->fiche['id']}/equipe/{$lienId}/accepter", [], Api::token());
+        $this->action($r, $this->fiche['relation'] === 'invite' ? "Bienvenue dans l'équipe !" : "Le membre a rejoint l'équipe et il est prévenu.");
+    }
+
+    public function retirerLien(int $lienId, string $succes = 'C\'est fait.'): void
+    {
+        $r = Api::delete("/projects/{$this->fiche['id']}/equipe/{$lienId}", Api::token());
+        $this->action($r, $succes);
+    }
+
+    public function declinerInvitation(): void
+    {
+        $this->retirerLien((int) $this->fiche['mon_lien'], 'Invitation déclinée : le porteur est prévenu.');
+    }
+
+    public function quitterEquipe(): void
+    {
+        $this->retirerLien((int) $this->fiche['mon_lien'], "Vous avez quitté l'équipe.");
+    }
+
+    public function inviter(int $userId): void
+    {
+        $r = Api::post("/projects/{$this->fiche['id']}/equipe/inviter", ['user_id' => $userId, 'role' => trim($this->roleInvite)], Api::token());
+        if ($r['ok'] ?? false) {
+            $this->rechercheCandidat = '';
+            $this->roleInvite = '';
+        }
+        $this->action($r, ($r['statut'] ?? '') === 'membre' ? "Il avait demandé à vous rejoindre : il fait maintenant partie de l'équipe." : 'Invitation envoyée : le membre est notifié.');
+    }
+
+    public function publierAvancee(): void
+    {
+        $r = Api::post("/projects/{$this->fiche['id']}/avancees", ['body' => trim($this->texteAvancee)], Api::token());
+        if ($r['ok'] ?? false) {
+            $this->texteAvancee = '';
+        }
+        $n = (int) ($r['notifies'] ?? 0);
+        $this->action($r, 'Nouvelle publiée'.($n ? " : {$n} membre".($n > 1 ? 's' : '').' prévenu'.($n > 1 ? 's' : '') : '').'.');
+    }
+
+    public function supprimerAvancee(int $avanceeId): void
+    {
+        $r = Api::delete("/projects/{$this->fiche['id']}/avancees/{$avanceeId}", Api::token());
+        $this->action($r, 'Nouvelle supprimée.');
     }
 
     // ── Formulaire ───────────────────────────────────────────────────────
@@ -241,10 +346,19 @@ class Projets extends Component
 
         $data = Api::get('/projects', [], Api::token());
 
+        $candidats = [];
+        if ($this->fiche && mb_strlen(trim($this->rechercheCandidat)) >= 2) {
+            $candidats = Api::get("/projects/{$this->fiche['id']}/candidats", ['q' => trim($this->rechercheCandidat)], Api::token())['membres'] ?? [];
+        }
+        $projets = Collection::make($data['projects'] ?? []);
+
         return view('livewire.member.projets', [
             'locked' => false,
-            'projets' => Collection::make($data['projects'] ?? []),
+            'projets' => $projets,
             'mesProjets' => Collection::make($data['mes_projets'] ?? []),
+            'mesEquipes' => Collection::make($data['mes_equipes'] ?? []),
+            'suivis' => $projets->filter(fn ($p) => $p['suivi'] ?? false)->values(),
+            'candidats' => $candidats,
             'categories' => $data['categories'] ?? [],
             'stades' => $data['stades'] ?? [],
             'listeBesoins' => $data['besoins'] ?? [],

@@ -143,4 +143,106 @@ class ProjetTest extends TestCase
         $this->assertCount(1, $this->withToken($admin)->getJson('/api/admin/projects?statut=valide')->json('projects'));
         $this->assertCount(1, $this->withToken($admin)->getJson('/api/admin/projects?q=alph')->json('projects'));
     }
+
+    // ── Collaborer ─────────────────────────────────────────────────────
+
+    private function projetValide(User $porteur): Project
+    {
+        return Project::create(['user_id' => $porteur->id, 'title' => 'BâtiJeunes', 'description' => str_repeat('a', 30), 'statut' => 'valide']);
+    }
+
+    public function test_invitation_acceptee_et_equipe_sur_la_bio(): void
+    {
+        $porteur = User::factory()->abonne()->create();
+        $paul = User::factory()->abonne()->create(['prenom' => 'Paul', 'nom' => 'Assi']);
+        $p = $this->projetValide($porteur);
+        $tp = $this->tokenFor($porteur);
+        $tpaul = $this->tokenFor($paul);
+
+        $this->withToken($tp)->getJson("/api/projects/{$p->id}/candidats?q=paul as")->assertOk()->assertJsonPath('membres.0.id', $paul->id);
+        $this->withToken($tp)->postJson("/api/projects/{$p->id}/equipe/inviter", ['user_id' => $paul->id, 'role' => 'Chef de chantier'])
+            ->assertOk()->assertJsonPath('statut', 'invite');
+        $this->assertTrue(MemberNotification::where('user_id', $paul->id)->where('title', 'like', 'Invitation%')->exists());
+
+        // L'invité voit le projet dans « Mes équipes » et accepte.
+        $this->assertSame('invite', $this->withToken($tpaul)->getJson('/api/projects')->json('mes_equipes.0.relation'));
+        $lien = $this->withToken($tpaul)->getJson("/api/projects/{$p->id}")->json('project');
+        $this->assertSame('invite', $lien['relation']);
+        $lienId = \App\Models\ProjectMember::first()->id;
+        $this->withToken($tpaul)->postJson("/api/projects/{$p->id}/equipe/{$lienId}/accepter")->assertOk()->assertJsonPath('statut', 'membre');
+        $this->assertTrue(MemberNotification::where('user_id', $porteur->id)->where('title', 'like', 'Nouvelle recrue%')->exists());
+
+        $fiche = $this->withToken($tp)->getJson("/api/projects/{$p->id}")->json('project');
+        $this->assertSame(2, $fiche['equipe_taille']);
+        $this->assertSame('Chef de chantier', $fiche['equipe'][0]['role']);
+
+        // La bio de Paul affiche le projet et son rôle.
+        $bio = \App\Support\MemberProfile::payload($paul->fresh(), true);
+        $this->assertSame('Chef de chantier', $bio['projets'][0]['role']);
+
+        // Un tiers ne peut pas accepter à la place de Paul ni retirer un membre.
+        $tiers = $this->tokenFor(User::factory()->abonne()->create());
+        $this->withToken($tiers)->deleteJson("/api/projects/{$p->id}/equipe/{$lienId}")->assertStatus(403);
+        // Paul quitte l'équipe : le porteur est prévenu.
+        $this->withToken($tpaul)->deleteJson("/api/projects/{$p->id}/equipe/{$lienId}")->assertOk();
+        $this->assertTrue(MemberNotification::where('user_id', $porteur->id)->where('title', 'like', "Départ de l'équipe%")->exists());
+    }
+
+    public function test_demande_pour_rejoindre_puis_refus(): void
+    {
+        $porteur = User::factory()->abonne()->create();
+        $awa = User::factory()->abonne()->create();
+        $p = $this->projetValide($porteur);
+        $ta = $this->tokenFor($awa);
+
+        $this->withToken($ta)->postJson("/api/projects/{$p->id}/equipe/rejoindre", ['message' => 'court'])->assertStatus(422);
+        $this->withToken($ta)->postJson("/api/projects/{$p->id}/equipe/rejoindre", ['message' => 'Je suis comptable et je peux tenir vos comptes.', 'role' => 'Comptable'])
+            ->assertOk()->assertJsonPath('statut', 'demande');
+        $this->withToken($ta)->postJson("/api/projects/{$p->id}/equipe/rejoindre", ['message' => 'Encore une demande !'])->assertStatus(422);
+
+        $fiche = $this->withToken($this->tokenFor($porteur))->getJson("/api/projects/{$p->id}")->json('project');
+        $this->assertSame('demande', $fiche['en_attente'][0]['statut']);
+        // L'équipe en attente n'est pas visible des autres membres.
+        $this->assertSame([], $this->withToken($ta)->getJson("/api/projects/{$p->id}")->json('project.en_attente'));
+
+        $this->withToken($this->tokenFor($porteur))->deleteJson("/api/projects/{$p->id}/equipe/{$fiche['en_attente'][0]['id']}")->assertOk();
+        $this->assertTrue(MemberNotification::where('user_id', $awa->id)->where('title', 'like', 'Demande non retenue%')->exists());
+    }
+
+    public function test_suivre_et_avancees_notifiees(): void
+    {
+        $porteur = User::factory()->abonne()->create();
+        $fan = User::factory()->abonne()->create();
+        $p = $this->projetValide($porteur);
+        $tf = $this->tokenFor($fan);
+        $tp = $this->tokenFor($porteur);
+
+        $this->withToken($tf)->postJson("/api/projects/{$p->id}/suivre")->assertOk()->assertJsonPath('suivi', true)->assertJsonPath('nb_suivis', 1);
+        $this->withToken($tf)->postJson("/api/projects/{$p->id}/avancees", ['body' => 'Je ne suis pas de l\'équipe'])->assertStatus(403);
+        $this->withToken($tp)->postJson("/api/projects/{$p->id}/avancees", ['body' => 'Premier chantier-école lancé à Yamoussoukro !'])
+            ->assertOk()->assertJsonPath('notifies', 1);
+        $this->assertTrue(MemberNotification::where('user_id', $fan->id)->where('title', 'Du nouveau sur le projet BâtiJeunes')->exists());
+
+        $fiche = $this->withToken($tf)->getJson("/api/projects/{$p->id}")->json('project');
+        $this->assertTrue($fiche['suivi']);
+        $this->assertSame('Premier chantier-école lancé à Yamoussoukro !', $fiche['avancees'][0]['body']);
+        $this->assertFalse($fiche['avancees'][0]['supprimable']);
+        $this->withToken($tf)->deleteJson("/api/projects/{$p->id}/avancees/{$fiche['avancees'][0]['id']}")->assertStatus(403);
+        $this->withToken($tp)->deleteJson("/api/projects/{$p->id}/avancees/{$fiche['avancees'][0]['id']}")->assertOk();
+
+        $this->withToken($tf)->postJson("/api/projects/{$p->id}/suivre")->assertJsonPath('suivi', false);
+    }
+
+    public function test_message_a_propos_du_projet(): void
+    {
+        $porteur = User::factory()->abonne()->create();
+        $p = $this->projetValide($porteur);
+        $t = $this->tokenFor(User::factory()->abonne()->create());
+
+        $this->withToken($t)->postJson('/api/messages', ['recipient_id' => $porteur->id, 'body' => 'Je peux vous aider.', 'project_id' => $p->id])->assertOk();
+        $notif = MemberNotification::where('user_id', $porteur->id)->where('type', 'message')->first();
+        $this->assertStringContainsString('À propos du projet « BâtiJeunes »', $notif->body);
+        $fil = $this->withToken($this->tokenFor($porteur))->getJson('/api/messages/'.\App\Models\Message::first()->sender_id)->json('messages');
+        $this->assertSame('BâtiJeunes', $fil[0]['projet']['title']);
+    }
 }

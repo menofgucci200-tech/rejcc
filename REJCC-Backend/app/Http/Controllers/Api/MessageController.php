@@ -148,10 +148,11 @@ class MessageController extends Controller
 
         $after = (int) $request->query('after', 0);
         $messages = (clone $query)->when($after > 0, fn ($q) => $q->where('id', '>', $after))
-            ->with('listing:id,title,photo,price,type,statut')
-            ->orderBy('id')->get(['id', 'sender_id', 'recipient_id', 'body', 'listing_id', 'created_at', 'read_at'])
+            ->with('listing:id,title,photo,price,type,statut', 'project:id,title,image,statut')
+            ->orderBy('id')->get(['id', 'sender_id', 'recipient_id', 'body', 'listing_id', 'project_id', 'created_at', 'read_at'])
             ->map(fn (Message $m) => $m->only(['id', 'sender_id', 'recipient_id', 'body', 'created_at', 'read_at']) + [
                 'annonce' => $m->listing ? $m->listing->only(['id', 'title', 'photo', 'price', 'type', 'statut']) : null,
+                'projet' => $m->project ? $m->project->only(['id', 'title', 'image', 'statut']) : null,
             ]);
 
         return response()->json([
@@ -177,6 +178,7 @@ class MessageController extends Controller
             'recipient_id' => 'required|integer',
             'body' => 'required|string|max:2000',
             'listing_id' => 'nullable|integer',
+            'project_id' => 'nullable|integer',
         ], [
             'body.required' => 'Écrivez votre message avant de l\'envoyer.',
             'body.max' => 'Votre message est trop long (2000 caractères maximum).',
@@ -234,16 +236,25 @@ class MessageController extends Controller
             $annonce->increment('contacts'); // un contact par membre intéressé
         }
 
+        // Message « À propos » d'un projet validé porté par le destinataire (ou son équipe).
+        $projet = $request->filled('project_id')
+            ? \App\Models\Project::where('statut', 'valide')->find((int) $request->input('project_id'))
+            : null;
+        if ($projet && ! $projet->estDeLEquipe($destinataire)) {
+            $projet = null;
+        }
+
         $message = Message::create([
             'sender_id' => $me->id,
             'recipient_id' => $destinataire->id,
             'body' => $body,
             'listing_id' => $annonce?->id,
+            'project_id' => $projet?->id,
         ]);
 
-        $this->notifier($me, $destinataire, $body, $annonce?->title);
+        $this->notifier($me, $destinataire, $body, $annonce?->title, $projet?->title);
 
-        return response()->json(['ok' => true, 'message' => $message->only(['id', 'sender_id', 'recipient_id', 'body', 'listing_id', 'created_at', 'read_at'])]);
+        return response()->json(['ok' => true, 'message' => $message->only(['id', 'sender_id', 'recipient_id', 'body', 'listing_id', 'project_id', 'created_at', 'read_at'])]);
     }
 
     private static function lien(int $autreId): string
@@ -261,7 +272,7 @@ class MessageController extends Controller
      * (extrait du dernier message, nombre de messages non lus) au lieu d'en
      * créer une par message. Aucune si le destinataire a le fil sous les yeux.
      */
-    private function notifier(User $expediteur, User $destinataire, string $body, ?string $annonce = null): void
+    private function notifier(User $expediteur, User $destinataire, string $body, ?string $annonce = null, ?string $projet = null): void
     {
         if (Cache::has(self::cleFilOuvert($destinataire->id, $expediteur->id))) {
             return;
@@ -271,7 +282,7 @@ class MessageController extends Controller
         $extrait = Str::limit(preg_replace('/\s+/', ' ', $body), 90);
         $donnees = [
             'title' => 'Message de '.trim($expediteur->prenom.' '.$expediteur->nom),
-            'body' => ($annonce ? "À propos de votre annonce « {$annonce} » : " : '')."« {$extrait} »".($nonLus > 1 ? " · {$nonLus} messages non lus" : ''),
+            'body' => ($annonce ? "À propos de votre annonce « {$annonce} » : " : '').($projet ? "À propos du projet « {$projet} » : " : '')."« {$extrait} »".($nonLus > 1 ? " · {$nonLus} messages non lus" : ''),
         ];
 
         $notif = MemberNotification::where('user_id', $destinataire->id)->where('type', 'message')

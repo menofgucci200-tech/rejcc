@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Project extends Model
 {
@@ -55,15 +56,44 @@ class Project extends Model
         return $this->belongsTo(Group::class, 'group_id');
     }
 
-    /** Projets visibles par ce membre : validés, plus les siens quel que soit leur statut. */
+    public function equipe(): HasMany
+    {
+        return $this->hasMany(ProjectMember::class);
+    }
+
+    public function suivis(): HasMany
+    {
+        return $this->hasMany(ProjectFollow::class);
+    }
+
+    public function avancees(): HasMany
+    {
+        return $this->hasMany(ProjectUpdate::class)->latest();
+    }
+
+    /** Projets visibles par ce membre : validés, les siens, et ceux dont il est (ou est invité dans) l'équipe. */
     public function scopeVisiblesPour(Builder $q, User $user): Builder
     {
-        return $q->where(fn ($w) => $w->where('statut', 'valide')->orWhere('user_id', $user->id));
+        return $q->where(fn ($w) => $w->where('statut', 'valide')->orWhere('user_id', $user->id)
+            ->orWhereHas('equipe', fn ($e) => $e->where('user_id', $user->id)->whereIn('statut', ['membre', 'invite'])));
     }
 
     public function estVisiblePar(User $user): bool
     {
-        return $this->statut === 'valide' || $this->user_id === $user->id || $user->role === 'admin';
+        return $this->statut === 'valide' || $this->user_id === $user->id || $user->role === 'admin'
+            || $this->equipe()->where('user_id', $user->id)->whereIn('statut', ['membre', 'invite'])->exists();
+    }
+
+    /** Porteur ou membre confirmé de l'équipe. */
+    public function estDeLEquipe(User $user): bool
+    {
+        return $this->user_id === $user->id || $this->equipe()->where('user_id', $user->id)->where('statut', 'membre')->exists();
+    }
+
+    /** Taille de l'équipe sur la plateforme (porteur compris). */
+    public function tailleEquipe(): int
+    {
+        return 1 + $this->equipe()->where('statut', 'membre')->count();
     }
 
     /** Le porteur peut-il modifier son projet ? (pas une fois refusé) */

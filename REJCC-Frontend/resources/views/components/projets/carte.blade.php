@@ -44,12 +44,20 @@
             <span class="flex min-w-0 items-center gap-1.5 text-[11.5px] text-[#5B677A]">
                 @if ($p['mine'])
                     <span class="font-semibold text-brand">Votre projet</span>
+                @elseif (($p['relation'] ?? null) === 'invite')
+                    <span class="rounded-full bg-accent px-2 py-0.5 text-[10.5px] font-bold text-white">Invitation à rejoindre</span>
+                @elseif (($p['relation'] ?? null) === 'demande')
+                    <span class="font-semibold text-[#9AA6B8]">Demande envoyée</span>
+                @elseif (($p['relation'] ?? null) === 'membre')
+                    <span class="font-semibold text-brand">Équipe{{ ($p['mon_role'] ?? null) ? ' · '.$p['mon_role'] : '' }}</span>
                 @elseif ($p['porteur'] ?? null)
                     <x-messagerie.avatar :personne="$p['porteur']" taille="size-5" texte="text-[8px]" />
                     <span class="truncate">{{ $p['porteur']['prenom'] }} {{ $p['porteur']['nom'] }}</span>
                 @endif
             </span>
-            @if ($p['ville'] ?? null)
+            @if (($p['equipe_taille'] ?? 1) > 1)
+                <span class="inline-flex shrink-0 items-center gap-1 text-[11px] text-[#9AA6B8]"><x-ui.icon name="users" class="size-3" /> {{ $p['equipe_taille'] }}</span>
+            @elseif ($p['ville'] ?? null)
                 <span class="inline-flex shrink-0 items-center gap-1 text-[11px] text-[#9AA6B8]"><x-ui.icon name="map-pin" class="size-3" /> {{ $p['ville'] }}</span>
             @endif
         </div>

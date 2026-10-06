@@ -173,6 +173,14 @@ Route::middleware('auth.token')->group(function () {
         Route::put('/projects/{id}', [\App\Http\Controllers\Api\ProjectController::class, 'update'])->whereNumber('id');
         Route::post('/projects/{id}/retirer', [\App\Http\Controllers\Api\ProjectController::class, 'retirer'])->whereNumber('id');
         Route::delete('/projects/{id}', [\App\Http\Controllers\Api\ProjectController::class, 'destroy'])->whereNumber('id');
+        Route::get('/projects/{id}/candidats', [\App\Http\Controllers\Api\ProjectController::class, 'candidats'])->whereNumber('id');
+        Route::post('/projects/{id}/equipe/inviter', [\App\Http\Controllers\Api\ProjectController::class, 'inviter'])->whereNumber('id');
+        Route::post('/projects/{id}/equipe/rejoindre', [\App\Http\Controllers\Api\ProjectController::class, 'rejoindre'])->whereNumber('id');
+        Route::post('/projects/{id}/equipe/{lien}/accepter', [\App\Http\Controllers\Api\ProjectController::class, 'accepter'])->whereNumber(['id', 'lien']);
+        Route::delete('/projects/{id}/equipe/{lien}', [\App\Http\Controllers\Api\ProjectController::class, 'retirerMembre'])->whereNumber(['id', 'lien']);
+        Route::post('/projects/{id}/suivre', [\App\Http\Controllers\Api\ProjectController::class, 'suivre'])->whereNumber('id');
+        Route::post('/projects/{id}/avancees', [\App\Http\Controllers\Api\ProjectController::class, 'publier'])->whereNumber('id');
+        Route::delete('/projects/{id}/avancees/{avancee}', [\App\Http\Controllers\Api\ProjectController::class, 'supprimerAvancee'])->whereNumber(['id', 'avancee']);
     });
 
     // Opportunités & annonces

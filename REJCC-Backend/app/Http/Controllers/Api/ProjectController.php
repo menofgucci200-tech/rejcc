@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Group;
 use App\Models\MemberNotification;
 use App\Models\Project;
+use App\Models\ProjectFollow;
+use App\Models\ProjectMember;
+use App\Models\ProjectUpdate;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -47,14 +50,39 @@ class ProjectController extends Controller
             'ville' => $p->ville,
             'image' => $p->image,
             'members_count' => (int) $p->members_count,
+            'equipe_taille' => 1 + $p->equipe->where('statut', 'membre')->count(),
             'porteur' => $u ? ['id' => $u->id, 'prenom' => $u->prenom, 'nom' => $u->nom, 'photo' => $u->photo, 'role' => $u->role, 'titre' => $u->titre] : null,
             'mine' => $moi && $p->user_id === $moi->id,
             'soumis_at' => $p->soumis_at?->toIso8601String(),
             'decide_at' => $p->decide_at?->toIso8601String(),
             'created_at' => $p->created_at?->toIso8601String(),
         ];
+        if ($moi) {
+            $lien = $p->equipe->firstWhere('user_id', $moi->id);
+            $data['relation'] = $p->user_id === $moi->id ? 'porteur' : $lien?->statut; // porteur | membre | invite | demande | null
+            $data['mon_role'] = $lien?->role;
+            $data['mon_lien'] = $lien?->id;
+        }
         if ($complet) {
+            $estEquipe = $moi && in_array($data['relation'] ?? null, ['porteur', 'membre'], true);
             $data += [
+                'equipe' => $p->equipe->where('statut', 'membre')->filter(fn ($m) => $m->user)->map(fn (ProjectMember $m) => [
+                    'id' => $m->id, 'role' => $m->role,
+                    'membre' => $m->user->only(['id', 'prenom', 'nom', 'photo', 'role', 'titre']),
+                ])->values(),
+                // Invitations et demandes en attente : visibles de l'équipe.
+                'en_attente' => $estEquipe ? $p->equipe->whereIn('statut', ['invite', 'demande'])->filter(fn ($m) => $m->user)->map(fn (ProjectMember $m) => [
+                    'id' => $m->id, 'statut' => $m->statut, 'role' => $m->role, 'message' => $m->message,
+                    'membre' => $m->user->only(['id', 'prenom', 'nom', 'photo', 'role', 'titre']),
+                ])->values() : [],
+                'suivi' => $moi && $p->suivis()->where('user_id', $moi->id)->exists(),
+                'nb_suivis' => $p->suivis()->count(),
+                'avancees' => $p->avancees()->with('auteur:id,prenom,nom,photo,role')->limit(10)->get()->map(fn (ProjectUpdate $u) => [
+                    'id' => $u->id, 'body' => $u->body, 'image' => $u->image, 'date' => $u->created_at->toIso8601String(),
+                    'auteur' => $u->auteur?->only(['id', 'prenom', 'nom', 'photo', 'role']),
+                    'supprimable' => $moi && ($u->user_id === $moi->id || $p->user_id === $moi->id),
+                ])->values(),
+                'peut_publier' => $estEquipe && $p->statut === 'valide',
                 'probleme' => $p->probleme,
                 'solution' => $p->solution,
                 'cible' => $p->cible,
@@ -138,16 +166,24 @@ class ProjectController extends Controller
     public function index(Request $request)
     {
         $moi = $request->user();
-        $projets = Project::with(['porteur:id,prenom,nom,photo,role,titre', 'groupe:id,name,couleur,icone'])
+        $projets = Project::with(['porteur:id,prenom,nom,photo,role,titre', 'groupe:id,name,couleur,icone', 'equipe.user:id,prenom,nom,photo,role,titre'])
             ->where('statut', 'valide')
             ->orderByDesc('decide_at')->orderByDesc('created_at')->get();
-        $mes = Project::with(['porteur:id,prenom,nom,photo,role,titre', 'groupe:id,name,couleur,icone'])
+        $mes = Project::with(['porteur:id,prenom,nom,photo,role,titre', 'groupe:id,name,couleur,icone', 'equipe.user:id,prenom,nom,photo,role,titre'])
             ->where('user_id', $moi->id)->orderByDesc('created_at')->get();
+
+        $equipes = Project::with(['porteur:id,prenom,nom,photo,role,titre', 'groupe:id,name,couleur,icone', 'equipe.user:id,prenom,nom,photo,role,titre'])
+            ->where('statut', '!=', 'retire')
+            ->whereHas('equipe', fn ($e) => $e->where('user_id', $moi->id)->whereIn('statut', ['membre', 'invite', 'demande']))
+            ->orderByDesc('updated_at')->get();
+        $suivis = ProjectFollow::where('user_id', $moi->id)->pluck('project_id')->all();
 
         return response()->json([
             'ok' => true,
-            'projects' => $projets->map(fn ($p) => $this->payload($p, $moi))->values(),
+            'projects' => $projets->map(fn ($p) => $this->payload($p, $moi) + ['suivi' => in_array($p->id, $suivis, true)])->values(),
             'mes_projets' => $mes->map(fn ($p) => $this->payload($p, $moi))->values(),
+            'mes_equipes' => $equipes->map(fn ($p) => $this->payload($p, $moi))->values(),
+            'suivis' => $suivis,
         ] + $this->referentiels());
     }
 
@@ -155,7 +191,7 @@ class ProjectController extends Controller
     public function show(Request $request, int $id)
     {
         $moi = $request->user();
-        $p = Project::with(['porteur:id,prenom,nom,photo,role,titre', 'groupe:id,name,couleur,icone'])->find($id);
+        $p = Project::with(['porteur:id,prenom,nom,photo,role,titre', 'groupe:id,name,couleur,icone', 'equipe.user:id,prenom,nom,photo,role,titre'])->find($id);
         if (! $p || ! $p->estVisiblePar($moi) || ($p->statut === 'retire' && $p->user_id !== $moi->id)) {
             return response()->json(['ok' => false, 'message' => "Ce projet n'est pas (ou plus) visible."], 404);
         }
@@ -180,7 +216,7 @@ class ProjectController extends Controller
 
         $project = Project::create($d + ['user_id' => $moi->id, 'statut' => 'evaluation', 'soumis_at' => now()]);
 
-        return response()->json(['ok' => true, 'project' => $this->payload($project->load('groupe'), $moi, true)], 201);
+        return response()->json(['ok' => true, 'project' => $this->payload($project->load('groupe', 'porteur', 'equipe.user'), $moi, true)], 201);
     }
 
     /**
@@ -207,7 +243,7 @@ class ProjectController extends Controller
         }
         $p->update($d);
 
-        return response()->json(['ok' => true, 'resoumis' => $resoumis, 'project' => $this->payload($p->fresh(['groupe', 'porteur']), $moi, true)]);
+        return response()->json(['ok' => true, 'resoumis' => $resoumis, 'project' => $this->payload($p->fresh(['groupe', 'porteur', 'equipe.user']), $moi, true)]);
     }
 
     /** POST /projects/{id}/retirer — le porteur retire son projet (plus visible des membres). */
@@ -231,6 +267,235 @@ class ProjectController extends Controller
     }
 
     // ------------------------------------------------------------------
+    // Collaborer : équipe, suivre, avancées
+    // ------------------------------------------------------------------
+
+    private function notif(int $userId, Project $p, string $titre, string $texte): void
+    {
+        MemberNotification::create([
+            'user_id' => $userId, 'type' => 'info', 'title' => $titre, 'body' => $texte,
+            'link' => "/espace-membre/projets?projet={$p->id}",
+        ]);
+    }
+
+    private function nomDe(User $u): string
+    {
+        return trim($u->prenom.' '.$u->nom);
+    }
+
+    /** GET /projects/{id}/candidats?q= — membres de l'annuaire à inviter dans l'équipe. */
+    public function candidats(Request $request, int $id)
+    {
+        $moi = $request->user();
+        $p = Project::find($id);
+        if (! $p || ! $p->estDeLEquipe($moi)) {
+            return response()->json(['ok' => false, 'message' => 'Projet introuvable.'], 404);
+        }
+        $q = trim((string) $request->query('q', ''));
+        if (mb_strlen($q) < 2) {
+            return response()->json(['ok' => true, 'membres' => []]);
+        }
+        $deja = $p->equipe()->pluck('user_id')->push($p->user_id)->all();
+        $membres = User::where('is_active', true)->whereIn('role', ['member', 'mentor'])->whereNotIn('id', $deja)
+            ->where(fn ($w) => $w->whereNull('preferences')->orWhereNull('preferences->apparaitre_annuaire')->orWhere('preferences->apparaitre_annuaire', true))
+            // Chaque mot doit se retrouver dans le prénom ou le nom (« awa tra » trouve Awa Traoré).
+            ->where(function ($w) use ($q) {
+                foreach (preg_split('/\s+/', $q) as $mot) {
+                    $w->where(fn ($x) => $x->where('prenom', 'like', "%{$mot}%")->orWhere('nom', 'like', "%{$mot}%"));
+                }
+            })
+            ->orderBy('prenom')->limit(8)->get(['id', 'prenom', 'nom', 'photo', 'role', 'titre', 'ville']);
+
+        return response()->json(['ok' => true, 'membres' => $membres]);
+    }
+
+    /** POST /projects/{id}/equipe/inviter — l'équipe invite un membre du réseau. */
+    public function inviter(Request $request, int $id)
+    {
+        $moi = $request->user();
+        $p = Project::find($id);
+        if (! $p || ! $p->estDeLEquipe($moi)) {
+            return response()->json(['ok' => false, 'message' => 'Projet introuvable.'], 404);
+        }
+        if ($p->statut === 'retire' || $p->statut === 'refuse') {
+            return response()->json(['ok' => false, 'message' => "Ce projet n'accepte plus de nouveaux membres."], 422);
+        }
+        $invite = User::where('is_active', true)->find((int) $request->input('user_id'));
+        if (! $invite || $invite->id === $p->user_id) {
+            return response()->json(['ok' => false, 'message' => 'Choisissez un membre du réseau.'], 422);
+        }
+        $role = mb_substr(trim((string) $request->input('role')), 0, 80) ?: null;
+        $lien = ProjectMember::firstWhere(['project_id' => $p->id, 'user_id' => $invite->id]);
+        if ($lien?->statut === 'membre') {
+            return response()->json(['ok' => false, 'message' => $this->nomDe($invite).' fait déjà partie de l\'équipe.'], 422);
+        }
+        if ($lien?->statut === 'demande') {
+            // Il avait demandé à rejoindre : l'invitation vaut acceptation.
+            $lien->update(['statut' => 'membre', 'role' => $role ?? $lien->role]);
+            $this->notif($invite->id, $p, "Bienvenue dans l'équipe : {$p->title}", 'Votre demande pour rejoindre le projet est acceptée.');
+
+            return response()->json(['ok' => true, 'statut' => 'membre']);
+        }
+        ProjectMember::updateOrCreate(['project_id' => $p->id, 'user_id' => $invite->id], [
+            'statut' => 'invite', 'role' => $role, 'message' => mb_substr(trim((string) $request->input('message')), 0, 500) ?: null,
+        ]);
+        $this->notif($invite->id, $p, "Invitation : rejoindre le projet {$p->title}",
+            $this->nomDe($moi)." vous invite à rejoindre l'équipe".($role ? " comme {$role}" : '').'. Ouvrez le projet pour accepter ou décliner.');
+
+        return response()->json(['ok' => true, 'statut' => 'invite']);
+    }
+
+    /** POST /projects/{id}/equipe/rejoindre — un membre demande à rejoindre l'équipe. */
+    public function rejoindre(Request $request, int $id)
+    {
+        $moi = $request->user();
+        $p = Project::where('statut', 'valide')->find($id);
+        if (! $p) {
+            return response()->json(['ok' => false, 'message' => 'Projet introuvable.'], 404);
+        }
+        if ($p->user_id === $moi->id) {
+            return response()->json(['ok' => false, 'message' => "C'est votre projet."], 422);
+        }
+        $lien = ProjectMember::firstWhere(['project_id' => $p->id, 'user_id' => $moi->id]);
+        if ($lien?->statut === 'invite') {
+            return $this->accepterLien($p, $lien, $moi);
+        }
+        if ($lien) {
+            return response()->json(['ok' => false, 'message' => $lien->statut === 'membre' ? "Vous faites déjà partie de l'équipe." : 'Votre demande est déjà envoyée.'], 422);
+        }
+        $message = mb_substr(trim((string) $request->input('message')), 0, 500);
+        if (mb_strlen($message) < 10) {
+            return response()->json(['ok' => false, 'message' => 'Présentez-vous en quelques mots : ce que vous pouvez apporter au projet.'], 422);
+        }
+        ProjectMember::create(['project_id' => $p->id, 'user_id' => $moi->id, 'statut' => 'demande',
+            'role' => mb_substr(trim((string) $request->input('role')), 0, 80) ?: null, 'message' => $message]);
+        $this->notif($p->user_id, $p, "Demande pour rejoindre : {$p->title}", $this->nomDe($moi)." souhaite rejoindre votre équipe : « {$message} »");
+
+        return response()->json(['ok' => true, 'statut' => 'demande']);
+    }
+
+    private function accepterLien(Project $p, ProjectMember $lien, User $par)
+    {
+        $lien->update(['statut' => 'membre']);
+        $u = $lien->user;
+        if ($par->id === $lien->user_id) {
+            // L'invité accepte : le porteur est prévenu.
+            $this->notif($p->user_id, $p, "Nouvelle recrue : {$p->title}", $this->nomDe($u).' a rejoint votre équipe.');
+        } else {
+            $this->notif($lien->user_id, $p, "Bienvenue dans l'équipe : {$p->title}", 'Votre demande pour rejoindre le projet est acceptée.');
+        }
+
+        return response()->json(['ok' => true, 'statut' => 'membre']);
+    }
+
+    /**
+     * POST /projects/{id}/equipe/{lien}/accepter — l'invité accepte son
+     * invitation, ou l'équipe accepte une demande.
+     */
+    public function accepter(Request $request, int $id, int $lienId)
+    {
+        $moi = $request->user();
+        $p = Project::find($id);
+        $lien = $p ? ProjectMember::with('user')->where('project_id', $p->id)->find($lienId) : null;
+        if (! $lien) {
+            return response()->json(['ok' => false, 'message' => 'Invitation introuvable.'], 404);
+        }
+        $autorise = ($lien->statut === 'invite' && $lien->user_id === $moi->id)
+            || ($lien->statut === 'demande' && $p->estDeLEquipe($moi));
+        if (! $autorise) {
+            return response()->json(['ok' => false, 'message' => 'Action impossible.'], 403);
+        }
+
+        return $this->accepterLien($p, $lien, $moi);
+    }
+
+    /**
+     * DELETE /projects/{id}/equipe/{lien} — décliner une invitation, refuser
+     * une demande, retirer un membre (équipe) ou quitter l'équipe (soi-même).
+     */
+    public function retirerMembre(Request $request, int $id, int $lienId)
+    {
+        $moi = $request->user();
+        $p = Project::find($id);
+        $lien = $p ? ProjectMember::with('user')->where('project_id', $p->id)->find($lienId) : null;
+        if (! $lien) {
+            return response()->json(['ok' => false, 'message' => 'Introuvable.'], 404);
+        }
+        $soiMeme = $lien->user_id === $moi->id;
+        if (! $soiMeme && $p->user_id !== $moi->id && ! ($lien->statut === 'demande' && $p->estDeLEquipe($moi))) {
+            return response()->json(['ok' => false, 'message' => 'Action impossible.'], 403);
+        }
+        $statut = $lien->statut;
+        $lien->delete();
+        if ($soiMeme) {
+            $this->notif($p->user_id, $p, $statut === 'invite' ? "Invitation déclinée : {$p->title}" : "Départ de l'équipe : {$p->title}",
+                $this->nomDe($moi).($statut === 'invite' ? " a décliné votre invitation." : ($statut === 'demande' ? ' a retiré sa demande.' : " a quitté l'équipe.")));
+        } elseif ($statut === 'demande') {
+            $this->notif($lien->user_id, $p, "Demande non retenue : {$p->title}", "L'équipe du projet n'a pas retenu votre demande pour le moment. Merci pour votre proposition !");
+        } elseif ($statut === 'membre') {
+            $this->notif($lien->user_id, $p, "Équipe du projet : {$p->title}", "Vous ne faites plus partie de l'équipe de ce projet.");
+        }
+
+        return response()->json(['ok' => true]);
+    }
+
+    /** POST /projects/{id}/suivre — suivre / ne plus suivre un projet validé. */
+    public function suivre(Request $request, int $id)
+    {
+        $moi = $request->user();
+        $p = Project::where('statut', 'valide')->find($id);
+        if (! $p) {
+            return response()->json(['ok' => false, 'message' => 'Projet introuvable.'], 404);
+        }
+        $suivi = ProjectFollow::where('project_id', $p->id)->where('user_id', $moi->id)->first();
+        $suivi ? $suivi->delete() : ProjectFollow::create(['project_id' => $p->id, 'user_id' => $moi->id]);
+
+        return response()->json(['ok' => true, 'suivi' => ! $suivi, 'nb_suivis' => $p->suivis()->count()]);
+    }
+
+    /** POST /projects/{id}/avancees — l'équipe publie une avancée ; abonnés au projet et équipe sont notifiés. */
+    public function publier(Request $request, int $id)
+    {
+        $moi = $request->user();
+        $p = Project::where('statut', 'valide')->find($id);
+        if (! $p || ! $p->estDeLEquipe($moi)) {
+            return response()->json(['ok' => false, 'message' => "Seule l'équipe d'un projet validé peut publier ses avancées."], 403);
+        }
+        $v = Validator::make($request->all(), ['body' => 'required|string|min:5|max:2000', 'image' => 'nullable|url|max:500'],
+            ['body.required' => 'Écrivez votre nouvelle.', 'body.min' => 'Votre nouvelle est trop courte.']);
+        if ($v->fails()) {
+            return response()->json(['ok' => false, 'message' => $v->errors()->first()], 422);
+        }
+        $u = ProjectUpdate::create($v->validated() + ['project_id' => $p->id, 'user_id' => $moi->id]);
+
+        $extrait = \Illuminate\Support\Str::limit(preg_replace('/\s+/', ' ', $u->body), 110);
+        $destinataires = ProjectFollow::where('project_id', $p->id)->pluck('user_id')
+            ->merge($p->equipe()->where('statut', 'membre')->pluck('user_id'))->push($p->user_id)
+            ->unique()->reject(fn ($uid) => $uid === $moi->id);
+        $now = now();
+        MemberNotification::insert($destinataires->map(fn ($uid) => [
+            'user_id' => $uid, 'type' => 'info', 'title' => "Du nouveau sur le projet {$p->title}", 'body' => $extrait,
+            'link' => "/espace-membre/projets?projet={$p->id}", 'created_at' => $now, 'updated_at' => $now,
+        ])->values()->all());
+
+        return response()->json(['ok' => true, 'notifies' => $destinataires->count()]);
+    }
+
+    /** DELETE /projects/{id}/avancees/{avancee} — par son auteur ou le porteur. */
+    public function supprimerAvancee(Request $request, int $id, int $avancee)
+    {
+        $moi = $request->user();
+        $p = Project::find($id);
+        $u = $p ? ProjectUpdate::where('project_id', $p->id)->find($avancee) : null;
+        if (! $u || ($u->user_id !== $moi->id && $p->user_id !== $moi->id)) {
+            return response()->json(['ok' => false, 'message' => 'Action impossible.'], 403);
+        }
+        $u->delete();
+
+        return response()->json(['ok' => true]);
+    }
+
+    // ------------------------------------------------------------------
     // Administration
     // ------------------------------------------------------------------
 
@@ -240,7 +505,7 @@ class ProjectController extends Controller
         $statut = (string) $request->query('statut', '');
         $q = trim((string) $request->query('q', ''));
 
-        $query = Project::with(['porteur:id,prenom,nom,photo,role,titre,email,telephone', 'groupe:id,name,couleur,icone'])
+        $query = Project::with(['porteur:id,prenom,nom,photo,role,titre,email,telephone', 'groupe:id,name,couleur,icone', 'equipe.user:id,prenom,nom,photo,role,titre'])
             ->when($statut !== '' && isset(Project::STATUTS[$statut]), fn ($w) => $w->where('statut', $statut))
             ->when($q !== '', fn ($w) => $w->where(fn ($x) => $x->where('title', 'like', "%{$q}%")->orWhere('description', 'like', "%{$q}%")
                 ->orWhere('ville', 'like', "%{$q}%")
@@ -275,7 +540,7 @@ class ProjectController extends Controller
         $this->notifier($project, "Projet mis à jour par l'équipe : {$project->title}",
             "L'équipe REJCC a apporté des corrections à la fiche de votre projet.".($note !== '' ? " Note : {$note}" : ''));
 
-        return response()->json(['ok' => true, 'project' => $this->payload($project->fresh(['groupe', 'porteur']), $request->user(), true)]);
+        return response()->json(['ok' => true, 'project' => $this->payload($project->fresh(['groupe', 'porteur', 'equipe.user']), $request->user(), true)]);
     }
 
     /**
@@ -314,7 +579,7 @@ class ProjectController extends Controller
         };
         $this->notifier($p, $titre, $texte);
 
-        return response()->json(['ok' => true, 'project' => $this->payload($p->fresh(['groupe', 'porteur']), $request->user(), true)]);
+        return response()->json(['ok' => true, 'project' => $this->payload($p->fresh(['groupe', 'porteur', 'equipe.user']), $request->user(), true)]);
     }
 
     public function adminDestroy(int $id)

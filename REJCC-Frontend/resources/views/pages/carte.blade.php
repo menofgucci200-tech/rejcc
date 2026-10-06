@@ -173,6 +173,7 @@
                                     <div class="rounded-2xl border border-brand/10 bg-cloud/40 p-4">
                                         <span class="rounded-full bg-azure/10 px-2.5 py-0.5 text-[10.5px] font-bold text-azure">{{ $pr['status'] }}</span>
                                         <p class="mt-2 text-[13.5px] font-bold text-brand">{{ $pr['title'] }}</p>
+                                        @if ($pr['role'] ?? null)<p class="text-[11.5px] font-semibold text-accent">{{ $pr['role'] }}</p>@endif
                                         @if ($pr['description'] ?? null)
                                             <p class="mt-1 line-clamp-3 text-[12.5px] text-[#5B677A]">{{ $pr['description'] }}</p>
                                         @endif
