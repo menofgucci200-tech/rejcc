@@ -28,8 +28,8 @@ class CertificatDelivre extends Mailable
         $base = rtrim((string) config('app.frontend_url'), '/');
         $verif = $c->urlVerification(false);
         $acces = $c->user_id
-            ? "<p>Retrouvez-le dans votre espace membre : <a href=\"{$base}/espace-membre/certificats\">{$base}/espace-membre/certificats</a></p>"
-            : "<p>Téléchargez-le depuis sa page officielle : <a href=\"{$verif}\">{$verif}</a></p>";
+            ? "<p>Il est délivré au format PDF, signé électroniquement : seul ce fichier fait foi (une image ou une capture d'écran n'a pas valeur de certificat). Retrouvez-le dans votre espace membre : <a href=\"{$base}/espace-membre/certificats\">{$base}/espace-membre/certificats</a></p>"
+            : "<p>Il est délivré au format PDF, signé électroniquement : seul ce fichier fait foi. Téléchargez-le depuis sa page officielle : <a href=\"{$verif}\">{$verif}</a></p>";
         $prenom = explode(' ', $c->nom)[0];
 
         return new Content(htmlString: "

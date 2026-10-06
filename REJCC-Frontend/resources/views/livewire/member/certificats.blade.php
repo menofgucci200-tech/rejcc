@@ -10,7 +10,7 @@
             <div>
                 <h1 class="mb-1 text-[17px] font-bold text-brand">Mes certificats &amp; attestations</h1>
                 <div class="h-[3px] w-9 rounded bg-accent"></div>
-                <p class="mt-2 max-w-xl text-xs text-[#5B677A]">Vos documents officiels, délivrés et vérifiables par le registre du REJCC. Partagez leur lien de vérification avec un recruteur ou un partenaire.</p>
+                <p class="mt-2 max-w-xl text-xs text-[#5B677A]">Vos documents officiels, délivrés uniquement au format PDF signé et vérifiables par le registre du REJCC. Partagez le PDF ou son lien de vérification avec un recruteur ou un partenaire.</p>
             </div>
             @if ($parType->isNotEmpty())
                 <div class="flex flex-wrap gap-2">
@@ -83,9 +83,11 @@
                             <p class="rounded-[12px] bg-accent/10 px-3 py-2.5 text-[12.5px] text-accent"><span class="font-bold">Certificat révoqué</span>{{ $cert['motif_revocation'] ? ' — '.$cert['motif_revocation'] : '' }}</p>
                         @else
                             <div class="grid grid-cols-2 gap-2">
-                                <a href="{{ route('espace-membre.certificats.pdf', ['id' => $cert['id'], 'telecharger' => 1]) }}" data-test="telecharger-certificat" class="btn-tap inline-flex items-center justify-center gap-1.5 rounded-full bg-brand px-3 py-2.5 text-[12.5px] font-bold text-white hover:bg-brand/90"><x-ui.icon name="download" class="size-4" /> Télécharger</a>
+                                <a href="{{ route('espace-membre.certificats.pdf', ['id' => $cert['id'], 'telecharger' => 1]) }}" data-test="telecharger-certificat" class="btn-tap inline-flex items-center justify-center gap-1.5 rounded-full bg-brand px-3 py-2.5 text-[12.5px] font-bold text-white hover:bg-brand/90"><x-ui.icon name="download" class="size-4" /> Télécharger le PDF</a>
                                 <a href="{{ \App\Livewire\Member\Certificats::lienLinkedin($cert) }}" target="_blank" rel="noopener" data-test="linkedin" class="btn-tap inline-flex items-center justify-center gap-1.5 rounded-full bg-[#0A66C2] px-3 py-2.5 text-[12.5px] font-bold text-white hover:bg-[#0A66C2]/90"><x-ui.icon name="linkedin" class="size-4" /> LinkedIn</a>
                             </div>
+
+                            <p data-test="pdf-seul" class="flex items-start gap-2 rounded-[12px] bg-cloud px-3 py-2.5 text-[11.5px] leading-relaxed text-[#5B677A]"><x-ui.icon name="shield-check" class="mt-px size-3.5 shrink-0 text-brand" /> <span>Votre certificat existe uniquement au <strong class="text-brand">format PDF</strong>, signé électroniquement. Une image, une photo ou une capture d'écran n'a pas valeur de certificat : transmettez toujours le PDF ou le lien de vérification.</span></p>
 
                             <div class="rounded-[14px] border border-brand/10 p-3.5">
                                 <p class="text-[12px] font-bold text-brand">Lien de vérification</p>

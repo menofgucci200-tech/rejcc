@@ -79,7 +79,7 @@
                             <p class="mt-6 rounded-[12px] border border-brand/10 bg-cloud/60 px-4 py-3 text-[12.5px] leading-relaxed text-[#5B677A]">Comparez ces informations avec le document qui vous a été présenté : le nom, la formation et la date doivent être <strong class="text-brand">identiques</strong>. Une différence signifie que le document a été modifié.</p>
                             @if ($r === 'valide')
                                 <div class="mt-5 flex flex-wrap gap-2">
-                                    <a href="{{ route('verifier.pdf', ['code' => $c['code']]) }}" target="_blank" rel="noopener" data-test="copie-officielle" class="btn-tap inline-flex items-center gap-1.5 rounded-full bg-brand px-5 py-2.5 text-[13px] font-bold text-white hover:bg-brand/90"><x-ui.icon name="file-text" class="size-4" /> Voir la copie officielle</a>
+                                    <a href="{{ route('verifier.pdf', ['code' => $c['code']]) }}" target="_blank" rel="noopener" data-test="copie-officielle" class="btn-tap inline-flex items-center gap-1.5 rounded-full bg-brand px-5 py-2.5 text-[13px] font-bold text-white hover:bg-brand/90"><x-ui.icon name="file-text" class="size-4" /> Voir la copie officielle (PDF)</a>
                                 </div>
                             @endif
                         </div>
@@ -93,6 +93,7 @@
                     <div class="min-w-0 flex-1">
                         <p class="text-[16px] font-extrabold text-brand">Vous avez reçu le certificat en PDF ?</p>
                         <p class="mt-1 text-[13px] leading-relaxed text-[#5B677A]">Déposez-le ici : nous vérifions qu'il s'agit exactement du fichier délivré par le REJCC, sans la moindre modification. Le fichier est analysé sur place, il n'est ni transmis ni conservé.</p>
+                        <p class="mt-1.5 text-[12px] leading-relaxed text-[#9AA6B8]">Les certificats du REJCC sont délivrés uniquement au format PDF : une image (PNG, JPG), une photo ou une capture d'écran n'a aucune valeur officielle. Vérifiez alors le code inscrit sur le document.</p>
                     </div>
                     <label class="btn-tap inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-brand/15 bg-cloud px-5 py-3 text-[13px] font-bold text-brand hover:bg-cloud-200">
                         <x-ui.icon name="download" class="size-4 rotate-180" /> Déposer le PDF
