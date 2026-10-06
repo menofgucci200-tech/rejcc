@@ -48,6 +48,9 @@ Route::get('/event-signup/{slug}', [\App\Http\Controllers\Api\EventSignupControl
     ->middleware('throttle:60,1');
 Route::post('/event-signup/{slug}', [\App\Http\Controllers\Api\EventSignupController::class, 'register'])
     ->middleware('throttle:20,1');
+// Billet d'un invité (QR présenté à l'entrée)
+Route::get('/billet/{code}', [\App\Http\Controllers\Api\EventSignupController::class, 'billet'])
+    ->middleware('throttle:60,1');
 
 // Webhook CinetPay (notification serveur à serveur du paiement d'abonnement)
 Route::post('/subscription/notify', [\App\Http\Controllers\Api\SubscriptionController::class, 'notify'])
@@ -305,13 +308,10 @@ Route::middleware(['auth.token', 'audit.log'])->prefix('admin')->group(function 
         Route::get('/events/{id}/inscrits', [EventController::class, 'inscrits'])->whereNumber('id');
         Route::post('/events/{id}/pointage', [EventController::class, 'pointage'])->whereNumber('id');
 
-        // Événements à inscription publique (module « Inscriptions »)
-        Route::get('/registration-events', [\App\Http\Controllers\Api\RegistrationEventController::class, 'index']);
-        Route::post('/registration-events', [\App\Http\Controllers\Api\RegistrationEventController::class, 'store']);
-        Route::put('/registration-events/{id}', [\App\Http\Controllers\Api\RegistrationEventController::class, 'update']);
-        Route::post('/registration-events/{id}/toggle', [\App\Http\Controllers\Api\RegistrationEventController::class, 'toggle']);
-        Route::delete('/registration-events/{id}', [\App\Http\Controllers\Api\RegistrationEventController::class, 'destroy']);
-        Route::get('/registration-events/{id}/participants', [\App\Http\Controllers\Api\RegistrationEventController::class, 'participants']);
+        Route::delete('/events/{id}/inscrits/{inscription}', [EventController::class, 'retirerInscrit'])->whereNumber(['id', 'inscription']);
+        Route::post('/events/{id}/annuler', [EventController::class, 'annuler'])->whereNumber('id');
+        Route::post('/events/{id}/retablir', [EventController::class, 'retablir'])->whereNumber('id');
+        Route::post('/events/{id}/message', [EventController::class, 'message'])->whereNumber('id');
     });
 
     Route::middleware('auth.admin:actualites')->group(function () {

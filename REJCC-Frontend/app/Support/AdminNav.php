@@ -21,7 +21,6 @@ class AdminNav
             ['label' => 'Parcours', 'icon' => 'nav-route', 'route' => 'admin.parcours'],
             ['label' => 'Certificats', 'icon' => 'award', 'route' => 'admin.certificats'],
             ['label' => 'Événements', 'icon' => 'calendar-days', 'route' => 'admin.evenements'],
-            ['label' => 'Inscriptions (QR)', 'icon' => 'qr-code', 'route' => 'admin.inscriptions'],
             ['label' => 'Projets', 'icon' => 'nav-projects', 'route' => 'admin.projets'],
             ['label' => 'Marketplace', 'icon' => 'store', 'route' => 'admin.marketplace'],
             ['label' => 'Emploi & Stage', 'icon' => 'nav-briefcase', 'route' => 'admin.emplois'],

@@ -45,44 +45,61 @@
                     <p class="mb-6 text-[14px] leading-relaxed text-ink/75">{{ $event['description'] }}</p>
                 @endif
 
-                {{-- ══════════ Confirmation ══════════ --}}
+                @php
+                    $etat = fn ($icone, $couleur, $titre, $texte) => ['icone' => $icone, 'couleur' => $couleur, 'titre' => $titre, 'texte' => $texte];
+                    $bloc = match (true) {
+                        $submitted => null,
+                        ($event['statut'] ?? '') === 'annule' => $etat('x-circle', 'accent', 'Événement annulé', 'Cet événement est annulé.'.(($event['motif_annulation'] ?? null) ? ' Motif : '.$event['motif_annulation'] : '')),
+                        $isPastDeadline => $etat('clock', 'gris', 'Inscriptions terminées', "La date limite d'inscription est dépassée. Merci de votre intérêt — à très bientôt pour un prochain événement !"),
+                        ! $isOpen => $etat('clock', 'gris', 'Inscriptions fermées', "Les inscriptions pour cet événement ne sont plus ouvertes. Merci de votre intérêt !"),
+                        $isFull => $etat('users', 'accent', 'Complet', 'Toutes les places ont été réservées. Les inscriptions sont complètes — merci de votre engouement !'),
+                        ! $accepts => $etat('info', 'gris', 'Inscription indisponible', $event['refus'] ?? "Les inscriptions ne sont pas ouvertes."),
+                        default => null,
+                    };
+                @endphp
+
+                {{-- ══════════ Confirmation + billet ══════════ --}}
                 @if ($submitted)
-                    <div class="flex flex-col items-center gap-3 py-4 text-center">
+                    <div class="flex flex-col items-center gap-3 py-2 text-center">
                         <span class="flex size-14 items-center justify-center rounded-full bg-[#22A85A]/10 text-[#22A85A]">
                             <x-ui.icon name="check-circle" class="size-8" />
                         </span>
                         <p class="text-lg font-bold text-brand">Inscription confirmée !</p>
-                        <p class="max-w-sm text-sm text-ink/70">Merci {{ $prenom }}, votre place est réservée pour <strong>{{ $event['title'] ?? 'l\'événement' }}</strong>. Nous avons hâte de vous accueillir. Pensez à noter la date.</p>
+                        <p class="max-w-sm text-sm text-ink/70">Merci {{ $prenom }}, votre place est réservée pour <strong>{{ $event['title'] ?? "l'événement" }}</strong>.</p>
+                        @if ($billet)
+                            <div class="mt-2 w-full max-w-xs rounded-2xl border border-brand/10 bg-cloud/50 p-4" x-data x-init="$nextTick(() => window.QRCode && window.QRCode.toCanvas($refs.qr, $el.dataset.code, { width: 180, margin: 1, color: { dark: '#031D59' } }))" data-code="{{ $billet }}">
+                                <p class="text-[11px] font-bold uppercase tracking-[0.12em] text-[#9AA6B8]">Votre billet</p>
+                                <canvas x-ref="qr" class="mx-auto my-2 rounded-lg bg-white p-1"></canvas>
+                                <p class="font-mono text-sm font-bold text-brand">{{ $billet }}</p>
+                                <p class="mt-1 text-[11.5px] text-[#5B677A]">Présentez ce QR code à l'entrée. Faites une capture d'écran ou gardez ce lien :</p>
+                                <a href="{{ url('/billet/'.$billet) }}" class="mt-1 inline-block break-all text-[12px] font-semibold text-azure hover:underline">{{ url('/billet/'.$billet) }}</a>
+                            </div>
+                        @endif
+                        @if ($email)
+                            <p class="text-[12px] text-[#9AA6B8]">Une confirmation avec votre billet a été envoyée à {{ $email }}.</p>
+                        @endif
+                        <a href="{{ route('adhesion') }}" class="mt-2 text-[12.5px] font-semibold text-brand hover:underline">Rejoindre le REJCC pour profiter de tout le réseau →</a>
                     </div>
 
-                {{-- ══════════ Date limite dépassée ══════════ --}}
-                @elseif ($isPastDeadline)
+                @elseif ($bloc)
                     <div class="flex flex-col items-center gap-3 py-4 text-center">
-                        <span class="flex size-14 items-center justify-center rounded-full bg-[#9AA6B8]/10 text-[#5B677A]">
-                            <x-ui.icon name="clock" class="size-7" />
+                        <span class="flex size-14 items-center justify-center rounded-full {{ $bloc['couleur'] === 'accent' ? 'bg-accent/10 text-accent' : 'bg-[#9AA6B8]/10 text-[#5B677A]' }}">
+                            <x-ui.icon :name="$bloc['icone']" class="size-7" />
                         </span>
-                        <p class="text-lg font-bold text-brand">Inscriptions terminées</p>
-                        <p class="max-w-sm text-sm text-ink/70">La date limite d'inscription est dépassée. Merci de votre intérêt — à très bientôt pour un prochain événement !</p>
+                        <p class="text-lg font-bold text-brand">{{ $bloc['titre'] }}</p>
+                        <p class="max-w-sm text-sm text-ink/70">{{ $bloc['texte'] }}</p>
+                        @if ($membreConnecte && ($event['id'] ?? null))
+                            <a href="{{ url('/espace-membre/evenements?evenement='.$event['id']) }}" class="mt-1 text-[12.5px] font-semibold text-brand hover:underline">Voir l'événement dans mon espace →</a>
+                        @endif
                     </div>
 
-                {{-- ══════════ Inscriptions fermées ══════════ --}}
-                @elseif (! $isOpen)
+                {{-- ══════════ Membre connecté : inscription depuis son espace ══════════ --}}
+                @elseif ($membreConnecte && ($event['id'] ?? null))
                     <div class="flex flex-col items-center gap-3 py-4 text-center">
-                        <span class="flex size-14 items-center justify-center rounded-full bg-[#9AA6B8]/10 text-[#5B677A]">
-                            <x-ui.icon name="clock" class="size-7" />
-                        </span>
-                        <p class="text-lg font-bold text-brand">Inscriptions fermées</p>
-                        <p class="max-w-sm text-sm text-ink/70">Les inscriptions pour cet événement ne sont plus ouvertes. Merci de votre intérêt !</p>
-                    </div>
-
-                {{-- ══════════ Complet ══════════ --}}
-                @elseif ($isFull)
-                    <div class="flex flex-col items-center gap-3 py-4 text-center">
-                        <span class="flex size-14 items-center justify-center rounded-full bg-accent/10 text-accent">
-                            <x-ui.icon name="users" class="size-7" />
-                        </span>
-                        <p class="text-lg font-bold text-brand">Complet</p>
-                        <p class="max-w-sm text-sm text-ink/70">Toutes les places ont été réservées. Les inscriptions sont complètes — merci de votre engouement !</p>
+                        <span class="flex size-14 items-center justify-center rounded-full bg-brand/[.06] text-brand"><x-ui.icon name="calendar-days" class="size-7" /></span>
+                        <p class="text-lg font-bold text-brand">Vous êtes membre</p>
+                        <p class="max-w-sm text-sm text-ink/70">Inscrivez-vous depuis votre espace : votre billet sera rattaché à votre compte et vous recevrez le rappel la veille.</p>
+                        <a href="{{ url('/espace-membre/evenements?evenement='.$event['id']) }}" class="btn-tap mt-1 inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 text-sm font-bold text-white hover:bg-accent-600">Je m'inscris depuis mon espace</a>
                     </div>
 
                 {{-- ══════════ Formulaire d'inscription ══════════ --}}
@@ -96,6 +113,12 @@
                     @if ($deadline)
                         <p class="mb-4 inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#5B677A]">
                             <x-ui.icon name="clock" class="size-3.5 text-azure" /> Inscriptions jusqu'au {{ $deadline->locale('fr')->translatedFormat('j F Y \à H\hi') }}
+                        </p>
+                    @endif
+
+                    @if ($event['id'] ?? null)
+                        <p class="mb-4 rounded-xl border border-brand/10 bg-cloud/60 px-3.5 py-2.5 text-[12.5px] text-ink/75">
+                            Déjà membre du REJCC ? <a href="{{ url('/espace-membre/evenements?evenement='.$event['id']) }}" class="font-bold text-brand hover:underline">Connectez-vous pour vous inscrire depuis votre espace</a>.
                         </p>
                     @endif
 

@@ -43,6 +43,9 @@ class EventSignup extends Component
 
     public bool $submitted = false;
 
+    /** Code du billet reçu après l'inscription (QR présenté à l'entrée). */
+    public ?string $billet = null;
+
     public function mount(string $slug): void
     {
         $this->slug = $slug;
@@ -123,11 +126,17 @@ class EventSignup extends Component
         }
 
         $this->event = $result['event'] ?? $this->event;
+        $this->billet = $result['billet'] ?? null;
         $this->submitted = true;
     }
 
     public function render()
     {
-        return view('livewire.event-signup');
+        $user = session('api_user');
+
+        return view('livewire.event-signup', [
+            // Membre connecté : il s'inscrit depuis son espace (billet rattaché à son compte).
+            'membreConnecte' => $user && ($user['role'] ?? null) !== 'admin',
+        ]);
     }
 }

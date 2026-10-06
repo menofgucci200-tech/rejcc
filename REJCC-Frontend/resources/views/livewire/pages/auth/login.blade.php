@@ -33,7 +33,13 @@ new #[Layout('layouts.site')] class extends Component
         session(['api_token' => $result['token'], 'api_user' => $result['user']]);
         session()->regenerate();
 
-        $target = ($result['user']['role'] ?? null) === 'admin' ? '/admin' : '/espace-membre';
+        $admin = ($result['user']['role'] ?? null) === 'admin';
+        $target = $admin ? '/admin' : '/espace-membre';
+        // Retour vers la page demandée avant la connexion, si elle est de son espace.
+        $voulu = (string) session()->pull('url.intended', '');
+        if (str_starts_with($voulu, $admin ? '/admin' : '/espace-membre')) {
+            $target = $voulu;
+        }
 
         $this->redirect($target, navigate: true);
     }

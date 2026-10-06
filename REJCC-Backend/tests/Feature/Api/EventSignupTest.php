@@ -2,265 +2,254 @@
 
 namespace Tests\Feature\Api;
 
+use App\Mail\InfoEvenement;
 use App\Mail\InscriptionEvenementConfirmee;
 use App\Models\ApiToken;
-use App\Models\EventParticipant;
-use App\Models\RegistrationEvent;
+use App\Models\Event;
+use App\Models\EventRegistration;
+use App\Models\MemberNotification;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
+/**
+ * Inscription publique (QR code) fusionnée dans les événements, et
+ * administration des événements : une seule liste membres + invités.
+ */
 class EventSignupTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function adminToken(): string
+    private function tokenFor(User $u): string
     {
         $plain = Str::random(60);
-        ApiToken::create([
-            'user_id' => User::factory()->create(['role' => 'admin'])->id,
-            'token' => hash('sha256', $plain),
-            'name' => 'test',
-        ]);
+        ApiToken::create(['user_id' => $u->id, 'token' => hash('sha256', $plain), 'name' => 'test']);
 
         return $plain;
     }
 
+    private function adminToken(): string
+    {
+        return $this->tokenFor(User::factory()->create(['role' => 'admin']));
+    }
+
+    private function evenement(array $attrs = []): Event
+    {
+        return Event::create($attrs + [
+            'title' => 'Lancement REJCC', 'slug' => 'lancement-rejcc', 'category' => 'Lancement',
+            'starts_at' => now()->addDays(10), 'location' => 'Abidjan', 'inscription_publique' => true,
+        ]);
+    }
+
     private function payload(array $o = []): array
     {
-        return $o + [
-            'prenom' => 'Marie',
-            'nom' => 'Aka',
-            'telephone' => '0102030405',
-        ];
+        return $o + ['prenom' => 'Marie', 'nom' => 'Aka', 'telephone' => '0102030405'];
     }
 
     // ── Inscription publique ─────────────────────────────────────────────
 
-    public function test_une_personne_s_inscrit_a_un_evenement(): void
-    {
-        $event = RegistrationEvent::create(['title' => 'Lancement REJCC', 'slug' => 'lancement-rejcc']);
-
-        $this->postJson('/api/event-signup/lancement-rejcc', $this->payload())
-            ->assertOk()->assertJsonPath('ok', true)
-            ->assertJsonPath('event.count', 1);
-
-        $this->assertDatabaseHas('event_participants', [
-            'registration_event_id' => $event->id,
-            'telephone' => '0102030405',
-        ]);
-    }
-
-    public function test_un_email_de_confirmation_est_envoye_si_une_adresse_est_fournie(): void
+    public function test_un_invite_s_inscrit_et_recoit_un_billet(): void
     {
         Mail::fake();
-        RegistrationEvent::create(['title' => 'Lancement REJCC', 'slug' => 'lancement-rejcc']);
+        $event = $this->evenement();
 
-        $this->postJson('/api/event-signup/lancement-rejcc', $this->payload(['email' => 'awa@example.com']))->assertOk();
+        $res = $this->postJson('/api/event-signup/lancement-rejcc', $this->payload(['email' => 'marie@example.com']))
+            ->assertOk()->assertJsonPath('event.count', 1)->json();
 
-        Mail::assertSent(InscriptionEvenementConfirmee::class, fn ($m) => $m->hasTo('awa@example.com'));
+        $this->assertMatchesRegularExpression('/^B-[A-Z0-9]{8}$/', $res['billet']);
+        $this->assertDatabaseHas('event_registrations', ['event_id' => $event->id, 'user_id' => null, 'telephone' => '0102030405']);
+        Mail::assertSent(InscriptionEvenementConfirmee::class, fn ($m) => $m->hasTo('marie@example.com'));
+
+        // Le billet est consultable (QR présenté à l'entrée).
+        $this->getJson('/api/billet/'.strtolower($res['billet']))->assertOk()
+            ->assertJsonPath('billet.nom', 'Marie Aka')->assertJsonPath('billet.event.title', 'Lancement REJCC');
     }
 
-    public function test_aucun_email_si_aucune_adresse_n_est_fournie(): void
+    public function test_aucun_email_si_aucune_adresse_et_pas_de_doublon(): void
     {
         Mail::fake();
-        RegistrationEvent::create(['title' => 'Lancement REJCC', 'slug' => 'lancement-rejcc']);
+        $this->evenement();
 
-        // Le participant ne laisse pas d'e-mail : aucune confirmation envoyée.
         $this->postJson('/api/event-signup/lancement-rejcc', $this->payload())->assertOk();
+        $this->postJson('/api/event-signup/lancement-rejcc', $this->payload(['prenom' => 'Autre', 'telephone' => '01 02 03 04 05']))
+            ->assertStatus(422)->assertJsonPath('message', 'Ce numéro est déjà inscrit à cet événement.');
 
         Mail::assertNothingSent();
+        $this->assertSame(1, EventRegistration::count());
     }
 
-    public function test_le_meme_numero_ne_s_inscrit_pas_deux_fois(): void
+    public function test_les_invites_et_les_membres_partagent_la_capacite(): void
     {
-        RegistrationEvent::create(['title' => 'Lancement', 'slug' => 'lancement']);
+        $event = $this->evenement(['capacity' => 1]);
+        EventRegistration::create(['event_id' => $event->id, 'user_id' => User::factory()->create()->id]);
 
-        $this->postJson('/api/event-signup/lancement', $this->payload())->assertOk();
-        $this->postJson('/api/event-signup/lancement', $this->payload(['prenom' => 'Autre']))
-            ->assertStatus(422);
-
-        $this->assertSame(1, EventParticipant::count());
+        $this->postJson('/api/event-signup/lancement-rejcc', $this->payload())
+            ->assertStatus(422)->assertJsonPath('ok', false)->assertJsonPath('event.is_full', true);
     }
 
-    public function test_inscription_refusee_si_evenement_complet(): void
+    public function test_refus_si_ferme_date_limite_brouillon_ou_non_public(): void
     {
-        $event = RegistrationEvent::create(['title' => 'Atelier', 'slug' => 'atelier', 'capacity' => 1]);
-        EventParticipant::create(['registration_event_id' => $event->id, 'prenom' => 'A', 'nom' => 'B', 'telephone' => '0700000000']);
+        $this->evenement(['inscriptions_ouvertes' => false]);
+        $this->postJson('/api/event-signup/lancement-rejcc', $this->payload())->assertStatus(422)
+            ->assertJsonPath('message', 'Les inscriptions sont fermées.');
 
-        $this->postJson('/api/event-signup/atelier', $this->payload())
-            ->assertStatus(422)->assertJsonPath('ok', false);
-
-        $this->assertSame(1, EventParticipant::count());
-    }
-
-    public function test_inscription_refusee_apres_la_date_limite(): void
-    {
-        $event = RegistrationEvent::create([
-            'title' => 'Forum',
-            'slug' => 'forum',
-            'registration_deadline' => now()->subDay(), // hier
-        ]);
-
-        $this->postJson('/api/event-signup/forum', $this->payload())
-            ->assertStatus(422)->assertJsonPath('ok', false);
-        $this->assertSame(0, EventParticipant::count());
-
-        // La page publique signale que la date limite est dépassée.
-        $this->getJson('/api/event-signup/forum')
-            ->assertOk()->assertJsonPath('event.is_past_deadline', true)
-            ->assertJsonPath('event.accepts', false);
-
-        // Avant la date limite, l'inscription passe.
-        $event->update(['registration_deadline' => now()->addWeek()]);
-        $this->postJson('/api/event-signup/forum', $this->payload())->assertOk();
-    }
-
-    public function test_inscription_refusee_si_fermee(): void
-    {
-        RegistrationEvent::create(['title' => 'Gala', 'slug' => 'gala', 'is_open' => false]);
-
-        $this->postJson('/api/event-signup/gala', $this->payload())
-            ->assertStatus(422)->assertJsonPath('ok', false);
-
-        $this->assertSame(0, EventParticipant::count());
-    }
-
-    public function test_page_publique_renvoie_l_etat_des_inscriptions(): void
-    {
-        RegistrationEvent::create(['title' => 'Forum', 'slug' => 'forum', 'capacity' => 100]);
-
+        $this->evenement(['slug' => 'forum', 'date_limite' => now()->subDay()]);
         $this->getJson('/api/event-signup/forum')->assertOk()
-            ->assertJsonPath('event.title', 'Forum')
-            ->assertJsonPath('event.remaining', 100)
-            ->assertJsonPath('event.accepts', true);
+            ->assertJsonPath('event.is_past_deadline', true)->assertJsonPath('event.accepts', false);
 
+        $this->evenement(['slug' => 'prive', 'inscription_publique' => false]);
+        $this->postJson('/api/event-signup/prive', $this->payload())->assertStatus(422)
+            ->assertJsonPath('message', 'Cet événement est réservé aux membres du réseau.');
+
+        // Brouillon sans inscription publique : introuvable.
+        $this->evenement(['slug' => 'brouillon', 'statut' => 'brouillon', 'inscription_publique' => false]);
+        $this->getJson('/api/event-signup/brouillon')->assertStatus(404);
         $this->getJson('/api/event-signup/inconnu')->assertStatus(404);
+        $this->assertSame(0, EventRegistration::count());
     }
 
-    // ── Administration ───────────────────────────────────────────────────
-
-    public function test_l_admin_cree_gere_et_ferme_un_evenement(): void
+    public function test_l_ancien_lien_du_qr_reste_valable(): void
     {
-        $token = $this->adminToken();
+        $this->evenement(['slug' => 'lancement-2', 'ancien_slug' => 'lancement-officiel']);
 
-        $event = $this->withToken($token)->postJson('/api/admin/registration-events', [
-            'title' => 'Lancement officiel',
-            'capacity' => 500,
-        ])->assertCreated()->json('event');
-
-        $this->assertSame('lancement-officiel', $event['slug']);
-        $this->assertTrue($event['is_open']);
-
-        // Fermeture des inscriptions.
-        $this->withToken($token)->postJson("/api/admin/registration-events/{$event['id']}/toggle")
-            ->assertOk()->assertJsonPath('is_open', false);
-
-        // La liste expose le compteur d'inscrits.
-        $this->withToken($token)->getJson('/api/admin/registration-events')
-            ->assertOk()->assertJsonPath('events.0.count', 0);
-    }
-
-    public function test_les_participants_sont_listes_et_exportables(): void
-    {
-        $token = $this->adminToken();
-        $event = RegistrationEvent::create(['title' => 'Lancement', 'slug' => 'lancement']);
-        EventParticipant::create(['registration_event_id' => $event->id, 'prenom' => 'Jean', 'nom' => 'Kouassi', 'telephone' => '0102030405', 'is_member' => true]);
-
-        $this->withToken($token)->getJson("/api/admin/registration-events/{$event->id}/participants")
-            ->assertOk()->assertJsonPath('meta.total', 1)
-            ->assertJsonPath('participants.0.nom', 'Kouassi');
-
-        $export = $this->withToken($token)->getJson('/api/admin/export/participants?event='.$event->id)
-            ->assertOk()->json();
-        $this->assertSame(['Événement', 'Prénom', 'Nom', 'Téléphone', 'Email', 'Membre', 'Inscrit le'], $export['columns']);
-        $this->assertCount(1, $export['rows']);
-    }
-
-    // ── Champs personnalisés ─────────────────────────────────────────────
-
-    public function test_l_admin_definit_des_champs_personnalises(): void
-    {
-        $token = $this->adminToken();
-
-        $event = $this->withToken($token)->postJson('/api/admin/registration-events', [
-            'title' => 'Lancement',
-            'poster' => 'https://rejcc.site/uploads/affiche.jpg',
-            'fields' => [
-                ['label' => 'Domaine de formation', 'type' => 'text', 'required' => true],
-                ['label' => 'Statut social', 'type' => 'select', 'required' => true, 'options' => ['Étudiant', 'Salarié', 'Entrepreneur']],
-                ['label' => 'Votre CV', 'type' => 'file', 'required' => false],
-            ],
-        ])->assertCreated()->json('event');
-
-        $this->assertSame('https://rejcc.site/uploads/affiche.jpg', $event['poster']);
-        $this->assertCount(3, $event['fields']);
-        // Une clé stable est générée depuis l'intitulé.
-        $this->assertSame('domaine-de-formation', $event['fields'][0]['key']);
-        $this->assertSame(['Étudiant', 'Salarié', 'Entrepreneur'], $event['fields'][1]['options']);
+        $this->getJson('/api/event-signup/lancement-officiel')->assertOk()->assertJsonPath('event.slug', 'lancement-2');
+        $this->postJson('/api/event-signup/lancement-officiel', $this->payload())->assertOk();
     }
 
     public function test_les_reponses_sont_validees_et_enregistrees(): void
     {
-        $event = RegistrationEvent::create([
-            'title' => 'Lancement',
-            'slug' => 'lancement',
-            'fields' => [
-                ['key' => 'domaine', 'label' => 'Domaine de formation', 'type' => 'text', 'required' => true],
-                ['key' => 'statut', 'label' => 'Statut social', 'type' => 'select', 'required' => true, 'options' => ['Étudiant', 'Salarié']],
-            ],
-        ]);
+        $this->evenement(['champs' => [
+            ['key' => 'domaine', 'label' => 'Domaine de formation', 'type' => 'text', 'required' => true],
+            ['key' => 'statut', 'label' => 'Statut social', 'type' => 'select', 'required' => true, 'options' => ['Étudiant', 'Salarié']],
+        ]]);
 
-        // Champ requis manquant → refus.
-        $this->postJson('/api/event-signup/lancement', $this->payload())
+        $this->postJson('/api/event-signup/lancement-rejcc', $this->payload())->assertStatus(422);
+        $this->postJson('/api/event-signup/lancement-rejcc', $this->payload(['answers' => ['domaine' => 'Informatique', 'statut' => 'Autre']]))
             ->assertStatus(422);
+        $this->postJson('/api/event-signup/lancement-rejcc', $this->payload(['answers' => ['domaine' => 'Informatique', 'statut' => 'Étudiant']]))
+            ->assertOk();
 
-        // Valeur hors options → refus.
-        $this->postJson('/api/event-signup/lancement', $this->payload([
-            'answers' => ['domaine' => 'Informatique', 'statut' => 'Autre'],
-        ]))->assertStatus(422);
-
-        // Réponses valides → enregistrées.
-        $this->postJson('/api/event-signup/lancement', $this->payload([
-            'answers' => ['domaine' => 'Informatique', 'statut' => 'Étudiant'],
-        ]))->assertOk();
-
-        $participant = EventParticipant::first();
-        $this->assertSame('Informatique', $participant->answers['domaine']);
-        $this->assertSame('Étudiant', $participant->answers['statut']);
+        $this->assertSame(['domaine' => 'Informatique', 'statut' => 'Étudiant'], EventRegistration::first()->reponses);
     }
 
-    public function test_l_export_inclut_les_colonnes_des_champs_personnalises(): void
+    // ── Administration ───────────────────────────────────────────────────
+
+    public function test_l_admin_cree_un_brouillon_puis_publie_avec_annonce(): void
     {
         $token = $this->adminToken();
-        $event = RegistrationEvent::create([
-            'title' => 'Lancement',
-            'slug' => 'lancement',
-            'fields' => [['key' => 'domaine', 'label' => 'Domaine de formation', 'type' => 'text', 'required' => false]],
-        ]);
-        EventParticipant::create([
-            'registration_event_id' => $event->id, 'prenom' => 'Jean', 'nom' => 'Kouassi',
-            'telephone' => '0102030405', 'answers' => ['domaine' => 'Agriculture'],
-        ]);
+        $membre = User::factory()->create();
+        User::factory()->create(['is_active' => false]);
 
-        $export = $this->withToken($token)->getJson('/api/admin/export/participants?event='.$event->id)
-            ->assertOk()->json();
+        $event = $this->withToken($token)->postJson('/api/admin/events', [
+            'title' => 'Lancement officiel', 'category' => 'Lancement', 'starts_at' => now()->addDays(20)->format('Y-m-d H:i'),
+            'statut' => 'brouillon', 'capacity' => 500, 'inscription_publique' => true, 'annoncer' => true,
+            'champs' => [
+                ['label' => 'Domaine de formation', 'type' => 'text', 'required' => true],
+                ['label' => 'Statut social', 'type' => 'select', 'options' => ['Étudiant', ' Salarié ', '']],
+            ],
+        ])->assertOk()->assertJsonPath('annonces', 0)->json('event');
 
+        $this->assertSame('brouillon', $event['statut']);
+        $this->assertSame('domaine-de-formation', $event['champs'][0]['key']);
+        $this->assertSame(['Étudiant', 'Salarié'], $event['champs'][1]['options']);
+
+        // Publication avec annonce : seuls les membres actifs sont notifiés, une seule fois.
+        $data = ['title' => 'Lancement officiel', 'category' => 'Lancement', 'starts_at' => $event['starts_at'], 'statut' => 'publie', 'annoncer' => true];
+        $this->withToken($token)->putJson("/api/admin/events/{$event['id']}", $data)->assertOk()->assertJsonPath('annonces', 1);
+        $this->withToken($token)->putJson("/api/admin/events/{$event['id']}", $data)->assertOk()->assertJsonPath('annonces', 0);
+        $this->assertSame(1, MemberNotification::where('user_id', $membre->id)->where('title', 'Nouvel événement : Lancement officiel')->count());
+    }
+
+    public function test_regles_du_formulaire_admin(): void
+    {
+        $token = $this->adminToken();
+        $base = ['title' => 'Atelier', 'category' => 'Atelier', 'starts_at' => now()->addDays(5)->format('Y-m-d H:i')];
+
+        $this->withToken($token)->postJson('/api/admin/events', $base + ['en_ligne' => true])->assertStatus(422);
+        $this->withToken($token)->postJson('/api/admin/events', $base + ['date_limite' => now()->addDays(6)->format('Y-m-d H:i')])
+            ->assertStatus(422)->assertJsonPath('message', "La date limite d'inscription doit précéder le début de l'événement.");
+        $this->withToken($token)->postJson('/api/admin/events', $base + ['reserve_abonnes' => true, 'inscription_publique' => true])
+            ->assertStatus(422);
+        $this->withToken($token)->postJson('/api/admin/events', $base + ['en_ligne' => true, 'lien_visio' => 'https://meet.example.com/abc'])
+            ->assertOk()->assertJsonPath('event.statut', 'publie');
+
+        // Le lien de visio n'est jamais exposé sur la vitrine.
+        $this->assertArrayNotHasKey('lien_visio', $this->getJson('/api/public-events')->json('events.0'));
+    }
+
+    public function test_report_annulation_et_message_previennent_les_inscrits(): void
+    {
+        Mail::fake();
+        $token = $this->adminToken();
+        $e = $this->evenement();
+        $membre = User::factory()->create();
+        EventRegistration::create(['event_id' => $e->id, 'user_id' => $membre->id]);
+        EventRegistration::create(['event_id' => $e->id, 'prenom' => 'Marie', 'nom' => 'Aka', 'telephone' => '0102030405', 'email' => 'marie@example.com']);
+        EventRegistration::create(['event_id' => $e->id, 'prenom' => 'Jean', 'nom' => 'Yao', 'telephone' => '0708091011']);
+
+        // Report : nouvelle date → membres notifiés, invités avec e-mail prévenus.
+        $this->withToken($token)->putJson("/api/admin/events/{$e->id}", [
+            'title' => $e->title, 'category' => $e->category, 'location' => 'Abidjan', 'starts_at' => now()->addDays(15)->format('Y-m-d H:i'),
+        ])->assertOk()->assertJsonPath('prevenus.membres', 1)->assertJsonPath('prevenus.invites', 1);
+        $this->assertTrue(MemberNotification::where('user_id', $membre->id)->where('title', 'like', 'Date modifiée%')->exists());
+
+        // Message aux inscrits.
+        $this->withToken($token)->postJson("/api/admin/events/{$e->id}/message", ['message' => 'Apportez votre carte membre.'])
+            ->assertOk()->assertJsonPath('prevenus.membres', 1);
+
+        // Annulation : motif obligatoire, puis tout le monde est prévenu.
+        $this->withToken($token)->postJson("/api/admin/events/{$e->id}/annuler", ['motif' => ''])->assertStatus(422);
+        $this->withToken($token)->postJson("/api/admin/events/{$e->id}/annuler", ['motif' => 'Salle indisponible'])->assertOk();
+        $this->assertSame('annule', $e->fresh()->statut);
+        $this->assertTrue(MemberNotification::where('user_id', $membre->id)->where('title', 'like', 'Événement annulé%')->exists());
+        // Seule Marie (invitée avec e-mail) est prévenue par e-mail, pour chaque information.
+        foreach (['Date modifiée', 'Message', 'Événement annulé'] as $titre) {
+            Mail::assertSent(InfoEvenement::class, fn ($m) => $m->hasTo('marie@example.com') && str_starts_with($m->titre, $titre));
+        }
+        Mail::assertNotSent(InfoEvenement::class, fn ($m) => $m->inscription->email !== 'marie@example.com');
+
+        // Rétablir.
+        $this->withToken($token)->postJson("/api/admin/events/{$e->id}/retablir")->assertOk();
+        $this->assertSame('publie', $e->fresh()->statut);
+    }
+
+    public function test_liste_unique_pointage_invite_et_export(): void
+    {
+        $token = $this->adminToken();
+        $e = $this->evenement(['champs' => [['key' => 'domaine', 'label' => 'Domaine de formation', 'type' => 'text', 'required' => false]]]);
+        $membre = User::factory()->create(['prenom' => 'Awa', 'nom' => 'Koné']);
+        EventRegistration::create(['event_id' => $e->id, 'user_id' => $membre->id]);
+        $invite = EventRegistration::create(['event_id' => $e->id, 'prenom' => 'Jean', 'nom' => 'Kouassi', 'telephone' => '0102030405', 'reponses' => ['domaine' => 'Agriculture']]);
+
+        $liste = $this->withToken($token)->getJson("/api/admin/events/{$e->id}/inscrits")->assertOk()->json();
+        $this->assertSame([2, 1, 1], [$liste['total'], $liste['membres'], $liste['invites']]);
+        $this->withToken($token)->getJson("/api/admin/events/{$e->id}/inscrits?q=kouassi")->assertJsonCount(1, 'inscrits')
+            ->assertJsonPath('inscrits.0.type', 'invite');
+
+        // Pointage d'un invité par son billet.
+        $this->withToken($token)->postJson("/api/admin/events/{$e->id}/pointage", ['code' => $invite->billet])
+            ->assertOk()->assertJsonPath('membre.nom', 'Jean Kouassi')->assertJsonPath('presents', 1);
+
+        $export = $this->withToken($token)->getJson('/api/admin/export/participants?event='.$e->id)->assertOk()->json();
         $this->assertContains('Domaine de formation', $export['columns']);
-        $this->assertContains('Agriculture', $export['rows'][0]);
+        $this->assertCount(2, $export['rows']);
+        $ligneInvite = collect($export['rows'])->first(fn ($r) => $r[3] === 'Jean');
+        $this->assertSame('Invité', $ligneInvite[1]);
+        $this->assertContains('Agriculture', $ligneInvite);
+
+        // Retrait d'un inscrit.
+        $this->withToken($token)->deleteJson("/api/admin/events/{$e->id}/inscrits/{$invite->id}")->assertOk();
+        $this->assertSame(1, $e->nbInscrits());
     }
 
     public function test_un_membre_ne_peut_pas_gerer_les_evenements(): void
     {
-        $plain = Str::random(60);
-        ApiToken::create([
-            'user_id' => User::factory()->create(['role' => 'member'])->id,
-            'token' => hash('sha256', $plain),
-            'name' => 'test',
-        ]);
+        $t = $this->tokenFor(User::factory()->create());
+        $e = $this->evenement();
 
-        $this->withToken($plain)->getJson('/api/admin/registration-events')->assertStatus(403);
+        $this->withToken($t)->getJson('/api/admin/events')->assertStatus(403);
+        $this->withToken($t)->postJson("/api/admin/events/{$e->id}/annuler", ['motif' => 'Essai de motif'])->assertStatus(403);
     }
 }

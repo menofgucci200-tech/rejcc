@@ -8,9 +8,17 @@ use Illuminate\Support\Str;
 
 class EventRegistration extends Model
 {
-    protected $fillable = ['event_id', 'user_id', 'billet', 'present_at', 'rappel_at'];
+    protected $fillable = [
+        'event_id', 'user_id', 'prenom', 'nom', 'telephone', 'email', 'se_dit_membre', 'reponses',
+        'billet', 'present_at', 'rappel_at',
+    ];
 
-    protected $casts = ['present_at' => 'datetime', 'rappel_at' => 'datetime'];
+    protected $casts = [
+        'present_at' => 'datetime',
+        'rappel_at' => 'datetime',
+        'se_dit_membre' => 'boolean',
+        'reponses' => 'array',
+    ];
 
     protected static function booted(): void
     {
@@ -33,5 +41,23 @@ class EventRegistration extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /** Invité inscrit par le formulaire public (pas de compte membre). */
+    public function estInvite(): bool
+    {
+        return $this->user_id === null;
+    }
+
+    public function nomComplet(): string
+    {
+        return $this->user
+            ? trim($this->user->prenom.' '.$this->user->nom)
+            : trim($this->prenom.' '.$this->nom);
+    }
+
+    public function emailContact(): ?string
+    {
+        return $this->user?->email ?? $this->email;
     }
 }

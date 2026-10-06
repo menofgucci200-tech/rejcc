@@ -41,7 +41,6 @@ class AdminSections
         'admin.parcours' => 'formations',
         'admin.evenements' => 'evenements',
         'admin.evenements.pointage' => 'evenements',
-        'admin.inscriptions' => 'evenements',
         'admin.projets' => 'projets',
         'admin.marketplace' => 'communaute',
         'admin.certificats' => 'certificats',

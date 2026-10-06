@@ -50,7 +50,7 @@
                             </span>
                             <div class="min-w-0 flex-1">
                                 @if ($okR)
-                                    <p class="text-[14px] font-extrabold text-brand">{{ $resultat['membre']['nom'] }}</p>
+                                    <p class="text-[14px] font-extrabold text-brand">{{ $resultat['membre']['nom'] }} @if (($resultat['membre']['role'] ?? null) === 'invite') <span class="ml-1 rounded-full bg-azure/10 px-2 py-0.5 text-[10px] font-bold text-azure">Invité</span> @endif</p>
                                     <p class="text-[12.5px] {{ $deja ? 'text-[#8A5A08]' : 'text-[#1C8F4C]' }}">{{ $deja ? 'Déjà pointé(e) à '.\Illuminate\Support\Carbon::parse($resultat['present_at'])->setTimezone(config('app.timezone'))->format('H\hi') : 'Présence enregistrée' }}</p>
                                 @else
                                     <p class="text-[13.5px] font-bold text-accent">{{ $resultat['message'] ?? 'Code non reconnu.' }}</p>
@@ -75,7 +75,7 @@
                                 <x-messagerie.avatar :personne="['prenom' => $i['nom'], 'nom' => '', 'photo' => $i['photo'], 'role' => $i['role']]" taille="size-8" texte="text-[10px]" />
                                 <div class="min-w-0 flex-1">
                                     <p class="truncate text-[13px] font-bold text-brand">{{ $i['nom'] }}</p>
-                                    <p class="truncate font-mono text-[11px] text-[#9AA6B8]">{{ $i['billet'] }}</p>
+                                    <p class="truncate text-[11px] text-[#9AA6B8]"><span class="font-mono">{{ $i['billet'] }}</span>{{ $i['type'] === 'invite' ? ' · Invité' : '' }}</p>
                                 </div>
                                 @if ($i['present_at'])
                                     <span class="shrink-0 rounded-full bg-[#22A85A]/10 px-2.5 py-1 text-[11px] font-bold text-[#1C8F4C]">Présent · {{ \Illuminate\Support\Carbon::parse($i['present_at'])->setTimezone(config('app.timezone'))->format('H\hi') }}</span>

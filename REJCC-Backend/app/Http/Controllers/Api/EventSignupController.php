@@ -4,52 +4,43 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Mail\InscriptionEvenementConfirmee;
-use App\Models\EventParticipant;
-use App\Models\RegistrationEvent;
+use App\Models\Event;
+use App\Models\EventRegistration;
 use App\Support\Mailer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
 /**
- * Inscription publique à un événement (cible des QR codes). N'importe qui
- * peut s'inscrire — membre ou non — pour permettre d'estimer le nombre de
- * participants et de constituer une base de données solide.
+ * Inscription publique à un événement (cible des QR codes), ouverte quand
+ * l'admin a activé « Inscription publique ». Les invités rejoignent la même
+ * liste que les membres : même capacité, même billet, même pointage.
  */
 class EventSignupController extends Controller
 {
     /** Détails de l'événement + état des inscriptions (page scannée). */
     public function show(string $slug)
     {
-        $event = RegistrationEvent::where('slug', $slug)->first();
-        if (! $event) {
+        $event = Event::parSlug($slug);
+        if (! $event || $event->statut === 'brouillon' && ! $event->inscription_publique) {
             return response()->json(['ok' => false, 'message' => 'Événement introuvable.'], 404);
         }
 
         return response()->json(['ok' => true, 'event' => $this->payload($event)]);
     }
 
-    /** Enregistre un participant. */
+    /** Enregistre un invité. */
     public function register(Request $request, string $slug)
     {
-        $event = RegistrationEvent::where('slug', $slug)->first();
+        $event = Event::parSlug($slug);
         if (! $event) {
             return response()->json(['ok' => false, 'message' => 'Événement introuvable.'], 404);
         }
-
-        if (! $event->is_open) {
-            return response()->json(['ok' => false, 'message' => 'Les inscriptions pour cet événement sont fermées.'], 422);
+        if ($raison = $event->raisonRefus(null)) {
+            return response()->json(['ok' => false, 'message' => $raison, 'event' => $this->payload($event)], 422);
         }
 
-        if ($event->isPastDeadline()) {
-            return response()->json(['ok' => false, 'message' => 'La date limite d\'inscription est dépassée.'], 422);
-        }
-
-        if ($event->isFull()) {
-            return response()->json(['ok' => false, 'message' => 'Toutes les places ont été réservées. Les inscriptions sont complètes.'], 422);
-        }
-
-        // Règles de base + règles dynamiques issues des champs personnalisés.
+        // Règles de base + règles dynamiques issues des questions de l'événement.
         $rules = [
             'prenom' => ['required', 'string', 'min:2', 'max:80'],
             'nom' => ['required', 'string', 'min:2', 'max:80'],
@@ -58,7 +49,7 @@ class EventSignupController extends Controller
             'is_member' => ['nullable', 'boolean'],
         ];
         $names = [];
-        foreach ($event->fields ?? [] as $f) {
+        foreach ($event->champs ?? [] as $f) {
             $key = 'answers.'.$f['key'];
             $required = $f['required'] ?? false;
 
@@ -89,47 +80,63 @@ class EventSignupController extends Controller
         }
 
         $d = $validator->validated();
-        $answers = $this->collectAnswers($event, $request);
+        $telephone = preg_replace('/\s+/', '', $d['telephone']);
 
         // Anti-doublon : une même personne (par téléphone) ne s'inscrit qu'une fois.
-        $exists = EventParticipant::where('registration_event_id', $event->id)
-            ->where('telephone', $d['telephone'])
+        $doublon = EventRegistration::where('event_id', $event->id)
+            ->where(fn ($q) => $q->where('telephone', $telephone)->orWhereHas('user', fn ($u) => $u->where('telephone', $telephone)))
             ->exists();
-        if ($exists) {
+        if ($doublon) {
             return response()->json(['ok' => false, 'message' => 'Ce numéro est déjà inscrit à cet événement.'], 422);
         }
 
         // Nouvelle vérification de capacité juste avant l'insertion (anti-course).
-        if ($event->isFull()) {
-            return response()->json(['ok' => false, 'message' => 'Toutes les places ont été réservées entre-temps.'], 422);
+        if ($event->placesRestantes() === 0) {
+            return response()->json(['ok' => false, 'message' => 'Toutes les places ont été réservées entre-temps.', 'event' => $this->payload($event)], 422);
         }
 
-        $participant = EventParticipant::create([
-            'registration_event_id' => $event->id,
+        $inscription = EventRegistration::create([
+            'event_id' => $event->id,
             'prenom' => $d['prenom'],
             'nom' => $d['nom'],
-            'telephone' => $d['telephone'],
+            'telephone' => $telephone,
             'email' => $d['email'] ?? null,
-            'is_member' => (bool) ($d['is_member'] ?? false),
-            'answers' => $answers ?: null,
+            'se_dit_membre' => (bool) ($d['is_member'] ?? false),
+            'reponses' => $this->collectAnswers($event, $request) ?: null,
         ]);
 
-        // E-mail de confirmation (uniquement si une adresse a été fournie).
-        // Envoi best-effort APRÈS la réponse HTTP (cf. App\Support\Mailer).
-        Mailer::send($participant->email, new InscriptionEvenementConfirmee($participant, $event));
+        // E-mail de confirmation avec le billet (si une adresse a été fournie).
+        Mailer::send($inscription->email, new InscriptionEvenementConfirmee($inscription, $event));
 
         return response()->json([
             'ok' => true,
             'message' => 'Votre inscription est confirmée. À bientôt !',
-            'event' => $this->payload($event->fresh()),
+            'billet' => $inscription->billet,
+            'event' => $this->payload($event),
         ]);
     }
 
-    /** Ne conserve que les réponses aux champs définis, typées proprement. */
-    private function collectAnswers(RegistrationEvent $event, Request $request): array
+    /** GET /billet/{code} — billet d'un invité (QR présenté à l'entrée). */
+    public function billet(string $code)
+    {
+        $r = EventRegistration::with('event', 'user:id,prenom,nom')->where('billet', strtoupper($code))->first();
+        if (! $r || ! $r->event) {
+            return response()->json(['ok' => false, 'message' => 'Billet introuvable.'], 404);
+        }
+
+        return response()->json(['ok' => true, 'billet' => [
+            'code' => $r->billet,
+            'nom' => $r->nomComplet(),
+            'present' => (bool) $r->present_at,
+            'event' => $this->payload($r->event),
+        ]]);
+    }
+
+    /** Ne conserve que les réponses aux questions définies, typées proprement. */
+    private function collectAnswers(Event $event, Request $request): array
     {
         $answers = [];
-        foreach ($event->fields ?? [] as $f) {
+        foreach ($event->champs ?? [] as $f) {
             $val = $request->input('answers.'.$f['key']);
             if ($f['type'] === 'checkbox') {
                 if ($request->has('answers.'.$f['key'])) {
@@ -146,26 +153,33 @@ class EventSignupController extends Controller
         return $answers;
     }
 
-    private function payload(RegistrationEvent $event): array
+    private function payload(Event $event): array
     {
-        $count = $event->participants()->count();
+        $count = $event->nbInscrits();
+        $refus = $event->raisonRefus(null);
 
         return [
+            'id' => $event->id,
             'title' => $event->title,
             'slug' => $event->slug,
             'description' => $event->description,
-            'poster' => $event->poster,
-            'fields' => $event->fields ?? [],
-            'location' => $event->location,
+            'poster' => $event->image,
+            'fields' => $event->champs ?? [],
+            'location' => $event->en_ligne ? 'En ligne' : $event->location,
             'starts_at' => $event->starts_at?->toIso8601String(),
-            'registration_deadline' => $event->registration_deadline?->toIso8601String(),
+            'time_label' => $event->time_label,
+            'registration_deadline' => $event->date_limite?->toIso8601String(),
             'capacity' => $event->capacity,
             'count' => $count,
             'remaining' => $event->capacity !== null ? max(0, $event->capacity - $count) : null,
-            'is_open' => $event->is_open,
-            'is_full' => $event->isFull(),
-            'is_past_deadline' => $event->isPastDeadline(),
-            'accepts' => $event->acceptsRegistrations(),
+            'statut' => $event->statut,
+            'motif_annulation' => $event->motif_annulation,
+            'is_open' => $event->inscriptions_ouvertes,
+            'is_full' => $event->capacity !== null && $count >= $event->capacity,
+            'is_past_deadline' => $event->date_limite !== null && $event->date_limite->isPast(),
+            'inscription_publique' => $event->inscription_publique,
+            'accepts' => $refus === null,
+            'refus' => $refus,
         ];
     }
 }

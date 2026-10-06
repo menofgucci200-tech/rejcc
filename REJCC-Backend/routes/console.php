@@ -23,13 +23,21 @@ Artisan::command('evenements:rappels', function () {
     foreach ($evenements as $e) {
         $quand = $e->starts_at->isToday() ? "aujourd'hui" : 'demain';
         foreach ($e->registrations()->whereNull('rappel_at')->get() as $r) {
-            \App\Models\MemberNotification::create([
-                'user_id' => $r->user_id,
-                'type' => 'info',
-                'title' => "Rappel : {$e->title} {$quand}",
-                'body' => 'Rendez-vous '.$quand.' à '.$e->starts_at->format('H\hi').($e->en_ligne ? ' en ligne : le lien de connexion est sur la fiche.' : ($e->location ? " — {$e->location}." : '.')).' Votre billet est dans la fiche de l\'événement.',
-                'link' => "/espace-membre/evenements?evenement={$e->id}",
-            ]);
+            $titre = "Rappel : {$e->title} {$quand}";
+            $heure = 'Rendez-vous '.$quand.' à '.$e->starts_at->format('H\hi');
+            if ($r->user_id) {
+                \App\Models\MemberNotification::create([
+                    'user_id' => $r->user_id,
+                    'type' => 'info',
+                    'title' => $titre,
+                    'body' => $heure.($e->en_ligne ? ' en ligne : le lien de connexion est sur la fiche.' : ($e->location ? " — {$e->location}." : '.')).' Votre billet est dans la fiche de l\'événement.',
+                    'link' => "/espace-membre/evenements?evenement={$e->id}",
+                ]);
+            } elseif ($r->email) {
+                // Invité du formulaire public : rappel par e-mail (lien visio inclus pour un événement en ligne).
+                \App\Support\Mailer::send($r->email, new \App\Mail\InfoEvenement($r, $e, $titre,
+                    $heure.($e->en_ligne ? ($e->lien_visio ? " en ligne : {$e->lien_visio}" : ' en ligne.') : ($e->location ? " — {$e->location}." : '.')).' Présentez le QR code de votre billet à l\'entrée.'));
+            }
             $r->update(['rappel_at' => now()]);
             $n++;
         }

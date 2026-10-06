@@ -15,6 +15,11 @@ class EnsureApiAuthenticated
     public function handle(Request $request, Closure $next): Response
     {
         if (! session('api_token')) {
+            // Après connexion, on revient sur la page demandée (lien d'une notification, d'un QR…).
+            if ($request->isMethod('GET') && ! $request->header('X-Livewire')) {
+                session(['url.intended' => $request->getRequestUri()]);
+            }
+
             return redirect()->route('login');
         }
 

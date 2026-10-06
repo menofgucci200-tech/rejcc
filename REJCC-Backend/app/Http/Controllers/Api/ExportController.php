@@ -7,10 +7,9 @@ use App\Models\Contact;
 use App\Models\Event;
 use App\Models\Formation;
 use App\Models\MembershipApplication;
-use App\Models\EventParticipant;
+use App\Models\EventRegistration;
 use App\Models\NewsletterSubscriber;
 use App\Models\Opportunity;
-use App\Models\RegistrationEvent;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -107,40 +106,52 @@ class ExportController extends Controller
 
     private function evenements(): array
     {
+        $statuts = ['brouillon' => 'Brouillon', 'publie' => 'Publié', 'annule' => 'Annulé'];
+
         return [
-            'columns' => ['Titre', 'Catégorie', 'Date', 'Lieu', 'Inscrits'],
-            'rows' => Event::withCount('registrations')->orderByDesc('starts_at')->get()->map(fn (Event $e) => [
-                $e->title, $e->category, $e->starts_at?->format('d/m/Y H:i'), $e->location, $e->registrations_count,
+            'columns' => ['Titre', 'Catégorie', 'Statut', 'Date', 'Lieu', 'Capacité', 'Inscrits', 'dont invités', 'Présents'],
+            'rows' => Event::withCount([
+                'registrations',
+                'registrations as invites_count' => fn ($q) => $q->whereNull('user_id'),
+                'registrations as presents_count' => fn ($q) => $q->whereNotNull('present_at'),
+            ])->orderByDesc('starts_at')->get()->map(fn (Event $e) => [
+                $e->title, $e->category, $statuts[$e->statut] ?? $e->statut, $e->starts_at?->format('d/m/Y H:i'),
+                $e->en_ligne ? 'En ligne' : $e->location, $e->capacity, $e->registrations_count, $e->invites_count, $e->presents_count,
             ])->all(),
         ];
     }
 
+    /** Liste unique des inscrits (membres et invités), d'un événement ou de tous. */
     private function participants(?string $eventId): array
     {
-        $query = EventParticipant::with('event:id,title')->orderBy('created_at');
+        $query = EventRegistration::with(['event:id,title,champs', 'user:id,prenom,nom,email,telephone,ville'])->orderBy('event_id')->orderBy('created_at');
 
         // Filtre optionnel sur un événement précis (bouton « Exporter » d'un événement).
-        $event = $eventId ? RegistrationEvent::find($eventId) : null;
+        $event = $eventId ? Event::find($eventId) : null;
         if ($event) {
-            $query->where('registration_event_id', $event->id);
+            $query->where('event_id', $event->id);
         }
 
-        // Colonnes des champs personnalisés (uniquement pour un export ciblé).
-        $fields = $event?->fields ?? [];
+        // Colonnes des questions personnalisées (uniquement pour un export ciblé).
+        $fields = $event?->champs ?? [];
         $columns = array_merge(
-            ['Événement', 'Prénom', 'Nom', 'Téléphone', 'Email', 'Membre', 'Inscrit le'],
+            ['Événement', 'Type', 'N° membre', 'Prénom', 'Nom', 'Téléphone', 'Email', 'Ville', 'Billet', 'Inscrit le', 'Présent'],
             array_map(fn ($f) => $f['label'], $fields),
         );
 
         return [
             'columns' => $columns,
-            'rows' => $query->get()->map(function (EventParticipant $p) use ($fields) {
+            'rows' => $query->get()->map(function (EventRegistration $r) use ($fields) {
+                $u = $r->user;
                 $row = [
-                    $p->event?->title, $p->prenom, $p->nom, $p->telephone, $p->email,
-                    $p->is_member ? 'Oui' : 'Non', $p->created_at?->format('d/m/Y H:i'),
+                    $r->event?->title,
+                    $u ? 'Membre' : ($r->se_dit_membre ? 'Invité (se dit membre)' : 'Invité'),
+                    $u?->memberNumber(), $u->prenom ?? $r->prenom, $u->nom ?? $r->nom,
+                    $u->telephone ?? $r->telephone, $u->email ?? $r->email, $u?->ville,
+                    $r->billet, $r->created_at?->format('d/m/Y H:i'), $r->present_at?->format('d/m/Y H:i') ?? 'Non',
                 ];
                 foreach ($fields as $f) {
-                    $v = $p->answers[$f['key']] ?? '';
+                    $v = $r->reponses[$f['key']] ?? '';
                     if ($f['type'] === 'checkbox') {
                         $v = $v === true ? 'Oui' : ($v === false ? 'Non' : '');
                     }

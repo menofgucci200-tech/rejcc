@@ -43,7 +43,7 @@ class EvenementPointage extends Component
         $inscrits = collect($data['inscrits'] ?? []);
         $q = mb_strtolower(trim($this->filtre));
         if ($q !== '') {
-            $inscrits = $inscrits->filter(fn ($i) => str_contains(mb_strtolower($i['nom'].' '.$i['billet'].' '.$i['email']), $q));
+            $inscrits = $inscrits->filter(fn ($i) => str_contains(mb_strtolower($i['nom'].' '.$i['billet'].' '.$i['email'].' '.$i['telephone']), $q));
         }
 
         return view('livewire.admin.evenement-pointage', [

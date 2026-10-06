@@ -16,7 +16,8 @@ class EventController extends Controller
     /** Liste publique des événements (vitrine, pas d'inscription/membre). */
     public function publicIndex()
     {
-        return response()->json(['ok' => true, 'events' => Event::where('statut', 'publie')->orderBy('starts_at')->get()]);
+        return response()->json(['ok' => true, 'events' => Event::where('statut', 'publie')->orderBy('starts_at')->get()
+            ->each->makeHidden(['lien_visio', 'champs', 'ancien_slug', 'annonce_at'])]);
     }
 
     /** Détail public d'un événement par son slug (vitrine). */
@@ -28,7 +29,7 @@ class EventController extends Controller
             return response()->json(['ok' => false, 'message' => 'Événement introuvable.'], 404);
         }
 
-        return response()->json(['ok' => true, 'event' => $event]);
+        return response()->json(['ok' => true, 'event' => $event->makeHidden(['lien_visio', 'champs', 'ancien_slug', 'annonce_at'])]);
     }
 
     /** Données d'un événement pour l'espace membre. */
@@ -174,43 +175,86 @@ class EventController extends Controller
 
     public function adminIndex()
     {
-        $events = Event::withCount('registrations')->orderByDesc('starts_at')->get();
+        $events = Event::withCount([
+            'registrations',
+            'registrations as presents_count' => fn ($q) => $q->whereNotNull('present_at'),
+            'registrations as invites_count' => fn ($q) => $q->whereNull('user_id'),
+        ])->orderByDesc('starts_at')->get()
+            ->map(fn (Event $e) => $e->toArray() + ['passe' => $e->estPasse()]);
 
         return response()->json(['ok' => true, 'events' => $events]);
     }
 
+    /** Une ligne de la liste unique des inscrits (membre ou invité). */
+    private function ligneInscrit(EventRegistration $r): array
+    {
+        $u = $r->user;
+
+        return [
+            'id' => $r->id,
+            'user_id' => $r->user_id,
+            'type' => $u ? 'membre' : 'invite',
+            'nom' => $r->nomComplet(),
+            'prenom' => $u->prenom ?? $r->prenom,
+            'nom_famille' => $u->nom ?? $r->nom,
+            'email' => $u->email ?? $r->email,
+            'telephone' => $u->telephone ?? $r->telephone,
+            'ville' => $u->ville ?? null,
+            'photo' => $u->photo ?? null,
+            'role' => $u->role ?? null,
+            'numero' => $u?->memberNumber(),
+            'se_dit_membre' => $r->se_dit_membre,
+            'reponses' => $r->reponses ?? [],
+            'billet' => $r->billet,
+            'inscrit_le' => $r->created_at?->toIso8601String(),
+            'present_at' => $r->present_at?->toIso8601String(),
+        ];
+    }
+
     /**
-     * GET /admin/events/{id}/inscrits — membres inscrits (coordonnées pour
-     * l'administration), présence le jour J.
+     * GET /admin/events/{id}/inscrits — liste unique des inscrits (membres et
+     * invités du formulaire public), recherche, présence le jour J.
      */
-    public function inscrits(int $id)
+    public function inscrits(Request $request, int $id)
     {
         $e = Event::find($id);
         if (! $e) {
             return response()->json(['ok' => false, 'message' => 'Événement introuvable.'], 404);
         }
-        $inscrits = EventRegistration::with('user:id,prenom,nom,email,telephone,ville,photo,role')
-            ->where('event_id', $e->id)->orderBy('created_at')->get()
-            ->map(fn (EventRegistration $r) => [
-                'id' => $r->id,
-                'user_id' => $r->user_id,
-                'nom' => trim(($r->user->prenom ?? '').' '.($r->user->nom ?? '')),
-                'email' => $r->user->email ?? null,
-                'telephone' => $r->user->telephone ?? null,
-                'ville' => $r->user->ville ?? null,
-                'photo' => $r->user->photo ?? null,
-                'role' => $r->user->role ?? null,
-                'billet' => $r->billet,
-                'inscrit_le' => $r->created_at?->toIso8601String(),
-                'present_at' => $r->present_at?->toIso8601String(),
-            ]);
+        $q = trim((string) $request->query('q', ''));
+        $query = EventRegistration::with('user:id,prenom,nom,email,telephone,ville,photo,role')
+            ->where('event_id', $e->id)->orderBy('created_at');
+        if ($q !== '') {
+            $like = "%{$q}%";
+            $query->where(fn ($w) => $w->where('prenom', 'like', $like)->orWhere('nom', 'like', $like)
+                ->orWhere('telephone', 'like', $like)->orWhere('email', 'like', $like)->orWhere('billet', 'like', $like)
+                ->orWhereHas('user', fn ($u) => $u->where('prenom', 'like', $like)->orWhere('nom', 'like', $like)
+                    ->orWhere('email', 'like', $like)->orWhere('telephone', 'like', $like)));
+        }
+        $inscrits = $query->get()->map(fn (EventRegistration $r) => $this->ligneInscrit($r));
+        $tous = EventRegistration::where('event_id', $e->id);
 
         return response()->json([
             'ok' => true,
-            'event' => ['id' => $e->id, 'title' => $e->title, 'starts_at' => $e->starts_at?->toIso8601String(), 'capacity' => $e->capacity],
-            'inscrits' => $inscrits,
-            'presents' => $inscrits->whereNotNull('present_at')->count(),
+            'event' => [
+                'id' => $e->id, 'title' => $e->title, 'slug' => $e->slug, 'statut' => $e->statut,
+                'starts_at' => $e->starts_at?->toIso8601String(), 'capacity' => $e->capacity,
+                'champs' => $e->champs ?? [], 'inscription_publique' => $e->inscription_publique,
+            ],
+            'inscrits' => $inscrits->values(),
+            'total' => (clone $tous)->count(),
+            'membres' => (clone $tous)->whereNotNull('user_id')->count(),
+            'invites' => (clone $tous)->whereNull('user_id')->count(),
+            'presents' => (clone $tous)->whereNotNull('present_at')->count(),
         ]);
+    }
+
+    /** DELETE /admin/events/{id}/inscrits/{inscription} — retire un inscrit (doublon, erreur). */
+    public function retirerInscrit(int $id, int $inscription)
+    {
+        EventRegistration::where('event_id', $id)->whereKey($inscription)->delete();
+
+        return response()->json(['ok' => true]);
     }
 
     /**
@@ -263,11 +307,70 @@ class EventController extends Controller
         return response()->json([
             'ok' => true,
             'deja' => $deja,
-            'membre' => ['id' => $membre->id, 'nom' => trim($membre->prenom.' '.$membre->nom), 'photo' => $membre->photo, 'role' => $membre->role],
+            'membre' => $membre
+                ? ['id' => $membre->id, 'nom' => trim($membre->prenom.' '.$membre->nom), 'photo' => $membre->photo, 'role' => $membre->role]
+                : ['id' => null, 'nom' => $inscription->nomComplet(), 'photo' => null, 'role' => 'invite'],
             'present_at' => $inscription->present_at->toIso8601String(),
             'presents' => EventRegistration::where('event_id', $e->id)->whereNotNull('present_at')->count(),
             'inscrits' => EventRegistration::where('event_id', $e->id)->count(),
         ]);
+    }
+
+    /** POST /admin/events/{id}/annuler — annule l'événement et prévient les inscrits. */
+    public function annuler(Request $request, int $id)
+    {
+        $e = Event::find($id);
+        if (! $e) {
+            return response()->json(['ok' => false, 'message' => 'Événement introuvable.'], 404);
+        }
+        $motif = trim((string) $request->input('motif'));
+        if (mb_strlen($motif) < 5) {
+            return response()->json(['ok' => false, 'message' => "Indiquez le motif de l'annulation : il est transmis aux inscrits."], 422);
+        }
+        if ($e->statut === 'annule') {
+            return response()->json(['ok' => false, 'message' => 'Cet événement est déjà annulé.'], 422);
+        }
+        $e->update(['statut' => 'annule', 'motif_annulation' => mb_substr($motif, 0, 500)]);
+        $prevenus = $e->prevenirInscrits("Événement annulé : {$e->title}", "Nous sommes au regret d'annuler « {$e->title} ». Motif : {$motif}");
+
+        return response()->json(['ok' => true, 'prevenus' => $prevenus]);
+    }
+
+    /** POST /admin/events/{id}/retablir — remet en ligne un événement annulé par erreur. */
+    public function retablir(int $id)
+    {
+        $e = Event::find($id);
+        if (! $e || $e->statut !== 'annule') {
+            return response()->json(['ok' => false, 'message' => "Cet événement n'est pas annulé."], 422);
+        }
+        $e->update(['statut' => 'publie', 'motif_annulation' => null]);
+        $prevenus = $e->prevenirInscrits("Événement maintenu : {$e->title}", "Bonne nouvelle : « {$e->title} » est finalement maintenu, {$this->quand($e)}. Votre inscription reste valable.");
+
+        return response()->json(['ok' => true, 'prevenus' => $prevenus]);
+    }
+
+    /** POST /admin/events/{id}/message — message de l'équipe à tous les inscrits. */
+    public function message(Request $request, int $id)
+    {
+        $e = Event::find($id);
+        if (! $e) {
+            return response()->json(['ok' => false, 'message' => 'Événement introuvable.'], 404);
+        }
+        $texte = trim((string) $request->input('message'));
+        if (mb_strlen($texte) < 5) {
+            return response()->json(['ok' => false, 'message' => 'Écrivez le message à envoyer aux inscrits.'], 422);
+        }
+        if (! $e->registrations()->exists()) {
+            return response()->json(['ok' => false, 'message' => "Personne n'est encore inscrit à cet événement."], 422);
+        }
+        $prevenus = $e->prevenirInscrits("Message : {$e->title}", mb_substr($texte, 0, 1000));
+
+        return response()->json(['ok' => true, 'prevenus' => $prevenus]);
+    }
+
+    private function quand(Event $e): string
+    {
+        return $e->starts_at->locale('fr')->isoFormat('dddd D MMMM [à] HH[h]mm');
     }
 
     public function store(Request $request)
@@ -297,13 +400,37 @@ class EventController extends Controller
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|min:2|max:160',
             'category' => 'required|string|min:2|max:60',
+            'statut' => 'nullable|in:brouillon,publie',
             'starts_at' => 'required|date',
+            'ends_at' => 'nullable|date|after:starts_at',
             'time_label' => 'nullable|string|max:60',
             'location' => 'nullable|string|max:160',
+            'en_ligne' => 'nullable|boolean',
+            'lien_visio' => 'nullable|required_if:en_ligne,true|url|max:500',
             'excerpt' => 'nullable|string|max:300',
             'description' => 'nullable|string|max:3000',
-            'capacity' => 'nullable|integer|min:1',
+            'capacity' => 'nullable|integer|min:1|max:1000000',
             'image' => 'nullable|url|max:500',
+            'inscriptions_ouvertes' => 'nullable|boolean',
+            'date_limite' => 'nullable|date|before_or_equal:starts_at',
+            'reserve_abonnes' => 'nullable|boolean',
+            'inscription_publique' => 'nullable|boolean',
+            'annoncer' => 'nullable|boolean',
+            // Questions du formulaire d'inscription publique.
+            'champs' => 'nullable|array|max:20',
+            'champs.*.label' => 'required|string|max:120',
+            'champs.*.type' => 'required|in:text,textarea,select,checkbox,file',
+            'champs.*.required' => 'nullable|boolean',
+            'champs.*.options' => 'nullable|array|max:30',
+            'champs.*.options.*' => 'nullable|string|max:120',
+        ], [
+            'ends_at.after' => 'La fin doit être après le début.',
+            'date_limite.before_or_equal' => "La date limite d'inscription doit précéder le début de l'événement.",
+            'lien_visio.required_if' => 'Indiquez le lien de connexion (Zoom, Meet…) de l\'événement en ligne.',
+            'lien_visio.url' => 'Le lien de connexion doit être une adresse web complète (https://…).',
+            'champs.*.label.required' => 'Chaque question doit avoir un intitulé.',
+        ], [
+            'title' => 'titre', 'category' => 'catégorie', 'starts_at' => 'date de début', 'capacity' => 'capacité',
         ]);
 
         if ($validator->fails()) {
@@ -311,20 +438,104 @@ class EventController extends Controller
         }
 
         $data = $validator->validated();
+        if (($data['reserve_abonnes'] ?? false) && ($data['inscription_publique'] ?? false)) {
+            return response()->json(['ok' => false, 'message' => "Un événement réservé aux abonnés ne peut pas être ouvert à l'inscription publique."], 422);
+        }
+        $annoncer = (bool) ($data['annoncer'] ?? false);
+        unset($data['annoncer']);
+        if (array_key_exists('champs', $data)) {
+            $data['champs'] = $this->normaliserChamps($data['champs'] ?? []);
+        }
+        if (! ($data['en_ligne'] ?? $event->en_ligne)) {
+            $data['lien_visio'] = null;
+        }
+        // Un événement annulé garde son statut (le rétablir passe par « Rétablir »).
+        if ($event->statut === 'annule') {
+            unset($data['statut']);
+        }
 
         // Slug généré à la création puis stable (les URLs publiques ne changent pas).
         if (! $event->exists) {
             $base = Str::slug($data['title']) ?: 'evenement';
             $slug = $base;
-            for ($i = 2; Event::where('slug', $slug)->exists(); $i++) {
+            for ($i = 2; Event::where('slug', $slug)->orWhere('ancien_slug', $slug)->exists(); $i++) {
                 $slug = "{$base}-{$i}";
             }
             $data['slug'] = $slug;
+            $data['statut'] ??= 'publie';
         }
+
+        $etaitPublie = $event->exists && $event->statut === 'publie';
+        $ancienneDate = $event->starts_at;
+        $ancienLieu = $event->en_ligne ? 'en ligne' : $event->location;
 
         $event->fill($data)->save();
 
-        return response()->json(['ok' => true, 'event' => $event]);
+        // Report ou changement de lieu d'un événement publié : les inscrits sont prévenus.
+        $prevenus = null;
+        $nouveauLieu = $event->en_ligne ? 'en ligne' : $event->location;
+        if ($etaitPublie && $event->statut === 'publie' && ($ancienneDate && ! $ancienneDate->equalTo($event->starts_at) || $ancienLieu !== $nouveauLieu)) {
+            $changeDate = ! $ancienneDate->equalTo($event->starts_at);
+            $prevenus = $event->prevenirInscrits(
+                ($changeDate ? 'Date modifiée' : 'Lieu modifié')." : {$event->title}",
+                "« {$event->title} » aura lieu {$this->quand($event)}".($event->en_ligne ? ' en ligne' : ($event->location ? " — {$event->location}" : '')).'. Votre inscription reste valable ; si vous ne pouvez plus venir, annulez-la pour libérer votre place.'
+            );
+        }
+
+        // Annonce aux membres à la publication (case à cocher).
+        $annonces = 0;
+        if ($annoncer && $event->statut === 'publie' && ! $event->annonce_at) {
+            $annonces = $this->annoncer($event);
+        }
+
+        return response()->json(['ok' => true, 'event' => $event->fresh(), 'prevenus' => $prevenus, 'annonces' => $annonces]);
+    }
+
+    /** Notifie tous les membres actifs d'un nouvel événement (une seule fois). */
+    private function annoncer(Event $e): int
+    {
+        $body = "{$this->quand($e)}".($e->en_ligne ? ' — en ligne' : ($e->location ? " — {$e->location}" : ''))
+            .($e->reserve_abonnes ? '. Réservé aux membres à jour de leur abonnement.' : '. Inscrivez-vous depuis la fiche de l\'événement.');
+        $n = 0;
+        User::where('is_active', true)->whereIn('role', ['member', 'mentor'])->select('id')
+            ->chunkById(500, function ($users) use ($e, $body, &$n) {
+                $now = now();
+                MemberNotification::insert($users->map(fn ($u) => [
+                    'user_id' => $u->id, 'type' => 'info', 'title' => "Nouvel événement : {$e->title}",
+                    'body' => ucfirst($body), 'link' => "/espace-membre/evenements?evenement={$e->id}",
+                    'created_at' => $now, 'updated_at' => $now,
+                ])->all());
+                $n += $users->count();
+            });
+        $e->forceFill(['annonce_at' => now()])->save();
+
+        return $n;
+    }
+
+    /** Génère une clé stable par question et nettoie sa définition. */
+    private function normaliserChamps(array $champs): array
+    {
+        $out = [];
+        $used = [];
+        foreach ($champs as $f) {
+            $label = trim($f['label'] ?? '');
+            if ($label === '') {
+                continue;
+            }
+            $base = Str::slug($label) ?: 'champ';
+            $key = $base;
+            for ($i = 2; in_array($key, $used, true); $i++) {
+                $key = $base.'-'.$i;
+            }
+            $used[] = $key;
+            $field = ['key' => $key, 'label' => $label, 'type' => $f['type'], 'required' => (bool) ($f['required'] ?? false)];
+            if ($f['type'] === 'select') {
+                $field['options'] = array_values(array_filter(array_map('trim', $f['options'] ?? [])));
+            }
+            $out[] = $field;
+        }
+
+        return $out;
     }
 
     /** Ancienne bascule (compatibilité) : inscrit ou désinscrit selon l'état actuel. */

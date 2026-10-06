@@ -60,6 +60,7 @@ Route::get('/{slug}', \App\Http\Controllers\LegalPageController::class)
 Route::get('/carte/{code}', [\App\Http\Controllers\CardController::class, 'show'])->name('carte');
 Route::get('/carte/{code}/contact.vcf', [\App\Http\Controllers\CardController::class, 'vcard'])->name('carte.vcard');
 Route::get('/participer/{slug}', \App\Livewire\EventSignup::class)->name('event.signup');
+Route::get('/billet/{code}', \App\Livewire\Billet::class)->name('billet');
 Route::get('/adhesion', \App\Livewire\AdhesionApplicationForm::class)->name('adhesion');
 Route::get('/suivre-ma-candidature', \App\Livewire\AdhesionStatusCheck::class)->name('adhesion.status');
 Route::redirect('/inscription', '/adhesion');
@@ -117,7 +118,8 @@ Route::middleware(['api.auth', 'admin.web'])->prefix('admin')->name('admin.')->g
     Route::get('/parcours', AdminParcours::class)->name('parcours');
     Route::get('/evenements', AdminEvenements::class)->name('evenements');
     Route::get('/evenements/{id}/pointage', \App\Livewire\Admin\EvenementPointage::class)->whereNumber('id')->name('evenements.pointage');
-    Route::get('/inscriptions', \App\Livewire\Admin\Inscriptions::class)->name('inscriptions');
+    // Ancien module « Inscriptions (QR) », fusionné dans les événements.
+    Route::redirect('/inscriptions', '/admin/evenements')->name('inscriptions');
     Route::get('/projets', AdminProjets::class)->name('projets');
     Route::get('/marketplace', AdminMarketplace::class)->name('marketplace');
     Route::redirect('/communaute', '/admin/marketplace');
