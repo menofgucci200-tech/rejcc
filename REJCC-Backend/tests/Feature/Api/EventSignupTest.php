@@ -244,6 +244,25 @@ class EventSignupTest extends TestCase
         $this->assertSame(1, $e->nbInscrits());
     }
 
+    public function test_la_vitrine_indique_comment_s_inscrire(): void
+    {
+        $this->evenement(['lien_visio' => 'https://meet.example.com/x', 'en_ligne' => true]);
+        $this->evenement(['slug' => 'membres', 'inscription_publique' => false]);
+        $this->evenement(['slug' => 'brouillon', 'statut' => 'brouillon']);
+        $this->evenement(['slug' => 'annule', 'statut' => 'annule', 'motif_annulation' => 'Salle indisponible']);
+
+        $events = collect($this->getJson('/api/public-events')->assertOk()->json('events'))->keyBy('slug');
+        $this->assertSame(['lancement-rejcc', 'membres', 'annule'], $events->keys()->all());
+        $this->assertTrue($events['lancement-rejcc']['inscription_visiteur']);
+        $this->assertArrayNotHasKey('lien_visio', $events['lancement-rejcc']);
+        $this->assertFalse($events['membres']['inscription_visiteur']);
+        $this->assertTrue($events['membres']['inscriptions_membres']);
+        $this->assertFalse($events['annule']['inscriptions_membres']);
+
+        $this->getJson('/api/public-events/brouillon')->assertStatus(404);
+        $this->getJson('/api/public-events/annule')->assertOk()->assertJsonPath('event.motif_annulation', 'Salle indisponible');
+    }
+
     public function test_un_membre_ne_peut_pas_gerer_les_evenements(): void
     {
         $t = $this->tokenFor(User::factory()->create());

@@ -4,6 +4,8 @@
             $e['starts_at'] = \Carbon\Carbon::parse($e['starts_at']);
             return (object) $e;
         })
+        // Uniquement les prochains rendez-vous (ni passés ni annulés).
+        ->filter(fn ($e) => ! ($e->passe ?? false) && ($e->statut ?? 'publie') === 'publie')
         ->sortBy('starts_at')
         ->take(4)
         ->values();
@@ -31,7 +33,7 @@
                             <p class="mt-1 line-clamp-1 text-sm text-ink/65">{{ $e->excerpt }}</p>
                             <p class="mt-2 flex items-center gap-1.5 text-xs text-ink/55">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="size-3.5"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                                {{ $e->location }} · {{ $e->starts_at->format('Y') }}
+                                {{ ($e->en_ligne ?? false) ? 'En ligne' : $e->location }} · {{ $e->starts_at->format('Y') }}
                             </p>
                         </div>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="size-5 self-center text-brand/20 transition-all duration-500 group-hover:translate-x-1 group-hover:text-accent"><path d="M5 12h14M13 6l6 6-6 6"/></svg>

@@ -21,8 +21,14 @@ class EventController extends Controller
         }
 
         $event = (object) $result['event'];
-        $event->starts_at = Carbon::parse($event->starts_at);
+        $event->starts_at = Carbon::parse($event->starts_at)->setTimezone(config('app.timezone'))->locale('fr');
+        $event->ends_at = $event->ends_at ? Carbon::parse($event->ends_at)->setTimezone(config('app.timezone'))->locale('fr') : null;
+        $user = session('api_user');
 
-        return view('pages.evenements.show', ['event' => $event]);
+        return view('pages.evenements.show', [
+            'event' => $event,
+            // Membre connecté : il s'inscrit depuis son espace ; visiteur : formulaire public ou adhésion.
+            'membreConnecte' => $user && ($user['role'] ?? null) !== 'admin',
+        ]);
     }
 }

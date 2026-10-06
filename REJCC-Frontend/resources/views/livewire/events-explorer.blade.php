@@ -60,25 +60,42 @@
 
         <div>
             @if ($agenda->isEmpty())
-                <div class="flex h-full min-h-48 items-center justify-center rounded-3xl border border-dashed border-brand/15 text-center text-ink/55">
-                    Aucun événement {{ $selectedDay ? 'ce jour' : 'ce mois-ci' }}. Naviguez entre les mois pour en découvrir d'autres.
+                <div class="flex h-full min-h-48 flex-col items-center justify-center gap-3 rounded-3xl border border-dashed border-brand/15 p-6 text-center text-ink/55">
+                    Aucun événement {{ $selectedDay ? 'ce jour' : 'ce mois-ci' }}.
+                    @if ($prochains)
+                        <button wire:click="allerProchain" class="rounded-full bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand/90">Voir le prochain événement</button>
+                    @else
+                        <span class="text-sm">Aucun événement à venir pour le moment : revenez bientôt !</span>
+                    @endif
                 </div>
             @else
                 <div class="flex flex-col gap-4">
                     @foreach ($agenda as $e)
-                        <a href="/evenements/{{ $e->slug }}" wire:navigate class="group flex items-stretch gap-5 rounded-3xl border border-brand/10 bg-white p-5 transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_28px_60px_-35px_rgba(3,29,89,0.4)]">
-                            <div class="flex w-20 shrink-0 flex-col items-center justify-center rounded-2xl bg-brand py-4 text-white">
+                        @php $termine = $e->passe || $e->statut === 'annule'; @endphp
+                        <a href="/evenements/{{ $e->slug }}" wire:navigate wire:key="ag-{{ $e->id }}" class="group flex items-stretch gap-5 rounded-3xl border border-brand/10 bg-white p-5 transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_28px_60px_-35px_rgba(3,29,89,0.4)] {{ $termine ? 'opacity-70' : '' }}">
+                            <div class="flex w-20 shrink-0 flex-col items-center justify-center rounded-2xl py-4 text-white {{ $termine ? 'bg-ink/40' : 'bg-brand' }}">
                                 <span class="font-display text-3xl leading-none">{{ $e->starts_at->format('d') }}</span>
                                 <span class="mt-1 text-xs uppercase tracking-wider text-white/70">{{ $e->starts_at->locale('fr')->translatedFormat('M') }}</span>
                             </div>
                             <div class="flex min-w-0 flex-1 flex-col justify-center">
-                                <span class="inline-flex w-fit rounded-full bg-accent/10 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-accent">{{ $e->category }}</span>
+                                <span class="flex flex-wrap gap-1.5">
+                                    <span class="inline-flex w-fit rounded-full bg-accent/10 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-accent">{{ $e->category }}</span>
+                                    @if ($e->statut === 'annule')
+                                        <span class="inline-flex w-fit rounded-full bg-accent px-2.5 py-0.5 text-xs font-semibold text-white">Annulé</span>
+                                    @elseif ($e->passe)
+                                        <span class="inline-flex w-fit rounded-full bg-ink/10 px-2.5 py-0.5 text-xs font-semibold text-ink/60">Passé</span>
+                                    @elseif ($e->complet)
+                                        <span class="inline-flex w-fit rounded-full bg-ink/10 px-2.5 py-0.5 text-xs font-semibold text-ink/60">Complet</span>
+                                    @elseif ($e->inscription_visiteur)
+                                        <span class="inline-flex w-fit rounded-full bg-[#22A85A]/10 px-2.5 py-0.5 text-xs font-semibold text-[#1C8F4C]">Ouvert à tous</span>
+                                    @endif
+                                </span>
                                 <h3 class="mt-2 text-lg font-bold text-brand">{{ $e->title }}</h3>
                                 <p class="mt-1 line-clamp-1 text-sm text-ink/65">{{ $e->excerpt }}</p>
                                 <p class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink/55">
                                     <span class="flex items-center gap-1.5">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="size-3.5"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
-                                        {{ $e->location }}
+                                        {{ $e->en_ligne ? 'En ligne' : $e->location }}
                                     </span>
                                     <span class="flex items-center gap-1.5">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="size-3.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>

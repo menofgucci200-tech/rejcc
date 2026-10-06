@@ -13,23 +13,61 @@ use Illuminate\Support\Str;
 
 class EventController extends Controller
 {
-    /** Liste publique des événements (vitrine, pas d'inscription/membre). */
+    /** Données publiques d'un événement (vitrine) : jamais le lien de visio ni les inscrits. */
+    private function payloadPublic(Event $e): array
+    {
+        $nb = $e->registrations_count ?? $e->nbInscrits();
+        $restantes = $e->capacity === null ? null : max(0, $e->capacity - $nb);
+
+        return [
+            'id' => $e->id,
+            'slug' => $e->slug,
+            'title' => $e->title,
+            'excerpt' => $e->excerpt,
+            'description' => $e->description,
+            'body' => $e->body,
+            'category' => $e->category,
+            'location' => $e->location,
+            'en_ligne' => $e->en_ligne,
+            'statut' => $e->statut,
+            'motif_annulation' => $e->motif_annulation,
+            'starts_at' => $e->starts_at?->toIso8601String(),
+            'ends_at' => $e->ends_at?->toIso8601String(),
+            'time_label' => $e->time_label,
+            'image' => $e->image,
+            'capacity' => $e->capacity,
+            'places_restantes' => $restantes,
+            'complet' => $restantes === 0,
+            'passe' => $e->estPasse(),
+            'reserve_abonnes' => $e->reserve_abonnes,
+            'inscription_publique' => $e->inscription_publique,
+            // Un visiteur peut-il s'inscrire par le formulaire public ?
+            'inscription_visiteur' => $e->inscription_publique && $e->raisonRefus(null) === null,
+            // Les membres peuvent-ils encore s'inscrire (sans tenir compte de l'abonnement) ?
+            'inscriptions_membres' => $e->statut === 'publie' && ! $e->starts_at->isPast() && $e->inscriptions_ouvertes
+                && ($e->date_limite === null || $e->date_limite->isFuture()) && $restantes !== 0,
+        ];
+    }
+
+    /** Liste publique des événements (vitrine) : publiés et annulés. */
     public function publicIndex()
     {
-        return response()->json(['ok' => true, 'events' => Event::where('statut', 'publie')->orderBy('starts_at')->get()
-            ->each->makeHidden(['lien_visio', 'champs', 'ancien_slug', 'annonce_at'])]);
+        $events = Event::visibles()->withCount('registrations')->orderBy('starts_at')->get()
+            ->map(fn (Event $e) => $this->payloadPublic($e));
+
+        return response()->json(['ok' => true, 'events' => $events->values()]);
     }
 
     /** Détail public d'un événement par son slug (vitrine). */
     public function publicShow(string $slug)
     {
-        $event = Event::visibles()->where('slug', $slug)->first();
+        $event = Event::visibles()->withCount('registrations')->where('slug', $slug)->first();
 
         if (! $event) {
             return response()->json(['ok' => false, 'message' => 'Événement introuvable.'], 404);
         }
 
-        return response()->json(['ok' => true, 'event' => $event->makeHidden(['lien_visio', 'champs', 'ancien_slug', 'annonce_at'])]);
+        return response()->json(['ok' => true, 'event' => $this->payloadPublic($event)]);
     }
 
     /** Données d'un événement pour l'espace membre. */

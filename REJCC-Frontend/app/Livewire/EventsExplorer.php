@@ -19,8 +19,9 @@ class EventsExplorer extends Component
 
     public function mount(): void
     {
-        $first = $this->fetchEvents()->first();
-        $cursor = $first ? $first->starts_at : now();
+        // L'agenda s'ouvre sur le prochain événement à venir (ou le mois en cours).
+        $prochain = $this->fetchEvents()->first(fn ($e) => ! $e->passe && $e->statut === 'publie');
+        $cursor = $prochain ? $prochain->starts_at : now();
         $this->year = (int) $cursor->year;
         $this->month = (int) $cursor->month;
     }
@@ -29,7 +30,7 @@ class EventsExplorer extends Component
     {
         return Collection::make(Api::get('/public-events')['events'] ?? [])
             ->map(function (array $e) {
-                $e['starts_at'] = Carbon::parse($e['starts_at']);
+                $e['starts_at'] = Carbon::parse($e['starts_at'])->setTimezone(config('app.timezone'));
 
                 return (object) $e;
             })
@@ -50,6 +51,18 @@ class EventsExplorer extends Component
 
     public function resetDay(): void
     {
+        $this->selectedDay = null;
+    }
+
+    /** Revient au mois du prochain événement. */
+    public function allerProchain(): void
+    {
+        $prochain = $this->fetchEvents()
+            ->when($this->type !== 'Tous', fn ($c) => $c->where('category', $this->type))
+            ->first(fn ($e) => ! $e->passe && $e->statut === 'publie');
+        $cursor = $prochain ? $prochain->starts_at : now();
+        $this->year = (int) $cursor->year;
+        $this->month = (int) $cursor->month;
         $this->selectedDay = null;
     }
 
@@ -89,6 +102,7 @@ class EventsExplorer extends Component
             ->values();
 
         $types = $all->pluck('category')->unique()->sort()->values();
+        $prochains = $byType->filter(fn ($e) => ! $e->passe && $e->statut === 'publie')->count();
 
         return view('livewire.events-explorer', [
             'types' => ['Tous', ...$types],
@@ -97,6 +111,7 @@ class EventsExplorer extends Component
             'cells' => $cells,
             'eventDays' => $eventDays,
             'agenda' => $agenda,
+            'prochains' => $prochains,
         ]);
     }
 }
