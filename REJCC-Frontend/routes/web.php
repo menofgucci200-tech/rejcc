@@ -98,6 +98,7 @@ Route::middleware('api.auth')->prefix('espace-membre')->name('espace-membre.')->
     Route::get('/marketplace', MemberMarketplace::class)->name('marketplace');
     Route::redirect('/communaute', '/espace-membre/marketplace');
     Route::get('/evenements', MemberEvenements::class)->name('evenements');
+    Route::get('/evenements/{id}/agenda.ics', \App\Http\Controllers\EvenementAgendaController::class)->whereNumber('id')->name('evenements.agenda');
     Route::get('/projets', MemberProjets::class)->name('projets');
     Route::get('/emplois', MemberEmplois::class)->name('emplois');
     Route::get('/certificats', MemberCertificats::class)->name('certificats');

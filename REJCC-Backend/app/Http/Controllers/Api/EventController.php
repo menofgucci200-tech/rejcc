@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\EventRegistration;
+use App\Models\MemberNotification;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -14,13 +16,13 @@ class EventController extends Controller
     /** Liste publique des événements (vitrine, pas d'inscription/membre). */
     public function publicIndex()
     {
-        return response()->json(['ok' => true, 'events' => Event::orderBy('starts_at')->get()]);
+        return response()->json(['ok' => true, 'events' => Event::where('statut', 'publie')->orderBy('starts_at')->get()]);
     }
 
     /** Détail public d'un événement par son slug (vitrine). */
     public function publicShow(string $slug)
     {
-        $event = Event::where('slug', $slug)->first();
+        $event = Event::visibles()->where('slug', $slug)->first();
 
         if (! $event) {
             return response()->json(['ok' => false, 'message' => 'Événement introuvable.'], 404);
@@ -29,28 +31,107 @@ class EventController extends Controller
         return response()->json(['ok' => true, 'event' => $event]);
     }
 
-    /** Liste des événements à venir + statut d'inscription du membre courant. */
-    public function index(Request $request)
+    /** Données d'un événement pour l'espace membre. */
+    private function payloadMembre(Event $e, User $moi, bool $inscrit): array
     {
-        $me = $request->user()->id;
+        $nb = $e->registrations_count ?? $e->nbInscrits();
+        $restantes = $e->capacity === null ? null : max(0, $e->capacity - $nb);
 
-        $events = Event::orderBy('starts_at')->withCount('registrations')->get();
-        $registered = EventRegistration::where('user_id', $me)->pluck('event_id')->all();
-
-        $out = $events->map(fn ($e) => [
+        return [
             'id' => $e->id,
             'slug' => $e->slug,
             'title' => $e->title,
+            'excerpt' => $e->excerpt,
             'description' => $e->description,
             'location' => $e->location,
+            'en_ligne' => $e->en_ligne,
             'category' => $e->category,
-            'starts_at' => $e->starts_at,
+            'statut' => $e->statut,
+            'motif_annulation' => $e->motif_annulation,
+            'starts_at' => $e->starts_at?->toIso8601String(),
+            'ends_at' => $e->ends_at?->toIso8601String(),
+            'time_label' => $e->time_label,
             'image' => $e->image,
-            'attendees_count' => $e->registrations_count,
-            'registered' => in_array($e->id, $registered),
+            'capacity' => $e->capacity,
+            'attendees_count' => $nb,
+            'places_restantes' => $restantes,
+            'complet' => $restantes === 0,
+            'reserve_abonnes' => $e->reserve_abonnes,
+            'date_limite' => $e->date_limite?->toIso8601String(),
+            'passe' => $e->estPasse(),
+            'registered' => $inscrit,
+            // Raison pour laquelle l'inscription est impossible (null : possible).
+            'refus' => $inscrit ? null : $e->raisonRefus($moi),
+        ];
+    }
+
+    /** GET /events — événements publiés (et annulés) avec l'état d'inscription du membre. */
+    public function index(Request $request)
+    {
+        $moi = $request->user();
+        $inscrits = EventRegistration::where('user_id', $moi->id)->pluck('event_id')->flip();
+
+        $events = Event::visibles()->withCount('registrations')->orderBy('starts_at')->get()
+            ->map(fn (Event $e) => $this->payloadMembre($e, $moi, isset($inscrits[$e->id])));
+
+        return response()->json(['ok' => true, 'events' => $events->values()]);
+    }
+
+    /** GET /events/{id} — fiche complète d'un événement. */
+    public function show(Request $request, int $id)
+    {
+        $moi = $request->user();
+        $e = Event::visibles()->withCount('registrations')->find($id);
+        if (! $e) {
+            return response()->json(['ok' => false, 'message' => 'Événement introuvable.'], 404);
+        }
+        $inscrit = EventRegistration::where('event_id', $e->id)->where('user_id', $moi->id)->exists();
+
+        return response()->json(['ok' => true, 'event' => $this->payloadMembre($e, $moi, $inscrit)]);
+    }
+
+    /** POST /events/{id}/inscription — s'inscrire (règles : statut, date, capacité, abonnement). */
+    public function inscrire(Request $request, int $id)
+    {
+        $moi = $request->user();
+        $e = Event::visibles()->find($id);
+        if (! $e) {
+            return response()->json(['ok' => false, 'message' => 'Événement introuvable.'], 404);
+        }
+        if (EventRegistration::where('event_id', $e->id)->where('user_id', $moi->id)->exists()) {
+            return response()->json(['ok' => true, 'registered' => true, 'attendees_count' => $e->nbInscrits()]);
+        }
+        if ($raison = $e->raisonRefus($moi)) {
+            return response()->json(['ok' => false, 'message' => $raison], 422);
+        }
+
+        EventRegistration::create(['event_id' => $e->id, 'user_id' => $moi->id]);
+
+        $date = $e->starts_at->locale('fr')->isoFormat('dddd D MMMM [à] HH[h]mm');
+        MemberNotification::create([
+            'user_id' => $moi->id,
+            'type' => 'info',
+            'title' => 'Inscription confirmée',
+            'body' => "Vous êtes inscrit(e) à « {$e->title} », {$date}".($e->en_ligne ? ' (en ligne)' : ($e->location ? " — {$e->location}" : '')).'.',
+            'link' => "/espace-membre/evenements?evenement={$e->id}",
         ]);
 
-        return response()->json(['ok' => true, 'events' => $out]);
+        return response()->json(['ok' => true, 'registered' => true, 'attendees_count' => $e->nbInscrits()]);
+    }
+
+    /** DELETE /events/{id}/inscription — se désinscrire (avant le début de l'événement). */
+    public function desinscrire(Request $request, int $id)
+    {
+        $e = Event::find($id);
+        if (! $e) {
+            return response()->json(['ok' => false, 'message' => 'Événement introuvable.'], 404);
+        }
+        if ($e->starts_at->isPast()) {
+            return response()->json(['ok' => false, 'message' => "L'événement a commencé : l'inscription ne peut plus être annulée."], 422);
+        }
+        EventRegistration::where('event_id', $e->id)->where('user_id', $request->user()->id)->delete();
+
+        return response()->json(['ok' => true, 'registered' => false, 'attendees_count' => $e->nbInscrits()]);
     }
 
     // ------------------------------------------------------------------
@@ -121,29 +202,11 @@ class EventController extends Controller
         return response()->json(['ok' => true, 'event' => $event]);
     }
 
-    /** Bascule l'inscription du membre courant à un événement. */
+    /** Ancienne bascule (compatibilité) : inscrit ou désinscrit selon l'état actuel. */
     public function register(Request $request, int $id)
     {
-        $me = $request->user()->id;
+        $inscrit = EventRegistration::where('event_id', $id)->where('user_id', $request->user()->id)->exists();
 
-        $event = Event::find($id);
-        if (! $event) {
-            return response()->json(['ok' => false, 'message' => 'Événement introuvable.'], 404);
-        }
-
-        $existing = EventRegistration::where('event_id', $id)->where('user_id', $me)->first();
-        if ($existing) {
-            $existing->delete();
-            $registered = false;
-        } else {
-            EventRegistration::create(['event_id' => $id, 'user_id' => $me]);
-            $registered = true;
-        }
-
-        return response()->json([
-            'ok' => true,
-            'registered' => $registered,
-            'attendees_count' => EventRegistration::where('event_id', $id)->count(),
-        ]);
+        return $inscrit ? $this->desinscrire($request, $id) : $this->inscrire($request, $id);
     }
 }

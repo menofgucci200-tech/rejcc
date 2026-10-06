@@ -135,6 +135,9 @@ Route::middleware('auth.token')->group(function () {
     // Événements
     Route::get('/events', [EventController::class, 'index']);
     Route::post('/events/{id}/register', [EventController::class, 'register']);
+    Route::get('/events/{id}', [EventController::class, 'show'])->whereNumber('id');
+    Route::post('/events/{id}/inscription', [EventController::class, 'inscrire'])->whereNumber('id');
+    Route::delete('/events/{id}/inscription', [EventController::class, 'desinscrire'])->whereNumber('id');
 
     // Formations
     Route::get('/formations', [FormationController::class, 'catalogue']);
