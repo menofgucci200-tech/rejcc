@@ -337,8 +337,8 @@
                             </div>
                             <p class="mb-1 text-[13.5px] font-semibold leading-tight text-brand">{{ $doc->title }}</p>
                             <p data-test="document" class="mb-3.5 text-[11.5px] text-[#9AA6B8]">{{ $doc->category }}@if ($doc->ajoute) · ajouté {{ $doc->ajoute->diffForHumans() }}@endif</p>
-                            <a href="{{ $doc->url }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 rounded-lg border border-azure/25 bg-azure/10 px-3 py-1.5 text-xs font-semibold text-azure transition-all duration-200 ease-out hover:bg-azure/20 active:scale-95">
-                                <x-ui.icon name="download" class="size-3" /> Télécharger
+                            <a href="{{ route('espace-membre.documents', ['document' => $doc->id]) }}" wire:navigate class="inline-flex items-center gap-1.5 rounded-lg border border-azure/25 bg-azure/10 px-3 py-1.5 text-xs font-semibold text-azure transition-all duration-200 ease-out hover:bg-azure/20 active:scale-95">
+                                <x-ui.icon :name="($doc->verrouille ?? false) ? 'lock' : 'eye'" class="size-3" /> {{ ($doc->verrouille ?? false) ? 'Réservé' : 'Consulter' }}
                             </a>
                         </div>
                     @endforeach

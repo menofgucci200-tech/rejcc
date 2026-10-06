@@ -328,51 +328,6 @@ class AdminController extends Controller
         return response()->json(['ok' => true]);
     }
 
-    // ── Documents ─────────────────────────────────────────────────────────────
-
-    public function documents()
-    {
-        return response()->json(['ok' => true, 'documents' => Document::orderBy('category')->orderBy('title')->get()]);
-    }
-
-    public function createDocument(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'title'       => 'required|string|max:200',
-            'description' => 'nullable|string|max:500',
-            'category'    => 'required|string|max:100',
-            'url'         => 'required|url|max:500',
-            'size'        => 'nullable|string|max:20',
-        ]);
-        if ($validator->fails()) {
-            return response()->json(['ok' => false, 'message' => $validator->errors()->first()], 422);
-        }
-        $doc = Document::create($validator->validated());
-        return response()->json(['ok' => true, 'document' => $doc], 201);
-    }
-
-    public function updateDocument(Request $request, $id)
-    {
-        $doc = Document::findOrFail($id);
-        $validator = Validator::make($request->all(), [
-            'title'       => 'sometimes|string|max:200',
-            'description' => 'nullable|string|max:500',
-            'category'    => 'sometimes|string|max:100',
-            'url'         => 'sometimes|url|max:500',
-            'size'        => 'nullable|string|max:20',
-        ]);
-        if ($validator->fails()) {
-            return response()->json(['ok' => false, 'message' => $validator->errors()->first()], 422);
-        }
-        $doc->fill($validator->validated())->save();
-        return response()->json(['ok' => true, 'document' => $doc]);
-    }
-
-    public function deleteDocument($id)
-    {
-        Document::findOrFail($id)->delete();
-        return response()->json(['ok' => true]);
-    }
 
     // ── Notifications broadcast ───────────────────────────────────────────────
 

@@ -138,6 +138,9 @@ Route::middleware('auth.token')->group(function () {
 
     // Documents & ressources
     Route::get('/documents', [DocumentController::class, 'index']);
+    Route::get('/documents/{id}/acces', [DocumentController::class, 'acces'])->whereNumber('id');
+    Route::post('/documents', [DocumentController::class, 'proposer'])->middleware('sub.active');
+    Route::delete('/documents/{id}', [DocumentController::class, 'retirerProposition'])->whereNumber('id');
 
     // Événements
     Route::get('/events', [EventController::class, 'index']);
@@ -375,10 +378,14 @@ Route::middleware(['auth.token', 'audit.log'])->prefix('admin')->group(function 
     });
 
     Route::middleware('auth.admin:documents')->group(function () {
-        Route::get('/documents', [AdminController::class, 'documents']);
-        Route::post('/documents', [AdminController::class, 'createDocument']);
-        Route::put('/documents/{id}', [AdminController::class, 'updateDocument']);
-        Route::delete('/documents/{id}', [AdminController::class, 'deleteDocument']);
+        Route::get('/documents', [DocumentController::class, 'adminIndex']);
+        Route::post('/documents', [DocumentController::class, 'adminStore']);
+        Route::put('/documents/{id}', [DocumentController::class, 'adminUpdate'])->whereNumber('id');
+        Route::delete('/documents/{id}', [DocumentController::class, 'adminDestroy'])->whereNumber('id');
+        Route::post('/documents/{id}/decision', [DocumentController::class, 'decision'])->whereNumber('id');
+        Route::post('/document-categories', [DocumentController::class, 'creerCategorie']);
+        Route::put('/document-categories/{id}', [DocumentController::class, 'modifierCategorie'])->whereNumber('id');
+        Route::delete('/document-categories/{id}', [DocumentController::class, 'supprimerCategorie'])->whereNumber('id');
     });
 
     Route::middleware('auth.admin:notifications')->group(function () {

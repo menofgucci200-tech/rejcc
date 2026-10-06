@@ -90,6 +90,8 @@ Route::middleware('api.auth')->prefix('espace-membre')->name('espace-membre.')->
     Route::get('/messagerie', MemberMessaging::class)->name('messaging');
     Route::get('/notifications', MemberNotifications::class)->name('notifications');
     Route::get('/documents', MemberDocuments::class)->name('documents');
+    // Fichier d'un document : servi après contrôle d'accès (jamais en accès public).
+    Route::get('/documents/{id}/fichier/{nom?}', \App\Http\Controllers\DocumentFichierController::class)->whereNumber('id')->name('documents.fichier');
     Route::get('/profil', MemberProfileEditor::class)->name('profile');
 
     Route::get('/formations', MemberFormations::class)->name('formations');

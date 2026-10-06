@@ -32,6 +32,7 @@ class ExportController extends Controller
             'participants' => $this->participants($request->query('event')),
             'groupes' => $this->groupes($request->query('group')),
             'projets' => $this->projets(),
+            'documents' => $this->documents(),
             default => null,
         };
 
@@ -165,6 +166,22 @@ class ExportController extends Controller
     }
 
     /** Projets proposés par les membres, avec porteur, équipe et suivi. */
+    private function documents(): array
+    {
+        $statuts = ['publie' => 'Publié', 'en_attente' => 'En attente', 'refuse' => 'Refusé'];
+        $docs = \App\Models\Document::with(['categorie:id,nom', 'groupe:id,name', 'auteur:id,prenom,nom,role'])->orderByDesc('created_at')->get();
+
+        return [
+            'columns' => ['Titre', 'Catégorie', 'Type', 'Taille', 'Accès', 'Groupe', 'Statut', 'Proposé par', 'Vues', 'Téléchargements', 'Publié le'],
+            'rows' => $docs->map(fn (\App\Models\Document $d) => [
+                $d->title, $d->categorie?->nom ?? $d->category, $d->typeLabel(), $d->tailleLisible(),
+                \App\Models\Document::ACCES[$d->acces] ?? $d->acces, $d->groupe?->name, $statuts[$d->statut] ?? $d->statut,
+                $d->auteur && $d->auteur->role !== 'admin' ? trim($d->auteur->prenom.' '.$d->auteur->nom) : '',
+                $d->vues, $d->telechargements, $d->publie_at?->format('d/m/Y'),
+            ])->all(),
+        ];
+    }
+
     private function projets(): array
     {
         $projets = \App\Models\Project::with(['porteur:id,prenom,nom,email,telephone', 'groupe:id,name'])

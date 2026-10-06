@@ -66,12 +66,11 @@ class Dashboard extends Component
         $conversations = Collection::make($abonnementActif ? (Api::get('/messages', [], $token)['conversations'] ?? []) : []);
         $unreadMessages = $conversations->sum('unread');
 
-        // Les 4 derniers documents mis en ligne (l'API les trie par catégorie).
+        // Les 4 derniers documents publiés (l'API les trie du plus récent au plus ancien).
         $docs = Collection::make(Api::get('/documents', [], $token)['documents'] ?? [])
-            ->sortByDesc(fn ($d) => $d['created_at'] ?? '')
             ->take(4)
             ->map(function ($d) {
-                $d['ajoute'] = ! empty($d['created_at']) ? Carbon::parse($d['created_at']) : null;
+                $d['ajoute'] = ! empty($d['publie_at'] ?? $d['created_at']) ? Carbon::parse($d['publie_at'] ?? $d['created_at']) : null;
 
                 return (object) $d;
             })
