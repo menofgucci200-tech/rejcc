@@ -45,6 +45,8 @@ class AdminNavController extends Controller
                 'nombre' => \Illuminate\Support\Facades\DB::table('listing_reports')->where('statut', 'nouveau')->distinct()->count('listing_id')],
             ['cle' => 'projets', 'section' => 'projets', 'route' => 'admin.projets', 'libelle' => 'Projets en évaluation',
                 'nombre' => Project::where('statut', 'evaluation')->count()],
+            ['cle' => 'offres', 'section' => 'opportunites', 'route' => 'admin.emplois', 'libelle' => "Offres d'emploi et de stage à valider",
+                'nombre' => \App\Models\Opportunity::where('statut', 'en_attente')->count()],
             ['cle' => 'mentorat', 'section' => 'mentors', 'route' => 'admin.mentors', 'libelle' => 'Candidatures de mentors',
                 'nombre' => MentorApplication::where('statut', 'en_attente')->count()],
             ['cle' => 'mentorat_retard', 'section' => 'mentors', 'route' => 'admin.mentors', 'libelle' => 'Demandes de mentorat sans réponse (> 7 j)',

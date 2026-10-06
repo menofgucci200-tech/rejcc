@@ -3,83 +3,146 @@
 namespace App\Livewire\Admin;
 
 use App\Livewire\Concerns\HandlesMedia;
+use App\Support\AdminNav;
 use App\Support\Api;
-use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
+/**
+ * Emploi & Stage : validation des offres proposées par les membres
+ * (publier, demander une correction, refuser, retirer — motif transmis),
+ * correction, publication directe par l'équipe.
+ */
 #[Layout('layouts.admin-light')]
 class Emplois extends Component
 {
     use HandlesMedia;
 
+    #[Url(except: 'en_attente')]
+    public string $filtre = 'en_attente';
+
+    #[Url(as: 'q', except: '')]
+    public string $recherche = '';
+
+    public ?int $ouvert = null;
+
+    public ?string $message = null;
+
+    public ?string $erreur = null;
+
+    public ?string $decision = null;
+
+    public string $motif = '';
+
+    // Formulaire (création par l'équipe ou correction)
     public bool $showForm = false;
 
     public ?int $editingId = null;
 
-    public string $title = '';
+    public array $f = [];
 
-    public string $type = 'emploi';
+    public string $note = '';
 
-    public string $entreprise = '';
+    public const FILTRES = ['en_attente' => 'À valider', 'a_corriger' => 'À corriger', 'publiee' => 'En ligne', 'expiree' => 'Expirées', 'pourvue' => 'Pourvues', 'cloturee' => 'Clôturées', 'refusee' => 'Refusées / retirées', '' => 'Toutes'];
 
-    public string $site_url = '';
+    public const MOTIFS = [
+        'corriger' => [
+            "Précisez l'entreprise qui recrute et la ville du poste.",
+            'Détaillez les missions et le profil recherché.',
+            'Indiquez la rémunération ou la gratification (obligatoire pour un stage).',
+        ],
+        'refuser' => [
+            "L'offre ne correspond pas à un emploi, un stage ou une mission (voir la Marketplace).",
+            "L'offre est en double avec une offre déjà publiée.",
+            'Les informations ne permettent pas de vérifier le sérieux de l\'offre.',
+        ],
+        'retirer' => [
+            'Offre signalée comme frauduleuse par des membres.',
+            'Le poste est déjà pourvu.',
+        ],
+    ];
 
-    public string $lieu = '';
-
-    public string $description = '';
-
-    public string $contact = '';
-
-    public string $deadline = '';
-
-    protected function rules(): array
+    private function vide(): array
     {
-        return [
-            'title' => 'required|string|min:4|max:160',
-            'type' => 'required|string|max:40',
-            'entreprise' => 'nullable|string|max:160',
-            'site_url' => 'nullable|url|max:500',
-            'lieu' => 'nullable|string|max:160',
-            'description' => 'required|string|min:20|max:3000',
-            'contact' => 'nullable|string|max:160',
-            'deadline' => 'nullable|date',
-        ];
+        return ['title' => '', 'type' => 'emploi', 'contrat' => 'cdi', 'entreprise' => '', 'group_id' => '', 'lieu' => '', 'teletravail' => 'sur_site',
+            'remuneration' => '', 'debut' => '', 'duree' => '', 'description' => '', 'missions' => '', 'profil' => '', 'competences' => '',
+            'site_url' => '', 'contact' => '', 'deadline' => ''];
     }
 
-    protected function annonces(): Collection
+    public function setFiltre(string $f): void
     {
-        return Collection::make(Api::get('/admin/opportunities', [], Api::token())['opportunities'] ?? []);
+        $this->filtre = array_key_exists($f, self::FILTRES) ? $f : 'en_attente';
+        $this->ouvert = null;
+        $this->decision = null;
+    }
+
+    public function basculer(int $id): void
+    {
+        $this->ouvert = $this->ouvert === $id ? null : $id;
+        $this->decision = null;
+        $this->message = $this->erreur = null;
+    }
+
+    public function preparer(int $id, string $decision): void
+    {
+        $this->ouvert = $id;
+        $this->decision = $decision;
+        $this->motif = '';
+        $this->erreur = null;
+    }
+
+    public function annulerDecision(): void
+    {
+        $this->decision = null;
+    }
+
+    public function confirmer(): void
+    {
+        $r = Api::post("/admin/opportunities/{$this->ouvert}/decision", array_filter(['decision' => $this->decision, 'motif' => trim($this->motif) ?: null]), Api::token());
+        if (! ($r['ok'] ?? false)) {
+            $this->erreur = $r['message'] ?? 'Une erreur est survenue.';
+
+            return;
+        }
+        $this->message = match ($this->decision) {
+            'publier' => "Offre publiée : elle est en ligne et l'auteur est prévenu.",
+            'corriger' => "Demande de correction envoyée à l'auteur.",
+            'retirer' => "Offre retirée : l'auteur est prévenu du motif.",
+            default => "Offre refusée : le motif a été transmis à l'auteur.",
+        };
+        $this->decision = null;
+        $this->ouvert = null;
+        $this->erreur = null;
+        AdminNav::oublier();
     }
 
     public function openCreate(): void
     {
-        $this->reset(['editingId', 'title', 'entreprise', 'site_url', 'lieu', 'description', 'contact', 'deadline']);
+        $this->editingId = null;
+        $this->f = $this->vide();
+        $this->note = '';
         $this->clearMedia();
-        $this->type = 'emploi';
-        $this->resetValidation();
+        $this->erreur = $this->message = null;
         $this->showForm = true;
     }
 
     public function openEdit(int $id): void
     {
-        $o = $this->annonces()->firstWhere('id', $id);
+        $o = collect(Api::get('/admin/opportunities', [], Api::token())['opportunities'] ?? [])->firstWhere('id', $id);
         if (! $o) {
             return;
         }
-
-        $this->editingId = $o['id'];
-        $this->title = $o['title'];
-        $this->type = $o['type'];
-        $this->entreprise = $o['entreprise'] ?? '';
-        $this->site_url = $o['site_url'] ?? '';
-        $this->lieu = $o['lieu'] ?? '';
-        $this->description = $o['description'];
-        $this->contact = $o['contact'] ?? '';
-        $this->deadline = $o['deadline'] ?? '';
-        $this->fillMedia($o['media_url'] ?? null, $o['media_name'] ?? null);
-        $this->resetValidation();
+        $this->editingId = $id;
+        $this->f = array_merge($this->vide(), array_map(fn ($v) => $v ?? '', array_intersect_key($o, $this->vide())), [
+            'group_id' => (string) ($o['groupe']['id'] ?? ''),
+            'contrat' => $o['contrat'] ?? 'cdi',
+            'competences' => implode(', ', $o['competences'] ?? []),
+        ]);
+        $this->note = '';
+        $this->fillMedia($o['media_url'] ?? null);
+        $this->erreur = $this->message = null;
         $this->showForm = true;
     }
 
@@ -91,52 +154,54 @@ class Emplois extends Component
 
     public function save(): void
     {
-        $this->validate();
-
+        $d = $this->f;
         $data = [
-            'title' => $this->title,
-            'type' => $this->type,
-            'entreprise' => $this->entreprise ?: null,
-            'site_url' => $this->site_url ?: null,
-            'lieu' => $this->lieu ?: null,
-            'description' => $this->description,
-            'contact' => $this->contact ?: null,
-            'deadline' => $this->deadline ?: null,
-            'media_url' => $this->mediaUrl ?: null,
-            'media_name' => $this->mediaName ?: null,
+            'title' => trim($d['title']), 'type' => $d['type'], 'contrat' => $d['type'] === 'emploi' ? $d['contrat'] : null,
+            'entreprise' => trim($d['entreprise']), 'group_id' => (int) $d['group_id'], 'lieu' => trim($d['lieu']),
+            'teletravail' => $d['teletravail'], 'remuneration' => trim($d['remuneration']) ?: null, 'debut' => $d['debut'] ?: null,
+            'duree' => trim($d['duree']) ?: null, 'description' => trim($d['description']), 'missions' => trim($d['missions']) ?: null,
+            'profil' => trim($d['profil']) ?: null, 'competences' => array_values(array_filter(array_map('trim', explode(',', $d['competences'])))),
+            'site_url' => trim($d['site_url']) ?: null, 'contact' => trim($d['contact']) ?: null, 'deadline' => $d['deadline'] ?: null,
+            'media_url' => $this->mediaUrl ?: null, 'media_name' => $this->mediaName ?: null, 'note' => trim($this->note),
         ];
-        $token = Api::token();
+        $r = $this->editingId
+            ? Api::put("/admin/opportunities/{$this->editingId}", $data, Api::token())
+            : Api::post('/admin/opportunities', $data, Api::token());
 
-        if ($this->editingId) {
-            Api::put("/admin/opportunities/{$this->editingId}", $data, $token);
-        } else {
-            // L'admin publie via le même endpoint que les membres (auteur = admin).
-            Api::post('/opportunities', array_filter($data), $token);
+        if (! ($r['ok'] ?? false)) {
+            $this->erreur = $r['message'] ?? "L'enregistrement a échoué.";
+
+            return;
         }
-
+        $this->message = $this->editingId ? "Offre corrigée : l'auteur est prévenu." : 'Offre publiée directement.';
+        $this->erreur = null;
         $this->closeForm();
+        if (! $this->editingId) {
+            $this->filtre = 'publiee';
+        }
     }
 
     public function delete(int $id): void
     {
         Api::delete("/admin/opportunities/{$id}", Api::token());
+        $this->ouvert = null;
+        $this->message = 'Offre supprimée.';
+        AdminNav::oublier();
     }
 
     public function render()
     {
-        $annonces = $this->annonces()->map(fn (array $o) => [
-            'id' => $o['id'],
-            'titre' => $o['title'],
-            'type' => strtolower($o['type']),
-            'entreprise' => $o['entreprise'] ?? null,
-            'lieu' => $o['lieu'] ?? null,
-            'description' => $o['description'],
-            'auteur' => $o['author'] ?? 'REJCC',
-            'contact' => $o['contact'],
-            'deadline' => $o['deadline'] ? Carbon::parse($o['deadline'])->translatedFormat('j F Y') : null,
-            'date' => Carbon::parse($o['created_at'])->diffForHumans(),
-        ]);
+        $data = Api::get('/admin/opportunities', array_filter(['statut' => $this->filtre, 'q' => trim($this->recherche)]), Api::token());
+        $compteurs = $data['compteurs'] ?? [];
+        $compteurs[''] = array_sum($compteurs);
 
-        return view('livewire.admin.emplois', ['annonces' => $annonces]);
+        return view('livewire.admin.emplois', [
+            'offres' => Collection::make($data['opportunities'] ?? []),
+            'compteurs' => $compteurs,
+            'categories' => $data['categories'] ?? [],
+            'types' => $data['types'] ?? [],
+            'contrats' => $data['contrats'] ?? [],
+            'modesTravail' => $data['teletravail'] ?? [],
+        ]);
     }
 }

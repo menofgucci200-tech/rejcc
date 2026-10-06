@@ -1,134 +1,172 @@
 <div>
     <x-member-light.topbar title="Emploi & Stage" />
 
+    @php
+        $input = 'w-full rounded-[9px] border border-brand/15 bg-white px-3 py-2 text-sm outline-none focus:border-azure';
+        $lab = 'mb-1 block text-xs font-semibold text-[#5B677A]';
+        $aCorriger = $mesOffres->where('statut', 'a_corriger')->count();
+    @endphp
     <div class="mx-auto max-w-[1280px] px-4 py-6 sm:px-8 sm:py-8">
-        <div class="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div class="mb-5 flex flex-wrap items-end justify-between gap-4">
             <div>
                 <h1 class="mb-1 text-[17px] font-bold text-brand">Emploi &amp; Stage</h1>
                 <div class="h-[3px] w-9 rounded bg-accent"></div>
-                <p class="mt-3 max-w-xl text-[13px] text-[#5B677A]">Offres d'emploi, stages et annonces partagés par le réseau. Publiez la vôtre et touchez tous les membres.</p>
+                <p class="mt-2 max-w-xl text-xs text-[#5B677A]">Offres d'emploi, de stage, d'alternance et de missions partagées par le réseau, vérifiées par l'équipe REJCC.</p>
             </div>
-            <div class="flex flex-wrap items-center gap-2">
-                @foreach (['tous' => 'Tous', 'emploi' => 'Emplois', 'stage' => 'Stages', 'annonce' => 'Annonces'] as $value => $label)
-                    <button wire:click="setFiltre('{{ $value }}')" class="btn-tap rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors duration-200 {{ $filtre === $value ? 'border-brand bg-brand text-white' : 'border-brand/10 bg-white text-[#5B677A] hover:border-brand/30' }}">{{ $label }}</button>
-                @endforeach
-                <button wire:click="openForm" class="btn-tap rounded-full bg-accent px-4 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-accent-600 hover:shadow-md">+ Publier une offre</button>
-            </div>
+            @if ($peutPublier)
+                <button wire:click="openForm" data-test="proposer-offre" class="btn-tap inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-2 text-xs font-bold text-white hover:bg-accent-600"><x-ui.icon name="plus" class="size-3.5" /> Proposer une offre</button>
+            @else
+                <a href="{{ route('espace-membre.abonnement') }}" wire:navigate data-test="proposer-offre-verrou" class="btn-tap inline-flex items-center gap-1.5 rounded-full border border-[#F5A623]/40 bg-[#F5A623]/10 px-4 py-2 text-xs font-bold text-[#B27007]"><x-ui.icon name="lock" class="size-3.5" /> Proposer une offre (abonnés)</a>
+            @endif
         </div>
 
         @if ($message)
-            <p class="panel-enter mb-4 inline-flex items-center gap-1.5 rounded-full bg-[#22A85A]/10 px-3.5 py-1.5 text-xs font-semibold text-[#22A85A]"><x-ui.icon name="check-circle" class="size-3.5" /> {{ $message }}</p>
+            <p wire:key="flash-ok" data-test="flash-offre" class="panel-enter mb-4 flex items-start gap-1.5 rounded-[12px] bg-[#22A85A]/10 px-3.5 py-2.5 text-xs font-semibold text-[#1C8F4C]"><x-ui.icon name="check-circle" class="mt-px size-3.5 shrink-0" /> {{ $message }}</p>
+        @endif
+        @if ($erreur && ! $showForm)
+            <p wire:key="flash-ko" class="panel-enter mb-4 flex items-start gap-1.5 rounded-[12px] bg-accent/10 px-3.5 py-2.5 text-xs font-semibold text-accent"><x-ui.icon name="alert-circle" class="mt-px size-3.5 shrink-0" /> {{ $erreur }}</p>
         @endif
 
+        {{-- ══════════ Formulaire ══════════ --}}
         @if ($showForm)
-            <div class="panel-enter mb-6 grid grid-cols-1 gap-3.5 rounded-[16px] border border-brand/10 bg-white p-5 shadow-[0_2px_8px_rgba(3,29,89,.05)] sm:grid-cols-2">
-                <div class="flex items-center justify-between sm:col-span-2">
-                    <p class="text-sm font-bold text-brand">Publier une offre d'emploi ou de stage</p>
-                    <button wire:click="closeForm" class="icon-btn rounded-lg p-1 hover:bg-cloud hover:text-brand"><x-ui.icon name="x" class="size-4 text-[#5B677A]" /></button>
+            <div wire:key="form-offre" data-test="form-offre" class="panel-enter mb-6 rounded-[16px] border border-brand/10 bg-white p-5 shadow-[0_2px_8px_rgba(3,29,89,.05)] sm:p-6">
+                <div class="mb-4 flex items-center justify-between">
+                    <p class="text-sm font-bold text-brand">{{ $editingId ? (in_array($statutEdition, ['a_corriger', 'refusee'], true) ? 'Corriger mon offre' : 'Modifier mon offre') : "Proposer une offre d'emploi ou de stage" }}</p>
+                    <button wire:click="closeForm" class="icon-btn rounded-lg p-1 hover:bg-cloud hover:text-brand" title="Fermer"><x-ui.icon name="x" class="size-4 text-[#5B677A]" /></button>
                 </div>
-                <div>
-                    <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Intitulé du poste / stage</label>
-                    <input wire:model="title" type="text" placeholder="Ex : Développeur web junior" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
-                    @error('title') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                <div class="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+                    <div class="sm:col-span-2">
+                        <label class="{{ $lab }}">Intitulé du poste ou du stage</label>
+                        <input wire:model="title" type="text" placeholder="Ex : Développeur web junior" class="{{ $input }}" />
+                        @error('title') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                    </div>
+                    <div>
+                        <label class="{{ $lab }}">Type d'offre</label>
+                        <select wire:model.live="type" class="{{ $input }}">
+                            @foreach ($types as $k => $v) <option value="{{ $k }}">{{ $v }}</option> @endforeach
+                        </select>
+                    </div>
+                    @if ($type === 'emploi')
+                        <div wire:key="champ-contrat">
+                            <label class="{{ $lab }}">Contrat</label>
+                            <select wire:model="contrat" class="{{ $input }}">
+                                @foreach ($contrats as $k => $v) <option value="{{ $k }}">{{ $v }}</option> @endforeach
+                            </select>
+                        </div>
+                    @else
+                        <div wire:key="champ-duree">
+                            <label class="{{ $lab }}">Durée</label>
+                            <input wire:model="duree" type="text" placeholder="Ex : 3 mois" class="{{ $input }}" />
+                        </div>
+                    @endif
+                    <div>
+                        <label class="{{ $lab }}">Entreprise / structure</label>
+                        <input wire:model="entreprise" type="text" placeholder="Ex : Ivoire Tech SARL" class="{{ $input }}" />
+                        @error('entreprise') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                    </div>
+                    <div>
+                        <label class="{{ $lab }}">Secteur</label>
+                        <select wire:model="groupId" class="{{ $input }}">
+                            <option value="">— Choisir —</option>
+                            @foreach ($categories as $c) <option value="{{ $c['id'] }}">{{ $c['nom'] }}</option> @endforeach
+                        </select>
+                        @error('groupId') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                    </div>
+                    <div>
+                        <label class="{{ $lab }}">Ville</label>
+                        <input wire:model="lieu" type="text" placeholder="Ex : Abidjan, Cocody" class="{{ $input }}" />
+                        @error('lieu') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                    </div>
+                    <div>
+                        <label class="{{ $lab }}">Mode de travail</label>
+                        <select wire:model="teletravail" class="{{ $input }}">
+                            @foreach ($modesTravail as $k => $v) <option value="{{ $k }}">{{ $v }}</option> @endforeach
+                        </select>
+                    </div>
+                    <div>
+                        <label class="{{ $lab }}">Rémunération (optionnel)</label>
+                        <input wire:model="remuneration" type="text" placeholder="Ex : 350 000 F / mois, à négocier" class="{{ $input }}" />
+                    </div>
+                    <div>
+                        <label class="{{ $lab }}">Date de début (optionnel)</label>
+                        <input wire:model="debut" type="date" class="{{ $input }}" />
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="{{ $lab }}">Présentation de l'offre</label>
+                        <textarea wire:model="description" rows="3" placeholder="L'entreprise, le poste, le contexte." class="{{ $input }}"></textarea>
+                        @error('description') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                    </div>
+                    <div>
+                        <label class="{{ $lab }}">Missions</label>
+                        <textarea wire:model="missions" rows="3" class="{{ $input }}"></textarea>
+                    </div>
+                    <div>
+                        <label class="{{ $lab }}">Profil recherché</label>
+                        <textarea wire:model="profil" rows="3" class="{{ $input }}"></textarea>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="{{ $lab }}">Compétences clés (séparées par des virgules)</label>
+                        <input wire:model="competences" type="text" placeholder="Ex : Laravel, comptabilité, permis B" class="{{ $input }}" />
+                    </div>
+                    <div>
+                        <label class="{{ $lab }}">Date limite de candidature (optionnel)</label>
+                        <input wire:model="deadline" type="date" min="{{ now()->toDateString() }}" class="{{ $input }}" />
+                        <p class="mt-1 text-[11px] text-[#9AA6B8]">Sans date, l'offre reste en ligne 60 jours (prolongeable).</p>
+                        @error('deadline') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                    </div>
+                    <div>
+                        <label class="{{ $lab }}">Site de l'entreprise (optionnel)</label>
+                        <input wire:model="site_url" type="url" placeholder="https://…" class="{{ $input }}" />
+                        @error('site_url') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="{{ $lab }}">Contact pour l'équipe REJCC (non publié)</label>
+                        <input wire:model="contact" type="text" placeholder="E-mail ou téléphone, visible uniquement par l'équipe" class="{{ $input }}" />
+                    </div>
+                    <div class="sm:col-span-2">
+                        <x-ui.media-field label="Fiche de poste / affiche (PDF ou image — optionnel)" :media-url="$mediaUrl" :media-name="$mediaName" :media-size="$mediaSize" />
+                    </div>
+                    @if ($erreur)
+                        <p wire:key="form-erreur" class="rounded-[9px] bg-accent/10 px-3 py-2 text-xs font-semibold text-accent sm:col-span-2">{{ $erreur }}</p>
+                    @endif
+                    <div class="sm:col-span-2">
+                        <button wire:click="publier" wire:loading.attr="disabled" wire:target="publier" data-test="envoyer-offre" class="btn-tap rounded-[9px] bg-brand px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-brand/90 disabled:opacity-60">
+                            {{ ! $editingId ? "Envoyer à l'équipe pour publication" : (in_array($statutEdition, ['a_corriger', 'refusee'], true) ? 'Renvoyer en validation' : 'Enregistrer') }}
+                        </button>
+                        <p class="mt-2 text-[11px] text-[#9AA6B8]">{{ $editingId && $statutEdition === 'publiee' ? 'Les modifications sont visibles immédiatement.' : "L'équipe REJCC vérifie chaque offre avant de la publier." }}</p>
+                    </div>
                 </div>
-                <div>
-                    <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Type</label>
-                    <select wire:model="type" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure">
-                        <option value="emploi">Emploi</option>
-                        <option value="stage">Stage</option>
-                        <option value="annonce">Annonce</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Entreprise / structure</label>
-                    <input wire:model="entreprise" type="text" placeholder="Ex : Ivoire Tech SARL" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
-                    @error('entreprise') <span class="text-xs text-accent">{{ $message }}</span> @enderror
-                </div>
-                <div>
-                    <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Lieu (ville / à distance)</label>
-                    <input wire:model="lieu" type="text" placeholder="Ex : Abidjan, Cocody" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
-                    @error('lieu') <span class="text-xs text-accent">{{ $message }}</span> @enderror
-                </div>
-                <div class="sm:col-span-2">
-                    <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Description de l'offre</label>
-                    <textarea wire:model="description" rows="4" placeholder="Missions, profil recherché, conditions…" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure"></textarea>
-                    @error('description') <span class="text-xs text-accent">{{ $message }}</span> @enderror
-                </div>
-                <div>
-                    <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Site web de l'entreprise (optionnel)</label>
-                    <input wire:model="site_url" type="url" placeholder="https://…" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
-                    @error('site_url') <span class="text-xs text-accent">{{ $message }}</span> @enderror
-                </div>
-                <div>
-                    <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Contact pour postuler (e-mail ou téléphone)</label>
-                    <input wire:model="contact" type="text" placeholder="rh@entreprise.ci ou 0700000000" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
-                    @error('contact') <span class="text-xs text-accent">{{ $message }}</span> @enderror
-                </div>
-                <div>
-                    <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Date limite de candidature (optionnel)</label>
-                    <input wire:model="deadline" type="date" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
-                    @error('deadline') <span class="text-xs text-accent">{{ $message }}</span> @enderror
-                </div>
-                <div class="sm:col-span-2">
-                    <x-ui.media-field label="Fiche de poste / affiche (PDF, image ou lien — optionnel)" hint="Ajoutez la fiche de poste, une affiche ou un visuel de l'offre (20 Mo max), ou collez un lien." :media-url="$mediaUrl" :media-name="$mediaName" :media-size="$mediaSize" />
-                </div>
-                <button wire:click="publier" wire:loading.attr="disabled" wire:target="publier" class="btn-tap rounded-[9px] bg-brand px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-brand/90 hover:shadow-md disabled:opacity-60 sm:col-span-2 sm:w-fit">
-                    <span wire:loading.remove wire:target="publier">Publier l'offre</span>
-                    <span wire:loading wire:target="publier">Publication…</span>
-                </button>
             </div>
         @endif
 
-        <div class="space-y-3">
-            @forelse ($offres as $o)
-                <article class="card-hover rounded-[16px] border border-brand/10 bg-white p-4 shadow-[0_2px_8px_rgba(3,29,89,.05)] sm:p-5">
-                    <div class="flex flex-wrap items-start gap-4">
-                        <span class="flex size-12 shrink-0 items-center justify-center rounded-xl text-white" style="background: linear-gradient(135deg, #4F6FBF, #AC0100)">
-                            <x-ui.icon name="nav-briefcase" class="size-5" />
-                        </span>
-                        <div class="min-w-[200px] flex-1">
-                            <div class="flex flex-wrap items-center gap-2">
-                                <p class="text-[14px] font-bold text-brand">{{ $o['titre'] }}</p>
-                                <span class="rounded-full px-2.5 py-0.5 text-[10.5px] font-bold {{ $o['type'] === 'emploi' ? 'bg-brand/10 text-brand' : ($o['type'] === 'stage' ? 'bg-[#F5A623]/15 text-[#B27007]' : 'bg-azure/10 text-azure') }}">{{ ucfirst($o['type']) }}</span>
-                            </div>
-                            <p class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11.5px] font-semibold text-[#5B677A]">
-                                @if ($o['entreprise'])
-                                    <span class="inline-flex items-center gap-1"><x-ui.icon name="store" class="size-3 text-azure" /> {{ $o['entreprise'] }}</span>
-                                @endif
-                                @if ($o['lieu'])
-                                    <span class="inline-flex items-center gap-1"><x-ui.icon name="map-pin" class="size-3 text-azure" /> {{ $o['lieu'] }}</span>
-                                @endif
-                            </p>
-                            <p class="mt-1.5 line-clamp-3 text-xs leading-relaxed text-[#5B677A]">{{ $o['description'] }}</p>
-                            <p class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[#9AA6B8]">
-                                <span>Par {{ $o['auteur'] }}</span>
-                                <span>{{ $o['date'] }}</span>
-                                @if ($o['deadline'])
-                                    <span class="inline-flex items-center gap-1 font-semibold text-accent"><x-ui.icon name="clock" class="size-3" /> Avant le {{ $o['deadline'] }}</span>
-                                @endif
-                            </p>
-                        </div>
-                    </div>
+        {{-- ══════════ Onglets et filtres ══════════ --}}
+        <div class="mb-4 flex flex-wrap items-center gap-1.5">
+            <button wire:click="setOnglet('offres')" class="btn-tap rounded-full px-4 py-1.5 text-xs font-bold {{ $onglet === 'offres' ? 'bg-brand text-white' : 'border border-brand/15 bg-white text-brand hover:bg-cloud' }}">Offres du réseau</button>
+            <button wire:click="setOnglet('mes')" data-test="onglet-mes-offres" class="btn-tap inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold {{ $onglet === 'mes' ? 'bg-brand text-white' : 'border border-brand/15 bg-white text-brand hover:bg-cloud' }}">
+                Mes offres <span class="{{ $onglet === 'mes' ? 'text-white/70' : 'text-[#9AA6B8]' }}">{{ $mesOffres->count() }}</span>
+                @if ($aCorriger) <span class="rounded-full bg-[#B27007] px-1.5 text-[10px] leading-4 text-white">{{ $aCorriger }}</span> @endif
+            </button>
+            @if ($onglet === 'offres')
+                <span class="mx-1 hidden h-5 w-px bg-brand/10 sm:block"></span>
+                @foreach (['tous' => 'Toutes'] + $types as $value => $label)
+                    <button wire:click="setFiltre('{{ $value }}')" class="btn-tap rounded-full border px-3 py-1 text-[11.5px] font-semibold {{ $filtre === $value ? 'border-azure bg-azure/10 text-azure' : 'border-brand/10 bg-white text-[#5B677A] hover:border-brand/30' }}">{{ $label }}</button>
+                @endforeach
+            @endif
+        </div>
 
-                    <div class="mt-3 flex flex-wrap items-center gap-2 border-t border-cloud-200 pt-3">
-                        @if ($o['contact'])
-                            @if (str_contains($o['contact'], '@'))
-                                <a href="mailto:{{ $o['contact'] }}" class="btn-tap inline-flex items-center gap-1.5 rounded-full bg-brand px-4 py-1.5 text-xs font-bold text-white hover:bg-brand/90"><x-ui.icon name="send" class="size-3.5" /> Postuler</a>
-                            @else
-                                <a href="tel:{{ $o['contact'] }}" class="btn-tap inline-flex items-center gap-1.5 rounded-full bg-brand px-4 py-1.5 text-xs font-bold text-white hover:bg-brand/90"><x-ui.icon name="phone" class="size-3.5" /> {{ $o['contact'] }}</a>
-                            @endif
-                        @endif
-                        @if ($o['site_url'])
-                            <a href="{{ $o['site_url'] }}" target="_blank" rel="noopener" class="btn-tap inline-flex items-center gap-1.5 rounded-full border border-brand/15 bg-white px-4 py-1.5 text-xs font-semibold text-brand hover:bg-cloud"><x-ui.icon name="globe" class="size-3.5" /> Site de l'entreprise</a>
-                        @endif
-                        @if ($o['media'])
-                            <a href="{{ $o['media'] }}" target="_blank" rel="noopener" class="btn-tap inline-flex items-center gap-1.5 rounded-full border border-brand/15 bg-white px-4 py-1.5 text-xs font-semibold text-brand hover:bg-cloud"><x-ui.icon name="file-text" class="size-3.5" /> Fiche de poste</a>
-                        @endif
-                    </div>
-                </article>
+        @php $liste = $onglet === 'mes' ? $mesOffres : $offres; @endphp
+        <div class="space-y-3">
+            @forelse ($liste as $o)
+                <x-emplois.carte :o="$o" :avec-statut="$onglet === 'mes'" />
             @empty
-                <p class="rounded-[16px] border border-brand/10 bg-white py-10 text-center text-sm text-[#5B677A]">Aucune offre{{ $filtre !== 'tous' ? ' dans cette catégorie' : '' }} pour le moment.</p>
+                <div class="rounded-[16px] border border-dashed border-brand/20 bg-white px-6 py-12 text-center">
+                    <span class="mx-auto flex size-12 items-center justify-center rounded-full bg-brand/[.06] text-brand"><x-ui.icon name="nav-briefcase" class="size-6" /></span>
+                    <p class="mt-3 text-sm font-bold text-brand">{{ $onglet === 'mes' ? "Vous n'avez pas encore proposé d'offre" : 'Aucune offre en ligne'.($filtre !== 'tous' ? ' dans cette catégorie' : '').' pour le moment' }}</p>
+                    <p class="mx-auto mt-1 max-w-md text-xs text-[#5B677A]">Votre entreprise recrute ? Proposez l'offre aux membres du réseau : l'équipe la vérifie puis la publie.</p>
+                </div>
             @endforelse
         </div>
     </div>
+
+    <x-emplois.fiche :fiche="$fiche" />
 </div>

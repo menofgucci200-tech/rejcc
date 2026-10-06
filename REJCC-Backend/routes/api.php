@@ -190,7 +190,12 @@ Route::middleware('auth.token')->group(function () {
 
     // Opportunités & annonces
     Route::get('/opportunities', [OpportunityController::class, 'index']);
-    Route::post('/opportunities', [OpportunityController::class, 'store']);
+    Route::get('/opportunities/{id}', [OpportunityController::class, 'show'])->whereNumber('id');
+    Route::post('/opportunities', [OpportunityController::class, 'store'])->middleware('sub.active');
+    Route::put('/opportunities/{id}', [OpportunityController::class, 'update'])->whereNumber('id');
+    Route::post('/opportunities/{id}/statut', [OpportunityController::class, 'changerStatut'])->whereNumber('id');
+    Route::post('/opportunities/{id}/prolonger', [OpportunityController::class, 'prolonger'])->whereNumber('id');
+    Route::delete('/opportunities/{id}', [OpportunityController::class, 'destroy'])->whereNumber('id');
 
     // Groupes sectoriels (adhésion libre, multiple, gratuite)
     Route::get('/groups', [\App\Http\Controllers\Api\GroupController::class, 'index']);
@@ -339,8 +344,10 @@ Route::middleware(['auth.token', 'audit.log'])->prefix('admin')->group(function 
     });
 
     Route::middleware('auth.admin:opportunites')->group(function () {
-        Route::get('/opportunities', [OpportunityController::class, 'index']);
+        Route::get('/opportunities', [OpportunityController::class, 'adminIndex']);
+        Route::post('/opportunities', [OpportunityController::class, 'adminStore']);
         Route::put('/opportunities/{id}', [OpportunityController::class, 'adminUpdate']);
+        Route::post('/opportunities/{id}/decision', [OpportunityController::class, 'decision'])->whereNumber('id');
         Route::delete('/opportunities/{id}', [OpportunityController::class, 'adminDestroy']);
     });
 

@@ -39,7 +39,7 @@ class ActivityFeedTest extends TestCase
         $event = Event::create(['title' => 'Café des entrepreneurs', 'category' => 'Networking', 'starts_at' => now()->addDays(5)]);
         EventRegistration::create(['event_id' => $event->id, 'user_id' => $user->id]);
 
-        Opportunity::create(['title' => 'Recherche associé', 'description' => 'Description de test suffisamment longue.', 'type' => 'annonce', 'author_id' => $user->id]);
+        Opportunity::create(['title' => 'Recherche associé', 'description' => 'Description de test suffisamment longue.', 'type' => 'mission', 'statut' => 'publiee', 'publie_at' => now(), 'author_id' => $user->id]);
 
         $activity = $this->withToken($this->tokenFor($user))
             ->getJson('/api/my-activity')

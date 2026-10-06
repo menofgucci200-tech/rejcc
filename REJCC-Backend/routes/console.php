@@ -16,6 +16,13 @@ Artisan::command('marketplace:echeances', function () {
 
 Schedule::command('marketplace:echeances')->dailyAt('07:00');
 
+// Emploi & Stage : rappel à l'auteur 3 jours avant l'expiration de son offre.
+Artisan::command('emplois:echeances', function () {
+    $this->info(\App\Models\Opportunity::rappelsExpiration().' rappel(s) envoyé(s).');
+})->purpose("Rappels d'expiration des offres d'emploi et de stage");
+
+Schedule::command('emplois:echeances')->dailyAt('07:10');
+
 // Événements : rappel aux inscrits la veille (vérifié toutes les heures).
 Artisan::command('evenements:rappels', function () {
     $n = 0;

@@ -146,8 +146,11 @@ class AdminContentTest extends TestCase
             'title' => 'Recherche développeur',
             'description' => 'Startup du réseau cherche un développeur web junior.',
             'type' => 'emploi',
+            'statut' => 'publiee',
+            'expire_le' => today()->addMonth(),
             'author_id' => $member->id,
         ]);
+        $groupe = \App\Models\Group::create(['name' => 'Informatique', 'slug' => 'info']);
 
         $token = $this->adminToken();
 
@@ -158,6 +161,7 @@ class AdminContentTest extends TestCase
             'entreprise' => 'Ivoire Tech',
             'site_url' => 'https://ivoire-tech.ci',
             'lieu' => 'Abidjan, Cocody',
+            'group_id' => $groupe->id,
         ])->assertOk();
 
         $fresh = $opp->fresh();

@@ -70,10 +70,10 @@ class ActivityFeedController extends Controller
             ]);
         }
 
-        foreach (Opportunity::where('author_id', $userId)->get() as $o) {
+        foreach (Opportunity::where('author_id', $userId)->where('statut', 'publiee')->whereNotNull('publie_at')->get() as $o) {
             $items->push([
-                'text' => "Votre annonce « {$o->title} » est en ligne",
-                'at' => $o->created_at,
+                'text' => "Votre offre « {$o->title} » est en ligne",
+                'at' => $o->publie_at,
                 'color' => '#F5A623',
             ]);
         }
