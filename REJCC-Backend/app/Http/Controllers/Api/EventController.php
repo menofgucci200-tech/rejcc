@@ -113,10 +113,14 @@ class EventController extends Controller
         if (! $e) {
             return response()->json(['ok' => false, 'message' => 'Événement introuvable.'], 404);
         }
-        $inscrit = EventRegistration::where('event_id', $e->id)->where('user_id', $moi->id)->exists();
+        $inscription = EventRegistration::where('event_id', $e->id)->where('user_id', $moi->id)->first();
 
-        return response()->json(['ok' => true, 'event' => $this->payloadMembre($e, $moi, $inscrit) + [
+        return response()->json(['ok' => true, 'event' => $this->payloadMembre($e, $moi, (bool) $inscription) + [
             'participants' => $this->participants($e, $moi),
+            // Réservé aux inscrits : billet (QR de pointage) et lien de visio.
+            'billet' => $inscription?->billet,
+            'present' => (bool) $inscription?->present_at,
+            'lien_visio' => $inscription && $e->en_ligne ? $e->lien_visio : null,
         ]]);
     }
 
@@ -173,6 +177,97 @@ class EventController extends Controller
         $events = Event::withCount('registrations')->orderByDesc('starts_at')->get();
 
         return response()->json(['ok' => true, 'events' => $events]);
+    }
+
+    /**
+     * GET /admin/events/{id}/inscrits — membres inscrits (coordonnées pour
+     * l'administration), présence le jour J.
+     */
+    public function inscrits(int $id)
+    {
+        $e = Event::find($id);
+        if (! $e) {
+            return response()->json(['ok' => false, 'message' => 'Événement introuvable.'], 404);
+        }
+        $inscrits = EventRegistration::with('user:id,prenom,nom,email,telephone,ville,photo,role')
+            ->where('event_id', $e->id)->orderBy('created_at')->get()
+            ->map(fn (EventRegistration $r) => [
+                'id' => $r->id,
+                'user_id' => $r->user_id,
+                'nom' => trim(($r->user->prenom ?? '').' '.($r->user->nom ?? '')),
+                'email' => $r->user->email ?? null,
+                'telephone' => $r->user->telephone ?? null,
+                'ville' => $r->user->ville ?? null,
+                'photo' => $r->user->photo ?? null,
+                'role' => $r->user->role ?? null,
+                'billet' => $r->billet,
+                'inscrit_le' => $r->created_at?->toIso8601String(),
+                'present_at' => $r->present_at?->toIso8601String(),
+            ]);
+
+        return response()->json([
+            'ok' => true,
+            'event' => ['id' => $e->id, 'title' => $e->title, 'starts_at' => $e->starts_at?->toIso8601String(), 'capacity' => $e->capacity],
+            'inscrits' => $inscrits,
+            'presents' => $inscrits->whereNotNull('present_at')->count(),
+        ]);
+    }
+
+    /**
+     * POST /admin/events/{id}/pointage — pointe un participant le jour J à
+     * partir du QR de son billet (B-XXXXXXXX) ou de sa carte membre
+     * (…/carte/0006). Avec sur_place=1, un membre non inscrit est inscrit et
+     * pointé.
+     */
+    public function pointage(Request $request, int $id)
+    {
+        $e = Event::find($id);
+        if (! $e) {
+            return response()->json(['ok' => false, 'message' => 'Événement introuvable.'], 404);
+        }
+        $code = strtoupper(trim((string) $request->input('code')));
+        $inscription = null;
+        $membre = null;
+
+        if (preg_match('/B-[A-Z0-9]{8}/', $code, $m)) {
+            $inscription = EventRegistration::with('user')->where('event_id', $e->id)->where('billet', $m[0])->first();
+            if (! $inscription) {
+                return response()->json(['ok' => false, 'message' => "Ce billet ne correspond pas à cet événement."], 404);
+            }
+            $membre = $inscription->user;
+        } elseif (preg_match('#(?:/CARTE/)?0*(\d{1,9})$#', $code, $m)) {
+            $membre = User::find((int) $m[1]);
+            if (! $membre) {
+                return response()->json(['ok' => false, 'message' => 'Carte membre inconnue.'], 404);
+            }
+            $inscription = EventRegistration::where('event_id', $e->id)->where('user_id', $membre->id)->first();
+            if (! $inscription) {
+                if (! $request->boolean('sur_place')) {
+                    return response()->json([
+                        'ok' => false, 'code' => 'non_inscrit',
+                        'message' => trim($membre->prenom.' '.$membre->nom)." n'est pas inscrit(e) à cet événement.",
+                        'membre' => ['id' => $membre->id, 'nom' => trim($membre->prenom.' '.$membre->nom), 'photo' => $membre->photo],
+                    ], 404);
+                }
+                $inscription = EventRegistration::create(['event_id' => $e->id, 'user_id' => $membre->id]);
+            }
+        } else {
+            return response()->json(['ok' => false, 'message' => 'Code non reconnu : scannez un billet ou une carte membre.'], 422);
+        }
+
+        $deja = $inscription->present_at !== null;
+        if (! $deja) {
+            $inscription->update(['present_at' => now()]);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'deja' => $deja,
+            'membre' => ['id' => $membre->id, 'nom' => trim($membre->prenom.' '.$membre->nom), 'photo' => $membre->photo, 'role' => $membre->role],
+            'present_at' => $inscription->present_at->toIso8601String(),
+            'presents' => EventRegistration::where('event_id', $e->id)->whereNotNull('present_at')->count(),
+            'inscrits' => EventRegistration::where('event_id', $e->id)->count(),
+        ]);
     }
 
     public function store(Request $request)

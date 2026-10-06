@@ -111,4 +111,42 @@ class EventInscriptionTest extends TestCase
         $p = $this->withToken($this->tokenFor($visible))->getJson("/api/events/{$e->id}")->json('event.participants');
         $this->assertSame(0, $p['total']);
     }
+
+    public function test_billet_visio_rappel_et_pointage(): void
+    {
+        $moi = User::factory()->create(['prenom' => 'Awa', 'nom' => 'Traoré']);
+        $t = $this->tokenFor($moi);
+        $e = $this->evenement(['en_ligne' => true, 'lien_visio' => 'https://meet.exemple.ci/forum', 'starts_at' => now()->addHours(20)]);
+
+        $this->withToken($this->tokenFor(User::factory()->create()))->getJson("/api/events/{$e->id}")->assertJsonPath('event.lien_visio', null);
+        $this->withToken($t)->postJson("/api/events/{$e->id}/inscription")->assertOk();
+        $fiche = $this->withToken($t)->getJson("/api/events/{$e->id}")->json('event');
+        $this->assertMatchesRegularExpression('/^B-[A-Z0-9]{8}$/', $fiche['billet']);
+        $this->assertSame('https://meet.exemple.ci/forum', $fiche['lien_visio']);
+
+        // Rappel la veille, une seule fois.
+        $this->artisan('evenements:rappels');
+        $this->artisan('evenements:rappels');
+        $this->assertSame(1, MemberNotification::where('user_id', $moi->id)->where('title', 'like', 'Rappel : Forum Agro%')->count());
+
+        // Pointage par billet, puis doublon signalé.
+        $admin = $this->tokenFor(User::factory()->create(['role' => 'admin']));
+        $this->withToken($admin)->postJson("/api/admin/events/{$e->id}/pointage", ['code' => $fiche['billet']])
+            ->assertOk()->assertJsonPath('deja', false)->assertJsonPath('membre.nom', 'Awa Traoré')->assertJsonPath('presents', 1);
+        $this->withToken($admin)->postJson("/api/admin/events/{$e->id}/pointage", ['code' => strtolower($fiche['billet'])])
+            ->assertOk()->assertJsonPath('deja', true);
+        $this->assertTrue($this->withToken($t)->getJson("/api/events/{$e->id}")->json('event.present'));
+
+        // Carte membre d'un non-inscrit : refus, puis inscription sur place.
+        $paul = User::factory()->create(['prenom' => 'Paul', 'nom' => 'Ahoua']);
+        $url = 'http://rejcc.test/carte/'.str_pad((string) $paul->id, 4, '0', STR_PAD_LEFT);
+        $this->withToken($admin)->postJson("/api/admin/events/{$e->id}/pointage", ['code' => $url])
+            ->assertStatus(404)->assertJsonPath('code', 'non_inscrit');
+        $this->withToken($admin)->postJson("/api/admin/events/{$e->id}/pointage", ['code' => $url, 'sur_place' => true])
+            ->assertOk()->assertJsonPath('presents', 2)->assertJsonPath('inscrits', 2);
+
+        $this->withToken($admin)->postJson("/api/admin/events/{$e->id}/pointage", ['code' => 'B-INCONNU1'])->assertStatus(404);
+        $liste = $this->withToken($admin)->getJson("/api/admin/events/{$e->id}/inscrits")->assertOk()->json();
+        $this->assertSame(2, $liste['presents']);
+    }
 }

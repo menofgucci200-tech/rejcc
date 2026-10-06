@@ -116,6 +116,7 @@ Route::middleware(['api.auth', 'admin.web'])->prefix('admin')->name('admin.')->g
     Route::get('/formations', AdminFormations::class)->name('formations');
     Route::get('/parcours', AdminParcours::class)->name('parcours');
     Route::get('/evenements', AdminEvenements::class)->name('evenements');
+    Route::get('/evenements/{id}/pointage', \App\Livewire\Admin\EvenementPointage::class)->whereNumber('id')->name('evenements.pointage');
     Route::get('/inscriptions', \App\Livewire\Admin\Inscriptions::class)->name('inscriptions');
     Route::get('/projets', AdminProjets::class)->name('projets');
     Route::get('/marketplace', AdminMarketplace::class)->name('marketplace');

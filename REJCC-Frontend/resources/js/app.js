@@ -4,8 +4,62 @@ import QRCode from 'qrcode';
 import { initHomeMotion } from './home-motion';
 import { initTourPlayer } from './tour-player';
 
-// Génération de QR codes côté client (cartes membres de l'admin).
+// Génération de QR codes côté client (cartes membres, billets d'événement).
 window.QRCode = QRCode;
+
+// Lecture de QR codes par la caméra (pointage des événements) : détecteur
+// natif du navigateur s'il existe, sinon jsQR chargé à la demande.
+window.lecteurQr = () => ({
+    actif: false,
+    erreur: null,
+    flux: null,
+    dernier: null,
+    async demarrer(surCode) {
+        this.erreur = null;
+        try {
+            this.flux = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        } catch (e) {
+            this.erreur = "Caméra indisponible : autorisez l'accès à la caméra ou saisissez le code à la main.";
+            return;
+        }
+        const video = this.$refs.video;
+        video.srcObject = this.flux;
+        await video.play();
+        this.actif = true;
+        const natif = 'BarcodeDetector' in window ? new window.BarcodeDetector({ formats: ['qr_code'] }) : null;
+        const jsQR = natif ? null : (await import('jsqr')).default;
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        const boucle = async () => {
+            if (!this.actif) return;
+            let code = null;
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                if (natif) {
+                    const res = await natif.detect(video).catch(() => []);
+                    code = res[0]?.rawValue ?? null;
+                } else {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    code = jsQR(img.data, img.width, img.height)?.data ?? null;
+                }
+            }
+            // Un même code n'est envoyé qu'une fois toutes les 3 secondes.
+            if (code && (code !== this.dernier?.code || Date.now() - this.dernier.t > 3000)) {
+                this.dernier = { code, t: Date.now() };
+                surCode(code);
+            }
+            requestAnimationFrame(boucle);
+        };
+        requestAnimationFrame(boucle);
+    },
+    arreter() {
+        this.actif = false;
+        this.flux?.getTracks().forEach((t) => t.stop());
+        this.flux = null;
+    },
+});
 
 // « Télécharger en image » de la carte membre : recto + verso en un PNG
 // (bibliothèque chargée à la demande, uniquement quand on clique).

@@ -49,7 +49,7 @@
                         <div class="min-w-0 text-[13px]">
                             <p class="font-bold text-brand">{{ $e['en_ligne'] ? 'En ligne' : ($e['location'] ?: 'Lieu à préciser') }}</p>
                             @if ($plan)<a href="{{ $plan }}" target="_blank" rel="noopener" class="text-[12px] font-semibold text-azure hover:underline">Voir sur la carte</a>@endif
-                            @if ($e['en_ligne'])<p class="text-[12px] text-[#5B677A]">Le lien de connexion est communiqué aux inscrits.</p>@endif
+                            @if ($e['en_ligne'])<p class="text-[12px] text-[#5B677A]">{{ ($e['lien_visio'] ?? null) ? 'Lien de connexion ci-dessous.' : 'Le lien de connexion est donné aux inscrits.' }}</p>@endif
                         </div>
                     </div>
                 </div>
@@ -105,6 +105,36 @@
                         <span class="rounded-full bg-cloud px-4 py-2.5 text-[13px] font-semibold text-[#5B677A]">Événement terminé{{ $e['registered'] ? ' — vous étiez inscrit(e)' : '' }}</span>
                     @elseif ($e['registered'])
                         <span data-test="fiche-inscrit" class="inline-flex items-center gap-1.5 rounded-full bg-[#22A85A]/10 px-4 py-2.5 text-[13px] font-bold text-[#1C8F4C]"><x-ui.icon name="check-circle" class="size-4" /> Vous êtes inscrit(e)</span>
+                        @if ($e['billet'] ?? null)
+                            <div x-data="{ billet: false }" class="contents">
+                                <button type="button" x-on:click="billet = true" data-test="mon-billet" class="btn-tap inline-flex items-center gap-2 rounded-full bg-brand px-4 py-2.5 text-[13px] font-bold text-white hover:bg-brand/90"><x-ui.icon name="qr-code" class="size-4" /> Mon billet</button>
+                                <template x-teleport="body">
+                                    <div x-show="billet" x-transition.opacity style="display: none" class="fixed inset-0 z-[95] flex items-center justify-center bg-brand/60 p-4" x-on:click.self="billet = false" x-on:keydown.escape.window="billet = false">
+                                        <div data-test="billet" class="w-full max-w-[340px] overflow-hidden rounded-[20px] bg-white text-center shadow-2xl">
+                                            <div class="px-6 pb-4 pt-6" style="background: linear-gradient(135deg, #031D59, {{ $couleur }})">
+                                                <p class="text-[10.5px] font-bold uppercase tracking-[0.14em] text-white/70">Billet REJCC</p>
+                                                <p class="mt-1 text-[15px] font-extrabold leading-snug text-white">{{ $e['title'] }}</p>
+                                                <p class="mt-1 text-[12px] text-white/80">{{ ucfirst($debut->isoFormat('dddd D MMMM · HH[h]mm')) }}</p>
+                                            </div>
+                                            <div class="p-6">
+                                                <canvas x-init="window.QRCode && window.QRCode.toCanvas($el, @js($e['billet']), { width: 220, margin: 1, color: { dark: '#031D59', light: '#ffffff' } }, () => { $el.style.width = ''; $el.style.height = ''; })" class="mx-auto !size-[220px]"></canvas>
+                                                <p class="mt-3 font-mono text-[15px] font-bold tracking-[0.12em] text-brand">{{ $e['billet'] }}</p>
+                                                <p class="mt-1 text-[11.5px] text-[#5B677A]">{{ \App\Support\Api::user()->prenom ?? '' }} {{ \App\Support\Api::user()->nom ?? '' }}</p>
+                                                @if ($e['present'] ?? false)
+                                                    <p class="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[#22A85A]/10 px-3 py-1 text-[12px] font-bold text-[#1C8F4C]"><x-ui.icon name="check-circle" class="size-4" /> Présence enregistrée</p>
+                                                @else
+                                                    <p class="mt-3 text-[11.5px] text-[#9AA6B8]">Présentez ce QR code à l'accueil (votre carte membre fonctionne aussi).</p>
+                                                @endif
+                                                <button type="button" x-on:click="billet = false" class="mt-4 text-[12.5px] font-semibold text-azure hover:underline">Fermer</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        @endif
+                        @if ($e['lien_visio'] ?? null)
+                            <a href="{{ $e['lien_visio'] }}" target="_blank" rel="noopener" data-test="lien-visio" class="btn-tap inline-flex items-center gap-2 rounded-full bg-azure px-4 py-2.5 text-[13px] font-bold text-white hover:bg-azure/90"><x-ui.icon name="video" class="size-4" /> Rejoindre en ligne</a>
+                        @endif
                         <a href="{{ route('espace-membre.evenements.agenda', $e['id']) }}" data-test="ajouter-agenda" class="btn-tap inline-flex items-center gap-2 rounded-full border border-brand/15 px-4 py-2.5 text-[13px] font-bold text-brand hover:bg-cloud"><x-ui.icon name="calendar" class="size-4" /> Ajouter à mon agenda</a>
                         <button type="button" wire:click="desinscrire({{ $e['id'] }})" wire:confirm="Annuler votre inscription à « {{ $e['title'] }} » ?" data-test="desinscrire" class="text-[12.5px] font-semibold text-[#9AA6B8] hover:text-accent">Annuler mon inscription</button>
                     @elseif ($e['refus'])

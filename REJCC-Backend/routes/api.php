@@ -302,6 +302,8 @@ Route::middleware(['auth.token', 'audit.log'])->prefix('admin')->group(function 
         Route::post('/events', [EventController::class, 'store']);
         Route::put('/events/{id}', [EventController::class, 'update']);
         Route::delete('/events/{id}', [EventController::class, 'destroy']);
+        Route::get('/events/{id}/inscrits', [EventController::class, 'inscrits'])->whereNumber('id');
+        Route::post('/events/{id}/pointage', [EventController::class, 'pointage'])->whereNumber('id');
 
         // Événements à inscription publique (module « Inscriptions »)
         Route::get('/registration-events', [\App\Http\Controllers\Api\RegistrationEventController::class, 'index']);
