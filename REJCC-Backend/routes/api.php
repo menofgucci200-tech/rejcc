@@ -196,6 +196,11 @@ Route::middleware('auth.token')->group(function () {
     Route::post('/opportunities/{id}/statut', [OpportunityController::class, 'changerStatut'])->whereNumber('id');
     Route::post('/opportunities/{id}/prolonger', [OpportunityController::class, 'prolonger'])->whereNumber('id');
     Route::delete('/opportunities/{id}', [OpportunityController::class, 'destroy'])->whereNumber('id');
+    Route::post('/opportunities/{id}/postuler', [OpportunityController::class, 'postuler'])->whereNumber('id');
+    Route::delete('/opportunities/{id}/candidature', [OpportunityController::class, 'retirerCandidature'])->whereNumber('id');
+    Route::get('/opportunities/{id}/candidatures', [OpportunityController::class, 'candidatures'])->whereNumber('id');
+    Route::post('/opportunities/{id}/candidatures/{c}/statut', [OpportunityController::class, 'statutCandidature'])->whereNumber(['id', 'c']);
+    Route::get('/mes-candidatures', [OpportunityController::class, 'mesCandidatures']);
 
     // Groupes sectoriels (adhésion libre, multiple, gratuite)
     Route::get('/groups', [\App\Http\Controllers\Api\GroupController::class, 'index']);

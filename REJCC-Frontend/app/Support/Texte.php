@@ -23,4 +23,15 @@ class Texte
             $sur
         );
     }
+
+    /** « il y a 5 minutes », et « à l'instant » pour moins d'une minute. */
+    public static function depuis(?string $date): string
+    {
+        if (! $date) {
+            return '';
+        }
+        $d = \Illuminate\Support\Carbon::parse($date)->locale('fr');
+
+        return $d->diffInSeconds(now()) < 60 ? "à l'instant" : $d->diffForHumans();
+    }
 }

@@ -148,11 +148,12 @@ class MessageController extends Controller
 
         $after = (int) $request->query('after', 0);
         $messages = (clone $query)->when($after > 0, fn ($q) => $q->where('id', '>', $after))
-            ->with('listing:id,title,photo,price,type,statut', 'project:id,title,image,statut')
-            ->orderBy('id')->get(['id', 'sender_id', 'recipient_id', 'body', 'listing_id', 'project_id', 'created_at', 'read_at'])
+            ->with('listing:id,title,photo,price,type,statut', 'project:id,title,image,statut', 'opportunity:id,title,entreprise,statut')
+            ->orderBy('id')->get(['id', 'sender_id', 'recipient_id', 'body', 'listing_id', 'project_id', 'opportunity_id', 'created_at', 'read_at'])
             ->map(fn (Message $m) => $m->only(['id', 'sender_id', 'recipient_id', 'body', 'created_at', 'read_at']) + [
                 'annonce' => $m->listing ? $m->listing->only(['id', 'title', 'photo', 'price', 'type', 'statut']) : null,
                 'projet' => $m->project ? $m->project->only(['id', 'title', 'image', 'statut']) : null,
+                'offre' => $m->opportunity ? $m->opportunity->only(['id', 'title', 'entreprise', 'statut']) : null,
             ]);
 
         return response()->json([
@@ -179,6 +180,7 @@ class MessageController extends Controller
             'body' => 'required|string|max:2000',
             'listing_id' => 'nullable|integer',
             'project_id' => 'nullable|integer',
+            'opportunity_id' => 'nullable|integer',
         ], [
             'body.required' => 'Écrivez votre message avant de l\'envoyer.',
             'body.max' => 'Votre message est trop long (2000 caractères maximum).',
@@ -244,15 +246,25 @@ class MessageController extends Controller
             $projet = null;
         }
 
+        // Message « À propos » d'une offre : entre son auteur et un candidat.
+        $offre = $request->filled('opportunity_id') ? \App\Models\Opportunity::find((int) $request->input('opportunity_id')) : null;
+        if ($offre) {
+            $candidat = $offre->author_id === $me->id ? $destinataire : $me;
+            $lienOk = in_array($offre->author_id, [$me->id, $destinataire->id], true)
+                && $offre->candidatures()->where('user_id', $candidat->id)->exists();
+            $offre = $lienOk ? $offre : null;
+        }
+
         $message = Message::create([
             'sender_id' => $me->id,
             'recipient_id' => $destinataire->id,
             'body' => $body,
             'listing_id' => $annonce?->id,
             'project_id' => $projet?->id,
+            'opportunity_id' => $offre?->id,
         ]);
 
-        $this->notifier($me, $destinataire, $body, $annonce?->title, $projet?->title);
+        $this->notifier($me, $destinataire, $body, $annonce?->title, $projet?->title, $offre?->title);
 
         return response()->json(['ok' => true, 'message' => $message->only(['id', 'sender_id', 'recipient_id', 'body', 'listing_id', 'project_id', 'created_at', 'read_at'])]);
     }
@@ -272,7 +284,7 @@ class MessageController extends Controller
      * (extrait du dernier message, nombre de messages non lus) au lieu d'en
      * créer une par message. Aucune si le destinataire a le fil sous les yeux.
      */
-    private function notifier(User $expediteur, User $destinataire, string $body, ?string $annonce = null, ?string $projet = null): void
+    private function notifier(User $expediteur, User $destinataire, string $body, ?string $annonce = null, ?string $projet = null, ?string $offre = null): void
     {
         if (Cache::has(self::cleFilOuvert($destinataire->id, $expediteur->id))) {
             return;
@@ -282,7 +294,7 @@ class MessageController extends Controller
         $extrait = Str::limit(preg_replace('/\s+/', ' ', $body), 90);
         $donnees = [
             'title' => 'Message de '.trim($expediteur->prenom.' '.$expediteur->nom),
-            'body' => ($annonce ? "À propos de votre annonce « {$annonce} » : " : '').($projet ? "À propos du projet « {$projet} » : " : '')."« {$extrait} »".($nonLus > 1 ? " · {$nonLus} messages non lus" : ''),
+            'body' => ($annonce ? "À propos de votre annonce « {$annonce} » : " : '').($projet ? "À propos du projet « {$projet} » : " : '').($offre ? "À propos de l'offre « {$offre} » : " : '')."« {$extrait} »".($nonLus > 1 ? " · {$nonLus} messages non lus" : ''),
         ];
 
         $notif = MemberNotification::where('user_id', $destinataire->id)->where('type', 'message')

@@ -33,7 +33,7 @@
             @endif
             <p class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[#9AA6B8]">
                 @if ($o['groupe']) <span style="color: {{ $o['groupe']['couleur'] }}">{{ $o['groupe']['nom'] }}</span> @endif
-                @if ($o['publie_at']) <span>Publiée {{ \Illuminate\Support\Carbon::parse($o['publie_at'])->locale('fr')->diffForHumans() }}</span> @endif
+                @if ($o['publie_at']) <span>Publiée {{ \App\Support\Texte::depuis($o['publie_at']) }}</span> @endif
                 @if ($limite)
                     <span class="inline-flex items-center gap-1 font-semibold text-accent"><x-ui.icon name="clock" class="size-3" /> Candidature avant le {{ \Illuminate\Support\Carbon::parse($limite)->locale('fr')->isoFormat('D MMMM') }}</span>
                 @elseif ($avecStatut && $o['statut'] === 'publiee' && $o['expire_le'])

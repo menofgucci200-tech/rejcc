@@ -52,6 +52,11 @@ class Opportunity extends Model
         return $this->belongsTo(User::class, 'author_id');
     }
 
+    public function candidatures()
+    {
+        return $this->hasMany(OpportunityApplication::class);
+    }
+
     public function groupe()
     {
         return $this->belongsTo(Group::class, 'group_id');

@@ -182,6 +182,16 @@
                                         </span>
                                     </a>
                                 @endif
+                                @if ($m['offre'] ?? null)
+                                    <a href="{{ route('espace-membre.emplois', ['offre' => $m['offre']['id']]) }}" wire:navigate data-test="message-offre"
+                                        class="mb-1 flex max-w-[78%] items-center gap-2.5 rounded-[12px] border border-brand/10 bg-white p-2 pr-3 text-left hover:border-brand/30">
+                                        <span class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand/[.06] text-brand"><x-ui.icon name="nav-briefcase" class="size-4" /></span>
+                                        <span class="min-w-0">
+                                            <span class="block text-[10.5px] font-bold uppercase tracking-[0.08em] text-[#9AA6B8]">À propos de l'offre</span>
+                                            <span class="block truncate text-[12.5px] font-bold text-brand">{{ $m['offre']['title'] }}{{ $m['offre']['entreprise'] ? ' · '.$m['offre']['entreprise'] : '' }}</span>
+                                        </span>
+                                    </a>
+                                @endif
                                 @if ($m['projet'] ?? null)
                                     <a href="{{ route('espace-membre.projets', ['projet' => $m['projet']['id']]) }}" wire:navigate data-test="message-projet"
                                         class="mb-1 flex max-w-[78%] items-center gap-2.5 rounded-[12px] border border-brand/10 bg-white p-2 pr-3 text-left hover:border-brand/30">
@@ -225,6 +235,16 @@
                                         <span class="block truncate text-[12.5px] font-bold text-brand">{{ $annonceContexte['title'] }}</span>
                                     </span>
                                     <button type="button" wire:click="retirerAnnonce" aria-label="Ne plus rattacher l'annonce" class="icon-btn rounded-lg p-1 text-[#9AA6B8] hover:bg-white hover:text-brand"><x-ui.icon name="x" class="size-3.5" /></button>
+                                </div>
+                            @endif
+                            @if ($offreContexte)
+                                <div data-test="contexte-offre" class="mb-2 flex items-center gap-2.5 rounded-[12px] border border-azure/25 bg-azure/[.06] p-2 pr-2.5">
+                                    <span class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-white text-brand"><x-ui.icon name="nav-briefcase" class="size-4" /></span>
+                                    <span class="min-w-0 flex-1">
+                                        <span class="block text-[10.5px] font-bold uppercase tracking-[0.08em] text-azure">À propos de l'offre</span>
+                                        <span class="block truncate text-[12.5px] font-bold text-brand">{{ $offreContexte['title'] }}</span>
+                                    </span>
+                                    <button type="button" wire:click="retirerOffre" aria-label="Ne plus rattacher l'offre" class="icon-btn rounded-lg p-1 text-[#9AA6B8] hover:bg-white hover:text-brand"><x-ui.icon name="x" class="size-3.5" /></button>
                                 </div>
                             @endif
                             @if ($projetContexte)

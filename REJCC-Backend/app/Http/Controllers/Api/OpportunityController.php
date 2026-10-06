@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Group;
 use App\Models\MemberNotification;
 use App\Models\Opportunity;
+use App\Models\OpportunityApplication;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -71,6 +72,15 @@ class OpportunityController extends Controller
         ];
         if ($complet) {
             $data += ['missions' => $o->missions, 'profil' => $o->profil, 'vues' => (int) $o->vues];
+        }
+        if ($moi && ! $estAuteur) {
+            $c = $o->relationLoaded('candidatures') ? $o->candidatures->firstWhere('user_id', $moi->id) : $o->candidatures()->where('user_id', $moi->id)->first();
+            $data['ma_candidature'] = $c ? ['statut' => $c->statut, 'statut_label' => OpportunityApplication::STATUTS[$c->statut] ?? $c->statut, 'date' => $c->created_at->toIso8601String()] : null;
+        }
+        if ($estAuteur || $moi?->role === 'admin') {
+            $cands = $o->candidatures()->where('statut', '!=', 'retiree');
+            $data['nb_candidatures'] = (clone $cands)->count();
+            $data['nb_nouvelles'] = (clone $cands)->whereNull('vue_at')->count();
         }
         if ($estAuteur || $moi?->role === 'admin') {
             $data['motif'] = $o->motif;
@@ -269,6 +279,165 @@ class OpportunityController extends Controller
         Opportunity::where('author_id', $request->user()->id)->whereKey($id)->delete();
 
         return response()->json(['ok' => true]);
+    }
+
+    // ------------------------------------------------------------------
+    // Candidatures
+    // ------------------------------------------------------------------
+
+    private function nom(User $u): string
+    {
+        return trim($u->prenom.' '.$u->nom);
+    }
+
+    /** POST /opportunities/{id}/postuler — un membre postule (message + CV). */
+    public function postuler(Request $request, int $id)
+    {
+        $moi = $request->user();
+        $o = Opportunity::enLigne()->find($id);
+        if (! $o) {
+            return response()->json(['ok' => false, 'message' => "Cette offre n'accepte plus de candidatures."], 422);
+        }
+        if ($o->author_id === $moi->id) {
+            return response()->json(['ok' => false, 'message' => "Vous ne pouvez pas postuler à votre propre offre."], 422);
+        }
+        if ($o->deadline && $o->deadline->lt(today())) {
+            return response()->json(['ok' => false, 'message' => 'La date limite de candidature est dépassée.'], 422);
+        }
+        $existante = OpportunityApplication::where('opportunity_id', $o->id)->where('user_id', $moi->id)->first();
+        if ($existante && $existante->statut !== 'retiree') {
+            return response()->json(['ok' => false, 'message' => 'Vous avez déjà postulé à cette offre.'], 422);
+        }
+        $v = Validator::make($request->all(), [
+            'message' => 'required|string|min:30|max:3000',
+            'cv_url' => 'nullable|url|max:500',
+            'cv_name' => 'nullable|string|max:200',
+        ], [
+            'message.required' => 'Présentez-vous au recruteur en quelques lignes.',
+            'message.min' => 'Votre message est trop court : expliquez en quelques lignes pourquoi ce poste vous intéresse (30 caractères minimum).',
+        ]);
+        if ($v->fails()) {
+            return response()->json(['ok' => false, 'message' => $v->errors()->first()], 422);
+        }
+        $c = OpportunityApplication::updateOrCreate(['opportunity_id' => $o->id, 'user_id' => $moi->id],
+            $v->validated() + ['statut' => 'recue', 'vue_at' => null, 'note' => null]);
+
+        if ($o->author_id) {
+            MemberNotification::create([
+                'user_id' => $o->author_id, 'type' => 'info',
+                'title' => "Nouvelle candidature : {$o->title}",
+                'body' => $this->nom($moi).' a postulé à votre offre. Consultez sa candidature et son profil sur la plateforme.',
+                'link' => "/espace-membre/emplois?offre={$o->id}&candidatures=1",
+            ]);
+        }
+
+        return response()->json(['ok' => true, 'candidature' => ['statut' => $c->statut]], 201);
+    }
+
+    /** DELETE /opportunities/{id}/candidature — le candidat retire sa candidature. */
+    public function retirerCandidature(Request $request, int $id)
+    {
+        $c = OpportunityApplication::where('opportunity_id', $id)->where('user_id', $request->user()->id)->first();
+        if (! $c || ! in_array($c->statut, ['recue', 'preselection'], true)) {
+            return response()->json(['ok' => false, 'message' => 'Cette candidature ne peut plus être retirée.'], 422);
+        }
+        $c->update(['statut' => 'retiree']);
+
+        return response()->json(['ok' => true]);
+    }
+
+    /** GET /opportunities/{id}/candidatures — candidatures reçues (auteur de l'offre ou admin). */
+    public function candidatures(Request $request, int $id)
+    {
+        $moi = $request->user();
+        $o = Opportunity::find($id);
+        if (! $o || ($o->author_id !== $moi->id && $moi->role !== 'admin')) {
+            return response()->json(['ok' => false, 'message' => 'Offre introuvable.'], 404);
+        }
+        $liste = OpportunityApplication::with('user:id,prenom,nom,photo,role,titre,ville,email,telephone,created_at')
+            ->where('opportunity_id', $o->id)->where('statut', '!=', 'retiree')
+            ->orderByRaw("CASE statut WHEN 'recue' THEN 0 WHEN 'preselection' THEN 1 WHEN 'retenue' THEN 2 ELSE 3 END")
+            ->orderByDesc('created_at')->get();
+
+        // Le recruteur a vu les candidatures : elles ne sont plus « nouvelles ».
+        if ($o->author_id === $moi->id) {
+            OpportunityApplication::where('opportunity_id', $o->id)->whereNull('vue_at')->update(['vue_at' => now()]);
+        }
+
+        return response()->json(['ok' => true, 'candidatures' => $liste->filter(fn ($c) => $c->user)->map(fn (OpportunityApplication $c) => [
+            'id' => $c->id,
+            'statut' => $c->statut,
+            'statut_label' => OpportunityApplication::STATUTS[$c->statut] ?? $c->statut,
+            'message' => $c->message,
+            'cv_url' => $c->cv_url,
+            'cv_name' => $c->cv_name,
+            'note' => $c->note,
+            'nouvelle' => $c->vue_at === null,
+            'date' => $c->created_at->toIso8601String(),
+            // En postulant, le candidat partage ses coordonnées avec le recruteur.
+            'candidat' => $c->user->only(['id', 'prenom', 'nom', 'photo', 'role', 'titre', 'ville', 'email', 'telephone']) + ['code' => $c->user->cardCode()],
+        ])->values(), 'statuts' => OpportunityApplication::STATUTS]);
+    }
+
+    /** POST /opportunities/{id}/candidatures/{c}/statut — le recruteur fait avancer une candidature. */
+    public function statutCandidature(Request $request, int $id, int $cid)
+    {
+        $moi = $request->user();
+        $o = Opportunity::where('author_id', $moi->id)->find($id);
+        $c = $o ? OpportunityApplication::where('opportunity_id', $o->id)->find($cid) : null;
+        if (! $c || $c->statut === 'retiree') {
+            return response()->json(['ok' => false, 'message' => 'Candidature introuvable.'], 404);
+        }
+        $v = Validator::make($request->all(), [
+            'statut' => 'nullable|in:recue,preselection,retenue,non_retenue',
+            'note' => 'nullable|string|max:1000',
+            'message' => 'nullable|string|max:1000',
+        ]);
+        if ($v->fails()) {
+            return response()->json(['ok' => false, 'message' => $v->errors()->first()], 422);
+        }
+        $d = $v->validated();
+        if (array_key_exists('note', $d)) {
+            $c->note = trim((string) $d['note']) ?: null;
+        }
+        $avant = $c->statut;
+        if (! empty($d['statut'])) {
+            $c->statut = $d['statut'];
+        }
+        $c->save();
+
+        if ($c->statut !== $avant && $c->statut !== 'recue') {
+            $mot = trim((string) ($d['message'] ?? ''));
+            [$titre, $texte] = match ($c->statut) {
+                'preselection' => ["Candidature présélectionnée : {$o->title}", 'Bonne nouvelle : votre candidature a retenu l\'attention du recruteur, qui reviendra vers vous.'],
+                'retenue' => ["Candidature retenue : {$o->title}", 'Félicitations ! Votre candidature est retenue. Le recruteur va vous contacter pour la suite.'],
+                default => ["Candidature non retenue : {$o->title}", "Votre candidature n'a pas été retenue cette fois-ci. Merci pour votre intérêt, et bon courage pour vos recherches !"],
+            };
+            MemberNotification::create([
+                'user_id' => $c->user_id, 'type' => 'info', 'title' => $titre,
+                'body' => $texte.($mot !== '' ? " Message du recruteur : {$mot}" : ''),
+                'link' => "/espace-membre/emplois?onglet=candidatures&offre={$o->id}",
+            ]);
+        }
+
+        return response()->json(['ok' => true, 'statut' => $c->statut]);
+    }
+
+    /** GET /mes-candidatures — suivi des candidatures du membre. */
+    public function mesCandidatures(Request $request)
+    {
+        $liste = OpportunityApplication::with(['opportunity' => fn ($q) => $q->with('groupe:id,name,couleur,icone')])
+            ->where('user_id', $request->user()->id)->orderByDesc('created_at')->get()
+            ->filter(fn ($c) => $c->opportunity);
+
+        return response()->json(['ok' => true, 'candidatures' => $liste->map(fn (OpportunityApplication $c) => [
+            'id' => $c->id,
+            'statut' => $c->statut,
+            'statut_label' => OpportunityApplication::STATUTS[$c->statut] ?? $c->statut,
+            'date' => $c->created_at->toIso8601String(),
+            'vue' => $c->vue_at !== null,
+            'offre' => $this->payload($c->opportunity, $request->user()),
+        ])->values()]);
     }
 
     // ------------------------------------------------------------------

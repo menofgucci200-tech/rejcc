@@ -146,6 +146,7 @@
                 Mes offres <span class="{{ $onglet === 'mes' ? 'text-white/70' : 'text-[#9AA6B8]' }}">{{ $mesOffres->count() }}</span>
                 @if ($aCorriger) <span class="rounded-full bg-[#B27007] px-1.5 text-[10px] leading-4 text-white">{{ $aCorriger }}</span> @endif
             </button>
+            <button wire:click="setOnglet('candidatures')" data-test="onglet-candidatures" class="btn-tap rounded-full px-4 py-1.5 text-xs font-bold {{ $onglet === 'candidatures' ? 'bg-brand text-white' : 'border border-brand/15 bg-white text-brand hover:bg-cloud' }}">Mes candidatures</button>
             @if ($onglet === 'offres')
                 <span class="mx-1 hidden h-5 w-px bg-brand/10 sm:block"></span>
                 @foreach (['tous' => 'Toutes'] + $types as $value => $label)
@@ -154,6 +155,23 @@
             @endif
         </div>
 
+        @if ($onglet === 'candidatures')
+            <div class="space-y-3">
+                @forelse ($mesCandidatures as $c)
+                    @php $cc = ['recue' => '#4F6FBF', 'preselection' => '#B27007', 'retenue' => '#1C8F4C', 'non_retenue' => '#9AA6B8', 'retiree' => '#9AA6B8'][$c['statut']] ?? '#4F6FBF'; @endphp
+                    <button type="button" wire:key="mc-{{ $c['id'] }}" wire:click="voir({{ $c['offre']['id'] }})" data-test="ma-candidature-ligne" class="card-hover flex w-full flex-wrap items-center gap-4 rounded-[16px] border border-brand/10 bg-white p-4 text-left shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                        <span class="flex size-11 shrink-0 items-center justify-center rounded-xl text-white" style="background: {{ $c['offre']['groupe']['couleur'] ?? '#031D59' }}"><x-ui.icon :name="$c['offre']['groupe']['icone'] ?? 'nav-briefcase'" class="size-5" /></span>
+                        <div class="min-w-[200px] flex-1">
+                            <p class="text-[14px] font-bold text-brand">{{ $c['offre']['title'] }}</p>
+                            <p class="text-[12px] text-[#5B677A]">{{ $c['offre']['entreprise'] }} · {{ $c['offre']['lieu'] }} · postulé {{ \App\Support\Texte::depuis($c['date']) }}{{ $c['vue'] ? ' · vue par le recruteur' : '' }}</p>
+                        </div>
+                        <span class="rounded-full px-2.5 py-1 text-[11px] font-bold" style="background: {{ $cc }}1A; color: {{ $cc }}">{{ $c['statut_label'] }}</span>
+                    </button>
+                @empty
+                    <div class="rounded-[16px] border border-dashed border-brand/20 bg-white px-6 py-12 text-center text-sm text-[#5B677A]">Vous n'avez pas encore postulé. Ouvrez une offre et cliquez sur « Postuler ».</div>
+                @endforelse
+            </div>
+        @else
         @php $liste = $onglet === 'mes' ? $mesOffres : $offres; @endphp
         <div class="space-y-3">
             @forelse ($liste as $o)
@@ -166,7 +184,8 @@
                 </div>
             @endforelse
         </div>
+        @endif
     </div>
 
-    <x-emplois.fiche :fiche="$fiche" />
+    <x-emplois.fiche :fiche="$fiche" :candidatures="$candidatures" :voir-candidatures="$voirCandidatures" :postuler-ouvert="$postulerOuvert" :cv-name="$cvName" :info="$infoFiche" />
 </div>

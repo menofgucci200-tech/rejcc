@@ -57,6 +57,9 @@ class Messaging extends Component
     /** Projet dont on parle (« Je veux contribuer » depuis la fiche d'un projet). */
     public ?array $projetContexte = null;
 
+    /** Offre d'emploi dont on parle (candidat ↔ recruteur). */
+    public ?array $offreContexte = null;
+
     /** Recherche dans les conversations (nom de l'interlocuteur). */
     public string $recherche = '';
 
@@ -73,6 +76,7 @@ class Messaging extends Component
             $this->openThread($to);
             $this->rattacherAnnonce(request()->integer('annonce'));
             $this->rattacherProjet(request()->integer('projet'));
+            $this->rattacherOffre(request()->integer('offre'));
         }
     }
 
@@ -175,11 +179,35 @@ class Messaging extends Component
         $this->projetContexte = null;
     }
 
+    /** Échange au sujet d'une offre : rappelée au-dessus du message et rattachée à l'envoi. */
+    private function rattacherOffre(int $offreId): void
+    {
+        if (! $offreId || ! $this->partner) {
+            return;
+        }
+        $o = Api::get("/opportunities/{$offreId}", [], Api::token())['opportunity'] ?? null;
+        if (! $o) {
+            return;
+        }
+        $this->offreContexte = ['id' => $o['id'], 'title' => $o['title'], 'entreprise' => $o['entreprise'] ?? null];
+        if (trim($this->body) === '') {
+            $this->body = ($o['mine'] ?? false)
+                ? "Bonjour {$this->partner['prenom']}, merci pour votre candidature au poste « {$o['title']} ». "
+                : "Bonjour {$this->partner['prenom']}, au sujet de ma candidature au poste « {$o['title']} » : ";
+        }
+    }
+
+    public function retirerOffre(): void
+    {
+        $this->offreContexte = null;
+    }
+
     public function openThread(int $userId): void
     {
         $this->activeId = $userId;
         $this->annonceContexte = null;
         $this->projetContexte = null;
+        $this->offreContexte = null;
         $this->erreur = null;
         $this->body = '';
 
@@ -336,6 +364,7 @@ class Messaging extends Component
             'body' => $texte,
             'listing_id' => $this->annonceContexte['id'] ?? null,
             'project_id' => $this->projetContexte['id'] ?? null,
+            'opportunity_id' => $this->offreContexte['id'] ?? null,
         ], Api::token());
 
         if (! ($result['ok'] ?? false)) {
@@ -347,6 +376,7 @@ class Messaging extends Component
         $this->body = '';
         $this->annonceContexte = null;
         $this->projetContexte = null;
+        $this->offreContexte = null;
         $this->rafraichir();
         $this->dispatch('message-envoye');
     }

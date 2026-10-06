@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Message extends Model
 {
-    protected $fillable = ['sender_id', 'recipient_id', 'body', 'listing_id', 'project_id', 'read_at'];
+    protected $fillable = ['sender_id', 'recipient_id', 'body', 'listing_id', 'project_id', 'opportunity_id', 'read_at'];
 
     protected function casts(): array
     {
@@ -34,5 +34,11 @@ class Message extends Model
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class, 'project_id');
+    }
+
+    /** Offre d'emploi dont parle ce message (candidature). */
+    public function opportunity(): BelongsTo
+    {
+        return $this->belongsTo(Opportunity::class, 'opportunity_id');
     }
 }

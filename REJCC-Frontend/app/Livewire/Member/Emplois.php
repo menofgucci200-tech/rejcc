@@ -6,6 +6,7 @@ use App\Livewire\Concerns\HandlesMedia;
 use App\Support\Api;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
@@ -30,6 +31,30 @@ class Emplois extends Component
     public string $filtre = 'tous';
 
     public ?array $fiche = null;
+
+    /** Ouvre directement les candidatures de l'offre (lien de notification). */
+    #[Url(as: 'candidatures', except: false)]
+    public bool $voirCandidatures = false;
+
+    public array $candidatures = [];
+
+    public array $notes = [];
+
+    public string $motCandidat = '';
+
+    // ── Postuler ─────────────────────────────────────────────────────────
+    public bool $postulerOuvert = false;
+
+    public string $messageCandidature = '';
+
+    /** CV joint (fichier temporaire). */
+    public $cvFile = null;
+
+    public string $cvUrl = '';
+
+    public string $cvName = '';
+
+    public ?string $infoFiche = null;
 
     public ?string $message = null;
 
@@ -124,17 +149,27 @@ class Emplois extends Component
 
     public function setOnglet(string $o): void
     {
-        $this->onglet = in_array($o, ['offres', 'mes'], true) ? $o : 'offres';
+        $this->onglet = in_array($o, ['offres', 'mes', 'candidatures'], true) ? $o : 'offres';
     }
 
     // ── Fiche ────────────────────────────────────────────────────────────
 
-    public function voir(int $id): void
+    public function voir(int $id, bool $garder = false): void
     {
+        if (! $garder) {
+            $this->infoFiche = null;
+            $this->postulerOuvert = false;
+            $this->motCandidat = '';
+        }
         $r = Api::get("/opportunities/{$id}", [], Api::token());
         if ($r['ok'] ?? false) {
             $this->fiche = $r['opportunity'];
             $this->focus = $id;
+            if ($this->voirCandidatures && ($this->fiche['mine'] ?? false)) {
+                $this->chargerCandidatures();
+            } else {
+                $this->voirCandidatures = false;
+            }
         } else {
             $this->fiche = null;
             $this->focus = null;
@@ -146,6 +181,93 @@ class Emplois extends Component
     {
         $this->fiche = null;
         $this->focus = null;
+        $this->voirCandidatures = false;
+        $this->candidatures = [];
+    }
+
+    // ── Postuler ─────────────────────────────────────────────────────────
+
+    public function ouvrirPostuler(): void
+    {
+        $this->postulerOuvert = ! $this->postulerOuvert;
+        $this->reset(['messageCandidature', 'cvFile', 'cvUrl', 'cvName']);
+        $this->resetValidation();
+    }
+
+    public function updatedCvFile(): void
+    {
+        $this->validate(['cvFile' => 'file|max:10240|mimes:pdf,doc,docx'], [
+            'cvFile.max' => 'Le CV ne doit pas dépasser 10 Mo.',
+            'cvFile.mimes' => 'Le CV doit être un fichier PDF ou Word.',
+        ]);
+        $chemin = $this->cvFile->store('cv/'.date('Y/m'), 'uploads');
+        $this->cvUrl = Storage::disk('uploads')->url($chemin);
+        $this->cvName = $this->cvFile->getClientOriginalName();
+        $this->cvFile = null;
+    }
+
+    public function retirerCv(): void
+    {
+        $this->cvUrl = $this->cvName = '';
+    }
+
+    public function postuler(): void
+    {
+        $r = Api::post("/opportunities/{$this->fiche['id']}/postuler", array_filter([
+            'message' => trim($this->messageCandidature), 'cv_url' => $this->cvUrl ?: null, 'cv_name' => $this->cvName ?: null,
+        ]), Api::token());
+        if ($r['ok'] ?? false) {
+            $this->postulerOuvert = false;
+        }
+        $this->voir($this->fiche['id'], true);
+        $this->infoFiche = ($r['ok'] ?? false)
+            ? 'Candidature envoyée ! Le recruteur est prévenu ; suivez-la dans « Mes candidatures ».'
+            : ($r['message'] ?? 'Une erreur est survenue.');
+    }
+
+    public function retirerCandidature(): void
+    {
+        $r = Api::delete("/opportunities/{$this->fiche['id']}/candidature", Api::token());
+        $this->voir($this->fiche['id'], true);
+        $this->infoFiche = ($r['ok'] ?? false) ? 'Candidature retirée.' : ($r['message'] ?? 'Une erreur est survenue.');
+    }
+
+    // ── Candidatures reçues (auteur) ─────────────────────────────────────
+
+    public function chargerCandidatures(): void
+    {
+        $this->candidatures = Api::get("/opportunities/{$this->fiche['id']}/candidatures", [], Api::token())['candidatures'] ?? [];
+        $this->notes = collect($this->candidatures)->mapWithKeys(fn ($c) => [$c['id'] => (string) ($c['note'] ?? '')])->all();
+        $this->voirCandidatures = true;
+    }
+
+    public function basculerCandidatures(): void
+    {
+        if ($this->voirCandidatures) {
+            $this->voirCandidatures = false;
+
+            return;
+        }
+        $this->chargerCandidatures();
+        $this->voir($this->fiche['id'], true);
+    }
+
+    public function statutCandidature(int $cid, string $statut): void
+    {
+        $r = Api::post("/opportunities/{$this->fiche['id']}/candidatures/{$cid}/statut", array_filter([
+            'statut' => $statut, 'message' => trim($this->motCandidat) ?: null,
+        ]), Api::token());
+        $this->motCandidat = '';
+        $this->chargerCandidatures();
+        $this->infoFiche = ($r['ok'] ?? false)
+            ? ['preselection' => 'Candidature présélectionnée : le candidat est prévenu.', 'retenue' => 'Candidature retenue : le candidat est prévenu.', 'non_retenue' => 'Candidature non retenue : le candidat est prévenu avec bienveillance.'][$statut] ?? 'Candidature mise à jour.'
+            : ($r['message'] ?? 'Une erreur est survenue.');
+    }
+
+    public function enregistrerNote(int $cid): void
+    {
+        $r = Api::post("/opportunities/{$this->fiche['id']}/candidatures/{$cid}/statut", ['note' => trim($this->notes[$cid] ?? '')], Api::token());
+        $this->infoFiche = ($r['ok'] ?? false) ? 'Note enregistrée (visible de vous seul).' : ($r['message'] ?? 'Une erreur est survenue.');
     }
 
     // ── Mes offres ───────────────────────────────────────────────────────
@@ -287,8 +409,13 @@ class Emplois extends Component
         $offres = Collection::make($data['opportunities'] ?? [])
             ->when($this->filtre !== 'tous', fn ($c) => $c->where('type', $this->filtre))->values();
 
+        $mesCandidatures = $this->onglet === 'candidatures'
+            ? Collection::make(Api::get('/mes-candidatures', [], Api::token())['candidatures'] ?? [])
+            : collect();
+
         return view('livewire.member.emplois', [
             'offres' => $offres,
+            'mesCandidatures' => $mesCandidatures,
             'mesOffres' => Collection::make($data['mes_offres'] ?? []),
             'peutPublier' => (bool) ($data['peut_publier'] ?? false),
             'categories' => $data['categories'] ?? [],
