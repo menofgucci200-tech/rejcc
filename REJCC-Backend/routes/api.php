@@ -37,6 +37,8 @@ Route::get('/gallery', fn () => response()->json(['ok' => true, 'photos' => \App
 Route::get('/news', [NewsArticleController::class, 'index']);
 Route::get('/news/{slug}', [NewsArticleController::class, 'show']);
 Route::get('/public-events', [EventController::class, 'publicIndex']);
+Route::get('/public-opportunities', [OpportunityController::class, 'publicIndex']);
+Route::get('/public-opportunities/{id}', [OpportunityController::class, 'publicShow'])->whereNumber('id');
 Route::get('/public-projects', [\App\Http\Controllers\Api\ProjectController::class, 'publicIndex']);
 Route::get('/public-projects/{id}', [\App\Http\Controllers\Api\ProjectController::class, 'publicShow'])->whereNumber('id');
 Route::get('/public-events/{slug}', [EventController::class, 'publicShow']);
@@ -202,6 +204,7 @@ Route::middleware('auth.token')->group(function () {
     Route::post('/opportunities/{id}/candidatures/{c}/statut', [OpportunityController::class, 'statutCandidature'])->whereNumber(['id', 'c']);
     Route::get('/mes-candidatures', [OpportunityController::class, 'mesCandidatures']);
     Route::post('/opportunities/{id}/favori', [OpportunityController::class, 'favori'])->whereNumber('id');
+    Route::post('/opportunities/{id}/signaler', [OpportunityController::class, 'signaler'])->whereNumber('id');
     Route::post('/job-alerts', [OpportunityController::class, 'creerAlerte']);
     Route::delete('/job-alerts/{id}', [OpportunityController::class, 'supprimerAlerte'])->whereNumber('id');
 
@@ -356,6 +359,7 @@ Route::middleware(['auth.token', 'audit.log'])->prefix('admin')->group(function 
         Route::post('/opportunities', [OpportunityController::class, 'adminStore']);
         Route::put('/opportunities/{id}', [OpportunityController::class, 'adminUpdate']);
         Route::post('/opportunities/{id}/decision', [OpportunityController::class, 'decision'])->whereNumber('id');
+        Route::post('/opportunities/{id}/signalements', [OpportunityController::class, 'classerSignalements'])->whereNumber('id');
         Route::delete('/opportunities/{id}', [OpportunityController::class, 'adminDestroy']);
     });
 

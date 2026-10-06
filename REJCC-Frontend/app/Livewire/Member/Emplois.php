@@ -182,6 +182,13 @@ class Emplois extends Component
         }
     }
 
+    public function signaler(string $motif): void
+    {
+        $r = Api::post("/opportunities/{$this->fiche['id']}/signaler", ['motif' => trim($motif)], Api::token());
+        $this->voir($this->fiche['id'], true);
+        $this->infoFiche = ($r['ok'] ?? false) ? "Merci : l'offre est signalée à l'équipe REJCC, qui va la vérifier." : ($r['message'] ?? 'Une erreur est survenue.');
+    }
+
     /** « M'alerter » : crée une alerte à partir des filtres en cours. */
     public function creerAlerte(): void
     {

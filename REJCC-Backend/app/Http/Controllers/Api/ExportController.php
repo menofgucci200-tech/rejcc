@@ -185,10 +185,18 @@ class ExportController extends Controller
 
     private function opportunites(): array
     {
+        $offres = Opportunity::with(['author:id,prenom,nom,email', 'groupe:id,name'])
+            ->withCount(['candidatures as candidatures_count' => fn ($q) => $q->where('statut', '!=', 'retiree'),
+                'candidatures as retenues_count' => fn ($q) => $q->where('statut', 'retenue')])
+            ->orderByDesc('created_at')->get();
+
         return [
-            'columns' => ['Titre', 'Type', 'Description', 'Contact', 'Date limite', 'Publiée le'],
-            'rows' => Opportunity::orderByDesc('created_at')->get()->map(fn ($o) => [
-                $o->title, $o->type, $o->description, $o->contact, $o->deadline?->format('d/m/Y'), $o->created_at?->format('d/m/Y'),
+            'columns' => ['Offre', 'Type', 'Contrat', 'Entreprise', 'Secteur', 'Ville', 'Mode', 'Rémunération', 'Statut', 'Auteur', 'Email auteur', 'Vues', 'Candidatures', 'Retenues', 'Date limite', 'Publiée le', 'En ligne jusqu\'au'],
+            'rows' => $offres->map(fn (Opportunity $o) => [
+                $o->title, Opportunity::TYPES[$o->type] ?? $o->type, Opportunity::CONTRATS[$o->contrat] ?? '', $o->entreprise, $o->groupe?->name, $o->lieu,
+                Opportunity::TELETRAVAIL[$o->teletravail] ?? '', $o->remuneration, $o->estExpiree() ? 'Expirée' : (Opportunity::STATUTS[$o->statut] ?? $o->statut),
+                $o->author ? trim($o->author->prenom.' '.$o->author->nom) : '', $o->author?->email, $o->vues, $o->candidatures_count, $o->retenues_count,
+                $o->deadline?->format('d/m/Y'), $o->publie_at?->format('d/m/Y'), $o->expire_le?->format('d/m/Y'),
             ])->all(),
         ];
     }

@@ -282,4 +282,47 @@ class EmploiTest extends TestCase
         $this->withToken($t)->deleteJson("/api/job-alerts/{$alertes[0]['id']}")->assertOk();
         $this->assertSame([], $this->withToken($t)->getJson('/api/opportunities')->json('alertes'));
     }
+
+    // ── Signalements, export, vitrine ──────────────────────────────────
+
+    public function test_signalement_retrait_et_export(): void
+    {
+        $auteur = User::factory()->abonne()->create();
+        $o = $this->offreEnLigne($auteur);
+        $admin = $this->tokenFor(User::factory()->create(['role' => 'admin']));
+        $t = $this->tokenFor(User::factory()->create(['prenom' => 'Awa', 'nom' => 'Traoré']));
+
+        $this->withToken($t)->postJson("/api/opportunities/{$o->id}/signaler", ['motif' => 'x'])->assertStatus(422);
+        $this->withToken($t)->postJson("/api/opportunities/{$o->id}/signaler", ['motif' => 'On me demande de payer des frais de dossier.'])->assertOk();
+        $this->assertTrue($this->withToken($t)->getJson("/api/opportunities/{$o->id}")->json('opportunity.deja_signalee'));
+
+        $res = $this->withToken($admin)->getJson('/api/admin/opportunities?statut=signalee')->assertOk()->json();
+        $this->assertSame(1, $res['signalees']);
+        $this->assertSame('Awa Traoré', $res['opportunities'][0]['signalements'][0]['par']);
+
+        // Retrait : signalements classés, auteur prévenu.
+        $this->withToken($admin)->postJson("/api/admin/opportunities/{$o->id}/decision", ['decision' => 'retirer', 'motif' => 'Frais de dossier demandés aux candidats.'])->assertOk();
+        $this->assertSame(0, $this->withToken($admin)->getJson('/api/admin/opportunities')->json('signalees'));
+
+        $export = $this->withToken($admin)->getJson('/api/admin/export/opportunites')->assertOk()->json();
+        $this->assertContains('Candidatures', $export['columns']);
+        $this->assertSame('Refusée', $export['rows'][0][8]);
+    }
+
+    public function test_vitrine_publique_sans_contact(): void
+    {
+        $auteur = User::factory()->abonne()->create(['email' => 'recruteur@example.com']);
+        $o = Opportunity::create($this->donnees(['contact' => 'rh@ivoire-tech.ci']) + ['author_id' => $auteur->id, 'statut' => 'publiee', 'publie_at' => now(), 'expire_le' => today()->addMonth()]);
+        Opportunity::create($this->donnees(['title' => 'En attente']) + ['author_id' => $auteur->id, 'statut' => 'en_attente']);
+
+        $liste = $this->getJson('/api/public-opportunities')->assertOk()->json('opportunities');
+        $this->assertSame(['Développeur web junior'], array_column($liste, 'title'));
+        $json = json_encode($this->getJson("/api/public-opportunities/{$o->id}")->assertOk()->json());
+        $this->assertStringNotContainsString('rh@ivoire-tech.ci', $json);
+        $this->assertStringNotContainsString('recruteur@example.com', $json);
+        $this->assertStringContainsString('Bac+2', $json);
+
+        $o->update(['statut' => 'pourvue']);
+        $this->getJson("/api/public-opportunities/{$o->id}")->assertStatus(404);
+    }
 }

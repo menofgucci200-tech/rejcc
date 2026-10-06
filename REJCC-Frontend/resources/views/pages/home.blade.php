@@ -15,6 +15,7 @@
     @if (SiteRemote::visible('home', 'gallery')) <x-sections.gallery /> @endif
     @if (SiteRemote::visible('home', 'events')) <x-sections.events /> @endif
     @if (SiteRemote::visible('home', 'projets')) <x-sections.projets /> @endif
+    @if (SiteRemote::visible('home', 'emplois')) <x-sections.emplois /> @endif
     @if (SiteRemote::visible('home', 'news')) <x-sections.news /> @endif
     @if (SiteRemote::visible('home', 'cta-band')) <x-sections.cta-band /> @endif
 </x-site-layout>

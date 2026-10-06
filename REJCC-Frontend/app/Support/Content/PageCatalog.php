@@ -76,6 +76,7 @@ class PageCatalog
                     ],
                     'events' => ['label' => 'Événements à venir', 'fields' => []],
                     'projets' => ['label' => 'Projets du réseau (porteurs ayant donné leur accord)', 'fields' => []],
+                    'emplois' => ['label' => "Offres d'emploi et de stage", 'fields' => []],
                     'news' => ['label' => 'Dernières actualités', 'fields' => []],
                     'cta-band' => [
                         'label' => 'Bandeau final (appel à l\'action)',

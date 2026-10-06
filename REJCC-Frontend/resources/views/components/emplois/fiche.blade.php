@@ -206,6 +206,14 @@
                     @if (! $o['mine'] && $o['statut'] === 'publiee')
                         <button type="button" wire:click="basculerFavori({{ $o['id'] }})" data-test="favori-offre" class="btn-tap inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-[13px] font-bold {{ ($o['favori'] ?? false) ? 'border-accent/30 bg-accent/5 text-accent' : 'border-brand/15 text-brand hover:bg-cloud' }}">{{ ($o['favori'] ?? false) ? '♥ Sauvegardée' : '♡ Sauvegarder' }}</button>
                     @endif
+                    @if (! $o['mine'] && $o['statut'] === 'publiee')
+                        @if ($o['deja_signalee'] ?? false)
+                            <span class="order-last ml-auto text-[11.5px] text-[#9AA6B8]">Offre signalée</span>
+                        @else
+                            <button type="button" data-test="signaler-offre" x-on:click="const m = prompt('Pourquoi signalez-vous cette offre ? (frais demandés aux candidats, fausse entreprise, contenu inapproprié…)'); if (m !== null) $wire.signaler(m)"
+                                class="order-last ml-auto text-[11.5px] font-semibold text-[#9AA6B8] hover:text-accent">Signaler</button>
+                        @endif
+                    @endif
                     @if ($o['statut'] === 'publiee')
                         <button type="button" x-data="{ copie: false }"
                             x-on:click="navigator.clipboard?.writeText(@js($lienPartage)); copie = true; setTimeout(() => copie = false, 2000)"

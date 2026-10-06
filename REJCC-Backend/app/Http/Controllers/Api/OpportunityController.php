@@ -80,6 +80,16 @@ class OpportunityController extends Controller
             $c = $o->relationLoaded('candidatures') ? $o->candidatures->firstWhere('user_id', $moi->id) : $o->candidatures()->where('user_id', $moi->id)->first();
             $data['ma_candidature'] = $c ? ['statut' => $c->statut, 'statut_label' => OpportunityApplication::STATUTS[$c->statut] ?? $c->statut, 'date' => $c->created_at->toIso8601String()] : null;
         }
+        if ($moi && ! $estAuteur && $moi->role !== 'admin') {
+            $data['deja_signalee'] = DB::table('opportunity_reports')->where('opportunity_id', $o->id)->where('user_id', $moi->id)->exists();
+        }
+        if ($moi?->role === 'admin') {
+            $data['signalements'] = DB::table('opportunity_reports')->join('users', 'users.id', '=', 'opportunity_reports.user_id')
+                ->where('opportunity_id', $o->id)->where('statut', 'nouveau')->orderByDesc('opportunity_reports.created_at')
+                ->get(['opportunity_reports.motif', 'opportunity_reports.created_at', 'users.prenom', 'users.nom'])
+                ->map(fn ($r) => ['motif' => $r->motif, 'date' => $r->created_at, 'par' => trim($r->prenom.' '.$r->nom)])->all();
+            $data['candidatures_par_statut'] = $o->candidatures()->selectRaw('statut, count(*) as n')->groupBy('statut')->pluck('n', 'statut')->all();
+        }
         if ($estAuteur || $moi?->role === 'admin') {
             $cands = $o->candidatures()->where('statut', '!=', 'retiree');
             $data['nb_candidatures'] = (clone $cands)->count();
@@ -165,6 +175,36 @@ class OpportunityController extends Controller
     }
 
     // ------------------------------------------------------------------
+    // Site public : offres en ligne, sans contact ni auteur (postuler = membres)
+    // ------------------------------------------------------------------
+
+    private function payloadPublic(Opportunity $o, bool $complet = false): array
+    {
+        $p = $this->payload($o, null, $complet);
+        unset($p['author'], $p['auteur'], $p['mine'], $p['media_url'], $p['media_name']);
+
+        return $p;
+    }
+
+    /** GET /public-opportunities */
+    public function publicIndex()
+    {
+        return response()->json(['ok' => true, 'opportunities' => Opportunity::with('groupe:id,name,couleur,icone')->enLigne()
+            ->orderByDesc('publie_at')->get()->map(fn ($o) => $this->payloadPublic($o))->values()]);
+    }
+
+    /** GET /public-opportunities/{id} */
+    public function publicShow(int $id)
+    {
+        $o = Opportunity::with('groupe:id,name,couleur,icone')->enLigne()->find($id);
+        if (! $o) {
+            return response()->json(['ok' => false, 'message' => "Cette offre n'est plus disponible."], 404);
+        }
+
+        return response()->json(['ok' => true, 'opportunity' => $this->payloadPublic($o, true)]);
+    }
+
+    // ------------------------------------------------------------------
     // Espace membre
     // ------------------------------------------------------------------
 
@@ -236,6 +276,24 @@ class OpportunityController extends Controller
         DB::table('opportunity_favoris')->insert(['user_id' => $moi->id, 'opportunity_id' => $id, 'created_at' => now(), 'updated_at' => now()]);
 
         return response()->json(['ok' => true, 'favori' => true]);
+    }
+
+    /** POST /opportunities/{id}/signaler — un membre signale une offre suspecte. */
+    public function signaler(Request $request, int $id)
+    {
+        $moi = $request->user();
+        $o = Opportunity::enLigne()->find($id);
+        if (! $o || $o->author_id === $moi->id) {
+            return response()->json(['ok' => false, 'message' => 'Offre introuvable.'], 404);
+        }
+        $motif = mb_substr(trim((string) $request->input('motif')), 0, 500);
+        if (mb_strlen($motif) < 5) {
+            return response()->json(['ok' => false, 'message' => 'Expliquez en quelques mots pourquoi vous signalez cette offre.'], 422);
+        }
+        DB::table('opportunity_reports')->updateOrInsert(['opportunity_id' => $o->id, 'user_id' => $moi->id],
+            ['motif' => $motif, 'statut' => 'nouveau', 'created_at' => now(), 'updated_at' => now()]);
+
+        return response()->json(['ok' => true]);
     }
 
     /** POST /job-alerts — « M'alerter » pour une recherche (5 alertes au plus). */
@@ -546,9 +604,10 @@ class OpportunityController extends Controller
         $q = trim((string) $request->query('q', ''));
 
         $query = $this->avecRelations()
+            ->when($statut === 'signalee', fn ($w) => $w->whereIn('id', DB::table('opportunity_reports')->where('statut', 'nouveau')->select('opportunity_id')))
             ->when($statut === 'expiree', fn ($w) => $w->where('statut', 'publiee')->whereDate('expire_le', '<', today()))
             ->when($statut === 'publiee', fn ($w) => $w->enLigne())
-            ->when($statut !== '' && ! in_array($statut, ['expiree', 'publiee'], true), fn ($w) => $w->where('statut', $statut))
+            ->when($statut !== '' && ! in_array($statut, ['expiree', 'publiee', 'signalee'], true), fn ($w) => $w->where('statut', $statut))
             ->when($q !== '', fn ($w) => $w->where(fn ($x) => $x->where('title', 'like', "%{$q}%")->orWhere('entreprise', 'like', "%{$q}%")
                 ->orWhere('lieu', 'like', "%{$q}%")->orWhereHas('author', fn ($u) => $u->where('prenom', 'like', "%{$q}%")->orWhere('nom', 'like', "%{$q}%"))))
             ->orderByRaw("CASE statut WHEN 'en_attente' THEN 0 WHEN 'a_corriger' THEN 1 ELSE 2 END")
@@ -558,6 +617,7 @@ class OpportunityController extends Controller
         $expirees = Opportunity::where('statut', 'publiee')->whereDate('expire_le', '<', today())->count();
         $compteurs['publiee'] = ($compteurs['publiee'] ?? 0) - $expirees;
         $compteurs['expiree'] = $expirees;
+        $signalees = DB::table('opportunity_reports')->where('statut', 'nouveau')->distinct()->count('opportunity_id');
 
         return response()->json([
             'ok' => true,
@@ -565,6 +625,14 @@ class OpportunityController extends Controller
                 'auteur_email' => $o->author?->email, 'auteur_telephone' => $o->author?->telephone,
             ])->values(),
             'compteurs' => $compteurs,
+            'signalees' => $signalees,
+            'stats' => [
+                'en_ligne' => Opportunity::enLigne()->count(),
+                'candidatures' => OpportunityApplication::where('statut', '!=', 'retiree')->count(),
+                'retenues' => OpportunityApplication::where('statut', 'retenue')->count(),
+                'pourvues' => Opportunity::where('statut', 'pourvue')->count(),
+                'alertes' => JobAlert::count(),
+            ],
         ] + $this->referentiels());
     }
 
@@ -644,9 +712,20 @@ class OpportunityController extends Controller
             'retirer' => ["Offre retirée : {$o->title}", "Votre offre a été retirée par l'équipe. Motif : {$motif}"],
         };
         $this->notifier($o, $titre, $texte);
+        if ($decision === 'retirer') {
+            DB::table('opportunity_reports')->where('opportunity_id', $o->id)->update(['statut' => 'classe', 'updated_at' => now()]);
+        }
         $alertes = $premierePublication ? JobAlert::prevenir($o) : 0;
 
         return response()->json(['ok' => true, 'alertes' => $alertes, 'opportunity' => $this->payload($o->fresh(['groupe', 'author']), $request->user(), true)]);
+    }
+
+    /** POST /admin/opportunities/{id}/signalements — classer les signalements sans suite. */
+    public function classerSignalements(int $id)
+    {
+        DB::table('opportunity_reports')->where('opportunity_id', $id)->update(['statut' => 'classe', 'updated_at' => now()]);
+
+        return response()->json(['ok' => true]);
     }
 
     public function adminDestroy(int $id)

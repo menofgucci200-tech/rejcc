@@ -45,7 +45,7 @@ class Emplois extends Component
 
     public string $note = '';
 
-    public const FILTRES = ['en_attente' => 'À valider', 'a_corriger' => 'À corriger', 'publiee' => 'En ligne', 'expiree' => 'Expirées', 'pourvue' => 'Pourvues', 'cloturee' => 'Clôturées', 'refusee' => 'Refusées / retirées', '' => 'Toutes'];
+    public const FILTRES = ['en_attente' => 'À valider', 'signalee' => 'Signalées', 'a_corriger' => 'À corriger', 'publiee' => 'En ligne', 'expiree' => 'Expirées', 'pourvue' => 'Pourvues', 'cloturee' => 'Clôturées', 'refusee' => 'Refusées / retirées', '' => 'Toutes'];
 
     public const MOTIFS = [
         'corriger' => [
@@ -181,6 +181,13 @@ class Emplois extends Component
         }
     }
 
+    public function classerSignalements(int $id): void
+    {
+        Api::post("/admin/opportunities/{$id}/signalements", [], Api::token());
+        $this->message = 'Signalements classés sans suite.';
+        AdminNav::oublier();
+    }
+
     public function delete(int $id): void
     {
         Api::delete("/admin/opportunities/{$id}", Api::token());
@@ -194,9 +201,11 @@ class Emplois extends Component
         $data = Api::get('/admin/opportunities', array_filter(['statut' => $this->filtre, 'q' => trim($this->recherche)]), Api::token());
         $compteurs = $data['compteurs'] ?? [];
         $compteurs[''] = array_sum($compteurs);
+        $compteurs['signalee'] = (int) ($data['signalees'] ?? 0);
 
         return view('livewire.admin.emplois', [
             'offres' => Collection::make($data['opportunities'] ?? []),
+            'stats' => $data['stats'] ?? [],
             'compteurs' => $compteurs,
             'categories' => $data['categories'] ?? [],
             'types' => $data['types'] ?? [],
