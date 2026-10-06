@@ -305,7 +305,7 @@ html.rj-intro-on .rj-intro {
   .rj-intro__skip { right: 50px; bottom: 13px; }
 }
 
-/* ---------- Hero ---------- */
+/* ---------- Hero « Autour de la table » ---------- */
 .rj-hero {
   --o: 0s; /* décalage : durée de l'intro quand elle joue */
 }
@@ -315,26 +315,99 @@ html.rj-intro-on .rj-intro {
   vertical-align: top;
   padding-top: 0.04em;
 }
-.rj-net {
-  color: rgb(255 255 255 / 0.13);
-  stroke-width: 1;
+
+/* Scène : la salle de réunion (dimensionnée et placée par home-motion.js ;
+   valeurs CSS ci-dessous = repli « cover » sans JavaScript). L'écran de la
+   salle occupe x 0–35,65 %, y 15,19–60,07 % de l'illustration. */
+.rj-cine {
+  overflow: hidden;
+  background: var(--color-brand);
 }
-.rj-net .rj-chord {
-  stroke: rgb(255 255 255 / 0.07);
+.rj-cine__scene {
+  position: absolute;
+  left: 50%;
+  top: 38%;
+  width: max(106%, calc(106svh * 1.5265));
+  aspect-ratio: 1728 / 1132;
+  translate: -50% -38%;
+  transform-origin: 0 0;
+  filter: blur(var(--rj-flou, 2.5px)) saturate(1.08);
+  will-change: transform;
 }
-.rj-node__ring {
-  fill: var(--color-brand);
-  stroke: rgb(255 255 255 / 0.35);
+.rj-cine__scene[style*="width"] {
+  translate: none;
 }
-.rj-node__dot {
-  fill: rgb(255 255 255 / 0.85);
+.rj-cine__drift {
+  position: absolute;
+  inset: 0;
 }
-.rj-pulse {
-  fill: var(--color-accent);
+.rj-cine__salle {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+}
+.rj-cine__ecran {
+  position: absolute;
+  left: 0;
+  top: 15.19%;
+  width: 35.65%;
+  height: 44.88%;
+  overflow: hidden;
+  background: #031d59;
+}
+.rj-cine__ecran video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 40%;
+}
+.rj-cine__voile {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgb(2 21 65 / 0.7) 0%, transparent 22%),
+    radial-gradient(ellipse at 50% 50%, rgb(3 29 89 / 0.74) 0%, rgb(3 29 89 / 0.55) 48%, rgb(2 21 65 / 0.88) 100%);
+}
+.rj-cine__grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.07;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Ouverture : gros plan net sur l'écran, voile et grain absents. */
+.rj-hero.is-cine-zoom .rj-cine__scene {
+  --rj-flou: 0px;
+}
+.rj-hero.is-cine-zoom .rj-cine__voile,
+.rj-hero.is-cine-zoom .rj-cine__grain {
   opacity: 0;
 }
-.rj-mark use {
-  fill: #fff;
+.rj-hero.is-cine-zoom .rj-anim {
+  opacity: 0;
+  pointer-events: none;
+}
+.rj-hero .rj-cine__voile,
+.rj-hero .rj-cine__grain {
+  transition: opacity 1.4s ease;
+}
+/* La scène n'apparaît qu'une fois placée (évite un saut au chargement). */
+html.rj-motion .rj-hero:not(.is-cine-ready) .rj-cine__scene {
+  opacity: 0;
+}
+.rj-hero.is-cine-ready .rj-cine__scene {
+  transition: opacity 0.45s ease;
+}
+/* Après le recul : lent panoramique, comme une caméra qui balaie la salle. */
+.rj-hero.is-cine-done .rj-cine__drift {
+  animation: rj-panoramique 26s ease-in-out infinite alternate;
+}
+@keyframes rj-panoramique {
+  from { transform: scale(1.02) translate3d(1.5%, 0, 0); }
+  to { transform: scale(1.05) translate3d(-1.5%, -1%, 0); }
 }
 
 /* État initial (avant lancement) — uniquement si les animations sont permises */
@@ -355,22 +428,6 @@ html.rj-motion .rj-hero.is-live .rj-soft {
 html.rj-motion .rj-hero.is-live .rj-fade {
   animation: rj-fade-in 1.2s ease calc(var(--o) + var(--d)) both;
 }
-html.rj-motion .rj-hero.is-live .rj-draw-line {
-  stroke-dasharray: 1 1;
-  animation: rj-stroke 1.3s cubic-bezier(0.65, 0, 0.35, 1) calc(var(--o) + var(--d)) both;
-}
-html.rj-motion .rj-hero.is-live .rj-node {
-  animation: rj-node 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) calc(var(--o) + var(--d)) both;
-}
-html.rj-motion .rj-hero.is-live .rj-converge {
-  animation: rj-converge 1.1s cubic-bezier(0.16, 1, 0.3, 1) calc(var(--o) + var(--d)) both;
-}
-html.rj-motion .rj-hero.is-live .rj-pop {
-  animation: rj-pop 0.8s cubic-bezier(0.16, 1, 0.3, 1) calc(var(--o) + var(--d)) both;
-}
-html.rj-motion .rj-hero.is-live .rj-pulse {
-  animation: rj-pulse 3.3s cubic-bezier(0.45, 0, 0.55, 1) calc(var(--o) + var(--d)) infinite both;
-}
 html.rj-motion .rj-hero.is-live .rj-marquee {
   animation: marquee 60s linear infinite;
 }
@@ -387,41 +444,12 @@ html.rj-motion .rj-hero.is-live .rj-marquee {
     transform: translateY(18px);
   }
 }
-@keyframes rj-node {
-  from {
-    opacity: 0;
-    transform: scale(0);
-  }
-}
-@keyframes rj-converge {
-  from {
-    opacity: 0;
-    transform: translate(var(--dx), var(--dy));
-  }
-}
-@keyframes rj-pop {
-  from {
-    opacity: 0;
-    transform: translateY(14px) scale(0.94);
-  }
-}
-@keyframes rj-pulse {
-  0% {
-    opacity: 0;
-    transform: translate(0, 0);
-  }
-  12%,
-  82% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: translate(var(--tx), var(--ty));
-  }
-}
 
 @media (prefers-reduced-motion: reduce) {
   .rj-intro {
     display: none !important;
+  }
+  .rj-cine__drift {
+    animation: none !important;
   }
 }
