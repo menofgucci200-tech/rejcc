@@ -69,9 +69,22 @@ class SiteContentController extends Controller
                 'ordre' => 'nullable|integer|min:0',
             ],
         ],
+        'albums' => [
+            'model' => \App\Models\GalleryAlbum::class,
+            'rules' => [
+                'titre' => 'required|string|min:3|max:160',
+                'date_evenement' => 'nullable|date',
+                'lieu' => 'nullable|string|max:160',
+                'description' => 'nullable|string|max:2000',
+                'couverture' => 'nullable|url|max:500',
+                'publie' => 'boolean',
+                'ordre' => 'nullable|integer|min:0',
+            ],
+        ],
         'gallery' => [
             'model' => \App\Models\GalleryPhoto::class,
             'rules' => [
+                'album_id' => 'nullable|integer|exists:gallery_albums,id',
                 'url' => 'required|url|max:500',
                 'caption' => 'nullable|string|max:200',
                 'ordre' => 'nullable|integer|min:0',
@@ -86,7 +99,18 @@ class SiteContentController extends Controller
             return response()->json(['ok' => false, 'message' => 'Type de contenu inconnu.'], 404);
         }
 
-        return response()->json(['ok' => true, 'items' => $config['model']::orderBy('ordre')->orderBy('id')->get()]);
+        $query = $config['model']::query();
+        if ($type === 'albums') {
+            // Les plus récents d'abord ; nombre de photos et couverture effective.
+            $items = $query->withCount('photos')->orderByDesc('date_evenement')->orderByDesc('id')->get()
+                ->each(fn ($a) => $a->setAttribute('couverture_url', $a->couvertureUrl()));
+        } elseif ($type === 'gallery') {
+            $items = $query->with('album:id,titre')->orderBy('ordre')->orderBy('id')->get();
+        } else {
+            $items = $query->orderBy('ordre')->orderBy('id')->get();
+        }
+
+        return response()->json(['ok' => true, 'items' => $items]);
     }
 
     public function store(Request $request, string $type)
@@ -137,6 +161,16 @@ class SiteContentController extends Controller
                 ->map(fn (string $part) => Str::upper(Str::substr($part, 0, 1)))
                 ->take(2)
                 ->implode('');
+        }
+
+        // Albums : adresse lisible et stable (/galerie/assemblee-generale-2026).
+        if ($type === 'albums' && ! $item->slug) {
+            $base = Str::slug($data['titre']) ?: 'album';
+            $slug = $base;
+            for ($i = 2; \App\Models\GalleryAlbum::where('slug', $slug)->exists(); $i++) {
+                $slug = $base.'-'.$i;
+            }
+            $data['slug'] = $slug;
         }
 
         $item->fill($data)->save();

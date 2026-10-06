@@ -58,6 +58,8 @@ Route::get('/actualites', [NewsController::class, 'index']);
 Route::get('/actualites/{slug}', [NewsController::class, 'show']);
 
 Route::view('/partenaires', 'pages.partenaires');
+Route::get('/galerie', [\App\Http\Controllers\GaleriePublicController::class, 'index']);
+Route::get('/galerie/{slug}', [\App\Http\Controllers\GaleriePublicController::class, 'show']);
 // Pages légales (contenu rédigé depuis l'admin)
 Route::get('/{slug}', \App\Http\Controllers\LegalPageController::class)
     ->whereIn('slug', \App\Support\Content\LegalPages::SLUGS)->name('legal');

@@ -5,6 +5,7 @@ namespace App\Livewire\Admin;
 use App\Livewire\Concerns\HandlesMedia;
 use App\Support\Api;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -20,6 +21,7 @@ class Contenu extends Component
         'partners' => 'Partenaires',
         'stats' => 'Chiffres clés',
         'steps' => "Étapes d'adhésion",
+        'albums' => 'Albums photos',
         'gallery' => 'Galerie photos',
     ];
 
@@ -58,10 +60,40 @@ class Contenu extends Component
 
     public string $site_url = '';
 
+    // Albums de la galerie
+    public string $dateAlbum = '';
+
+    public string $lieu = '';
+
+    public string $descriptionAlbum = '';
+
+    public bool $publie = true;
+
+    /** Photos envoyées en une fois dans l'album (fichiers temporaires). */
+    public array $photosAlbum = [];
+
+    /** Album d'une photo (onglet Galerie photos). */
+    public ?int $albumId = null;
+
+    /** Filtre de la liste des photos par album ('' = toutes, 'aucun' = hors album). */
+    public string $filtreAlbum = '';
+
+    public function voirPhotosAlbum(int $id): void
+    {
+        $this->setOnglet('gallery');
+        $this->filtreAlbum = (string) $id;
+    }
+
+    protected function albums(): Collection
+    {
+        return Collection::make(Api::get('/admin/site-content/albums', [], Api::token())['items'] ?? []);
+    }
+
     public function setOnglet(string $onglet): void
     {
         if (isset(self::ONGLETS[$onglet])) {
             $this->onglet = $onglet;
+            $this->filtreAlbum = '';
             $this->closeForm();
         }
     }
@@ -73,7 +105,9 @@ class Contenu extends Component
 
     public function openCreate(): void
     {
-        $this->reset(['editingId', 'title', 'blurb', 'items', 'icon', 'name', 'role', 'quote', 'sector', 'label', 'value', 'suffix', 'text', 'caption', 'site_url']);
+        $this->reset(['editingId', 'title', 'blurb', 'items', 'icon', 'name', 'role', 'quote', 'sector', 'label', 'value', 'suffix', 'text', 'caption', 'site_url', 'dateAlbum', 'lieu', 'descriptionAlbum', 'publie', 'photosAlbum']);
+        // Nouvelle photo : rangée par défaut dans l'album filtré.
+        $this->albumId = ctype_digit($this->filtreAlbum) ? (int) $this->filtreAlbum : null;
         $this->clearMedia();
         $this->resetValidation();
         $this->showForm = true;
@@ -104,6 +138,15 @@ class Contenu extends Component
         $this->site_url = $item['site_url'] ?? '';
         if ($this->onglet === 'gallery') {
             $this->fillMedia($item['url'] ?? null);
+            $this->albumId = $item['album_id'] ?? null;
+        }
+        if ($this->onglet === 'albums') {
+            $this->title = $item['titre'] ?? '';
+            $this->dateAlbum = $item['date_evenement'] ?? '';
+            $this->lieu = $item['lieu'] ?? '';
+            $this->descriptionAlbum = $item['description'] ?? '';
+            $this->publie = (bool) ($item['publie'] ?? true);
+            $this->fillMedia($item['couverture'] ?? null);
         }
         if ($this->onglet === 'partners') {
             $this->fillMedia($item['logo'] ?? null);
@@ -187,7 +230,31 @@ class Contenu extends Component
                     return;
                 }
                 $this->validate(['caption' => 'nullable|string|max:200']);
-                $data = ['url' => $this->mediaUrl, 'caption' => $this->caption ?: null];
+                $data = ['url' => $this->mediaUrl, 'caption' => $this->caption ?: null, 'album_id' => $this->albumId ?: null];
+                break;
+
+            case 'albums':
+                $this->validate([
+                    'title' => 'required|string|min:3|max:160',
+                    'dateAlbum' => 'nullable|date',
+                    'lieu' => 'nullable|string|max:160',
+                    'descriptionAlbum' => 'nullable|string|max:2000',
+                    'photosAlbum' => 'array|max:60',
+                    'photosAlbum.*' => 'image|max:10240',
+                ], [
+                    'title.required' => "Donnez un titre à l'album (ex : Assemblée générale 2026).",
+                    'photosAlbum.max' => 'Envoyez au plus 60 photos à la fois.',
+                    'photosAlbum.*.image' => 'Seules les images (JPG, PNG, WebP) peuvent être ajoutées.',
+                    'photosAlbum.*.max' => 'Chaque photo doit faire moins de 10 Mo.',
+                ]);
+                $data = [
+                    'titre' => $this->title,
+                    'date_evenement' => $this->dateAlbum ?: null,
+                    'lieu' => $this->lieu ?: null,
+                    'description' => $this->descriptionAlbum ?: null,
+                    'couverture' => $this->mediaUrl ?: null,
+                    'publie' => $this->publie,
+                ];
                 break;
 
             default:
@@ -195,10 +262,28 @@ class Contenu extends Component
         }
 
         $token = Api::token();
-        if ($this->editingId) {
-            Api::put("/admin/site-content/{$this->onglet}/{$this->editingId}", $data, $token);
-        } else {
-            Api::post("/admin/site-content/{$this->onglet}", $data, $token);
+        $res = $this->editingId
+            ? Api::put("/admin/site-content/{$this->onglet}/{$this->editingId}", $data, $token)
+            : Api::post("/admin/site-content/{$this->onglet}", $data, $token);
+
+        if (! ($res['ok'] ?? false)) {
+            $this->dispatch('rj-toast', type: 'erreur', message: $res['message'] ?? "L'enregistrement a échoué.");
+
+            return;
+        }
+
+        if ($this->onglet === 'albums' && $this->photosAlbum) {
+            $albumId = $res['item']['id'];
+            $ajoutees = 0;
+            foreach ($this->photosAlbum as $fichier) {
+                $path = $fichier->store('galerie/'.date('Y/m'), 'uploads');
+                $ok = Api::post('/admin/site-content/gallery', [
+                    'album_id' => $albumId,
+                    'url' => Storage::disk('uploads')->url($path),
+                ], $token)['ok'] ?? false;
+                $ajoutees += $ok ? 1 : 0;
+            }
+            $this->dispatch('rj-toast', type: 'succes', message: $ajoutees.' photo'.($ajoutees > 1 ? 's ajoutées' : ' ajoutée')." à l'album.");
         }
 
         $this->closeForm();
@@ -215,7 +300,20 @@ class Contenu extends Component
             'onglets' => self::ONGLETS,
             // « elements » et non « items » : la propriété publique $items
             // (textarea des filières) écraserait la variable de vue.
-            'elements' => $this->contenu(),
+            'elements' => $this->elements(),
+            'listeAlbums' => in_array($this->onglet, ['gallery', 'albums'], true) ? $this->albums() : collect(),
         ]);
+    }
+
+    protected function elements(): Collection
+    {
+        $elements = $this->contenu();
+        if ($this->onglet === 'gallery' && $this->filtreAlbum !== '') {
+            $elements = $elements->filter(fn ($p) => $this->filtreAlbum === 'aucun'
+                ? empty($p['album_id'])
+                : (string) ($p['album_id'] ?? '') === $this->filtreAlbum)->values();
+        }
+
+        return $elements;
     }
 }

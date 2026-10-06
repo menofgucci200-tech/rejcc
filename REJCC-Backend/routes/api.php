@@ -34,6 +34,8 @@ Route::get('/site-settings', [\App\Http\Controllers\Api\SiteSettingsController::
 Route::get('/legal-pages', [\App\Http\Controllers\Api\LegalPageController::class, 'index']);
 Route::get('/legal-pages/{slug}', [\App\Http\Controllers\Api\LegalPageController::class, 'show']);
 Route::get('/gallery', fn () => response()->json(['ok' => true, 'photos' => \App\Models\GalleryPhoto::orderBy('ordre')->orderBy('id')->get()]));
+Route::get('/albums', [\App\Http\Controllers\Api\GalerieController::class, 'albums']);
+Route::get('/albums/{slug}', [\App\Http\Controllers\Api\GalerieController::class, 'album']);
 Route::get('/news', [NewsArticleController::class, 'index']);
 Route::get('/news/{slug}', [NewsArticleController::class, 'show']);
 Route::get('/public-events', [EventController::class, 'publicIndex']);

@@ -113,7 +113,59 @@
                         <textarea wire:model="text" rows="2" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure"></textarea>
                         @error('text') <span class="text-xs text-accent">{{ $message }}</span> @enderror
                     </div>
+                @elseif ($onglet === 'albums')
+                    <div class="sm:col-span-2">
+                        <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Titre de l'album</label>
+                        <input wire:model="title" type="text" placeholder="Ex : Assemblée générale 2026" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
+                        @error('title') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Date (optionnel)</label>
+                        <input wire:model="dateAlbum" type="date" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
+                        @error('dateAlbum') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Lieu (optionnel)</label>
+                        <input wire:model="lieu" type="text" placeholder="Ex : Paroisse Saint Joseph, Riviera Bonoumin" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Description (optionnel)</label>
+                        <textarea wire:model="descriptionAlbum" rows="2" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure"></textarea>
+                    </div>
+                    <div class="sm:col-span-2" x-data="{ envoi: false, progression: 0 }"
+                         x-on:livewire-upload-start="envoi = true" x-on:livewire-upload-finish="envoi = false"
+                         x-on:livewire-upload-error="envoi = false" x-on:livewire-upload-progress="progression = $event.detail.progress">
+                        <label class="mb-1 block text-xs font-semibold text-[#5B677A]">{{ $editingId ? 'Ajouter des photos à cet album' : 'Photos de l\'album' }}</label>
+                        <label class="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-[12px] border-2 border-dashed border-brand/15 bg-cloud/60 px-4 py-6 text-center transition-colors hover:border-azure">
+                            <span class="text-sm font-bold text-brand">Choisir des photos</span>
+                            <span class="text-xs text-[#9AA6B8]">Plusieurs à la fois · JPG, PNG ou WebP · 10 Mo max. par photo</span>
+                            <input wire:model="photosAlbum" type="file" multiple accept="image/jpeg,image/png,image/webp" class="sr-only" />
+                        </label>
+                        <div x-show="envoi" class="mt-2 h-1.5 overflow-hidden rounded-full bg-brand/10"><div class="h-full bg-azure transition-all" :style="`width: ${progression}%`"></div></div>
+                        @if (count($photosAlbum))
+                            <p class="mt-2 text-xs font-semibold text-brand">{{ count($photosAlbum) }} photo{{ count($photosAlbum) > 1 ? 's' : '' }} prête{{ count($photosAlbum) > 1 ? 's' : '' }} à être ajoutée{{ count($photosAlbum) > 1 ? 's' : '' }}.</p>
+                        @endif
+                        @error('photosAlbum') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                        @error('photosAlbum.*') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                    </div>
+                    <div class="sm:col-span-2">
+                        <x-ui.media-field label="Photo de couverture (optionnel)" hint="Sans couverture, la première photo de l'album est utilisée." :media-url="$mediaUrl" :media-name="$mediaName" :media-size="$mediaSize" />
+                        @error('mediaFile') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                    </div>
+                    <label class="flex items-center gap-2.5 text-sm font-semibold text-brand sm:col-span-2">
+                        <input wire:model="publie" type="checkbox" class="size-4 rounded border-brand/30 text-brand" />
+                        Publier l'album sur le site (décochez pour le préparer en brouillon)
+                    </label>
                 @elseif ($onglet === 'gallery')
+                    <div class="sm:col-span-2">
+                        <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Album</label>
+                        <select wire:model="albumId" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure">
+                            <option value="">Aucun album (photo isolée)</option>
+                            @foreach ($listeAlbums as $a)
+                                <option value="{{ $a['id'] }}">{{ $a['titre'] }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                     <div class="sm:col-span-2">
                         <x-ui.media-field label="Photo" hint="Uploadez une photo (JPG, PNG, WebP) ou collez le lien d'une image — par exemple depuis la Médiathèque." :media-url="$mediaUrl" :media-name="$mediaName" :media-size="$mediaSize" />
                         @error('mediaFile') <span class="text-xs text-accent">{{ $message }}</span> @enderror
@@ -126,6 +178,19 @@
                 @endif
 
                 <button wire:click="save" wire:loading.attr="disabled" class="btn-tap rounded-[9px] bg-brand px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-brand/90 hover:shadow-md disabled:opacity-60 sm:col-span-2 sm:w-fit">Publier</button>
+            </div>
+        @endif
+
+        @if ($onglet === 'gallery' && $listeAlbums->isNotEmpty())
+            <div class="mb-3 flex flex-wrap items-center gap-2">
+                <label for="filtre-album" class="text-xs font-semibold text-[#5B677A]">Afficher :</label>
+                <select id="filtre-album" wire:model.live="filtreAlbum" class="rounded-[9px] border border-brand/15 bg-white px-3 py-1.5 text-sm outline-none focus:border-azure">
+                    <option value="">Toutes les photos</option>
+                    <option value="aucun">Photos sans album</option>
+                    @foreach ($listeAlbums as $a)
+                        <option value="{{ $a['id'] }}">{{ $a['titre'] }} ({{ $a['photos_count'] }})</option>
+                    @endforeach
+                </select>
             </div>
         @endif
 
@@ -161,21 +226,50 @@
                         @elseif ($onglet === 'steps')
                             <p class="text-[13.5px] font-bold text-brand">{{ $item['title'] }}</p>
                             <p class="line-clamp-1 text-xs text-[#5B677A]">{{ $item['text'] }}</p>
+                        @elseif ($onglet === 'albums')
+                            <div class="flex items-center gap-3">
+                                @if ($item['couverture_url'] ?? null)
+                                    <img src="{{ $item['couverture_url'] }}" alt="" class="h-12 w-16 shrink-0 rounded-lg object-cover">
+                                @else
+                                    <span class="flex h-12 w-16 shrink-0 items-center justify-center rounded-lg bg-brand/[.06] text-[10px] font-bold text-[#9AA6B8]">Vide</span>
+                                @endif
+                                <div class="min-w-0">
+                                    <p class="truncate text-[13.5px] font-bold text-brand">
+                                        {{ $item['titre'] }}
+                                        @unless ($item['publie'] ?? true) <span class="ml-1 rounded-full bg-[#FFF4E5] px-2 py-0.5 text-[10.5px] font-bold text-[#B45309]">Brouillon</span> @endunless
+                                    </p>
+                                    <p class="truncate text-xs text-[#5B677A]">
+                                        {{ ($item['date_evenement'] ?? null) ? \Illuminate\Support\Carbon::parse($item['date_evenement'])->locale('fr')->translatedFormat('j F Y') : 'Sans date' }}@if ($item['lieu'] ?? null) · {{ $item['lieu'] }}@endif
+                                    </p>
+                                    <p class="mt-0.5 text-[11px] text-[#9AA6B8]">
+                                        {{ $item['photos_count'] }} photo{{ $item['photos_count'] > 1 ? 's' : '' }}
+                                        @if (($item['publie'] ?? true) && $item['photos_count'] > 0)
+                                            · <a href="{{ url('/galerie/'.$item['slug']) }}" target="_blank" rel="noopener" class="text-azure hover:underline">Voir sur le site</a>
+                                        @endif
+                                    </p>
+                                </div>
+                            </div>
                         @elseif ($onglet === 'gallery')
                             <div class="flex items-center gap-3">
                                 <img src="{{ $item['url'] }}" alt="" class="size-12 shrink-0 rounded-lg object-cover">
                                 <div class="min-w-0">
                                     <p class="truncate text-[13.5px] font-bold text-brand">{{ $item['caption'] ?: 'Sans légende' }}</p>
+                                    @if ($item['album']['titre'] ?? null)
+                                        <p class="truncate text-xs text-[#5B677A]">Album : {{ $item['album']['titre'] }}</p>
+                                    @endif
                                     <a href="{{ $item['url'] }}" target="_blank" rel="noopener" class="truncate text-[11px] text-azure hover:underline">Voir la photo</a>
                                 </div>
                             </div>
                         @endif
                     </div>
                     <div class="flex shrink-0 items-center gap-1.5">
+                        @if ($onglet === 'albums')
+                            <button wire:click="voirPhotosAlbum({{ $item['id'] }})" class="btn-tap rounded-lg border border-brand/15 px-2.5 py-1 text-[11.5px] font-bold text-brand hover:border-brand/40">Photos</button>
+                        @endif
                         <button wire:click="openEdit({{ $item['id'] }})" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-brand/10 hover:text-brand">
                             <x-ui.icon name="pencil" class="size-3.5" />
                         </button>
-                        <button wire:click="delete({{ $item['id'] }})" wire:confirm="Supprimer cet élément du site ?" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-accent/10 hover:text-accent">
+                        <button wire:click="delete({{ $item['id'] }})" wire:confirm="{{ $onglet === 'albums' ? 'Supprimer cet album ? Ses photos restent dans la galerie, sans album.' : 'Supprimer cet élément du site ?' }}" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-accent/10 hover:text-accent">
                             <x-ui.icon name="trash-2" class="size-3.5" />
                         </button>
                     </div>

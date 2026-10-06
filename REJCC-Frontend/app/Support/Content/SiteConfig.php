@@ -38,6 +38,7 @@ class SiteConfig
             ['label' => 'Projets', 'href' => '/projets'],
             ['label' => 'Emplois', 'href' => '/emplois'],
             ['label' => 'Actualités', 'href' => '/actualites'],
+            ['label' => 'Galerie', 'href' => '/galerie'],
             ['label' => 'Partenaires', 'href' => '/partenaires'],
             ['label' => 'Contact', 'href' => '/contact'],
         ];
