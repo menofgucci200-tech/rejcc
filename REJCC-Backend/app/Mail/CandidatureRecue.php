@@ -20,14 +20,17 @@ class CandidatureRecue extends Mailable
 
     public function content(): Content
     {
-        return new Content(htmlString: "
-            <p>Bonjour {$this->application->prenom},</p>
-            <p>Nous avons bien reçu votre candidature d'adhésion au REJCC.
-            Elle sera examinée par notre équipe dans les meilleurs délais.</p>
-            <p>Vous pouvez suivre son avancement à tout moment sur
-            <a href=\"https://rejcc.site/suivre-ma-candidature\">rejcc.site/suivre-ma-candidature</a>
-            avec votre adresse e-mail.</p>
-            <p>Fraternellement,<br>L'équipe REJCC</p>
-        ");
+        $prenom = e($this->application->prenom);
+        $base = rtrim((string) config('app.frontend_url'), '/');
+
+        return new Content(htmlString: \App\Support\MailLayout::html(
+            "Votre demande d'adhésion est bien reçue",
+            "<p style=\"margin:0 0 12px\">Bonjour {$prenom},</p>
+<p style=\"margin:0 0 12px\">Nous avons bien reçu votre demande d'adhésion au REJCC. Elle va être étudiée par le Bureau exécutif dans les meilleurs délais.</p>
+<p style=\"margin:0\">Vous pouvez suivre son avancement à tout moment avec votre adresse e-mail.</p>",
+            'Suivre ma candidature',
+            $base.'/suivre-ma-candidature',
+            "Vous recevez cet e-mail suite à votre demande d'adhésion au REJCC.",
+        ));
     }
 }
