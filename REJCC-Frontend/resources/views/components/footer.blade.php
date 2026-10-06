@@ -8,6 +8,7 @@
         ['label' => 'Devenir partenaire', 'href' => '/partenaires'],
         ['label' => 'Nos domaines', 'href' => '/domaines'],
         ['label' => 'Espace membre', 'href' => '/connexion'],
+        ['label' => 'Vérifier un certificat', 'href' => '/verifier'],
     ];
 @endphp
 

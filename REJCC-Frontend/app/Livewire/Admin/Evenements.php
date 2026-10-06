@@ -69,6 +69,9 @@ class Evenements extends Component
 
     public bool $inscriptionPublique = false;
 
+    /** Attestation de participation délivrée aux présents une fois l'événement terminé. */
+    public bool $attestation = false;
+
     /** Questions du formulaire public (label, type, required, options en texte multi-ligne). */
     public array $champs = [];
 
@@ -149,7 +152,7 @@ class Evenements extends Component
     public function openCreate(): void
     {
         $this->reset(['editingId', 'title', 'category', 'startsAt', 'endsAt', 'timeLabel', 'enLigne', 'location', 'lienVisio',
-            'capacity', 'dateLimite', 'reserveAbonnes', 'inscriptionPublique', 'champs', 'excerpt', 'description', 'dejaAnnonce', 'nbInscritsForm']);
+            'capacity', 'dateLimite', 'reserveAbonnes', 'inscriptionPublique', 'attestation', 'champs', 'excerpt', 'description', 'dejaAnnonce', 'nbInscritsForm']);
         $this->statut = 'brouillon';
         $this->inscriptionsOuvertes = true;
         $this->annoncer = true;
@@ -185,6 +188,7 @@ class Evenements extends Component
         $this->inscriptionsOuvertes = (bool) ($e['inscriptions_ouvertes'] ?? true);
         $this->reserveAbonnes = (bool) ($e['reserve_abonnes'] ?? false);
         $this->inscriptionPublique = (bool) ($e['inscription_publique'] ?? false);
+        $this->attestation = (bool) ($e['attestation'] ?? false);
         $this->champs = collect($e['champs'] ?? [])->map(fn ($f) => [
             'label' => $f['label'] ?? '',
             'type' => $f['type'] ?? 'text',
@@ -265,6 +269,7 @@ class Evenements extends Component
             'inscriptions_ouvertes' => $this->inscriptionsOuvertes,
             'reserve_abonnes' => $this->reserveAbonnes,
             'inscription_publique' => $this->inscriptionPublique,
+            'attestation' => $this->attestation,
             'champs' => $champs,
             'excerpt' => trim($this->excerpt) ?: null,
             'description' => trim($this->description) ?: null,
@@ -396,6 +401,13 @@ class Evenements extends Component
         }
         $this->texteMessage = '';
         $this->flash('Message envoyé.'.$this->textePrevenus($r['prevenus'] ?? null, ' Reçu par'));
+    }
+
+    /** Délivre maintenant les attestations aux présents (sinon : automatique après l'événement). */
+    public function delivrerAttestations(int $id): void
+    {
+        $r = Api::post("/admin/events/{$id}/attestations", [], Api::token());
+        $this->dispatch('rj-toast', message: $r['message'] ?? 'Une erreur est survenue.', type: ($r['ok'] ?? false) ? 'succes' : 'erreur');
     }
 
     public function render()

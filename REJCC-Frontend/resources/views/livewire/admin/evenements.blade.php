@@ -122,6 +122,10 @@
                             <input wire:model.live="inscriptionPublique" type="checkbox" class="mt-0.5 size-4 rounded border-brand/25 text-brand" />
                             <span><span class="font-semibold text-brand">Inscription publique par QR code</span><span class="block text-[11.5px] text-[#9AA6B8]">Les non-membres s'inscrivent via un lien et un QR code à imprimer. Ils rejoignent la même liste et comptent dans les places.</span></span>
                         </label>
+                        <label class="flex items-start gap-2.5 rounded-[9px] border border-brand/10 bg-cloud/50 px-3 py-2.5 text-sm text-ink/80">
+                            <input wire:model="attestation" type="checkbox" data-test="attestation-evenement" class="mt-0.5 size-4 rounded border-brand/25 text-brand" />
+                            <span><span class="font-semibold text-brand">Délivrer une attestation de participation</span><span class="block text-[11.5px] text-[#9AA6B8]">Après l'événement, chaque présent pointé (membre ou invité) reçoit une attestation officielle vérifiable.</span></span>
+                        </label>
                     </div>
 
                     @if ($inscriptionPublique)
@@ -316,6 +320,11 @@
                                     <a href="{{ route('admin.export', ['dataset' => 'participants', 'event' => $ev['id']]) }}" class="btn-tap inline-flex items-center gap-1.5 rounded-full border border-brand/15 bg-white px-4 py-2 text-xs font-bold text-brand hover:bg-cloud">
                                         <x-ui.icon name="download" class="size-3.5" /> Exporter (CSV)
                                     </a>
+                                    @if (($detail['event']['attestation'] ?? false) && ($detail['presents'] ?? 0) > 0)
+                                        <button wire:click="delivrerAttestations({{ $ev['id'] }})" wire:confirm="Délivrer les attestations de participation ? Chaque présent pointé ({{ $detail['presents'] }}) reçoit son attestation officielle." data-confirm-ok="Délivrer" data-test="delivrer-attestations" class="btn-tap inline-flex items-center gap-1.5 rounded-full bg-brand px-4 py-2 text-xs font-bold text-white hover:bg-brand/90">
+                                            <x-ui.icon name="award" class="size-3.5" /> Délivrer les attestations
+                                        </button>
+                                    @endif
                                 </div>
                                 @if (empty($detail['inscrits']))
                                     <p class="rounded-[12px] border border-brand/10 bg-white py-8 text-center text-sm text-[#5B677A]">{{ trim($q) !== '' ? 'Aucun inscrit ne correspond à cette recherche.' : 'Aucun inscrit pour le moment.' }}</p>

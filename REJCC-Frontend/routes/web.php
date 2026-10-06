@@ -65,6 +65,10 @@ Route::get('/carte/{code}', [\App\Http\Controllers\CardController::class, 'show'
 Route::get('/carte/{code}/contact.vcf', [\App\Http\Controllers\CardController::class, 'vcard'])->name('carte.vcard');
 Route::get('/participer/{slug}', \App\Livewire\EventSignup::class)->name('event.signup');
 Route::get('/billet/{code}', \App\Livewire\Billet::class)->name('billet');
+
+// Vérification publique des certificats et attestations (le registre fait foi)
+Route::get('/verifier/{code?}', \App\Livewire\VerifierCertificat::class)->name('verifier');
+Route::get('/verifier/{code}/pdf', [\App\Http\Controllers\CertificatPdfController::class, 'public'])->name('verifier.pdf');
 Route::get('/adhesion', \App\Livewire\AdhesionApplicationForm::class)->name('adhesion');
 Route::get('/suivre-ma-candidature', \App\Livewire\AdhesionStatusCheck::class)->name('adhesion.status');
 Route::redirect('/inscription', '/adhesion');
@@ -110,6 +114,7 @@ Route::middleware('api.auth')->prefix('espace-membre')->name('espace-membre.')->
     Route::get('/projets', MemberProjets::class)->name('projets');
     Route::get('/emplois', MemberEmplois::class)->name('emplois');
     Route::get('/certificats', MemberCertificats::class)->name('certificats');
+    Route::get('/certificats/{id}/pdf', [\App\Http\Controllers\CertificatPdfController::class, 'membre'])->whereNumber('id')->name('certificats.pdf');
     Route::get('/carte', MemberCarte::class)->name('carte');
     Route::get('/abonnement', MemberAbonnement::class)->name('abonnement');
 });
@@ -132,6 +137,8 @@ Route::middleware(['api.auth', 'admin.web'])->prefix('admin')->name('admin.')->g
     Route::get('/marketplace', AdminMarketplace::class)->name('marketplace');
     Route::redirect('/communaute', '/admin/marketplace');
     Route::get('/certificats', AdminCertificats::class)->name('certificats');
+    Route::get('/certificats/{id}/pdf', [\App\Http\Controllers\CertificatPdfController::class, 'admin'])->whereNumber('id')->name('certificats.pdf');
+    Route::get('/certificats/apercu', [\App\Http\Controllers\CertificatPdfController::class, 'apercu'])->name('certificats.apercu');
     Route::get('/emplois', AdminEmplois::class)->name('emplois');
     Route::get('/groupes', \App\Livewire\Admin\Groupes::class)->name('groupes');
     Route::get('/signalements', \App\Livewire\Admin\Signalements::class)->name('signalements');

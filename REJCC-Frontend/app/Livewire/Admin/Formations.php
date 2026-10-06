@@ -40,6 +40,9 @@ class Formations extends Component
 
     public int $seuilReussite = 70;
 
+    /** Compétences validées, imprimées sur le certificat (une par ligne). */
+    public string $competences = '';
+
     /** Image de couverture (catalogue et fiche). */
     public string $imageUrl = '';
 
@@ -220,6 +223,7 @@ class Formations extends Component
         $this->isCertifying = false;
         $this->examen = [];
         $this->seuilReussite = 70;
+        $this->competences = '';
         $this->imageUrl = '';
         $this->clearMedia();
         $this->resetValidation();
@@ -244,6 +248,7 @@ class Formations extends Component
         $this->isCertifying = (bool) $f['is_certifying'];
         $this->examen = $this->quizPourEdition($f['examen'] ?? null);
         $this->seuilReussite = (int) ($f['seuil_reussite'] ?? 70);
+        $this->competences = implode("\n", (array) ($f['competences'] ?? []));
         $this->imageUrl = (string) ($f['image_url'] ?? '');
         $this->fillMedia($f['media_url'] ?? null, $f['media_name'] ?? null);
         $this->resetValidation();
@@ -272,6 +277,7 @@ class Formations extends Component
             'media_url' => $this->mediaUrl ?: null,
             'media_name' => $this->mediaName ?: null,
             'seuil_reussite' => $this->seuilReussite,
+            'competences' => array_values(array_filter(array_map('trim', preg_split('/[\r\n;]+/', $this->competences)))),
             'image_url' => $this->imageUrl ?: null,
             'examen' => $this->examen,
         ];

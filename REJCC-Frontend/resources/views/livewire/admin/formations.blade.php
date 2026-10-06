@@ -69,6 +69,11 @@
                 <div class="sm:col-span-2">
                     <x-ui.media-field label="Support de la formation (PDF consultable dans la fiche, téléchargeable par les abonnés)" :media-url="$mediaUrl" :media-name="$mediaName" :media-size="$mediaSize" />
                 </div>
+                <div class="sm:col-span-2 rounded-[12px] border border-brand/10 p-4">
+                    <p class="text-[13px] font-bold text-brand">Compétences validées</p>
+                    <p class="mb-2 mt-0.5 text-[11.5px] text-[#9AA6B8]">Imprimées sur le certificat des formations certifiantes : une compétence par ligne (3 à 6 conseillées, 8 au plus). Laissez vide pour ne pas afficher la ligne.</p>
+                    <textarea wire:model="competences" rows="3" data-test="competences-formation" placeholder="Budget prévisionnel&#10;Suivi de trésorerie&#10;Calcul des prix de vente" class="w-full rounded-[10px] border border-brand/15 px-3 py-2 text-sm"></textarea>
+                </div>
                 <div class="sm:col-span-2 rounded-[12px] border border-brand/10 p-4" data-test="editeur-examen">
                     <div class="mb-3 flex flex-wrap items-center gap-3">
                         <p class="text-[13px] font-bold text-brand">Examen final de certification</p>

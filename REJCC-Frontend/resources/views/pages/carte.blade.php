@@ -251,7 +251,7 @@
 
                     @if ($certificats->isNotEmpty())
                         <section data-test="bio-certificats" class="rounded-3xl border border-brand/10 bg-white p-6 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
-                            <h2 class="text-[15px] font-extrabold text-brand">Certificats REJCC</h2>
+                            <h2 class="text-[15px] font-extrabold text-brand">Certificats &amp; attestations REJCC</h2>
                             <div class="mb-4 mt-1 h-[3px] w-9 rounded bg-accent"></div>
                             <ul class="flex flex-col gap-3">
                                 @foreach ($certificats as $ce)
@@ -259,7 +259,10 @@
                                         <span class="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-[#F5A623]/15 text-[#B27007]"><x-ui.icon name="award" class="size-4" /></span>
                                         <span class="min-w-0">
                                             <span class="block text-[13px] font-bold text-brand">{{ $ce['titre'] }}</span>
-                                            <span class="block text-[11.5px] text-[#9AA6B8]">{{ \Carbon\Carbon::parse($ce['obtenu_le'])->translatedFormat('F Y') }} · {{ $ce['reference'] }}</span>
+                                            <span class="block text-[11.5px] text-[#9AA6B8]">{{ $ce['categorie'] ?? 'Certificat' }} · {{ \Carbon\Carbon::parse($ce['obtenu_le'])->translatedFormat('F Y') }} · {{ $ce['reference'] }}</span>
+                                            @if (! empty($ce['url_verification']))
+                                                <a href="{{ $ce['url_verification'] }}" target="_blank" rel="noopener" data-test="bio-verifier" class="mt-0.5 inline-flex items-center gap-1 text-[11.5px] font-bold text-[#1C8F4C] hover:underline"><x-ui.icon name="shield-check" class="size-3.5" /> Vérifier l'authenticité</a>
+                                            @endif
                                         </span>
                                     </li>
                                 @endforeach

@@ -24,6 +24,9 @@
         <title>{{ $seoTitle }}</title>
         <meta name="description" content="{{ $seoDescription }}">
         <link rel="canonical" href="{{ url()->current() }}">
+        @if ($noindex ?? false)
+            <meta name="robots" content="noindex, nofollow">
+        @endif
         @include('partials.favicon')
 
         <meta property="og:site_name" content="{{ $site['name'] }}">

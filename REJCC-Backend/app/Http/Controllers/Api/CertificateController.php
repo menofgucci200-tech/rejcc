@@ -148,7 +148,7 @@ class CertificateController extends Controller
     {
         CertificateVerification::create([
             'certificate_id' => $c?->id, 'methode' => $methode, 'resultat' => $resultat,
-            'ip_hash' => hash('sha256', $request->ip().'|'.config('app.key')),
+            'ip_hash' => preg_match('/^[a-f0-9]{64}$/', (string) $request->header('X-Visiteur')) ? $request->header('X-Visiteur') : hash('sha256', $request->ip().'|'.config('app.key')),
             'agent' => Str::limit((string) $request->userAgent(), 150, ''),
         ]);
         if ($c) {
@@ -356,6 +356,21 @@ class CertificateController extends Controller
         Storage::disk('local')->put($chemin, $brut);
 
         return $chemin;
+    }
+
+    /** GET /admin/certificats/apercu — modèle rempli avec un exemple et les réglages actuels (rien n'est enregistré). */
+    public function apercu()
+    {
+        $r = Certificats::reglages();
+        $c = new Certificate([
+            'type' => 'formation', 'reference' => 'REJCC-CERT-0000-EXEMPLE', 'code' => 'EXEMPLE00', 'nom' => 'Prénom Nom du membre',
+            'intitule' => 'Certificat de réussite', 'titre' => 'Intitulé de la formation certifiante',
+            'details' => ['duree' => '12 heures', 'modules' => 6, 'score' => 86, 'competences' => ['Compétence 1', 'Compétence 2', 'Compétence 3'], 'cachet' => $r['cachet']],
+            'signataires' => $r['signataires'], 'lieu' => $r['lieu'], 'delivre_le' => now()->toDateString(),
+        ]);
+        [$pdf] = \App\Support\CertificatPdf::generer($c);
+
+        return response($pdf, 200, ['Content-Type' => 'application/pdf', 'Content-Disposition' => 'inline; filename="apercu-certificat.pdf"', 'Cache-Control' => 'no-store']);
     }
 
     /** POST /admin/events/{id}/attestations — délivrer maintenant aux présents. */

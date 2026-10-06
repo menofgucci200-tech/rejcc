@@ -46,6 +46,25 @@ class Api
         return $response->json() ?? ['ok' => false];
     }
 
+    /**
+     * Appel public pour un visiteur (vérification des certificats) : l'API
+     * reçoit l'empreinte de l'adresse du visiteur pour limiter les essais en
+     * série par personne et non pour tout le site. Renvoie aussi le statut HTTP.
+     */
+    public static function visiteur(string $methode, string $path, array $data = []): array
+    {
+        $r = static::client()->withHeaders(['X-Visiteur' => hash('sha256', request()->ip().'|'.config('app.key'))])
+            ->{$methode}($path, $data);
+
+        return ($r->json() ?? ['ok' => false]) + ['_statut' => $r->status()];
+    }
+
+    /** Réponse brute (fichier PDF…) de l'API. */
+    public static function brut(string $path, ?string $token = null, array $entetes = []): \Illuminate\Http\Client\Response
+    {
+        return static::client($token)->withHeaders($entetes)->accept('*/*')->get($path);
+    }
+
     /** Token Bearer de l'utilisateur courant (posé en session au login/register). */
     public static function token(): ?string
     {

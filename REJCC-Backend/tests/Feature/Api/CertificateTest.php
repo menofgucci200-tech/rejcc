@@ -180,4 +180,24 @@ class CertificateTest extends TestCase
         $this->withToken($this->tokenFor($u))->putJson("/api/my-certificates/{$c->id}/bio", ['visible_bio' => true])->assertOk();
         $this->assertSame($c->reference, $this->getJson('/api/member-card/'.$u->id)->json('card.certificats.0.reference'));
     }
+
+    public function test_signature_electronique_du_pdf_si_configuree(): void
+    {
+        // Certificat numérique de test (auto-signé) : en production, celui acheté auprès d'une autorité reconnue.
+        $cle = openssl_pkey_new(['private_key_bits' => 2048]);
+        $csr = openssl_csr_new(['commonName' => 'REJCC TEST'], $cle);
+        openssl_x509_export(openssl_csr_sign($csr, null, $cle, 30), $crt);
+        openssl_pkey_export($cle, $pem);
+        $dir = sys_get_temp_dir();
+        file_put_contents("$dir/rejcc-test.crt", $crt);
+        file_put_contents("$dir/rejcc-test.key", $pem);
+        config(['services.certificats.pdf_certificat' => "$dir/rejcc-test.crt", 'services.certificats.pdf_cle' => "$dir/rejcc-test.key"]);
+
+        [, $c] = $this->certifie();
+        $pdf = Storage::disk('local')->get(Certificats::pdf($c));
+        $this->assertTrue($c->fresh()->signe_electroniquement);
+        $this->assertStringContainsString('/ByteRange', $pdf);
+        $this->assertStringContainsString('adbe.pkcs7.detached', $pdf);
+        $this->assertTrue($this->getJson('/api/certificats/verifier/'.$c->code)->json('certificat.signe_electroniquement'));
+    }
 }

@@ -59,10 +59,13 @@ class CertificatPdf
         self::contenu($pdf, $c);
         self::pied($pdf, $c);
 
-        // Protection : impression autorisée, modification / copie / extraction bloquées.
-        $pdf->SetProtection(['modify', 'copy', 'annot-forms', 'fill-forms', 'extract', 'assemble'], '', bin2hex(random_bytes(16)), 2);
-
+        // Signature électronique de certification (si configurée) : toute
+        // modification ultérieure est signalée par les lecteurs PDF. Sinon,
+        // protection par droits : impression seule, modification bloquée.
         $signe = self::signer($pdf, $c);
+        if (! $signe) {
+            $pdf->SetProtection(['modify', 'copy', 'annot-forms', 'fill-forms', 'extract', 'assemble'], '', bin2hex(random_bytes(16)), 2);
+        }
 
         return [$pdf->Output('certificat.pdf', 'S'), $signe];
     }

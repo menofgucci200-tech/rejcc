@@ -44,9 +44,9 @@ Route::get('/public-projects/{id}', [\App\Http\Controllers\Api\ProjectController
 Route::get('/public-events/{slug}', [EventController::class, 'publicShow']);
 
 // Vérification publique des certificats (le registre fait foi), limitée contre les essais en série
-Route::get('/certificats/verifier/{code}', [\App\Http\Controllers\Api\CertificateController::class, 'verifier'])->middleware('throttle:30,1');
-Route::get('/certificats/verifier/{code}/pdf', [\App\Http\Controllers\Api\CertificateController::class, 'pdfPublic'])->middleware('throttle:20,1');
-Route::post('/certificats/verifier-fichier', [\App\Http\Controllers\Api\CertificateController::class, 'verifierFichier'])->middleware('throttle:20,1');
+Route::get('/certificats/verifier/{code}', [\App\Http\Controllers\Api\CertificateController::class, 'verifier'])->middleware('throttle:verification');
+Route::get('/certificats/verifier/{code}/pdf', [\App\Http\Controllers\Api\CertificateController::class, 'pdfPublic'])->middleware('throttle:verification');
+Route::post('/certificats/verifier-fichier', [\App\Http\Controllers\Api\CertificateController::class, 'verifierFichier'])->middleware('throttle:verification');
 
 // Carte membre publique (cible des QR codes), limitée contre l'énumération
 Route::get('/member-card/{code}', [\App\Http\Controllers\Api\MemberCardController::class, 'show'])
@@ -391,6 +391,7 @@ Route::middleware(['auth.token', 'audit.log'])->prefix('admin')->group(function 
         Route::post('/certificates/{id}/correction/refuser', [\App\Http\Controllers\Api\CertificateController::class, 'refuserCorrection'])->whereNumber('id');
         Route::get('/certificats/reglages', [\App\Http\Controllers\Api\CertificateController::class, 'reglages']);
         Route::put('/certificats/reglages', [\App\Http\Controllers\Api\CertificateController::class, 'enregistrerReglages']);
+        Route::get('/certificats/apercu', [\App\Http\Controllers\Api\CertificateController::class, 'apercu']);
     });
     Route::post('/events/{id}/attestations', [\App\Http\Controllers\Api\CertificateController::class, 'attestationsEvenement'])->whereNumber('id')->middleware('auth.admin:evenements');
 
