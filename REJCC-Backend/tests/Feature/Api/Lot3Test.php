@@ -52,13 +52,13 @@ class Lot3Test extends TestCase
 
         // Seule la formation certifiante donne un certificat.
         $this->assertCount(1, $certs);
-        $this->assertSame('Leadership', $certs[0]['title']);
+        $this->assertSame('Leadership', $certs[0]['titre']);
         $this->assertStringStartsWith('REJCC-CERT-', $certs[0]['reference']);
 
         // Le registre admin liste le certificat avec le nom du membre.
         $registre = $this->withToken($this->adminToken())->getJson('/api/admin/certificates')
             ->assertOk()->json('certificates');
-        $this->assertSame('Marie Aka', $registre[0]['member']);
+        $this->assertSame('Marie Aka', $registre[0]['nom']);
     }
 
     // ------------------------------------------------------------ Projets

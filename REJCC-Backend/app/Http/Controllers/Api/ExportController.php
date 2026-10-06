@@ -33,6 +33,7 @@ class ExportController extends Controller
             'groupes' => $this->groupes($request->query('group')),
             'projets' => $this->projets(),
             'documents' => $this->documents(),
+            'certificats' => $this->certificats(),
             default => null,
         };
 
@@ -166,6 +167,20 @@ class ExportController extends Controller
     }
 
     /** Projets proposés par les membres, avec porteur, équipe et suivi. */
+    private function certificats(): array
+    {
+        $certs = \App\Models\Certificate::with('user:id,email')->orderByDesc('delivre_le')->get();
+
+        return [
+            'columns' => ['Référence', 'Code de vérification', 'Type', 'Titulaire', 'Email', 'Intitulé', 'Formation / événement / parcours', 'Délivré le', 'Statut', 'Motif de révocation', 'Vérifications', 'Affiché sur la bio'],
+            'rows' => $certs->map(fn (\App\Models\Certificate $c) => [
+                $c->reference, $c->codeLisible(), \App\Models\Certificate::TYPES[$c->type] ?? $c->type, $c->nom, $c->user?->email ?? $c->email,
+                $c->intitule, $c->titre, $c->delivre_le->format('d/m/Y'), $c->statut === 'valide' ? 'Valide' : 'Révoqué',
+                $c->motif_revocation, (int) $c->verifications, $c->visible_bio ? 'Oui' : 'Non',
+            ])->all(),
+        ];
+    }
+
     private function documents(): array
     {
         $statuts = ['publie' => 'Publié', 'en_attente' => 'En attente', 'refuse' => 'Refusé'];

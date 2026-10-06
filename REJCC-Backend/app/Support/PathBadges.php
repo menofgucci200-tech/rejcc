@@ -46,6 +46,7 @@ class PathBadges
 
                 $badge = PathBadge::firstOrCreate(['user_id' => $userId, 'path_id' => $p->id], ['obtenu_at' => now()]);
                 if ($badge->wasRecentlyCreated) {
+                    \App\Support\Certificats::pourParcours($badge);
                     MemberNotification::create([
                         'user_id' => $userId,
                         'type' => 'success',

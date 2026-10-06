@@ -60,3 +60,12 @@ Artisan::command('evenements:rappels', function () {
 })->purpose('Rappel aux inscrits la veille des événements');
 
 Schedule::command('evenements:rappels')->hourly();
+
+// Certificats : rattrapage des certificats et attestations non encore délivrés
+// (attestations d'événement une fois l'événement terminé).
+Artisan::command('certificats:delivrer', function () {
+    $n = \App\Support\Certificats::rattraper();
+    $this->info("{$n['formation']} certificat(s) de formation, {$n['evenement']} attestation(s) d'événement, {$n['parcours']} attestation(s) de parcours délivré(s).");
+})->purpose('Délivre les certificats et attestations en attente');
+
+Schedule::command('certificats:delivrer')->hourlyAt(25);

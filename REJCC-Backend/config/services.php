@@ -46,4 +46,12 @@ return [
         'site_id' => env('CINETPAY_SITE_ID'),
     ],
 
+    // Certificats : clé de signature des QR codes, signature électronique du PDF (facultative).
+    'certificats' => [
+        'cle_signature' => env('CERTIFICATS_CLE_SIGNATURE'),
+        'pdf_certificat' => env('CERTIFICATS_PDF_CERTIFICAT'),   // chemin du certificat (.crt/.pem)
+        'pdf_cle' => env('CERTIFICATS_PDF_CLE'),                 // chemin de la clé privée
+        'pdf_mot_de_passe' => env('CERTIFICATS_PDF_MOT_DE_PASSE', ''),
+    ],
+
 ];

@@ -43,6 +43,11 @@ Route::get('/public-projects', [\App\Http\Controllers\Api\ProjectController::cla
 Route::get('/public-projects/{id}', [\App\Http\Controllers\Api\ProjectController::class, 'publicShow'])->whereNumber('id');
 Route::get('/public-events/{slug}', [EventController::class, 'publicShow']);
 
+// Vérification publique des certificats (le registre fait foi), limitée contre les essais en série
+Route::get('/certificats/verifier/{code}', [\App\Http\Controllers\Api\CertificateController::class, 'verifier'])->middleware('throttle:30,1');
+Route::get('/certificats/verifier/{code}/pdf', [\App\Http\Controllers\Api\CertificateController::class, 'pdfPublic'])->middleware('throttle:20,1');
+Route::post('/certificats/verifier-fichier', [\App\Http\Controllers\Api\CertificateController::class, 'verifierFichier'])->middleware('throttle:20,1');
+
 // Carte membre publique (cible des QR codes), limitée contre l'énumération
 Route::get('/member-card/{code}', [\App\Http\Controllers\Api\MemberCardController::class, 'show'])
     ->middleware('throttle:30,1');
@@ -178,6 +183,9 @@ Route::middleware('auth.token')->group(function () {
 
     // Certificats (émis automatiquement pour les formations certifiantes terminées)
     Route::get('/my-certificates', [\App\Http\Controllers\Api\CertificateController::class, 'mine']);
+    Route::get('/my-certificates/{id}/pdf', [\App\Http\Controllers\Api\CertificateController::class, 'monPdf'])->whereNumber('id');
+    Route::put('/my-certificates/{id}/bio', [\App\Http\Controllers\Api\CertificateController::class, 'bio'])->whereNumber('id');
+    Route::post('/my-certificates/{id}/correction', [\App\Http\Controllers\Api\CertificateController::class, 'demanderCorrection'])->whereNumber('id');
 
     // Projets — aperçu (chiffres, sans données personnelles) pour les non-abonnés
     Route::get('/projects-apercu', [\App\Http\Controllers\Api\ProjectController::class, 'apercu']);
@@ -374,8 +382,17 @@ Route::middleware(['auth.token', 'audit.log'])->prefix('admin')->group(function 
         Route::delete('/opportunities/{id}', [OpportunityController::class, 'adminDestroy']);
     });
 
-    Route::get('/certificates', [\App\Http\Controllers\Api\CertificateController::class, 'adminIndex'])
-        ->middleware('auth.admin:certificats');
+    Route::middleware('auth.admin:certificats')->group(function () {
+        Route::get('/certificates', [\App\Http\Controllers\Api\CertificateController::class, 'adminIndex']);
+        Route::get('/certificates/{id}', [\App\Http\Controllers\Api\CertificateController::class, 'adminShow'])->whereNumber('id');
+        Route::get('/certificates/{id}/pdf', [\App\Http\Controllers\Api\CertificateController::class, 'adminPdf'])->whereNumber('id');
+        Route::post('/certificates/{id}/revoquer', [\App\Http\Controllers\Api\CertificateController::class, 'revoquer'])->whereNumber('id');
+        Route::post('/certificates/{id}/reemettre', [\App\Http\Controllers\Api\CertificateController::class, 'reemettre'])->whereNumber('id');
+        Route::post('/certificates/{id}/correction/refuser', [\App\Http\Controllers\Api\CertificateController::class, 'refuserCorrection'])->whereNumber('id');
+        Route::get('/certificats/reglages', [\App\Http\Controllers\Api\CertificateController::class, 'reglages']);
+        Route::put('/certificats/reglages', [\App\Http\Controllers\Api\CertificateController::class, 'enregistrerReglages']);
+    });
+    Route::post('/events/{id}/attestations', [\App\Http\Controllers\Api\CertificateController::class, 'attestationsEvenement'])->whereNumber('id')->middleware('auth.admin:evenements');
 
     Route::middleware('auth.admin:projets')->group(function () {
         Route::get('/projects', [\App\Http\Controllers\Api\ProjectController::class, 'adminIndex']);

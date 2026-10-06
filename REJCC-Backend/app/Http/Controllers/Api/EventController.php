@@ -277,7 +277,7 @@ class EventController extends Controller
             'event' => [
                 'id' => $e->id, 'title' => $e->title, 'slug' => $e->slug, 'statut' => $e->statut,
                 'starts_at' => $e->starts_at?->toIso8601String(), 'capacity' => $e->capacity,
-                'champs' => $e->champs ?? [], 'inscription_publique' => $e->inscription_publique,
+                'champs' => $e->champs ?? [], 'inscription_publique' => $e->inscription_publique, 'attestation' => (bool) $e->attestation,
             ],
             'inscrits' => $inscrits->values(),
             'total' => (clone $tous)->count(),
@@ -453,6 +453,7 @@ class EventController extends Controller
             'date_limite' => 'nullable|date|before_or_equal:starts_at',
             'reserve_abonnes' => 'nullable|boolean',
             'inscription_publique' => 'nullable|boolean',
+            'attestation' => 'nullable|boolean',
             'annoncer' => 'nullable|boolean',
             // Questions du formulaire d'inscription publique.
             'champs' => 'nullable|array|max:20',

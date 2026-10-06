@@ -11,7 +11,7 @@ class Event extends Model
     protected $fillable = [
         'title', 'slug', 'description', 'excerpt', 'body', 'location', 'en_ligne', 'lien_visio', 'category', 'statut', 'motif_annulation',
         'starts_at', 'ends_at', 'time_label', 'image', 'capacity', 'reserve_abonnes', 'inscriptions_ouvertes', 'date_limite',
-        'inscription_publique', 'champs', 'ancien_slug',
+        'inscription_publique', 'champs', 'ancien_slug', 'attestation',
     ];
 
     protected $casts = [
@@ -23,6 +23,7 @@ class Event extends Model
         'reserve_abonnes' => 'boolean',
         'inscriptions_ouvertes' => 'boolean',
         'inscription_publique' => 'boolean',
+        'attestation' => 'boolean',
         'champs' => 'array',
         'capacity' => 'integer',
     ];

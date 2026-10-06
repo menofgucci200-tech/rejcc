@@ -480,6 +480,9 @@ class FormationController extends Controller
             'media_name' => 'nullable|string|max:200',
             'image_url' => 'nullable|url|max:500',
             'seuil_reussite' => 'integer|min:50|max:100',
+            // Compétences validées, imprimées sur le certificat (3 à 6 conseillées).
+            'competences' => 'nullable|array|max:8',
+            'competences.*' => 'nullable|string|max:60',
             ...Quiz::rules('examen', 40),
         ]);
 
@@ -494,6 +497,9 @@ class FormationController extends Controller
         $data = $validator->validated();
         if (array_key_exists('examen', $data)) {
             $data['examen'] = Quiz::normalize($data['examen']);
+        }
+        if (array_key_exists('competences', $data)) {
+            $data['competences'] = array_values(array_unique(array_filter(array_map(fn ($c) => trim((string) $c), (array) $data['competences']))));
         }
         $formation->fill($data)->save();
 

@@ -52,16 +52,18 @@ class MemberProfile
             ? (bool) ($prefs['coordonnees_publiques'] ?? false)
             : (bool) ($prefs['visibilite_profil'] ?? false);
 
-        $certificats = FormationEnrollment::with('formation:id,title,category,is_certifying')
-            ->where('user_id', $user->id)
-            ->certificats()
-            ->orderByDesc('completed_at')
+        // Certificats valides du registre ; sur la page publique, seulement ceux que le membre a choisi d'afficher.
+        $certificats = \App\Models\Certificate::where('user_id', $user->id)->where('statut', 'valide')
+            ->when($public, fn ($q) => $q->where('visible_bio', true))
+            ->orderByDesc('delivre_le')
             ->get()
-            ->map(fn (FormationEnrollment $e) => [
-                'titre' => $e->formation->title,
-                'categorie' => $e->formation->category,
-                'reference' => $e->certificateReference(),
-                'obtenu_le' => $e->completed_at->toDateString(),
+            ->map(fn (\App\Models\Certificate $c) => [
+                'titre' => $c->titre,
+                'categorie' => \App\Models\Certificate::TYPES[$c->type] ?? '',
+                'type' => $c->type,
+                'reference' => $c->reference,
+                'obtenu_le' => $c->delivre_le->toDateString(),
+                'url_verification' => $c->urlVerification(false),
             ])->values();
 
         $listings = MarketplaceListing::where('user_id', $user->id)

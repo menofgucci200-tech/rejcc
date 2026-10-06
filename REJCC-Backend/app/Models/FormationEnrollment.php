@@ -23,6 +23,7 @@ class FormationEnrollment extends Model
     {
         static::saved(function (FormationEnrollment $e) {
             if ($e->completed_at && ($e->wasRecentlyCreated || $e->wasChanged('completed_at'))) {
+                \App\Support\Certificats::pourFormation($e);
                 \App\Support\PathBadges::attribuer($e->user_id);
             }
         });
