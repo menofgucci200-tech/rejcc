@@ -17,6 +17,9 @@
     @endif
     <div class="flex flex-1 flex-col p-[16px]">
         <div class="mb-2 flex flex-wrap items-center gap-1.5">
+            @if (($p['a_la_une'] ?? false) && ! $avecStatut)
+                <span class="rounded-full bg-[#F5A623]/15 px-2 py-0.5 text-[10.5px] font-bold text-[#B27007]">★ À la une</span>
+            @endif
             @if ($avecStatut)
                 <span class="rounded-full px-2 py-0.5 text-[10.5px] font-bold" style="background: {{ $statutC }}1A; color: {{ $statutC }}">{{ $p['statut_label'] }}</span>
             @endif

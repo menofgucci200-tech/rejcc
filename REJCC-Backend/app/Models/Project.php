@@ -37,11 +37,13 @@ class Project extends Model
 
     protected $fillable = [
         'user_id', 'group_id', 'ville', 'image', 'title', 'accroche', 'description', 'probleme', 'solution', 'cible', 'impact',
-        'besoins', 'lien', 'members_count', 'statut', 'stade', 'motif', 'vues', 'soumis_at', 'decide_at',
+        'besoins', 'lien', 'public_ok', 'a_la_une', 'members_count', 'statut', 'stade', 'motif', 'vues', 'soumis_at', 'decide_at',
     ];
 
     protected $casts = [
         'besoins' => 'array',
+        'public_ok' => 'boolean',
+        'a_la_une' => 'boolean',
         'soumis_at' => 'datetime',
         'decide_at' => 'datetime',
     ];

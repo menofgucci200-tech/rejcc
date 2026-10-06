@@ -51,6 +51,8 @@ class ProjectController extends Controller
             'ville' => $p->ville,
             'image' => $p->image,
             'members_count' => (int) $p->members_count,
+            'a_la_une' => (bool) $p->a_la_une,
+            'public_ok' => (bool) $p->public_ok,
             'equipe_taille' => 1 + $p->equipe->where('statut', 'membre')->count(),
             'porteur' => $u ? ['id' => $u->id, 'prenom' => $u->prenom, 'nom' => $u->nom, 'photo' => $u->photo, 'role' => $u->role, 'titre' => $u->titre] : null,
             'mine' => $moi && $p->user_id === $moi->id,
@@ -119,6 +121,7 @@ class ProjectController extends Controller
             'besoins' => 'nullable|array',
             'besoins.*' => [Rule::in(array_keys(Project::BESOINS))],
             'members_count' => 'nullable|integer|min:1|max:500',
+            'public_ok' => 'nullable|boolean',
         ];
     }
 
@@ -145,6 +148,7 @@ class ProjectController extends Controller
         $d = $v->validated();
         $d['besoins'] = array_values(array_unique($d['besoins'] ?? []));
         $d['members_count'] ??= 1;
+        $d['public_ok'] = (bool) ($d['public_ok'] ?? false);
 
         return $d;
     }
@@ -196,7 +200,7 @@ class ProjectController extends Controller
         match ($request->query('tri')) {
             'suivis' => $query->orderByDesc('suivis_count')->orderByDesc('projects.decide_at'),
             'vues' => $query->orderByDesc('projects.vues'),
-            default => $query->orderByDesc('projects.decide_at')->orderByDesc('projects.created_at'),
+            default => $query->orderByDesc('projects.a_la_une')->orderByDesc('projects.decide_at')->orderByDesc('projects.created_at'),
         };
         $projets = $query->get();
         $villes = Project::where('statut', 'valide')->whereNotNull('ville')->where('ville', '!=', '')
@@ -647,6 +651,22 @@ class ProjectController extends Controller
         $this->notifier($p, $titre, $texte);
 
         return response()->json(['ok' => true, 'project' => $this->payload($p->fresh(['groupe', 'porteur', 'equipe.user']), $request->user(), true)]);
+    }
+
+    /** POST /admin/projects/{id}/une — met un projet validé à la une (ou l'en retire). */
+    public function une(int $id)
+    {
+        $p = Project::where('statut', 'valide')->find($id);
+        if (! $p) {
+            return response()->json(['ok' => false, 'message' => 'Seul un projet validé peut être mis à la une.'], 422);
+        }
+        $p->update(['a_la_une' => ! $p->a_la_une]);
+        if ($p->a_la_une) {
+            $this->notifier($p, "Votre projet est à la une : {$p->title}",
+                "L'équipe REJCC met votre projet en avant auprès des membres".($p->public_ok ? ' et sur le site public du réseau.' : '.'));
+        }
+
+        return response()->json(['ok' => true, 'a_la_une' => $p->a_la_une]);
     }
 
     public function adminDestroy(int $id)

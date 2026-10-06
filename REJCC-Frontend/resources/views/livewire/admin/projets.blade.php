@@ -8,6 +8,9 @@
             <p class="mt-2 max-w-2xl text-xs text-[#9AA6B8]">Examinez les projets proposés par les membres : validez-les pour les rendre visibles du réseau, demandez des précisions ou refusez-les avec un motif. Le porteur est notifié à chaque décision.</p>
         </div>
 
+        @if ($erreur && ! $decision && ! $corrigerId)
+            <p wire:key="flash-ko" class="panel-enter mb-4 rounded-[12px] bg-accent/10 px-3.5 py-2 text-xs font-semibold text-accent">{{ $erreur }}</p>
+        @endif
         @if ($message)
             <p wire:key="flash-ok" class="panel-enter mb-4 flex items-start gap-1.5 rounded-[12px] bg-[#22A85A]/10 px-3.5 py-2 text-xs font-semibold text-[#1C8F4C]"><x-ui.icon name="check-circle" class="mt-px size-3.5 shrink-0" /> {{ $message }}</p>
         @endif
@@ -21,6 +24,7 @@
                 @endforeach
             </div>
             <input wire:model.live.debounce.300ms="recherche" type="search" placeholder="Projet, porteur, ville…" class="ml-auto w-full rounded-full border border-brand/15 bg-white px-4 py-2 text-xs outline-none focus:border-azure sm:w-60" />
+            <a href="{{ route('admin.export', ['dataset' => 'projets']) }}" class="btn-tap inline-flex items-center gap-1.5 rounded-full border border-brand/15 bg-white px-3.5 py-2 text-xs font-bold text-brand hover:bg-cloud"><x-ui.icon name="download" class="size-3.5" /> Exporter</a>
         </div>
 
         <div class="space-y-3">
@@ -39,6 +43,8 @@
                         <div class="min-w-[200px] flex-1">
                             <div class="mb-0.5 flex flex-wrap items-center gap-1.5">
                                 <span class="rounded-full px-2 py-0.5 text-[10px] font-bold" style="background: {{ $sc }}1A; color: {{ $sc }}">{{ $p['statut_label'] }}</span>
+                                @if ($p['a_la_une']) <span class="rounded-full bg-[#F5A623]/15 px-2 py-0.5 text-[10px] font-bold text-[#B27007]">★ À la une</span> @endif
+                                @if ($p['public_ok']) <span class="rounded-full bg-azure/10 px-2 py-0.5 text-[10px] font-bold text-azure">Site public accepté</span> @endif
                                 <span class="text-[11px] font-semibold text-[#9AA6B8]">{{ $p['stade_label'] }}{{ $p['groupe'] ? ' · '.$p['groupe']['nom'] : '' }}{{ $p['ville'] ? ' · '.$p['ville'] : '' }}</span>
                             </div>
                             <p class="text-[14px] font-bold text-brand">{{ $p['title'] }}</p>
@@ -81,9 +87,41 @@
                                     @else
                                         <p class="text-[#9AA6B8]">Compte supprimé</p>
                                     @endif
-                                    <p class="mt-3 text-[11.5px] text-[#9AA6B8]">{{ $p['members_count'] }} personne{{ $p['members_count'] > 1 ? 's' : '' }} impliquée{{ $p['members_count'] > 1 ? 's' : '' }} · {{ $p['vues'] }} vue{{ $p['vues'] > 1 ? 's' : '' }}</p>
+                                    @if (! empty($p['equipe']))
+                                        <p class="mb-1.5 mt-3 text-[11px] font-bold uppercase tracking-[0.1em] text-[#9AA6B8]">Équipe sur la plateforme</p>
+                                        @foreach ($p['equipe'] as $x)
+                                            <p class="text-[12px] text-[#5B677A]"><span class="font-semibold text-brand">{{ $x['membre']['prenom'] }} {{ $x['membre']['nom'] }}</span>{{ $x['role'] ? ' · '.$x['role'] : '' }}</p>
+                                        @endforeach
+                                    @endif
+                                    <p class="mt-3 text-[11.5px] text-[#9AA6B8]">{{ $p['equipe_taille'] }} sur la plateforme · {{ $p['members_count'] }} déclarée{{ $p['members_count'] > 1 ? 's' : '' }} par le porteur · {{ $p['vues'] }} vue{{ $p['vues'] > 1 ? 's' : '' }} · {{ $p['nb_suivis'] ?? 0 }} suivi{{ ($p['nb_suivis'] ?? 0) > 1 ? 's' : '' }}</p>
                                 </aside>
                             </div>
+
+                            {{-- Correction de la fiche --}}
+                            @if ($corrigerId === $p['id'])
+                                <div wire:key="corr-{{ $p['id'] }}" class="panel-enter mt-4 grid gap-2.5 rounded-[12px] border border-brand/10 bg-white p-4 sm:grid-cols-2">
+                                    <p class="text-[13px] font-bold text-brand sm:col-span-2">Corriger la fiche</p>
+                                    <input wire:model="correction.title" type="text" class="rounded-[9px] border border-brand/15 px-3 py-2 text-sm sm:col-span-2" />
+                                    <input wire:model="correction.accroche" type="text" placeholder="Accroche" class="rounded-[9px] border border-brand/15 px-3 py-2 text-sm sm:col-span-2" />
+                                    <select wire:model="correction.group_id" class="rounded-[9px] border border-brand/15 bg-white px-3 py-2 text-sm">
+                                        <option value="">— Secteur —</option>
+                                        @foreach ($categories as $c) <option value="{{ $c['id'] }}">{{ $c['nom'] }}</option> @endforeach
+                                    </select>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <select wire:model="correction.stade" class="rounded-[9px] border border-brand/15 bg-white px-3 py-2 text-sm">
+                                            @foreach ($stades as $k => $v) <option value="{{ $k }}">{{ $v }}</option> @endforeach
+                                        </select>
+                                        <input wire:model="correction.ville" type="text" placeholder="Ville" class="rounded-[9px] border border-brand/15 px-3 py-2 text-sm" />
+                                    </div>
+                                    <textarea wire:model="correction.description" rows="3" class="rounded-[9px] border border-brand/15 px-3 py-2 text-sm sm:col-span-2"></textarea>
+                                    <input wire:model="noteCorrection" type="text" placeholder="Note au porteur (optionnel)" class="rounded-[9px] border border-brand/15 px-3 py-2 text-sm sm:col-span-2" />
+                                    @if ($erreur) <p class="text-xs font-semibold text-accent sm:col-span-2">{{ $erreur }}</p> @endif
+                                    <div class="flex gap-2 sm:col-span-2">
+                                        <button wire:click="enregistrerCorrection" class="btn-tap rounded-[9px] bg-brand px-4 py-2 text-xs font-bold text-white hover:bg-brand/90">Enregistrer et prévenir le porteur</button>
+                                        <button wire:click="fermerCorrection" class="btn-tap rounded-[9px] border border-brand/15 bg-white px-4 py-2 text-xs font-bold text-brand hover:bg-cloud">Annuler</button>
+                                    </div>
+                                </div>
+                            @endif
 
                             {{-- Décision --}}
                             @if ($decision)
@@ -121,6 +159,10 @@
                                     @if ($p['statut'] !== 'refuse')
                                         <button wire:click="preparer({{ $p['id'] }}, 'refuser')" data-test="refuser-projet" class="btn-tap rounded-full border border-accent/30 bg-white px-4 py-2 text-xs font-bold text-accent hover:bg-accent/5">Refuser</button>
                                     @endif
+                                    @if ($p['statut'] === 'valide')
+                                        <button wire:click="basculerUne({{ $p['id'] }})" data-test="une-projet" class="btn-tap rounded-full border border-[#F5A623]/50 bg-white px-4 py-2 text-xs font-bold text-[#B27007] hover:bg-[#F5A623]/10">{{ $p['a_la_une'] ? 'Retirer de la une' : '★ Mettre à la une' }}</button>
+                                    @endif
+                                    <button wire:click="ouvrirCorrection({{ $p['id'] }})" class="btn-tap rounded-full border border-brand/15 bg-white px-4 py-2 text-xs font-bold text-brand hover:bg-cloud">Corriger la fiche</button>
                                     <button wire:click="delete({{ $p['id'] }})" wire:confirm="Supprimer définitivement « {{ $p['title'] }} » ? Le porteur ne sera pas prévenu." class="ml-auto icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-accent/10 hover:text-accent" title="Supprimer"><x-ui.icon name="trash-2" class="size-3.5" /></button>
                                 </div>
                             @endif

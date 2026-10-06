@@ -287,4 +287,28 @@ class ProjetTest extends TestCase
         $this->assertSame(['AgroVert'], array_column($a['exemples'], 'title'));
         $this->assertArrayNotHasKey('porteur', $a['exemples'][0]);
     }
+
+    // ── Administration ─────────────────────────────────────────────────
+
+    public function test_a_la_une_et_export(): void
+    {
+        $porteur = User::factory()->abonne()->create(['prenom' => 'Esther', 'nom' => 'Kouamé']);
+        $admin = $this->tokenFor(User::factory()->create(['role' => 'admin']));
+        $p = Project::create(['user_id' => $porteur->id, 'title' => 'BâtiJeunes', 'description' => str_repeat('a', 30), 'statut' => 'valide', 'public_ok' => true, 'besoins' => ['mentor'], 'decide_at' => now()->subWeek()]);
+        Project::create(['user_id' => $porteur->id, 'title' => 'Plus récent', 'description' => str_repeat('b', 30), 'statut' => 'valide', 'decide_at' => now()]);
+        $enEval = Project::create(['user_id' => $porteur->id, 'title' => 'En évaluation', 'description' => str_repeat('c', 30), 'statut' => 'evaluation']);
+
+        $this->withToken($admin)->postJson("/api/admin/projects/{$enEval->id}/une")->assertStatus(422);
+        $this->withToken($admin)->postJson("/api/admin/projects/{$p->id}/une")->assertOk()->assertJsonPath('a_la_une', true);
+        $this->assertStringContainsString('site public', MemberNotification::where('user_id', $porteur->id)->latest('id')->first()->body);
+
+        // À la une : en tête de la liste des membres.
+        $t = $this->tokenFor(User::factory()->abonne()->create());
+        $this->assertSame('BâtiJeunes', $this->withToken($t)->getJson('/api/projects')->json('projects.0.title'));
+
+        $export = $this->withToken($admin)->getJson('/api/admin/export/projets')->assertOk()->json();
+        $this->assertContains('À la une', $export['columns']);
+        $ligne = collect($export['rows'])->firstWhere(0, 'BâtiJeunes');
+        $this->assertSame(['Esther Kouamé', 'Validé', 'Un mentor', 'Oui', 'Oui'], [$ligne[1], $ligne[6], $ligne[8], $ligne[12], $ligne[13]]);
+    }
 }

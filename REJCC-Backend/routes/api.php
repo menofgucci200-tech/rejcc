@@ -349,6 +349,7 @@ Route::middleware(['auth.token', 'audit.log'])->prefix('admin')->group(function 
         Route::get('/projects', [\App\Http\Controllers\Api\ProjectController::class, 'adminIndex']);
         Route::put('/projects/{id}', [\App\Http\Controllers\Api\ProjectController::class, 'adminUpdate']);
         Route::post('/projects/{id}/decision', [\App\Http\Controllers\Api\ProjectController::class, 'decision'])->whereNumber('id');
+        Route::post('/projects/{id}/une', [\App\Http\Controllers\Api\ProjectController::class, 'une'])->whereNumber('id');
         Route::delete('/projects/{id}', [\App\Http\Controllers\Api\ProjectController::class, 'adminDestroy']);
     });
 

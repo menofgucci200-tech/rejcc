@@ -36,6 +36,13 @@ class Projets extends Component
 
     public string $stadeDecision = '';
 
+    // Correction d'une fiche
+    public ?int $corrigerId = null;
+
+    public array $correction = [];
+
+    public string $noteCorrection = '';
+
     public const FILTRES = ['evaluation' => 'À évaluer', 'a_completer' => 'À compléter', 'valide' => 'Validés', 'refuse' => 'Refusés', 'retire' => 'Retirés', '' => 'Tous'];
 
     public const MOTIFS = [
@@ -103,6 +110,56 @@ class Projets extends Component
         AdminNav::oublier();
     }
 
+    public function basculerUne(int $id): void
+    {
+        $r = Api::post("/admin/projects/{$id}/une", [], Api::token());
+        $this->message = ($r['ok'] ?? false)
+            ? (($r['a_la_une'] ?? false) ? 'Projet mis à la une : il apparaît en tête de liste, et le porteur est prévenu.' : "Projet retiré de la une.")
+            : null;
+        $this->erreur = ($r['ok'] ?? false) ? null : ($r['message'] ?? 'Une erreur est survenue.');
+    }
+
+    public function ouvrirCorrection(int $id): void
+    {
+        $p = collect(Api::get('/admin/projects', [], Api::token())['projects'] ?? [])->firstWhere('id', $id);
+        if (! $p) {
+            return;
+        }
+        $this->corrigerId = $id;
+        $this->decision = null;
+        $this->noteCorrection = '';
+        $this->correction = [
+            'title' => $p['title'], 'accroche' => (string) $p['accroche'], 'description' => $p['description'],
+            'group_id' => (string) ($p['groupe']['id'] ?? ''), 'stade' => $p['stade'], 'ville' => (string) $p['ville'],
+            // Champs conservés tels quels.
+            'probleme' => $p['probleme'], 'solution' => $p['solution'], 'cible' => $p['cible'], 'impact' => $p['impact'],
+            'besoins' => $p['besoins'], 'lien' => $p['lien'], 'image' => $p['image'], 'members_count' => $p['members_count'], 'public_ok' => $p['public_ok'],
+        ];
+    }
+
+    public function fermerCorrection(): void
+    {
+        $this->corrigerId = null;
+    }
+
+    public function enregistrerCorrection(): void
+    {
+        $data = $this->correction;
+        $data['group_id'] = (int) $data['group_id'];
+        foreach (['accroche', 'ville'] as $k) {
+            $data[$k] = trim((string) $data[$k]) ?: null;
+        }
+        $r = Api::put("/admin/projects/{$this->corrigerId}", $data + ['note' => trim($this->noteCorrection)], Api::token());
+        if (! ($r['ok'] ?? false)) {
+            $this->erreur = $r['message'] ?? 'Une erreur est survenue.';
+
+            return;
+        }
+        $this->corrigerId = null;
+        $this->erreur = null;
+        $this->message = 'Fiche corrigée : le porteur est prévenu.';
+    }
+
     public function delete(int $id): void
     {
         Api::delete("/admin/projects/{$id}", Api::token());
@@ -121,6 +178,7 @@ class Projets extends Component
             'projets' => Collection::make($data['projects'] ?? []),
             'compteurs' => $compteurs,
             'stades' => $data['stades'] ?? [],
+            'categories' => $data['categories'] ?? [],
             'besoins' => $data['besoins'] ?? [],
         ]);
     }

@@ -31,6 +31,7 @@ class ExportController extends Controller
             'opportunites' => $this->opportunites(),
             'participants' => $this->participants($request->query('event')),
             'groupes' => $this->groupes($request->query('group')),
+            'projets' => $this->projets(),
             default => null,
         };
 
@@ -160,6 +161,25 @@ class ExportController extends Controller
 
                 return $row;
             })->all(),
+        ];
+    }
+
+    /** Projets proposés par les membres, avec porteur, équipe et suivi. */
+    private function projets(): array
+    {
+        $projets = \App\Models\Project::with(['porteur:id,prenom,nom,email,telephone', 'groupe:id,name'])
+            ->withCount(['suivis', 'equipe as equipe_count' => fn ($q) => $q->where('statut', 'membre')])
+            ->orderByDesc('created_at')->get();
+
+        return [
+            'columns' => ['Projet', 'Porteur', 'Email', 'Téléphone', 'Secteur', 'Ville', 'Statut', 'Stade', 'Besoins', 'Équipe (plateforme)', 'Suivis', 'Vues', 'Site public', 'À la une', 'Soumis le', 'Décision le'],
+            'rows' => $projets->map(fn (\App\Models\Project $p) => [
+                $p->title, $p->porteur ? trim($p->porteur->prenom.' '.$p->porteur->nom) : '', $p->porteur?->email, $p->porteur?->telephone,
+                $p->groupe?->name, $p->ville, \App\Models\Project::STATUTS[$p->statut] ?? $p->statut, \App\Models\Project::STADES[$p->stade] ?? $p->stade,
+                implode(', ', array_map(fn ($b) => \App\Models\Project::BESOINS[$b] ?? $b, $p->besoins ?? [])),
+                1 + $p->equipe_count, $p->suivis_count, $p->vues, $p->public_ok ? 'Oui' : 'Non', $p->a_la_une ? 'Oui' : 'Non',
+                $p->soumis_at?->format('d/m/Y'), $p->decide_at?->format('d/m/Y'),
+            ])->all(),
         ];
     }
 
