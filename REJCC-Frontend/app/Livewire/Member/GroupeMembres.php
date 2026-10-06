@@ -157,6 +157,8 @@ class GroupeMembres extends Component
             'groupe' => $result['group'] ?? null,
             'members' => Collection::make($result['members'] ?? []),
             'meta' => $result['meta'] ?? [],
+            // Projets validés du secteur (lien vers la rubrique Projets filtrée).
+            'nbProjets' => count(Api::get('/projects', ['groupe' => $this->groupId], Api::token())['projects'] ?? []),
         ]);
     }
 }

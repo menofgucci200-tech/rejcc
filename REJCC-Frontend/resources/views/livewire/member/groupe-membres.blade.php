@@ -145,6 +145,11 @@
                     <span data-test="discussion-non-lus" class="rounded-full bg-accent px-1.5 text-[10.5px] font-bold leading-4 text-white">{{ ($groupe['discussion']['non_lus'] ?? 0) }}</span>
                 @endif
             </button>
+            @if (($nbProjets ?? 0) > 0)
+                <a href="{{ route('espace-membre.projets', ['groupe' => $groupId]) }}" wire:navigate data-test="projets-du-groupe" class="-mb-px inline-flex items-center gap-1.5 border-b-2 border-transparent px-4 py-2.5 text-[13px] font-bold text-[#9AA6B8] transition-colors hover:text-brand">
+                    <x-ui.icon name="nav-projects" class="size-4" /> Projets <span class="rounded-full bg-brand/10 px-1.5 text-[10.5px] leading-4 text-brand">{{ $nbProjets }}</span>
+                </a>
+            @endif
         </div>
 
         @if ($vue === 'discussion')

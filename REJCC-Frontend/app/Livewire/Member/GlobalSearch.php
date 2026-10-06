@@ -29,7 +29,7 @@ class GlobalSearch extends Component
         ['label' => 'Messagerie', 'route' => 'espace-membre.messaging', 'mots' => 'messages messagerie discussion'],
         ['label' => 'Marketplace', 'route' => 'espace-membre.marketplace', 'mots' => 'marketplace annonces produits services'],
         ['label' => 'Événements', 'route' => 'espace-membre.evenements', 'mots' => 'evenements agenda calendrier'],
-        ['label' => 'Projets', 'route' => 'espace-membre.projets', 'mots' => 'projets financement'],
+        ['label' => 'Projets', 'route' => 'espace-membre.projets', 'mots' => 'projets equipe porteur partenaires'],
         ['label' => 'Emploi & Stage', 'route' => 'espace-membre.emplois', 'mots' => 'emploi stage offres travail'],
         ['label' => 'Documents', 'route' => 'espace-membre.documents', 'mots' => 'documents ressources telecharger'],
         ['label' => 'Certificats', 'route' => 'espace-membre.certificats', 'mots' => 'certificats attestations'],
@@ -88,6 +88,18 @@ class GlobalSearch extends Component
                     ])->all();
             }
 
+            $projets = [];
+            if (Api::user()->subscription_active ?? false) {
+                $projets = Collection::make(Api::get('/projects', ['q' => $q], $token)['projects'] ?? [])
+                    ->take(4)
+                    ->map(fn ($p) => [
+                        'titre' => $p['title'],
+                        'detail' => collect([$p['stade_label'] ?? null, $p['groupe']['nom'] ?? null, $p['ville'] ?? null])->filter()->join(' · '),
+                        'url' => route('espace-membre.projets', ['projet' => $p['id']]),
+                        'icon' => 'nav-projects',
+                    ])->values()->all();
+            }
+
             $evenements = Collection::make(Api::get('/events', [], $token)['events'] ?? [])
                 ->filter(fn ($e) => static::matches($needle, $e['title'], $e['category'], $e['location']))
                 ->map(function ($e) {
@@ -114,6 +126,7 @@ class GlobalSearch extends Component
                 'Formations' => $formations,
                 'Membres' => $membres,
                 'Événements' => $evenements,
+                'Projets' => $projets,
                 'Rubriques' => $rubriques,
             ]);
         }

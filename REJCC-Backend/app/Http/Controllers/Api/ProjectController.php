@@ -10,6 +10,7 @@ use App\Models\ProjectFollow;
 use App\Models\ProjectMember;
 use App\Models\ProjectUpdate;
 use App\Models\User;
+use App\Support\RechercheMots;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -162,13 +163,45 @@ class ProjectController extends Controller
     // Espace membre
     // ------------------------------------------------------------------
 
-    /** GET /projects — projets validés du réseau + mes projets (tous statuts). */
+    /**
+     * GET /projects?q=&groupe=&stade=&besoin=&ville=&tri= — projets validés
+     * du réseau (filtrés côté serveur) + mes projets, mes équipes, mes suivis.
+     */
     public function index(Request $request)
     {
         $moi = $request->user();
-        $projets = Project::with(['porteur:id,prenom,nom,photo,role,titre', 'groupe:id,name,couleur,icone', 'equipe.user:id,prenom,nom,photo,role,titre'])
-            ->where('statut', 'valide')
-            ->orderByDesc('decide_at')->orderByDesc('created_at')->get();
+        $query = Project::select('projects.*')
+            ->leftJoin('users', 'users.id', '=', 'projects.user_id')
+            ->leftJoin('groups', 'groups.id', '=', 'projects.group_id')
+            ->with(['porteur:id,prenom,nom,photo,role,titre', 'groupe:id,name,couleur,icone', 'equipe.user:id,prenom,nom,photo,role,titre'])
+            ->withCount('suivis')
+            ->where('projects.statut', 'valide');
+
+        RechercheMots::appliquer($query, (string) $request->query('q', ''), [
+            'projects.title', 'projects.accroche', 'projects.description', 'projects.solution', 'projects.ville',
+            'users.prenom', 'users.nom', 'groups.name',
+        ]);
+        if ($groupe = (int) $request->query('groupe')) {
+            $query->where('projects.group_id', $groupe);
+        }
+        if (isset(Project::STADES[$stade = (string) $request->query('stade')])) {
+            $query->where('projects.stade', $stade);
+        }
+        if (isset(Project::BESOINS[$besoin = (string) $request->query('besoin')])) {
+            $query->where('projects.besoins', 'like', '%"'.$besoin.'"%');
+        }
+        if ($ville = trim((string) $request->query('ville', ''))) {
+            $query->where('projects.ville', $ville);
+        }
+        match ($request->query('tri')) {
+            'suivis' => $query->orderByDesc('suivis_count')->orderByDesc('projects.decide_at'),
+            'vues' => $query->orderByDesc('projects.vues'),
+            default => $query->orderByDesc('projects.decide_at')->orderByDesc('projects.created_at'),
+        };
+        $projets = $query->get();
+        $villes = Project::where('statut', 'valide')->whereNotNull('ville')->where('ville', '!=', '')
+            ->distinct()->orderBy('ville')->pluck('ville');
+
         $mes = Project::with(['porteur:id,prenom,nom,photo,role,titre', 'groupe:id,name,couleur,icone', 'equipe.user:id,prenom,nom,photo,role,titre'])
             ->where('user_id', $moi->id)->orderByDesc('created_at')->get();
 
@@ -184,7 +217,41 @@ class ProjectController extends Controller
             'mes_projets' => $mes->map(fn ($p) => $this->payload($p, $moi))->values(),
             'mes_equipes' => $equipes->map(fn ($p) => $this->payload($p, $moi))->values(),
             'suivis' => $suivis,
+            'mes_suivis' => Project::with(['porteur:id,prenom,nom,photo,role,titre', 'groupe:id,name,couleur,icone', 'equipe.user:id,prenom,nom,photo,role,titre'])
+                ->where('statut', 'valide')->whereIn('id', $suivis)->get()
+                ->map(fn ($p) => $this->payload($p, $moi) + ['suivi' => true])->values(),
+            'villes' => $villes,
+            'total_valides' => Project::where('statut', 'valide')->count(),
         ] + $this->referentiels());
+    }
+
+    /**
+     * GET /projects-apercu — ce que contient la rubrique, pour les membres non
+     * abonnés : chiffres, secteurs, besoins et quelques titres (sans porteur).
+     */
+    public function apercu()
+    {
+        $valides = Project::where('statut', 'valide');
+        $besoins = [];
+        foreach ((clone $valides)->pluck('besoins') as $liste) {
+            foreach ($liste ?? [] as $b) {
+                if (isset(Project::BESOINS[$b])) {
+                    $besoins[Project::BESOINS[$b]] = ($besoins[Project::BESOINS[$b]] ?? 0) + 1;
+                }
+            }
+        }
+        arsort($besoins);
+
+        return response()->json(['ok' => true, 'apercu' => [
+            'projets' => (clone $valides)->count(),
+            'equipiers' => ProjectMember::where('statut', 'membre')->whereIn('project_id', (clone $valides)->select('id'))->count(),
+            'secteurs' => (clone $valides)->join('groups', 'groups.id', '=', 'projects.group_id')
+                ->selectRaw('groups.name as nom, count(*) as nombre')->groupBy('groups.name')->orderByDesc('nombre')->limit(6)->pluck('nombre', 'nom'),
+            'besoins' => $besoins,
+            'exemples' => (clone $valides)->with('groupe:id,name,couleur,icone')->latest('decide_at')->limit(6)->get()
+                ->map(fn (Project $p) => ['title' => $p->title, 'stade' => Project::STADES[$p->stade] ?? $p->stade,
+                    'groupe' => $p->groupe ? ['nom' => $p->groupe->name, 'couleur' => $p->groupe->couleur ?: '#031D59', 'icone' => $p->groupe->icone ?: 'network'] : null])->values(),
+        ]]);
     }
 
     /** GET /projects/{id} — fiche complète (projet validé, ou le mien). */

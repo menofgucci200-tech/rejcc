@@ -26,6 +26,25 @@ class Projets extends Component
     #[Url(except: 'reseau')]
     public string $onglet = 'reseau';
 
+    // ── Filtres (projets du réseau) ──────────────────────────────────────
+    #[Url(as: 'q', except: '')]
+    public string $recherche = '';
+
+    #[Url(except: '')]
+    public string $groupe = '';
+
+    #[Url(as: 'stade', except: '')]
+    public string $stadeFiltre = '';
+
+    #[Url(except: '')]
+    public string $besoin = '';
+
+    #[Url(as: 'ville', except: '')]
+    public string $villeFiltre = '';
+
+    #[Url(except: 'recents')]
+    public string $tri = 'recents';
+
     public ?array $fiche = null;
 
     public ?string $message = null;
@@ -338,13 +357,25 @@ class Projets extends Component
         $this->message = 'Projet supprimé.';
     }
 
+    public function effacerFiltres(): void
+    {
+        $this->reset(['recherche', 'groupe', 'stadeFiltre', 'besoin', 'villeFiltre']);
+        $this->tri = 'recents';
+    }
+
     public function render()
     {
         if (! (Api::user()->subscription_active ?? false)) {
-            return view('livewire.member.projets', ['locked' => true]);
+            return view('livewire.member.projets', [
+                'locked' => true,
+                'apercu' => Api::get('/projects-apercu', [], Api::token())['apercu'] ?? null,
+            ]);
         }
 
-        $data = Api::get('/projects', [], Api::token());
+        $data = Api::get('/projects', array_filter([
+            'q' => trim($this->recherche), 'groupe' => $this->groupe, 'stade' => $this->stadeFiltre,
+            'besoin' => $this->besoin, 'ville' => $this->villeFiltre, 'tri' => $this->tri !== 'recents' ? $this->tri : null,
+        ]), Api::token());
 
         $candidats = [];
         if ($this->fiche && mb_strlen(trim($this->rechercheCandidat)) >= 2) {
@@ -357,7 +388,10 @@ class Projets extends Component
             'projets' => $projets,
             'mesProjets' => Collection::make($data['mes_projets'] ?? []),
             'mesEquipes' => Collection::make($data['mes_equipes'] ?? []),
-            'suivis' => $projets->filter(fn ($p) => $p['suivi'] ?? false)->values(),
+            'suivis' => Collection::make($data['mes_suivis'] ?? []),
+            'villes' => $data['villes'] ?? [],
+            'totalValides' => (int) ($data['total_valides'] ?? 0),
+            'filtresActifs' => trim($this->recherche) !== '' || $this->groupe !== '' || $this->stadeFiltre !== '' || $this->besoin !== '' || $this->villeFiltre !== '',
             'candidats' => $candidats,
             'categories' => $data['categories'] ?? [],
             'stades' => $data['stades'] ?? [],

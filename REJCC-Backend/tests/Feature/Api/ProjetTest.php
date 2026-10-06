@@ -245,4 +245,46 @@ class ProjetTest extends TestCase
         $fil = $this->withToken($this->tokenFor($porteur))->getJson('/api/messages/'.\App\Models\Message::first()->sender_id)->json('messages');
         $this->assertSame('BâtiJeunes', $fil[0]['projet']['title']);
     }
+
+    // ── Découverte ─────────────────────────────────────────────────────
+
+    public function test_recherche_filtres_et_tri(): void
+    {
+        $agro = Group::create(['name' => 'Agriculture', 'slug' => 'agriculture']);
+        $btp = Group::create(['name' => 'BTP & Construction', 'slug' => 'btp']);
+        $esther = User::factory()->abonne()->create(['prenom' => 'Esther', 'nom' => 'Kouamé']);
+        Project::create(['user_id' => $esther->id, 'group_id' => $btp->id, 'title' => 'BâtiJeunes', 'description' => 'Chantiers-écoles pour les jeunes maçons.', 'statut' => 'valide', 'stade' => 'developpement', 'ville' => 'Yamoussoukro', 'besoins' => ['mentor'], 'vues' => 2, 'decide_at' => now()->subDay()]);
+        $agv = Project::create(['user_id' => $esther->id, 'group_id' => $agro->id, 'title' => 'AgroVert', 'description' => 'Séchage de mangues pour l’export.', 'statut' => 'valide', 'stade' => 'lance', 'ville' => 'Korhogo', 'besoins' => ['financement', 'partenaires'], 'vues' => 9, 'decide_at' => now()]);
+        Project::create(['user_id' => $esther->id, 'group_id' => $agro->id, 'title' => 'Secret', 'description' => 'En évaluation, invisible.', 'statut' => 'evaluation']);
+        \App\Models\ProjectFollow::create(['project_id' => $agv->id, 'user_id' => User::factory()->create()->id]);
+        $t = $this->tokenFor(User::factory()->abonne()->create());
+        $titres = fn ($params) => array_column($this->withToken($t)->getJson('/api/projects?'.http_build_query($params))->json('projects'), 'title');
+
+        $this->assertSame(['AgroVert', 'BâtiJeunes'], $titres([]));
+        $this->assertSame(['BâtiJeunes'], $titres(['q' => 'maçon chantiers']));
+        $this->assertSame(['AgroVert', 'BâtiJeunes'], $titres(['q' => 'esther', 'tri' => 'vues'])); // recherche sur le porteur, tri par vues
+        $this->assertSame(['AgroVert'], $titres(['groupe' => $agro->id]));
+        $this->assertSame(['BâtiJeunes'], $titres(['stade' => 'developpement']));
+        $this->assertSame(['AgroVert'], $titres(['besoin' => 'financement']));
+        $this->assertSame(['BâtiJeunes'], $titres(['ville' => 'Yamoussoukro']));
+        $this->assertSame(['AgroVert', 'BâtiJeunes'], $titres(['tri' => 'suivis']));
+        $this->assertSame(['Korhogo', 'Yamoussoukro'], $this->withToken($t)->getJson('/api/projects')->json('villes'));
+    }
+
+    public function test_apercu_pour_les_non_abonnes(): void
+    {
+        \App\Support\SubscriptionMode::set(true);
+        $agro = Group::create(['name' => 'Agriculture', 'slug' => 'agriculture']);
+        Project::create(['user_id' => User::factory()->create()->id, 'group_id' => $agro->id, 'title' => 'AgroVert', 'description' => str_repeat('a', 30), 'statut' => 'valide', 'besoins' => ['financement']]);
+        Project::create(['title' => 'Secret', 'description' => str_repeat('b', 30), 'statut' => 'evaluation']);
+        $t = $this->tokenFor(User::factory()->create()); // sans abonnement
+
+        $this->withToken($t)->getJson('/api/projects')->assertStatus(402);
+        $a = $this->withToken($t)->getJson('/api/projects-apercu')->assertOk()->json('apercu');
+        $this->assertSame(1, $a['projets']);
+        $this->assertSame(['Agriculture' => 1], $a['secteurs']);
+        $this->assertSame(['Financement' => 1], $a['besoins']);
+        $this->assertSame(['AgroVert'], array_column($a['exemples'], 'title'));
+        $this->assertArrayNotHasKey('porteur', $a['exemples'][0]);
+    }
 }

@@ -165,6 +165,9 @@ Route::middleware('auth.token')->group(function () {
     // Certificats (émis automatiquement pour les formations certifiantes terminées)
     Route::get('/my-certificates', [\App\Http\Controllers\Api\CertificateController::class, 'mine']);
 
+    // Projets — aperçu (chiffres, sans données personnelles) pour les non-abonnés
+    Route::get('/projects-apercu', [\App\Http\Controllers\Api\ProjectController::class, 'apercu']);
+
     // Projets — réservés aux abonnés à jour
     Route::middleware('sub.active')->group(function () {
         Route::get('/projects', [\App\Http\Controllers\Api\ProjectController::class, 'index']);
