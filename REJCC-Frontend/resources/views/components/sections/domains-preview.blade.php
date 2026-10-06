@@ -20,9 +20,7 @@
                 <x-ui.reveal :delay="($i % 3) * 0.07">
                     <a href="/domaines" wire:navigate class="group relative block h-full overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] p-7 transition-all duration-500 hover:border-white/25 hover:bg-white/[0.08]">
                         <div class="flex items-start justify-between">
-                            <span class="inline-flex size-13 items-center justify-center rounded-2xl bg-white/10 text-white transition-all duration-500 group-hover:bg-accent">
-                                <x-ui.icon :name="$s->icon" class="size-6" />
-                            </span>
+                            <span class="font-display text-4xl leading-none text-white/20 tabular-nums transition-colors duration-500 group-hover:text-accent">{{ str_pad($i + 1, 2, '0', STR_PAD_LEFT) }}</span>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="size-5 text-white/30 transition-all duration-500 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-white"><path d="M7 17 17 7M7 7h10v10"/></svg>
                         </div>
 

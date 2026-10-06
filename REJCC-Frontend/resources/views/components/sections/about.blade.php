@@ -1,8 +1,8 @@
 @php
     $site = \App\Support\Content\SiteConfig::get();
     $pillars = [
-        ['icon' => 'network', 'label' => 'Notre mission', 'text' => $site['mission']],
-        ['icon' => 'target', 'label' => 'Notre vision', 'text' => $site['vision']],
+        ['label' => 'Notre mission', 'text' => $site['mission']],
+        ['label' => 'Notre vision', 'text' => $site['vision']],
     ];
 @endphp
 
@@ -28,11 +28,12 @@
                 <x-ui.reveal :delay="$i * 0.1">
                     <article class="group relative overflow-hidden rounded-3xl border border-brand/10 bg-cloud p-8 transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_30px_60px_-30px_rgba(3,29,89,0.35)]">
                         <div class="pointer-events-none absolute -right-10 -top-10 size-40 rounded-full bg-azure/10 blur-2xl transition-opacity duration-500 group-hover:opacity-100"></div>
-                        <span class="inline-flex size-14 items-center justify-center rounded-2xl bg-brand text-white shadow-lg">
-                            <x-ui.icon :name="$p['icon']" class="size-6" />
-                        </span>
-                        <h3 class="mt-6 font-display text-2xl uppercase tracking-tight text-brand">{{ $p['label'] }}</h3>
-                        <p class="mt-3 text-pretty leading-relaxed text-ink/75">{{ $p['text'] }}</p>
+                        <div class="flex items-baseline gap-4">
+                            <span class="font-display text-5xl leading-none text-brand/15 tabular-nums">0{{ $i + 1 }}</span>
+                            <h3 class="font-display text-2xl uppercase tracking-tight text-brand">{{ $p['label'] }}</h3>
+                        </div>
+                        <span class="mt-5 block h-0.5 w-10 bg-accent"></span>
+                        <p class="mt-4 text-pretty leading-relaxed text-ink/75">{{ $p['text'] }}</p>
                     </article>
                 </x-ui.reveal>
             @endforeach

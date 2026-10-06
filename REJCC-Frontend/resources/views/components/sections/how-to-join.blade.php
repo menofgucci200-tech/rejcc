@@ -19,9 +19,8 @@
                     <x-ui.reveal :delay="$i * 0.1" class="h-full">
                         <li class="relative flex h-full flex-col">
                             <div class="flex items-center gap-4 lg:flex-col lg:items-start">
-                                <span class="relative z-10 inline-flex size-18 shrink-0 items-center justify-center rounded-2xl bg-white text-brand shadow-[0_18px_40px_-20px_rgba(3,29,89,0.5)] ring-1 ring-brand/10">
-                                    <x-ui.icon :name="$s->icon" class="size-7" />
-                                    <span class="absolute -right-2 -top-2 inline-flex size-7 items-center justify-center rounded-full bg-accent text-xs font-bold text-white">{{ $i + 1 }}</span>
+                                <span class="relative z-10 inline-flex size-18 shrink-0 items-center justify-center rounded-2xl bg-white font-display text-4xl leading-none text-brand shadow-[0_18px_40px_-20px_rgba(3,29,89,0.5)] ring-1 ring-brand/10">
+                                    {{ $i + 1 }}<span class="text-accent">.</span>
                                 </span>
                             </div>
                             <h3 class="mt-6 text-lg font-bold text-brand">{{ $s->title }}</h3>
