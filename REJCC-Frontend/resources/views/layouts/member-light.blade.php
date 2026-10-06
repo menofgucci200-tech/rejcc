@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr" @if (config('app.debug')) data-debug @endif>
+<html lang="fr" @if (config('app.debug')) data-debug @endif @class(['rj-texte-grand' => (bool) (session('api_user.preferences.texte_grand') ?? false)])>
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -53,5 +53,8 @@
         </div>
 
         @livewireScripts
+        @if (session('rj_toast'))
+            <script>(() => { const f = () => window.dispatchEvent(new CustomEvent('rj-toast', { detail: @js(session('rj_toast')) })); document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', f) : setTimeout(f, 60); })();</script>
+        @endif
     </body>
 </html>

@@ -151,7 +151,7 @@ class AbonnementAdminController extends Controller
             ? 'Votre abonnement annuel au REJCC '.($u->subscription_expires_at->isFuture() ? 'expire le ' : 'a expiré le ').$u->subscription_expires_at->locale('fr')->isoFormat('D MMMM YYYY').' : pensez à le renouveler pour garder l\'accès à toutes les fonctionnalités du réseau.'
             : 'Activez votre abonnement annuel au REJCC pour accéder à la carte membre, à l\'annuaire, à la messagerie, à la Marketplace et aux projets.');
         $titre = 'Votre abonnement REJCC';
-        MemberNotification::create(['user_id' => $u->id, 'type' => 'info', 'title' => $titre, 'body' => $texte, 'link' => '/espace-membre/abonnement']);
+        MemberNotification::create(['user_id' => $u->id, 'type' => 'info', 'title' => $titre, 'body' => $texte, 'link' => '/espace-membre/abonnement', 'email_at' => now()]);
         Mailer::send($u->email, new AbonnementRappel($u, $titre, $texte));
 
         return response()->json(['ok' => true, 'message' => 'Relance envoyée à '.trim($u->prenom.' '.$u->nom).'.']);

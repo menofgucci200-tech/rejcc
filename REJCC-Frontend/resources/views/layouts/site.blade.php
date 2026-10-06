@@ -86,5 +86,8 @@
         @endunless
 
         @livewireScripts
+        @if (session('rj_toast'))
+            <script>(() => { const f = () => window.dispatchEvent(new CustomEvent('rj-toast', { detail: @js(session('rj_toast')) })); document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', f) : setTimeout(f, 60); })();</script>
+        @endif
     </body>
 </html>

@@ -152,7 +152,7 @@ class Abonnement
             'title' => $offert ? 'Un abonnement vous a été offert !' : 'Paiement confirmé : votre abonnement est actif',
             'body' => ($offert ? trim($p->user?->prenom.' '.$p->user?->nom).' vous offre votre abonnement annuel au REJCC. ' : '')
                 ."Il est valable jusqu'au {$finTxt}. Votre reçu est disponible dans « Mon abonnement ».",
-            'link' => '/espace-membre/abonnement',
+            'link' => '/espace-membre/abonnement', 'email_at' => now(),
         ]);
         Mailer::send($beneficiaire->email, new AbonnementConfirme($p->fresh(), $beneficiaire, $offert ? 'beneficiaire' : 'membre'));
         if ($offert && $p->user) {
@@ -160,7 +160,7 @@ class Abonnement
                 'user_id' => $p->user_id, 'type' => 'success',
                 'title' => 'Merci pour votre générosité !',
                 'body' => 'Votre paiement est confirmé : '.trim($beneficiaire->prenom.' '.$beneficiaire->nom)." est abonné(e) jusqu'au {$finTxt}. Votre reçu est disponible dans « Mon abonnement ».",
-                'link' => '/espace-membre/abonnement',
+                'link' => '/espace-membre/abonnement', 'email_at' => now(),
             ]);
             Mailer::send($p->user->email, new AbonnementConfirme($p->fresh(), $beneficiaire, 'payeur'));
         }
@@ -234,7 +234,7 @@ class Abonnement
                 ':date' => $u->subscription_expires_at->locale('fr')->isoFormat('D MMMM YYYY'),
                 ':grace' => $u->subscription_expires_at->copy()->addDays(self::GRACE_JOURS)->locale('fr')->isoFormat('D MMMM YYYY'),
             ]);
-            MemberNotification::create(['user_id' => $u->id, 'type' => $etape === 'fin' ? 'warning' : 'info', 'title' => $titre, 'body' => $texte, 'link' => '/espace-membre/abonnement']);
+            MemberNotification::create(['user_id' => $u->id, 'type' => $etape === 'fin' ? 'warning' : 'info', 'title' => $titre, 'body' => $texte, 'link' => '/espace-membre/abonnement', 'email_at' => now()]);
             Mailer::send($u->email, new AbonnementRappel($u, $titre, $texte));
             $u->forceFill(['abonnement_rappel' => $cle])->save();
             $n++;

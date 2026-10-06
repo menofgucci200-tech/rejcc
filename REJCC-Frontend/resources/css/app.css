@@ -504,3 +504,8 @@ select.rj-invalide {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: none; }
 }
+
+/* Confort de lecture (Paramètres → Mon compte) : contenu de l'espace membre agrandi. */
+html.rj-texte-grand main {
+    zoom: 1.12;
+}

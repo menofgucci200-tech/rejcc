@@ -1,5 +1,6 @@
 import './bootstrap';
 import './rj-dialogs';
+import './rj-app';
 import Lenis from 'lenis';
 import QRCode from 'qrcode';
 import { initHomeMotion } from './home-motion';

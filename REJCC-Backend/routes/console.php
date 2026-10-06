@@ -84,3 +84,31 @@ Artisan::command('abonnements:paiements', function () {
 })->purpose('Revérifie les paiements en attente auprès de CinetPay');
 
 Schedule::command('abonnements:paiements')->everyThirtyMinutes();
+
+// Notifications par e-mail selon les réglages des membres : « tout de suite »
+// (notification restée non lue 10 min) et résumé quotidien du matin.
+Artisan::command('notifications:emails', function () {
+    $this->info(\App\Support\Notifications::envoyerImmediats().' e-mail(s) envoyé(s).');
+})->purpose('E-mails des notifications « tout de suite »');
+
+Schedule::command('notifications:emails')->everyFiveMinutes()->withoutOverlapping();
+
+Artisan::command('notifications:resume', function () {
+    $this->info(\App\Support\Notifications::envoyerResumes().' résumé(s) envoyé(s).');
+})->purpose('Résumé quotidien des notifications non lues');
+
+Schedule::command('notifications:resume')->dailyAt('07:30');
+
+// Comptes clôturés : anonymisation définitive 30 jours après la demande.
+Artisan::command('comptes:clotures', function () {
+    $this->info(\App\Support\Cloture::anonymiserEcheances().' compte(s) supprimé(s) définitivement.');
+})->purpose('Anonymise les comptes dont la clôture est arrivée à échéance');
+
+Schedule::command('comptes:clotures')->dailyAt('03:10');
+
+// Notifications sur les appareils (Web Push) : envoi à la minute.
+Artisan::command('notifications:push', function () {
+    $this->info(\App\Support\Notifications::envoyerPush().' notification(s) envoyée(s) sur les appareils.');
+})->purpose('Notifications push sur les appareils des membres');
+
+Schedule::command('notifications:push')->everyMinute()->withoutOverlapping();

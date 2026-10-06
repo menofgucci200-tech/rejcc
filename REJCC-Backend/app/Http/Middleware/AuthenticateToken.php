@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\ApiToken;
+use App\Support\Client;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -30,7 +31,12 @@ class AuthenticateToken
             return response()->json(['ok' => false, 'message' => 'Session expirée, veuillez vous reconnecter.'], 401);
         }
 
-        $row->forceFill(['last_used_at' => now()])->save();
+        // Appareil et adresse tenus à jour pour « Appareils connectés ».
+        $row->forceFill(['last_used_at' => now()] + array_filter([
+            'ip' => Client::ip($request),
+            'agent' => Client::agent($request),
+        ]))->save();
+        $request->attributes->set('api_token_id', $row->id);
         $request->setUserResolver(fn () => $row->user);
 
         return $next($request);

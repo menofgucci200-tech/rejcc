@@ -181,6 +181,7 @@ class Certificats
                 'title' => $reemission ? "{$quoi} a été mis à jour" : "{$quoi} est disponible",
                 'body' => "« {$c->titre} » — référence {$c->reference}. Téléchargez-le et partagez son lien de vérification.",
                 'link' => '/espace-membre/certificats?certificat='.$c->id,
+                'email_at' => now(), // e-mail dédié envoyé ci-dessous
             ]);
         }
         Mailer::send($c->user?->email ?? $c->email, new CertificatDelivre($c, $reemission));

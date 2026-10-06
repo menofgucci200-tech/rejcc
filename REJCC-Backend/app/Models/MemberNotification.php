@@ -9,11 +9,11 @@ class MemberNotification extends Model
 {
     protected $table = 'member_notifications';
 
-    protected $fillable = ['user_id', 'type', 'title', 'body', 'link', 'read_at'];
+    protected $fillable = ['user_id', 'type', 'title', 'body', 'link', 'read_at', 'email_at', 'push_at'];
 
     protected function casts(): array
     {
-        return ['read_at' => 'datetime'];
+        return ['read_at' => 'datetime', 'email_at' => 'datetime', 'push_at' => 'datetime'];
     }
 
     public function user(): BelongsTo

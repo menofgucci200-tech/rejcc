@@ -69,6 +69,8 @@ Route::get('/billet/{code}', \App\Livewire\Billet::class)->name('billet');
 // Vérification publique des certificats et attestations (le registre fait foi)
 Route::get('/verifier/{code?}', \App\Livewire\VerifierCertificat::class)->name('verifier');
 Route::get('/verifier/{code}/pdf', [\App\Http\Controllers\CertificatPdfController::class, 'public'])->name('verifier.pdf');
+// Confirmation d'une nouvelle adresse e-mail (lien reçu par e-mail)
+Route::get('/confirmer-email/{jeton}', [\App\Http\Controllers\CompteController::class, 'confirmerEmail'])->where('jeton', '[A-Za-z0-9]{32,64}')->middleware('throttle:10,1')->name('confirmer-email');
 Route::get('/adhesion', \App\Livewire\AdhesionApplicationForm::class)->name('adhesion');
 Route::get('/suivre-ma-candidature', \App\Livewire\AdhesionStatusCheck::class)->name('adhesion.status');
 Route::redirect('/inscription', '/adhesion');
@@ -98,6 +100,7 @@ Route::middleware('api.auth')->prefix('espace-membre')->name('espace-membre.')->
     Route::get('/documents/{id}/fichier/{nom?}', \App\Http\Controllers\DocumentFichierController::class)->whereNumber('id')->name('documents.fichier');
     Route::get('/mes-documents/{id}/fichier/{nom?}', [\App\Http\Controllers\CoffreFichierController::class, 'membre'])->whereNumber('id')->name('mes-documents.fichier');
     Route::get('/profil', MemberProfileEditor::class)->name('profile');
+    Route::get('/mes-donnees', [\App\Http\Controllers\CompteController::class, 'exporter'])->middleware('throttle:5,1')->name('mes-donnees');
 
     Route::get('/formations', MemberFormations::class)->name('formations');
     Route::get('/formations/{formationId}', \App\Livewire\Member\FormationDetail::class)->name('formations.detail');

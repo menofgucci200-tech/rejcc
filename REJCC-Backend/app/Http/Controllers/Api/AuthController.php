@@ -5,10 +5,16 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Mail\ReinitialisationMotDePasse;
 use App\Models\ApiToken;
+use App\Models\Group;
 use App\Models\MemberNotification;
+use App\Models\NewsletterSubscriber;
 use App\Models\User;
+use App\Support\Abonnement;
+use App\Support\Client;
+use App\Support\Journal;
 use App\Support\Mailer;
 use App\Support\MemberProfile;
+use App\Support\SubscriptionMode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -25,7 +31,10 @@ class AuthController extends Controller
             'user_id' => $user->id,
             'token' => hash('sha256', $plain),
             'name' => 'web',
+            'ip' => Client::ip(request()),
+            'agent' => Client::agent(request()),
         ]);
+
         return $plain;
     }
 
@@ -45,14 +54,15 @@ class AuthController extends Controller
             'date_naissance' => $u->date_naissance?->toDateString(),
             'preferences' => $u->preferencesEffectives(),
             'date_adhesion' => $u->created_at?->toDateString(),
+            'email_nouveau' => $u->email_nouveau,
             'subscription_active' => $u->hasActiveSubscription(),
             'subscription_paid' => $u->hasPaidSubscription(),
-            'subscriptions_enforced' => \App\Support\SubscriptionMode::enforced(),
+            'subscriptions_enforced' => SubscriptionMode::enforced(),
             'subscription_expires_at' => $u->subscription_expires_at?->toDateString(),
             'subscription_grace' => $u->abonnementEnGrace(),
-            'subscription_grace_fin' => $u->abonnementEnGrace() ? $u->subscription_expires_at->copy()->addDays(\App\Support\Abonnement::GRACE_JOURS)->toDateString() : null,
+            'subscription_grace_fin' => $u->abonnementEnGrace() ? $u->subscription_expires_at->copy()->addDays(Abonnement::GRACE_JOURS)->toDateString() : null,
             'subscription_exempt' => $u->isExemptFromSubscription(),
-            'mentor' => $u->role === 'mentor' ? \App\Support\MemberProfile::mentor($u) : null,
+            'mentor' => $u->role === 'mentor' ? MemberProfile::mentor($u) : null,
         ];
     }
 
@@ -75,7 +85,7 @@ class AuthController extends Controller
 
         $d = $validator->validated();
         $user = User::create([
-            'name' => $d['prenom'] . ' ' . $d['nom'],
+            'name' => $d['prenom'].' '.$d['nom'],
             'prenom' => $d['prenom'],
             'nom' => $d['nom'],
             'email' => $d['email'],
@@ -118,14 +128,26 @@ class AuthController extends Controller
             return response()->json(['ok' => false, 'message' => 'Identifiant ou mot de passe incorrect.'], 401);
         }
 
+        // Clôture demandée : se reconnecter avant la date l'annule.
+        $clotureAnnulee = false;
+        if (! $user->is_active && $user->suppression_prevue_at && ! $user->anonymise_at) {
+            $user->forceFill(['is_active' => true, 'suppression_prevue_at' => null, 'suppression_motif' => null])->save();
+            Journal::noter($user, 'cloture_annulee', null, $request);
+            $clotureAnnulee = true;
+        }
+
         if (! $user->is_active) {
             return response()->json(['ok' => false, 'message' => 'Ce compte a été suspendu. Contactez un administrateur.'], 403);
         }
 
+        $token = $this->issueToken($user);
+        Journal::noter($user, 'connexion', null, $request);
+
         return response()->json([
             'ok' => true,
-            'token' => $this->issueToken($user),
+            'token' => $token,
             'user' => $this->payload($user),
+            'cloture_annulee' => $clotureAnnulee,
         ]);
     }
 
@@ -170,8 +192,8 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'email' => 'required|email',
             'token' => 'required|string',
-            'password' => 'required|string|min:8|max:100|confirmed',
-        ]);
+            'password' => CompteController::regleMotDePasse(),
+        ], CompteController::MESSAGES_MOT_DE_PASSE);
 
         if ($validator->fails()) {
             return response()->json(['ok' => false, 'message' => $validator->errors()->first()], 422);
@@ -199,6 +221,7 @@ class AuthController extends Controller
 
         // Déconnecte les éventuelles sessions ouvertes avec l'ancien mot de passe.
         ApiToken::where('user_id', $user->id)->delete();
+        Journal::noter($user, 'mot_de_passe_reinitialise', null, $request);
 
         return response()->json(['ok' => true]);
     }
@@ -211,6 +234,7 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         ApiToken::where('token', hash('sha256', $request->bearerToken() ?? ''))->delete();
+
         return response()->json(['ok' => true]);
     }
 
@@ -244,7 +268,9 @@ class AuthController extends Controller
             'liens.facebook' => 'nullable|url|max:300',
             'liens.instagram' => 'nullable|url|max:300',
             'photo' => 'nullable|url|max:500', // URL de la photo (fichier stocké côté frontend)
-            'piece_identite' => 'nullable|url|max:500', // URL de la pièce d'identité
+            // Ancienne pièce d'identité en ligne : ne peut plus qu'être retirée (elle vit
+            // désormais dans le coffre-fort chiffré « Mes documents personnels »).
+            'piece_identite' => 'nullable|prohibited',
         ]);
 
         if ($validator->fails()) {
@@ -271,33 +297,11 @@ class AuthController extends Controller
 
         $user->fill($data);
         if ($user->isDirty(['prenom', 'nom'])) {
-            $user->name = $user->prenom . ' ' . $user->nom;
+            $user->name = $user->prenom.' '.$user->nom;
         }
         $user->save();
 
         return response()->json(['ok' => true, 'user' => $this->payload($user)]);
-    }
-
-    public function updatePassword(Request $request)
-    {
-        $user = $request->user();
-        $validator = Validator::make($request->all(), [
-            'current_password' => 'required|string',
-            'password' => 'required|string|min:8|confirmed',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['ok' => false, 'message' => $validator->errors()->first()], 422);
-        }
-
-        if (! Hash::check($request->current_password, $user->password)) {
-            return response()->json(['ok' => false, 'message' => 'Mot de passe actuel incorrect.'], 422);
-        }
-
-        $user->password = $request->password;
-        $user->save();
-
-        return response()->json(['ok' => true]);
     }
 
     public function updatePreferences(Request $request)
@@ -312,10 +316,27 @@ class AuthController extends Controller
             return response()->json(['ok' => false, 'message' => $validator->errors()->first()], 422);
         }
 
-        $user->preferences = array_merge($user->preferencesEffectives(), $request->preferences);
+        // Seuls les réglages connus sont enregistrés ; les notifications ont leur propre route.
+        $avant = $user->preferencesEffectives();
+        $nouveaux = array_intersect_key(array_map('boolval', $request->preferences), $user->defaultPreferences());
+        $user->preferences = array_merge($user->preferences ?? [], $nouveaux);
         $user->save();
+        $apres = $user->preferencesEffectives();
 
-        return response()->json(['ok' => true, 'preferences' => $user->preferences]);
+        // Lettre d'information : la liste gérée par l'administration suit le choix du membre.
+        if (($avant['newsletter'] ?? null) !== $apres['newsletter']) {
+            $apres['newsletter']
+                ? NewsletterSubscriber::firstOrCreate(['email' => $user->email])
+                : NewsletterSubscriber::where('email', $user->email)->delete();
+        }
+        $vie = ['apparaitre_annuaire' => "Apparaître dans l'annuaire", 'visibilite_profil' => 'Coordonnées visibles par les membres', 'coordonnees_publiques' => 'Coordonnées sur la page publique'];
+        foreach ($vie as $cle => $libelle) {
+            if (($avant[$cle] ?? null) !== $apres[$cle]) {
+                Journal::noter($user, 'confidentialite', $libelle.' : '.($apres[$cle] ? 'activé' : 'désactivé'), $request);
+            }
+        }
+
+        return response()->json(['ok' => true, 'preferences' => $apres]);
     }
 
     public function directory(Request $request)
@@ -357,7 +378,7 @@ class AuthController extends Controller
         // trouve le membre dont le prénom est Koffi et le nom Yao. Les listes
         // JSON (compétences, expertises) stockent les accents échappés : on
         // cherche aussi la forme échappée.
-        $mysql = \Illuminate\Support\Facades\DB::connection()->getDriverName() === 'mysql';
+        $mysql = DB::connection()->getDriverName() === 'mysql';
         foreach (preg_split('/\s+/', $q, -1, PREG_SPLIT_NO_EMPTY) as $mot) {
             $echappe = trim(json_encode(mb_strtolower($mot)), '"');
             if ($mysql) {
@@ -401,7 +422,7 @@ class AuthController extends Controller
             'filtres' => [
                 'secteurs' => User::whereIn('role', ['member', 'mentor'])->where('is_active', true)->whereNotNull('secteur')->where('secteur', '!=', '')->distinct()->orderBy('secteur')->pluck('secteur'),
                 'villes' => User::whereIn('role', ['member', 'mentor'])->where('is_active', true)->whereNotNull('ville')->where('ville', '!=', '')->distinct()->orderBy('ville')->pluck('ville'),
-                'groupes' => \App\Models\Group::orderBy('ordre')->get(['id', 'name'])->map(fn ($g) => ['id' => $g->id, 'nom' => $g->name]),
+                'groupes' => Group::orderBy('ordre')->get(['id', 'name'])->map(fn ($g) => ['id' => $g->id, 'nom' => $g->name]),
             ],
             'meta' => [
                 'current_page' => $page->currentPage(),

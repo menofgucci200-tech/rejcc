@@ -324,7 +324,8 @@ document.addEventListener('livewire:init', () => {
 // Notifications émises par les composants : $this->dispatch('rj-toast', message: '…', type: 'succes').
 window.addEventListener('rj-toast', (e) => {
     const d = Array.isArray(e.detail) ? e.detail[0] : e.detail;
-    if (d?.message) rjToast(d.message, { type: d.type ?? 'succes' });
+    const types = { success: 'succes', error: 'erreur', warning: 'erreur' };
+    if (d?.message) rjToast(d.message, { type: types[d.type] ?? d.type ?? 'succes' });
 });
 
 window.rjConfirm = rjConfirm;

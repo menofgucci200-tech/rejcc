@@ -1,11 +1,23 @@
 {
   "name": "REJCC — Réseau Entrepreneurial des Jeunes Chrétiens Catholiques",
   "short_name": "REJCC",
-  "icons": [
-    { "src": "/favicon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/favicon-512.png", "sizes": "512x512", "type": "image/png" }
-  ],
+  "description": "L'espace membre du Réseau Entrepreneurial des Jeunes Chrétiens Catholiques : formations, mentorat, messagerie, projets et opportunités.",
+  "lang": "fr",
+  "id": "/espace-membre",
+  "start_url": "/espace-membre?source=application",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
   "theme_color": "#031d59",
-  "background_color": "#ffffff",
-  "display": "standalone"
+  "background_color": "#031d59",
+  "icons": [
+    { "src": "/app/icone-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/app/icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/app/icone-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Messagerie", "url": "/espace-membre/messagerie", "icons": [{ "src": "/app/icone-192.png", "sizes": "192x192" }] },
+    { "name": "Notifications", "url": "/espace-membre/notifications", "icons": [{ "src": "/app/icone-192.png", "sizes": "192x192" }] },
+    { "name": "Ma carte membre", "url": "/espace-membre/carte", "icons": [{ "src": "/app/icone-192.png", "sizes": "192x192" }] }
+  ]
 }

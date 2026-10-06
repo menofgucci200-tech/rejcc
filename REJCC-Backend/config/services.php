@@ -54,4 +54,10 @@ return [
         'pdf_mot_de_passe' => env('CERTIFICATS_PDF_MOT_DE_PASSE', ''),
     ],
 
+    // Notifications Web Push : clé privée VAPID (PEM, éventuellement en base64).
+    // Sans valeur, une paire est créée et conservée dans storage/app/private/webpush.
+    'webpush' => [
+        'private_key' => env('WEBPUSH_PRIVATE_KEY'),
+    ],
+
 ];

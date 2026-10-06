@@ -14,6 +14,16 @@ class Api
     protected static function client(?string $token = null): PendingRequest
     {
         $client = Http::baseUrl(config('services.backend.url'))->acceptJson();
+        // Adresse et navigateur du visiteur : « Appareils connectés », journal du
+        // compte et limites anti-force brute calculées par personne, pas par serveur.
+        if (! app()->runningInConsole() && ($r = request())) {
+            $client = $client->withHeaders(array_filter([
+                'X-Client-Ip' => $r->ip(),
+                // Les limites anti-abus de l'API (formulaires publics…) comptent ainsi par visiteur.
+                'X-Forwarded-For' => $r->ip(),
+                'X-Client-Agent' => mb_substr((string) $r->userAgent(), 0, 255),
+            ]));
+        }
 
         return $token ? $client->withToken($token) : $client;
     }

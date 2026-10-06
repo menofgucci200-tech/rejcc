@@ -32,6 +32,9 @@ new #[Layout('layouts.site')] class extends Component
 
         session(['api_token' => $result['token'], 'api_user' => $result['user']]);
         session()->regenerate();
+        if ($result['cloture_annulee'] ?? false) {
+            session()->flash('rj_toast', ['message' => 'Bon retour parmi nous ! La clôture de votre compte a été annulée.', 'type' => 'success']);
+        }
 
         $admin = ($result['user']['role'] ?? null) === 'admin';
         $target = $admin ? '/admin' : '/espace-membre';

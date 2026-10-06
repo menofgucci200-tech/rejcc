@@ -143,6 +143,9 @@ class User extends Authenticatable
             'permissions' => 'array',
             'is_active' => 'boolean',
             'subscription_expires_at' => 'datetime',
+            'email_jeton_at' => 'datetime',
+            'suppression_prevue_at' => 'datetime',
+            'anonymise_at' => 'datetime',
             'mentor_expertises' => 'array',
             'mentor_capacite' => 'integer',
             'mentor_accepte' => 'boolean',
@@ -181,25 +184,31 @@ class User extends Authenticatable
         };
     }
 
-    /** Préférences enregistrées, complétées par les valeurs par défaut des réglages ajoutés depuis. */
+    /**
+     * Préférences enregistrées, complétées par les valeurs par défaut. Les
+     * notifications (e-mail par catégorie, téléphone, pause) sont détaillées
+     * par App\Support\Notifications::reglages().
+     */
     public function preferencesEffectives(): array
     {
-        return array_merge($this->defaultPreferences(), $this->preferences ?? []);
+        $p = array_intersect_key($this->preferences ?? [], $this->defaultPreferences());
+
+        return array_merge($this->defaultPreferences(), $p) + ['notifications' => \App\Support\Notifications::reglages($this)];
     }
 
     public function defaultPreferences(): array
     {
         return [
-            'notifications_email' => true,
-            'rappels_quotidiens' => true,
             // Présence dans l'annuaire des membres (désactivable).
             'apparaitre_annuaire' => true,
             // Téléphone et e-mail montrés aux membres : sur choix explicite.
             'visibilite_profil' => false,
             // Coordonnées sur la page publique du QR code : uniquement sur choix explicite.
             'coordonnees_publiques' => false,
+            // Lettre d'information du REJCC (liste gérée dans l'administration).
             'newsletter' => true,
-            'telechargement_hors_ligne' => false,
+            // Confort de lecture : textes de l'espace membre agrandis.
+            'texte_grand' => false,
         ];
     }
 }

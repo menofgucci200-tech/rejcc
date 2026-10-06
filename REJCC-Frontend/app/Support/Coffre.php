@@ -28,6 +28,15 @@ class Coffre
         return $chemin;
     }
 
+    /** Variante à partir d'un contenu déjà lu (reprise d'anciens fichiers). */
+    public static function rangerContenu(string $contenu, int $userId): string
+    {
+        $chemin = self::dossier($userId).'/'.Str::random(40).'.enc';
+        Storage::disk('local')->put($chemin, Crypt::encryptString(base64_encode($contenu)));
+
+        return $chemin;
+    }
+
     public static function lire(string $chemin): ?string
     {
         if (! Storage::disk('local')->exists($chemin)) {

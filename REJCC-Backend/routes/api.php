@@ -46,6 +46,8 @@ Route::get('/public-events/{slug}', [EventController::class, 'publicShow']);
 // Vérification publique des certificats (le registre fait foi), limitée contre les essais en série
 Route::get('/certificats/verifier/{code}', [\App\Http\Controllers\Api\CertificateController::class, 'verifier'])->middleware('throttle:verification');
 Route::get('/certificats/verifier/{code}/pdf', [\App\Http\Controllers\Api\CertificateController::class, 'pdfPublic'])->middleware('throttle:verification');
+// Clé publique VAPID (notifications sur les appareils)
+Route::get('/push/cle', fn () => response()->json(['ok' => true, 'cle' => \App\Support\WebPush::clePublique()]));
 Route::post('/certificats/verifier-fichier', [\App\Http\Controllers\Api\CertificateController::class, 'verifierFichier'])->middleware('throttle:verification');
 
 // Carte membre publique (cible des QR codes), limitée contre l'énumération
@@ -75,12 +77,13 @@ Route::middleware('throttle:10,1')->group(function () {
     Route::post('/partenariat', [PartenariatController::class, 'store']);
 });
 
-// Authentification — espace membre (throttle anti-brute-force, par IP)
-Route::middleware('throttle:5,1')->group(function () {
+// Authentification — espace membre (anti-force brute par visiteur et par e-mail)
+Route::middleware('throttle:connexion')->group(function () {
     Route::post('/auth/register', [AuthController::class, 'register']);
     Route::post('/auth/login', [AuthController::class, 'login']);
     Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
     Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
+    Route::post('/auth/email/confirmer', [\App\Http\Controllers\Api\CompteController::class, 'confirmerEmail']);
 });
 
 Route::middleware('auth.token')->group(function () {
@@ -88,8 +91,24 @@ Route::middleware('auth.token')->group(function () {
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
-    Route::put('/auth/password', [AuthController::class, 'updatePassword']);
+    Route::put('/auth/password', [\App\Http\Controllers\Api\CompteController::class, 'motDePasse'])->middleware('throttle:compte-mdp');
     Route::put('/auth/preferences', [AuthController::class, 'updatePreferences']);
+    // Paramètres du compte
+    Route::controller(\App\Http\Controllers\Api\CompteController::class)->prefix('auth')->group(function () {
+        Route::get('/notifications', 'notifications');
+        Route::put('/notifications', 'enregistrerNotifications');
+        Route::get('/appareils', 'appareils');
+        Route::delete('/appareils/{id}', 'deconnecterAppareil')->whereNumber('id');
+        Route::post('/appareils/deconnecter-autres', 'deconnecterAutres');
+        Route::post('/email', 'demanderEmail')->middleware('throttle:compte-email');
+        Route::delete('/email', 'annulerEmail');
+        Route::get('/export', 'export')->middleware('throttle:compte-export');
+        Route::post('/cloture', 'cloturer')->middleware('throttle:compte-cloture');
+        Route::get('/journal', 'journal');
+        Route::post('/push', 'abonnerPush');
+        Route::delete('/push', 'desabonnerPush');
+        Route::post('/push/essai', 'essaiPush')->middleware('throttle:compte-push');
+    });
 
     // Abonnement annuel (10 000 F) — statut consultable par tout membre connecté
     Route::get('/subscription/status', [\App\Http\Controllers\Api\SubscriptionController::class, 'status']);

@@ -145,6 +145,7 @@ class PersonalDocumentController extends Controller
             return response()->json(['ok' => false, 'message' => "Ce document n'est pas partagé avec l'équipe."], 404);
         }
         $d->update(['consulte_equipe_at' => now()]);
+        \App\Support\Journal::noter($d->user_id, 'consultation_equipe', $d->libelle(), false);
         // Toute consultation par l'équipe est tracée dans le journal d'audit.
         $admin = $request->user();
         \App\Models\AuditLog::create([
