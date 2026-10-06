@@ -94,6 +94,9 @@ Route::middleware('auth.token')->group(function () {
     // Abonnement annuel (10 000 F) — statut consultable par tout membre connecté
     Route::get('/subscription/status', [\App\Http\Controllers\Api\SubscriptionController::class, 'status']);
     Route::post('/subscription/pay', [\App\Http\Controllers\Api\SubscriptionController::class, 'initiate']);
+    Route::post('/subscription/verifier/{ref}', [\App\Http\Controllers\Api\SubscriptionController::class, 'verifierPaiement'])->middleware('throttle:10,1');
+    Route::get('/subscription/recus/{ref}', [\App\Http\Controllers\Api\SubscriptionController::class, 'recu']);
+    Route::get('/subscription/beneficiaires', [\App\Http\Controllers\Api\SubscriptionController::class, 'beneficiaires'])->middleware('throttle:30,1');
 
     // Aperçu chiffré de l'annuaire, ouvert à tout membre connecté
     Route::get('/members-apercu', [AuthController::class, 'apercuAnnuaire']);
@@ -307,6 +310,14 @@ Route::middleware(['auth.token', 'audit.log'])->prefix('admin')->group(function 
         Route::get('/avis', [\App\Http\Controllers\Api\GroupAdminController::class, 'avis']);
         Route::put('/avis/{id}', [\App\Http\Controllers\Api\GroupAdminController::class, 'moderer'])->whereNumber('id');
         Route::delete('/avis/{id}', [\App\Http\Controllers\Api\GroupAdminController::class, 'supprimerAvis'])->whereNumber('id');
+    });
+
+    Route::middleware('auth.admin:membres')->group(function () {
+        Route::get('/abonnements', [\App\Http\Controllers\Api\AbonnementAdminController::class, 'index']);
+        Route::get('/abonnements/paiements', [\App\Http\Controllers\Api\AbonnementAdminController::class, 'paiements']);
+        Route::get('/abonnements/recus/{ref}', [\App\Http\Controllers\Api\AbonnementAdminController::class, 'recu']);
+        Route::put('/abonnements/tarif', [\App\Http\Controllers\Api\AbonnementAdminController::class, 'tarif']);
+        Route::post('/abonnements/{id}/relancer', [\App\Http\Controllers\Api\AbonnementAdminController::class, 'relancer'])->whereNumber('id');
     });
 
     Route::middleware('auth.admin:membres')->group(function () {

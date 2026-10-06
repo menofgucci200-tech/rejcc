@@ -2,7 +2,7 @@
     <x-member-light.topbar title="Ma carte membre" />
 
     @if ($locked ?? false)
-        <x-member-light.paywall description="Votre carte de membre officielle (avec QR code) n'est délivrée qu'aux membres à jour de leur abonnement annuel (10 000 F)." />
+        <x-member-light.paywall :description="'Votre carte de membre officielle (avec QR code) n\'est délivrée qu\'aux membres à jour de leur abonnement annuel ('.\App\Support\Tarif::libelle().').'" />
     @else
     <div class="mx-auto max-w-[1120px] px-8 py-8">
         <div class="mb-6 flex flex-wrap items-end justify-between gap-4">

@@ -141,7 +141,7 @@
                         @endif
                     </div>
                     <p class="mb-4 text-[11.5px] text-[#9AA6B8]">
-                        Identifiants de votre compte marchand <span class="font-semibold">CinetPay</span> (Wave, Orange Money, MTN, Moov, carte bancaire), nécessaires pour encaisser l'abonnement annuel des membres (10 000 F). Créez un compte sur cinetpay.com puis collez ci-dessous la clé API et l'ID de site indiqués dans votre tableau de bord CinetPay.
+                        Identifiants de votre compte marchand <span class="font-semibold">CinetPay</span> (Wave, Orange Money, MTN, Moov, carte bancaire), nécessaires pour encaisser l'abonnement annuel des membres ({{ \App\Support\Tarif::libelle() }}, réglable dans « Abonnements »). Créez un compte sur cinetpay.com puis collez ci-dessous la clé API et l'ID de site indiqués dans votre tableau de bord CinetPay.
                     </p>
                     <div class="flex flex-col gap-3" x-data="{ show: false }">
                         <label class="flex flex-col gap-1 text-xs font-semibold text-[#5B677A]">Clé API (apikey)

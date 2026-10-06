@@ -93,7 +93,21 @@ class User extends Authenticatable
     public function hasPaidSubscription(): bool
     {
         return $this->isExemptFromSubscription()
-            || ($this->subscription_expires_at !== null && $this->subscription_expires_at->isFuture());
+            || ($this->subscription_expires_at !== null && $this->subscription_expires_at->copy()->addDays(\App\Support\Abonnement::GRACE_JOURS)->isFuture());
+    }
+
+    /** Échéance passée mais encore dans le délai de grâce : accès maintenu, renouvellement attendu. */
+    public function abonnementEnGrace(): bool
+    {
+        return ! $this->isExemptFromSubscription() && $this->subscription_expires_at !== null
+            && $this->subscription_expires_at->isPast()
+            && $this->subscription_expires_at->copy()->addDays(\App\Support\Abonnement::GRACE_JOURS)->isFuture();
+    }
+
+    /** Requête : membres dont l'abonnement payé est en cours (délai de grâce compris). */
+    public function scopeAbonnementEnCours($q)
+    {
+        return $q->where('subscription_expires_at', '>', now()->subDays(\App\Support\Abonnement::GRACE_JOURS));
     }
 
     public function isExemptFromSubscription(): bool

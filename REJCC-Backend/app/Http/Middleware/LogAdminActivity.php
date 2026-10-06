@@ -35,6 +35,7 @@ class LogAdminActivity
         'groups' => 'Groupe sectoriel',
         'avis' => 'Avis de membre',
         'signalements-messages' => 'Signalement de conversation',
+        'abonnements' => 'Abonnement',
     ];
 
     public function handle(Request $request, Closure $next): Response
@@ -59,11 +60,15 @@ class LogAdminActivity
 
         $label = self::LABELS[$resource] ?? ucfirst($resource);
         $target = $label.($id && is_numeric($id) ? " #{$id}" : '');
+        if ($resource === 'abonnements' && $id === 'tarif') {
+            $target = 'Tarif de l\'abonnement annuel : '.number_format((int) $request->input('montant'), 0, ',', ' ').' F';
+        }
 
         $action = match (true) {
             $subAction === 'accept', $subAction === 'approve' => 'Acceptation',
             $subAction === 'reject' => 'Rejet',
             $subAction === 'traite' => 'Marqué traité',
+            $subAction === 'relancer' => 'Relance',
             $subAction === 'broadcast', $resource === 'notifications' => 'Notification diffusée',
             $request->isMethod('POST') => 'Création',
             $request->isMethod('DELETE') => 'Suppression',

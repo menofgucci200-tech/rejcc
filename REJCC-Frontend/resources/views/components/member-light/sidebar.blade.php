@@ -43,6 +43,7 @@
     $statut = match (true) {
         (bool) ($user->subscription_exempt ?? false) => ['Dispensé d\'abonnement', 'bg-[#22A85A]/20 text-[#7FE0A6]'],
         ! ($user->subscriptions_enforced ?? true) => ['Accès libre', 'bg-[#22A85A]/20 text-[#7FE0A6]'],
+        (bool) ($user->subscription_grace ?? false) => ['Délai de grâce'.(($user->subscription_grace_fin ?? null) ? ' · '.\Carbon\Carbon::parse($user->subscription_grace_fin)->translatedFormat('j M') : ''), 'bg-[#F5A623]/20 text-[#F7C873]'],
         (bool) ($user->subscription_paid ?? false) => ['À jour'.(($user->subscription_expires_at ?? null) ? ' · '.\Carbon\Carbon::parse($user->subscription_expires_at)->translatedFormat('j M Y') : ''), 'bg-[#22A85A]/20 text-[#7FE0A6]'],
         default => ['Abonnement non actif', 'bg-[#F5A623]/20 text-[#F7C873]'],
     };

@@ -184,6 +184,8 @@ class Dashboard extends Component
             'parole' => DailyWord::today(),
             'champsManquants' => $champsManquants,
             'abonnementActif' => $abonnementActif,
+            'enGrace' => (bool) ($user->subscription_grace ?? false),
+            'graceFin' => ! empty($user->subscription_grace_fin) ? Carbon::parse($user->subscription_grace_fin) : null,
             'expireLe' => $expireLe,
             'expireBientot' => $expireBientot,
             'unreadMessages' => $unreadMessages,

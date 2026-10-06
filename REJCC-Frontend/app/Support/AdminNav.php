@@ -13,6 +13,7 @@ class AdminNav
         ['label' => 'Membres', 'icon' => 'users', 'items' => [
             ['label' => 'Adhésions', 'icon' => 'file-text', 'route' => 'admin.adhesions'],
             ['label' => 'Comptes membres', 'icon' => 'users', 'route' => 'admin.members'],
+            ['label' => 'Abonnements', 'icon' => 'credit-card', 'route' => 'admin.abonnements'],
             ['label' => 'Mentorat', 'icon' => 'hand-heart', 'route' => 'admin.mentors'],
         ]],
         ['label' => 'Activité réseau', 'icon' => 'network', 'items' => [

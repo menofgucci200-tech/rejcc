@@ -205,7 +205,7 @@
         @else
             {{-- Mes annonces --}}
             @if (! $abonnementActif && $mesAnnonces->isEmpty())
-                <x-member-light.paywall description="Pour publier vos propres services ou produits sur la Marketplace, un abonnement annuel actif (10 000 F) est nécessaire. La consultation du catalogue reste libre pour tous les membres." />
+                <x-member-light.paywall :description="'Pour publier vos propres services ou produits sur la Marketplace, un abonnement annuel actif ('.\App\Support\Tarif::libelle().') est nécessaire. La consultation du catalogue reste libre pour tous les membres.'" />
             @elseif ($mesAnnonces->isEmpty())
                 <p class="rounded-[16px] border border-brand/10 bg-white py-10 text-center text-sm text-[#5B677A]">Vous n'avez pas encore d'annonce. Cliquez sur « Proposer un service / produit » pour vendre sur la Marketplace.</p>
             @else

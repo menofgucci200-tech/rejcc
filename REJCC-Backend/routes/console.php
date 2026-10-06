@@ -69,3 +69,18 @@ Artisan::command('certificats:delivrer', function () {
 })->purpose('Délivre les certificats et attestations en attente');
 
 Schedule::command('certificats:delivrer')->hourlyAt(25);
+
+// Abonnements : rappels d'échéance (J-30, J-7, échéance, fin du délai de grâce)
+// et revérification des paiements restés en attente auprès de CinetPay.
+Artisan::command('abonnements:echeances', function () {
+    $this->info(\App\Support\Abonnement::rappels().' rappel(s) envoyé(s).');
+})->purpose("Rappels d'échéance des abonnements");
+
+Schedule::command('abonnements:echeances')->dailyAt('08:05');
+
+Artisan::command('abonnements:paiements', function () {
+    $n = \App\Support\Abonnement::verifierEnAttente();
+    $this->info("{$n['confirmes']} paiement(s) confirmé(s), {$n['abandonnes']} abandonné(s).");
+})->purpose('Revérifie les paiements en attente auprès de CinetPay');
+
+Schedule::command('abonnements:paiements')->everyThirtyMinutes();

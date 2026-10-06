@@ -34,6 +34,8 @@ class ExportController extends Controller
             'projets' => $this->projets(),
             'documents' => $this->documents(),
             'certificats' => $this->certificats(),
+            'abonnements' => $this->abonnements(),
+            'paiements' => $this->paiements(),
             default => null,
         };
 
@@ -167,6 +169,41 @@ class ExportController extends Controller
     }
 
     /** Projets proposés par les membres, avec porteur, équipe et suivi. */
+    private function abonnements(): array
+    {
+        $membres = User::whereNotIn('role', ['admin', 'mentor'])->orderByRaw('subscription_expires_at IS NULL')->orderBy('subscription_expires_at')->get();
+
+        return [
+            'columns' => ['N° membre', 'Prénom', 'Nom', 'Email', 'Téléphone', 'Statut', 'Échéance'],
+            'rows' => $membres->map(fn (User $u) => [
+                $u->memberNumber(), $u->prenom, $u->nom, $u->email, $u->telephone,
+                match (true) {
+                    ! $u->subscription_expires_at => 'Jamais abonné',
+                    $u->subscription_expires_at->isFuture() => 'Actif',
+                    $u->abonnementEnGrace() => 'Délai de grâce',
+                    default => 'Expiré',
+                },
+                $u->subscription_expires_at?->format('d/m/Y'),
+            ])->all(),
+        ];
+    }
+
+    private function paiements(): array
+    {
+        $p = \App\Models\Payment::with(['user:id,prenom,nom,email', 'beneficiaire:id,prenom,nom'])->where('type', 'abonnement')->latest()->get();
+
+        return [
+            'columns' => ['Date', 'Référence', 'Reçu', 'Payeur', 'Email', 'Bénéficiaire (offert)', 'Montant (F CFA)', 'Moyen', 'Statut', 'Payé le', 'Fin de période'],
+            'rows' => $p->map(fn (\App\Models\Payment $x) => [
+                $x->created_at?->format('d/m/Y H:i'), $x->reference, $x->recu_numero,
+                trim(($x->user?->prenom ?? '').' '.($x->user?->nom ?? '')), $x->user?->email,
+                $x->estOffert() ? trim($x->beneficiaire?->prenom.' '.$x->beneficiaire?->nom) : '',
+                $x->amount, $x->moyen, \App\Models\Payment::STATUTS[$x->status] ?? $x->status,
+                $x->paye_at?->format('d/m/Y H:i'), $x->periode_fin?->format('d/m/Y'),
+            ])->all(),
+        ];
+    }
+
     private function certificats(): array
     {
         $certs = \App\Models\Certificate::with('user:id,email')->orderByDesc('delivre_le')->get();

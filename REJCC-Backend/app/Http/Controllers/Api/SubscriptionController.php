@@ -4,130 +4,151 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Payment;
-use App\Models\SiteSetting;
+use App\Models\User;
+use App\Support\Abonnement;
+use App\Support\RechercheMots;
+use App\Support\SubscriptionMode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
- * Abonnement annuel (10 000 F XOF) donnant accès aux fonctionnalités
- * premium (carte membre, annuaire, messagerie, marketplace, projets &
- * incubateur). Paiement encaissé via CinetPay (Wave / Orange Money / MTN
- * / Moov / carte), qui agrège ces moyens de paiement derrière une seule
- * API — évite d'intégrer chaque opérateur séparément.
+ * Abonnement annuel au REJCC (tarif réglable par l'administration) donnant
+ * accès aux fonctionnalités réservées aux membres abonnés. Paiement en ligne
+ * uniquement, via CinetPay (Wave, Orange Money, MTN, Moov, carte). Un membre
+ * peut aussi offrir l'abonnement d'un autre membre.
  */
 class SubscriptionController extends Controller
 {
-    public const AMOUNT = 10000;
+    private function paiementPayload(Payment $p, User $moi): array
+    {
+        $benef = $p->beneficiaire ?? $p->user;
 
-    public const CURRENCY = 'XOF';
+        return [
+            'reference' => $p->reference,
+            'montant' => (int) $p->amount,
+            'devise' => $p->currency,
+            'statut' => $p->status,
+            'statut_label' => Payment::STATUTS[$p->status] ?? $p->status,
+            'moyen' => $p->moyen,
+            'created_at' => $p->created_at?->toIso8601String(),
+            'paye_at' => $p->paye_at?->toIso8601String(),
+            'periode_debut' => $p->periode_debut?->toDateString(),
+            'periode_fin' => $p->periode_fin?->toDateString(),
+            'recu' => $p->status === 'success' ? $p->recu_numero : null,
+            'offert' => $p->estOffert(),
+            // Abonnement offert : à qui (pour le payeur) ou par qui (pour le bénéficiaire).
+            'pour' => $p->estOffert() && $p->user_id === $moi->id ? trim($benef?->prenom.' '.$benef?->nom) : null,
+            'par' => $p->estOffert() && $p->user_id !== $moi->id ? trim($p->user?->prenom.' '.$p->user?->nom) : null,
+        ];
+    }
 
-    /** Statut d'abonnement de l'utilisateur connecté + historique des paiements. */
+    /** Statut d'abonnement, paiements (les siens, ceux qu'il a offerts et ceux reçus). */
     public function status(Request $request)
     {
         $user = $request->user();
 
-        // Retour depuis la page de paiement CinetPay : on vérifie tout de
-        // suite ce paiement plutôt que d'attendre le webhook `notify`.
-        $ref = $request->query('ref');
-        if ($ref) {
-            $payment = Payment::where('user_id', $user->id)
-                ->where('reference', $ref)
-                ->where('type', 'abonnement')
-                ->where('status', 'pending')
-                ->first();
-
-            if ($payment) {
-                $this->verify($payment);
+        // Retour depuis la page CinetPay : vérification immédiate de ce paiement.
+        if ($ref = $request->query('ref')) {
+            $p = Payment::where('reference', $ref)->where('type', 'abonnement')->where('user_id', $user->id)->first();
+            if ($p) {
+                Abonnement::verifier($p);
                 $user->refresh();
             }
         }
 
+        $paiements = Payment::with(['user:id,prenom,nom', 'beneficiaire:id,prenom,nom'])->where('type', 'abonnement')
+            ->where(fn ($q) => $q->where('user_id', $user->id)->orWhere('beneficiaire_id', $user->id))
+            ->latest()->limit(20)->get();
+        $exp = $user->subscription_expires_at;
+
         return response()->json([
             'ok' => true,
             'active' => $user->hasPaidSubscription(),
-            // Administrateurs et mentors : dispensés d'abonnement.
             'exempt' => $user->isExemptFromSubscription(),
             'role' => $user->role,
-            // Abonnements obligatoires ? (interrupteur du tableau de bord admin)
-            'enforced' => \App\Support\SubscriptionMode::enforced(),
-            'expires_at' => $user->subscription_expires_at?->toDateString(),
-            'amount' => self::AMOUNT,
-            'currency' => self::CURRENCY,
-            'history' => $user->payments()
-                ->where('type', 'abonnement')
-                ->latest()
-                ->limit(10)
-                ->get(['reference', 'provider', 'amount', 'currency', 'status', 'created_at']),
+            'enforced' => SubscriptionMode::enforced(),
+            'expires_at' => $exp?->toDateString(),
+            'jours_restants' => $exp && $exp->isFuture() ? (int) ceil(now()->diffInDays($exp)) : null,
+            'grace' => $user->abonnementEnGrace(),
+            'grace_fin' => $exp ? $exp->copy()->addDays(Abonnement::GRACE_JOURS)->toDateString() : null,
+            'grace_jours' => Abonnement::GRACE_JOURS,
+            'peut_renouveler' => Abonnement::peutRenouveler($user),
+            'amount' => Abonnement::montant(),
+            'currency' => Abonnement::DEVISE,
+            'en_attente' => $paiements->first(fn ($p) => $p->status === 'pending' && $p->user_id === $user->id && ! $p->estOffert())
+                ? $this->paiementPayload($paiements->first(fn ($p) => $p->status === 'pending' && $p->user_id === $user->id && ! $p->estOffert()), $user) : null,
+            'history' => $paiements->map(fn ($p) => $this->paiementPayload($p, $user))->values(),
         ]);
     }
 
-    /** Initie un paiement CinetPay et renvoie l'URL de la page de paiement hébergée. */
+    /**
+     * Initie un paiement CinetPay pour soi ou, avec `beneficiaire_id`, pour
+     * offrir l'abonnement à un autre membre. Renvoie l'URL de paiement.
+     */
     public function initiate(Request $request)
     {
         $user = $request->user();
-
-        if (! \App\Support\SubscriptionMode::enforced()) {
-            return response()->json(['ok' => false, 'message' => "Les abonnements ne sont pas encore ouverts : toutes les fonctionnalités sont accessibles gratuitement pour le moment."], 422);
+        if (! SubscriptionMode::enforced()) {
+            return response()->json(['ok' => false, 'message' => 'Les abonnements ne sont pas encore ouverts : toutes les fonctionnalités sont accessibles gratuitement pour le moment.'], 422);
         }
 
-        // Renouvellement possible dans les 30 derniers jours : l'année suivante
-        // part de l'échéance actuelle (date anniversaire conservée, cf. verify()).
-        if ($user->hasPaidSubscription()
-            && ($user->isExemptFromSubscription() || $user->subscription_expires_at->gt(now()->addDays(30)))) {
-            return response()->json(['ok' => false, 'message' => $user->isExemptFromSubscription()
+        $beneficiaire = $user;
+        if ($request->filled('beneficiaire_id')) {
+            $beneficiaire = User::where('is_active', true)->find((int) $request->input('beneficiaire_id'));
+            if (! $beneficiaire || $beneficiaire->id === $user->id) {
+                return response()->json(['ok' => false, 'message' => 'Membre introuvable.'], 404);
+            }
+        }
+        if ($beneficiaire->isExemptFromSubscription()) {
+            return response()->json(['ok' => false, 'message' => $beneficiaire->id === $user->id
                 ? 'Votre statut vous dispense d\'abonnement : vous avez accès à toutes les fonctionnalités.'
-                : 'Votre abonnement est déjà actif. Le renouvellement sera possible dans les 30 jours avant son échéance.'], 422);
+                : trim($beneficiaire->prenom.' '.$beneficiaire->nom).' est dispensé(e) d\'abonnement.'], 422);
+        }
+        if (! Abonnement::peutRenouveler($beneficiaire)) {
+            return response()->json(['ok' => false, 'message' => $beneficiaire->id === $user->id
+                ? 'Votre abonnement est déjà actif. Le renouvellement sera possible dans les 30 jours avant son échéance.'
+                : trim($beneficiaire->prenom.' '.$beneficiaire->nom).' est déjà abonné(e) : un nouvel abonnement pourra lui être offert dans les 30 jours avant son échéance.'], 422);
         }
 
-        $apiKey = $this->cinetpayApiKey();
-        $siteId = $this->cinetpaySiteId();
-
+        $apiKey = Abonnement::cinetpayApiKey();
+        $siteId = Abonnement::cinetpaySiteId();
         if (! $apiKey || ! $siteId) {
             return response()->json(['ok' => false, 'message' => "Le paiement en ligne n'est pas encore configuré. Contactez un administrateur."], 503);
         }
 
+        $montant = Abonnement::montant();
         $reference = 'ABO-'.$user->id.'-'.now()->format('YmdHis').'-'.Str::upper(Str::random(4));
-
-        $payment = Payment::create([
+        $p = Payment::create([
             'user_id' => $user->id,
-            'type' => 'abonnement',
-            'reference' => $reference,
-            'provider' => 'cinetpay',
-            'amount' => self::AMOUNT,
-            'currency' => self::CURRENCY,
-            'status' => 'pending',
+            'beneficiaire_id' => $beneficiaire->id !== $user->id ? $beneficiaire->id : null,
+            'type' => 'abonnement', 'reference' => $reference, 'provider' => 'cinetpay',
+            'amount' => $montant, 'currency' => Abonnement::DEVISE, 'status' => 'pending',
         ]);
 
         try {
-            $response = Http::asJson()->timeout(15)->post(rtrim(config('services.cinetpay.base_url'), '/').'/v2/payment', [
-                'apikey' => $apiKey,
-                'site_id' => $siteId,
-                'transaction_id' => $reference,
-                'amount' => self::AMOUNT,
-                'currency' => self::CURRENCY,
-                'description' => 'Abonnement annuel REJCC',
-                'notify_url' => rtrim(config('app.url'), '/').'/api/subscription/notify',
-                'return_url' => rtrim(config('app.frontend_url'), '/').'/espace-membre/abonnement?ref='.$reference,
+            $r = Http::asJson()->timeout(15)->post(rtrim((string) config('services.cinetpay.base_url'), '/').'/v2/payment', [
+                'apikey' => $apiKey, 'site_id' => $siteId, 'transaction_id' => $reference,
+                'amount' => $montant, 'currency' => Abonnement::DEVISE,
+                'description' => $p->beneficiaire_id ? 'Abonnement REJCC offert' : 'Abonnement annuel REJCC',
+                'notify_url' => rtrim((string) config('app.url'), '/').'/api/subscription/notify',
+                'return_url' => rtrim((string) config('app.frontend_url'), '/').'/espace-membre/abonnement?ref='.$reference,
                 'channels' => 'ALL',
-                'customer_name' => $user->nom ?? $user->name,
-                'customer_surname' => $user->prenom ?? '',
-                'customer_email' => $user->email,
-                'customer_phone_number' => $user->telephone,
+                'customer_name' => $user->nom ?? $user->name, 'customer_surname' => $user->prenom ?? '',
+                'customer_email' => $user->email, 'customer_phone_number' => $user->telephone,
             ]);
         } catch (\Throwable $e) {
             Log::warning('CinetPay initiate a échoué', ['reference' => $reference, 'error' => $e->getMessage()]);
-            $payment->update(['status' => 'failed']);
+            $p->update(['status' => 'failed']);
 
             return response()->json(['ok' => false, 'message' => 'Impossible de contacter le service de paiement. Réessayez plus tard.'], 502);
         }
-
-        $body = $response->json() ?? [];
-
+        $body = $r->json() ?? [];
         if ((string) ($body['code'] ?? null) !== '201' || empty($body['data']['payment_url'])) {
             Log::warning('CinetPay initiate refusé', ['reference' => $reference, 'response' => $body]);
-            $payment->update(['status' => 'failed']);
+            $p->update(['status' => 'failed']);
 
             return response()->json(['ok' => false, 'message' => $body['message'] ?? "Impossible d'initier le paiement pour le moment."], 502);
         }
@@ -135,79 +156,77 @@ class SubscriptionController extends Controller
         return response()->json(['ok' => true, 'payment_url' => $body['data']['payment_url'], 'reference' => $reference]);
     }
 
-    /** Webhook CinetPay (notification serveur à serveur, POST). */
+    /** Webhook CinetPay (serveur à serveur) : le statut est toujours revérifié auprès de CinetPay. */
     public function notify(Request $request)
     {
-        $reference = $request->input('cpm_trans_id') ?? $request->input('transaction_id');
-
-        $payment = $reference
-            ? Payment::where('reference', $reference)->where('type', 'abonnement')->first()
-            : null;
-
-        if ($payment && $payment->status === 'pending') {
-            $this->verify($payment);
+        $ref = $request->input('cpm_trans_id') ?? $request->input('transaction_id');
+        $p = $ref ? Payment::where('reference', $ref)->where('type', 'abonnement')->first() : null;
+        if ($p && $p->status === 'pending') {
+            Abonnement::verifier($p);
         }
 
         return response('OK', 200);
     }
 
-    /** Interroge l'API CinetPay pour connaître le statut réel d'une transaction (source de vérité). */
-    private function verify(Payment $payment): void
+    /** POST /subscription/verifier/{ref} — « Vérifier mon paiement » (paiement resté en attente). */
+    public function verifierPaiement(Request $request, string $ref)
     {
-        try {
-            $response = Http::asJson()->timeout(15)->post(rtrim(config('services.cinetpay.base_url'), '/').'/v2/payment/check', [
-                'apikey' => $this->cinetpayApiKey(),
-                'site_id' => $this->cinetpaySiteId(),
-                'transaction_id' => $payment->reference,
-            ]);
-        } catch (\Throwable $e) {
-            Log::warning('CinetPay check a échoué', ['reference' => $payment->reference, 'error' => $e->getMessage()]);
+        $p = Payment::where('reference', $ref)->where('type', 'abonnement')->where('user_id', $request->user()->id)->first();
+        if (! $p) {
+            return response()->json(['ok' => false, 'message' => 'Paiement introuvable.'], 404);
+        }
+        $statut = Abonnement::verifier($p);
 
-            return;
+        return response()->json(['ok' => true, 'statut' => $statut, 'message' => match ($statut) {
+            'success' => 'Paiement confirmé : l\'abonnement est actif.',
+            'failed' => 'Ce paiement n\'a pas abouti. Vous pouvez en lancer un nouveau.',
+            default => 'Le paiement n\'est pas encore confirmé par l\'opérateur. Réessayez dans quelques minutes.',
+        }]);
+    }
+
+    /** GET /subscription/recus/{ref} — reçu PDF (payeur ou bénéficiaire). */
+    public function recu(Request $request, string $ref)
+    {
+        $moi = $request->user()->id;
+        $p = Payment::where('reference', $ref)->where('type', 'abonnement')->where('status', 'success')
+            ->where(fn ($q) => $q->where('user_id', $moi)->orWhere('beneficiaire_id', $moi))->first();
+        if (! $p) {
+            return response()->json(['ok' => false, 'message' => 'Reçu introuvable.'], 404);
         }
 
-        $status = $response->json('data.status');
-
-        if ($status === 'ACCEPTED') {
-            $payment->update([
-                'status' => 'success',
-                'transaction_id' => $response->json('data.operator_id') ?? $response->json('data.payment_method'),
-            ]);
-
-            $user = $payment->user;
-            if ($user) {
-                $base = ($user->subscription_expires_at && $user->subscription_expires_at->isFuture())
-                    ? $user->subscription_expires_at
-                    : now();
-                $user->subscription_expires_at = $base->copy()->addYear();
-                $user->save();
-            }
-        } elseif (in_array($status, ['REFUSED', 'CANCELLED'], true)) {
-            $payment->update(['status' => 'failed']);
-        }
+        return response(Storage::disk('local')->get(Abonnement::recu($p)), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$p->recu_numero.'.pdf"',
+            'Cache-Control' => 'private, no-store',
+        ]);
     }
 
     /**
-     * Identifiants CinetPay : priorité aux réglages saisis par l'admin
-     * (Réglages du site → Paiement), sinon repli sur le `.env` du serveur.
+     * GET /subscription/beneficiaires?q= — membre à qui offrir l'abonnement :
+     * recherche par nom parmi les membres visibles dans l'annuaire, ou par
+     * numéro de membre exact. Informations minimales, jamais de coordonnées.
      */
-    private function cinetpayApiKey(): ?string
+    public function beneficiaires(Request $request)
     {
-        return $this->siteSetting('payment.cinetpay_api_key') ?: config('services.cinetpay.api_key');
-    }
+        $q = trim((string) $request->query('q'));
+        if (mb_strlen($q) < 3) {
+            return response()->json(['ok' => true, 'membres' => []]);
+        }
+        $moi = $request->user();
+        $query = User::where('is_active', true)->where('id', '!=', $moi->id)->whereNotIn('role', ['admin', 'mentor']);
+        if (preg_match('/^REJCC-\d{4}-\d{4}-(\d+)$/i', $q, $m)) {
+            // Numéro de membre complet (date d'adhésion comprise) : impossible à deviner à partir du seul identifiant.
+            $u = (clone $query)->find((int) $m[1]);
+            $query->whereKey($u && strtoupper($u->memberNumber()) === strtoupper($q) ? $u->id : 0);
+        } else {
+            $query->where(fn ($w) => $w->whereNull('preferences->apparaitre_annuaire')->orWhere('preferences->apparaitre_annuaire', true));
+            RechercheMots::appliquer($query, $q, ['prenom', 'nom']);
+        }
 
-    private function cinetpaySiteId(): ?string
-    {
-        return $this->siteSetting('payment.cinetpay_site_id') ?: config('services.cinetpay.site_id');
-    }
-
-    private function siteSetting(string $key): ?string
-    {
-        // ->first()->value (pas ->value('value')) : la colonne est castée en
-        // JSON, un accès direct en query builder renverrait la valeur brute
-        // encodée (avec guillemets) plutôt que la chaîne décodée.
-        $value = SiteSetting::where('key', $key)->first()?->value;
-
-        return is_string($value) && $value !== '' ? $value : null;
+        return response()->json(['ok' => true, 'membres' => $query->limit(8)->get()->map(fn (User $u) => [
+            'id' => $u->id, 'nom' => trim($u->prenom.' '.$u->nom), 'ville' => $u->ville, 'photo' => $u->photo,
+            'abonne' => $u->hasPaidSubscription() && ! $u->abonnementEnGrace(),
+            'peut_recevoir' => Abonnement::peutRenouveler($u),
+        ])->values()]);
     }
 }

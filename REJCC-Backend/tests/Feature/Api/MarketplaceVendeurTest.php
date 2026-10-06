@@ -151,9 +151,12 @@ class MarketplaceVendeurTest extends TestCase
         MarketplaceListing::create(['user_id' => $mentor->id, 'type' => 'service', 'title' => 'Coaching', 'category' => 'x', 'group_id' => 5,
             'description' => 'Accompagnement des jeunes entrepreneurs.', 'statut' => 'approuve', 'publie_le' => now(), 'expire_le' => now()->addDays(90)]);
 
+        // Pendant le délai de grâce, l'annonce reste visible.
         $this->travel(11)->days();
         $lecteur = $this->tokenFor(User::factory()->create());
-        // L'annonce du vendeur non à jour disparaît ; celle du mentor (dispensé) reste.
+        $this->assertCount(2, $this->withToken($lecteur)->getJson('/api/marketplace')->json('listings'));
+        $this->travel(\App\Support\Abonnement::GRACE_JOURS)->days();
+        // Grâce terminée : l'annonce du vendeur non à jour disparaît ; celle du mentor (dispensé) reste.
         $this->assertSame(['Coaching'], array_column($this->withToken($lecteur)->getJson('/api/marketplace')->json('listings'), 'title'));
         $this->withToken($lecteur)->getJson("/api/marketplace/{$l->id}")->assertStatus(404);
 

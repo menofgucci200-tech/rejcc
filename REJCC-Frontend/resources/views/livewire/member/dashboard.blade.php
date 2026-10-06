@@ -14,10 +14,23 @@
                 </span>
                 <div class="min-w-[220px] flex-1">
                     <p class="text-[15px] font-bold text-brand">Votre abonnement annuel n'est pas actif</p>
-                    <p class="mt-0.5 text-[13px] text-[#5B677A]">La carte membre, l'annuaire, la messagerie et les projets sont verrouillés. Activez votre abonnement (10 000 F / an) pour profiter de tout le réseau.</p>
+                    <p class="mt-0.5 text-[13px] text-[#5B677A]">La carte membre, l'annuaire, la messagerie et les projets sont verrouillés. Activez votre abonnement ({{ \App\Support\Tarif::libelle() }} / an) pour profiter de tout le réseau.</p>
                 </div>
                 <a href="{{ route('espace-membre.abonnement') }}" wire:navigate class="group inline-flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-5 py-2.5 text-[13.5px] font-bold text-white transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-accent-600 hover:shadow-md active:scale-95 sm:w-fit">
                     Activer mon abonnement <x-ui.icon name="arrow-right" class="nudge-x size-3.5" />
+                </a>
+            </section>
+        @elseif ($enGrace)
+            <section data-test="abonnement-grace" class="mb-6 flex flex-wrap items-center gap-4 rounded-[18px] border border-[#F5A623]/40 bg-[#FFF8EC] px-6 py-5">
+                <span class="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#F5A623]/15 text-[#B97400]">
+                    <x-ui.icon name="clock" class="size-5" />
+                </span>
+                <div class="min-w-[220px] flex-1">
+                    <p class="text-[15px] font-bold text-brand">Votre abonnement est arrivé à échéance</p>
+                    <p class="mt-0.5 text-[13px] text-[#5B677A]">Vous gardez l'accès à tout le réseau jusqu'au <strong>{{ $graceFin?->translatedFormat('j F Y') }}</strong>. Renouvelez-le d'ici là : la date anniversaire est conservée.</p>
+                </div>
+                <a href="{{ route('espace-membre.abonnement') }}" wire:navigate class="group inline-flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-5 py-2.5 text-[13.5px] font-bold text-white transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-accent-600 hover:shadow-md active:scale-95 sm:w-fit">
+                    Renouveler maintenant <x-ui.icon name="arrow-right" class="nudge-x size-3.5" />
                 </a>
             </section>
         @elseif ($expireBientot)

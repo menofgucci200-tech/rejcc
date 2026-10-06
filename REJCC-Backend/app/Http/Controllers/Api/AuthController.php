@@ -49,6 +49,8 @@ class AuthController extends Controller
             'subscription_paid' => $u->hasPaidSubscription(),
             'subscriptions_enforced' => \App\Support\SubscriptionMode::enforced(),
             'subscription_expires_at' => $u->subscription_expires_at?->toDateString(),
+            'subscription_grace' => $u->abonnementEnGrace(),
+            'subscription_grace_fin' => $u->abonnementEnGrace() ? $u->subscription_expires_at->copy()->addDays(\App\Support\Abonnement::GRACE_JOURS)->toDateString() : null,
             'subscription_exempt' => $u->isExemptFromSubscription(),
             'mentor' => $u->role === 'mentor' ? \App\Support\MemberProfile::mentor($u) : null,
         ];

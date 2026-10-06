@@ -103,7 +103,7 @@
                             <span class="flex size-11 shrink-0 items-center justify-center rounded-full bg-accent/10 text-accent"><x-ui.icon name="lock" class="size-5" /></span>
                             <div class="min-w-0 flex-1">
                                 <p class="text-[14px] font-bold text-brand">Les fiches des professionnels sont réservées aux membres abonnés</p>
-                                <p class="text-[12.5px] text-[#5B677A]">Abonnez-vous (10 000 F / an) pour voir leurs services, zones d'intervention, avis et les contacter.</p>
+                                <p class="text-[12.5px] text-[#5B677A]">Abonnez-vous ({{ \App\Support\Tarif::libelle() }} / an) pour voir leurs services, zones d'intervention, avis et les contacter.</p>
                             </div>
                             <a href="{{ route('espace-membre.abonnement') }}" wire:navigate class="btn-tap rounded-full bg-accent px-5 py-2.5 text-[13px] font-bold text-white hover:bg-accent-600">M'abonner</a>
                         </div>

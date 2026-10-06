@@ -416,7 +416,7 @@ class AdminController extends Controller
             'enforced' => SubscriptionMode::enforced(),
             'changed_at' => \App\Models\SiteSetting::where('key', 'subscription.enforced_changed_at')->value('value'),
             'membres' => (clone $membres)->count(),
-            'abonnes' => (clone $membres)->whereNotNull('subscription_expires_at')->where('subscription_expires_at', '>', now())->count(),
+            'abonnes' => (clone $membres)->abonnementEnCours()->count(),
         ]);
     }
 

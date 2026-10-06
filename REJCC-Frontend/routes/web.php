@@ -117,6 +117,7 @@ Route::middleware('api.auth')->prefix('espace-membre')->name('espace-membre.')->
     Route::get('/certificats/{id}/pdf', [\App\Http\Controllers\CertificatPdfController::class, 'membre'])->whereNumber('id')->name('certificats.pdf');
     Route::get('/carte', MemberCarte::class)->name('carte');
     Route::get('/abonnement', MemberAbonnement::class)->name('abonnement');
+    Route::get('/abonnement/recus/{ref}', [\App\Http\Controllers\RecuController::class, 'membre'])->where('ref', '[A-Za-z0-9\-]+')->name('abonnement.recu');
 });
 
 Route::middleware(['api.auth', 'admin.web'])->prefix('admin')->name('admin.')->group(function () {
@@ -136,6 +137,8 @@ Route::middleware(['api.auth', 'admin.web'])->prefix('admin')->name('admin.')->g
     Route::get('/projets', AdminProjets::class)->name('projets');
     Route::get('/marketplace', AdminMarketplace::class)->name('marketplace');
     Route::redirect('/communaute', '/admin/marketplace');
+    Route::get('/abonnements', \App\Livewire\Admin\Abonnements::class)->name('abonnements');
+    Route::get('/abonnements/recus/{ref}', [\App\Http\Controllers\RecuController::class, 'admin'])->where('ref', '[A-Za-z0-9\-]+')->name('abonnements.recu');
     Route::get('/certificats', AdminCertificats::class)->name('certificats');
     Route::get('/certificats/{id}/pdf', [\App\Http\Controllers\CertificatPdfController::class, 'admin'])->whereNumber('id')->name('certificats.pdf');
     Route::get('/certificats/apercu', [\App\Http\Controllers\CertificatPdfController::class, 'apercu'])->name('certificats.apercu');

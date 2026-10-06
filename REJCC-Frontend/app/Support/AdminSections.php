@@ -37,6 +37,8 @@ class AdminSections
         'admin.adhesions' => 'adhesions',
         'admin.members' => 'membres',
         'admin.inscription' => 'membres',
+        'admin.abonnements' => 'membres',
+        'admin.abonnements.recu' => 'membres',
         'admin.formations' => 'formations',
         'admin.parcours' => 'formations',
         'admin.evenements' => 'evenements',

@@ -39,7 +39,7 @@ class MarketplaceListing extends Model
     public static function vendeurEnRegle($u)
     {
         return $u->where('is_active', true)->when(\App\Support\SubscriptionMode::enforced(), fn ($q) => $q->where(
-            fn ($w) => $w->whereIn('role', ['admin', 'mentor'])->orWhere('subscription_expires_at', '>', now())
+            fn ($w) => $w->whereIn('role', ['admin', 'mentor'])->orWhere('subscription_expires_at', '>', now()->subDays(\App\Support\Abonnement::GRACE_JOURS))
         ));
     }
 
@@ -89,7 +89,7 @@ class MarketplaceListing extends Model
         if (\App\Support\SubscriptionMode::enforced()) {
             $concernees = (clone $base)->whereNull('suspension_notifiee_at')
                 ->whereHas('user', fn ($u) => $u->where('is_active', true)->whereNotIn('role', ['admin', 'mentor'])
-                    ->where(fn ($w) => $w->whereNull('subscription_expires_at')->orWhere('subscription_expires_at', '<=', now())))
+                    ->where(fn ($w) => $w->whereNull('subscription_expires_at')->orWhere('subscription_expires_at', '<=', now()->subDays(\App\Support\Abonnement::GRACE_JOURS))))
                 ->get()->groupBy('user_id');
             foreach ($concernees as $vendeurId => $annonces) {
                 MemberNotification::create([
@@ -106,7 +106,7 @@ class MarketplaceListing extends Model
             }
             // Abonnement renouvelé : l'avis pourra être renvoyé lors d'une prochaine expiration.
             static::whereNotNull('suspension_notifiee_at')
-                ->whereHas('user', fn ($u) => $u->where('subscription_expires_at', '>', now()))
+                ->whereHas('user', fn ($u) => $u->abonnementEnCours())
                 ->update(['suspension_notifiee_at' => null]);
         }
 

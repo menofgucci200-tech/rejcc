@@ -22,7 +22,7 @@
                 </div>
                 <p class="mt-1 text-[12.5px] leading-relaxed text-[#5B677A]">
                     @if ($ab['obligatoires'])
-                        Carte membre, annuaire, messagerie, projets et publication sur la marketplace sont réservés aux membres à jour de leur abonnement annuel (10 000 F).
+                        Carte membre, annuaire, messagerie, projets et publication sur la marketplace sont réservés aux membres à jour de leur abonnement annuel ({{ \App\Support\Tarif::libelle() }}).
                     @else
                         Tous les membres accèdent à toutes les fonctionnalités, sans abonnement. Activez les abonnements quand le paiement en ligne sera prêt.
                     @endif
