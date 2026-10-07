@@ -370,7 +370,10 @@ mkdir -p "$DOSSIER_SAUVEGARDES/journaux"
 chmod 700 "$DOSSIER_SAUVEGARDES"
 HORODATAGE="$(date +%Y%m%d-%H%M%S)"
 JOURNAL="$DOSSIER_SAUVEGARDES/journaux/deploy-$HORODATAGE.log"
-exec > >(tee -a "$JOURNAL") 2>&1
+# Tube nommé plutôt que « >(tee …) » : /dev/fd n'existe pas sur Hostinger (CageFS).
+mkfifo "$TMP/journal"
+tee -a "$JOURNAL" < "$TMP/journal" &
+exec > "$TMP/journal" 2>&1
 for r in "${DEPOTS[@]}"; do
     info "Version avant mise à jour ($r) : ${AVANT[$r]}  →  nouvelle : ${APRES[$r]}"
 done
