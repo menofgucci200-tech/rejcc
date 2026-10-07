@@ -225,6 +225,10 @@ fi
 
 artisan() { "$PHP" artisan "$@" --no-interaction; }
 
+# Un service sans migrations (le frontend passe uniquement par l'API) n'a pas
+# de base de données : rien à sauvegarder ni à migrer.
+a_une_base() { compgen -G "$1/database/migrations/*.php" >/dev/null; }
+
 # Lit une valeur dans un fichier .env sans l'exécuter.
 lire_env() {
     local valeur
@@ -387,6 +391,10 @@ etape "Sauvegarde des bases de données"
         nom="$(basename "$d" | tr '[:upper:]' '[:lower:]' | sed 's/^rejcc-//')"
         cible="$DOSSIER_SAUVEGARDES/$HORODATAGE-$nom"
         cp "$d/.env" "$cible.env"; chmod 600 "$cible.env"
+        if ! a_une_base "$d"; then
+            ok "$nom : pas de base de données (.env sauvegardé)"
+            continue
+        fi
         connexion="$(lire_env "$d/.env" DB_CONNECTION)"
         case "$connexion" in
             mysql|mariadb)
@@ -452,6 +460,7 @@ done
 etape "Base de données (migrations)"
 # ----------------------------------------------------------------------------
 for d in "$DOSSIER_BACKEND" "$DOSSIER_FRONTEND"; do
+    a_une_base "$d" || { ok "$(basename "$d") : pas de base de données"; continue; }
     sortie="$(cd "$d" && artisan migrate --force 2>&1)" || { printf '%s\n' "$sortie"; echec "Migration échouée ($(basename "$d")). Le site est rouvert ; la sauvegarde de la base est dans $DOSSIER_SAUVEGARDES."; }
     n="$(printf '%s\n' "$sortie" | grep -c 'DONE' || true)"
     [ "$n" -gt 0 ] && ok "$(basename "$d") : $n migration(s) appliquée(s)" || ok "$(basename "$d") : rien à migrer"
