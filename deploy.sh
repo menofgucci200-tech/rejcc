@@ -451,7 +451,10 @@ done
 etape "Dépendances PHP (composer)"
 # ----------------------------------------------------------------------------
 for d in "$DOSSIER_BACKEND" "$DOSSIER_FRONTEND"; do
-    sortie="$(cd "$d" && "${COMPOSER_CMD[@]}" install --no-dev --optimize-autoloader --no-interaction --no-progress --no-ansi 2>&1)" \
+    # --no-scripts : proc_open est désactivé sur Hostinger, les scripts de
+    # Composer échouent. On lance package:discover directement ensuite.
+    sortie="$(cd "$d" && "${COMPOSER_CMD[@]}" install --no-dev --optimize-autoloader --no-scripts --no-interaction --no-progress --no-ansi 2>&1 \
+        && artisan package:discover 2>&1)" \
         || { printf '%s\n' "$sortie" | tail -n 30; echec "composer install a échoué ($(basename "$d"))."; }
     ok "$(basename "$d")"
 done
