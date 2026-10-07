@@ -166,7 +166,23 @@ LOG_CHANNEL=stack
 
 ADMIN_EMAIL=<ton email admin>
 ADMIN_PASSWORD=<un mot de passe temporaire de ton choix>
+
+FRONTEND_URL=https://rejcc.site
+
+# E-mails (boîte créée dans hPanel → E-mails, ex. contact@rejcc.site)
+MAIL_MAILER=smtp
+MAIL_SCHEME=smtps
+MAIL_HOST=smtp.hostinger.com
+MAIL_PORT=465
+MAIL_USERNAME=contact@rejcc.site
+MAIL_PASSWORD=<mot de passe de cette boîte e-mail>
+MAIL_FROM_ADDRESS=contact@rejcc.site
+MAIL_FROM_NAME="REJCC"
+MAIL_ADMIN_EMAIL=<adresse qui reçoit les messages de contact>
 ```
+
+`MAIL_FROM_NAME` est le nom que les membres voient comme expéditeur : gardez
+« REJCC » (et non `${APP_NAME}`, qui afficherait « REJCC API »).
 
 Puis générer la clé de chiffrement propre à cet environnement :
 

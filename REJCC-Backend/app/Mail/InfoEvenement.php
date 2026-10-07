@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use App\Models\Event;
 use App\Models\EventRegistration;
+use App\Support\MailLayout;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
@@ -34,12 +35,13 @@ class InfoEvenement extends Mailable
         $lien = rtrim(config('app.frontend_url'), '/').'/billet/'.$this->inscription->billet;
         $texte = nl2br($e($this->texte));
 
-        return new Content(htmlString: "
-            <p>Bonjour {$e($this->inscription->prenom)},</p>
-            <p>À propos de <strong>{$e($this->event->title)}</strong> :</p>
-            <p>{$texte}</p>
-            <p>Votre billet : <a href=\"{$lien}\">{$lien}</a></p>
-            <p>L'équipe REJCC</p>
-        ");
+        $p = MailLayout::P;
+
+        return new Content(htmlString: MailLayout::html($this->titre,
+            MailLayout::bonjour($this->inscription->prenom)."
+<p style=\"{$p}\">À propos de <strong>{$e($this->event->title)}</strong> :</p>
+<p style=\"margin:0\">{$texte}</p>",
+            'Voir mon billet', $lien,
+            'Vous recevez cet e-mail car vous êtes inscrit(e) à cet événement du REJCC.'));
     }
 }

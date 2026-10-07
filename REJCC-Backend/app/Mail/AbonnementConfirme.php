@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use App\Models\Payment;
 use App\Models\User;
+use App\Support\MailLayout;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
@@ -34,14 +35,21 @@ class AbonnementConfirme extends Mailable
         $payeur = trim(($p->user?->prenom ?? '').' '.($p->user?->nom ?? ''));
         $montant = number_format($p->amount, 0, ',', ' ').' F CFA';
 
+        $p_ = MailLayout::P;
         $corps = match ($this->pour) {
-            'beneficiaire' => "<p>Bonjour {$e($this->beneficiaire->prenom)},</p><p><strong>{$e($payeur)}</strong> vous offre votre abonnement annuel au Réseau Entrepreneurial des Jeunes Chrétiens Catholiques. Il est valable jusqu'au <strong>{$e($fin)}</strong>.</p>",
-            'payeur' => "<p>Bonjour {$e($p->user?->prenom)},</p><p>Merci ! Votre paiement de {$e($montant)} est confirmé : <strong>{$e($nom)}</strong> est abonné(e) jusqu'au <strong>{$e($fin)}</strong>. Il ou elle en a été prévenu(e).</p>",
-            default => "<p>Bonjour {$e($this->beneficiaire->prenom)},</p><p>Votre paiement de {$e($montant)} est confirmé : votre abonnement annuel au REJCC est actif jusqu'au <strong>{$e($fin)}</strong>.</p>",
+            'beneficiaire' => "<p style=\"{$p_}\">Bonjour {$e($this->beneficiaire->prenom)},</p><p style=\"{$p_}\"><strong>{$e($payeur)}</strong> vous offre votre abonnement annuel au Réseau Entrepreneurial des Jeunes Chrétiens Catholiques. Il est valable jusqu'au <strong>{$e($fin)}</strong>.</p>",
+            'payeur' => "<p style=\"{$p_}\">Bonjour {$e($p->user?->prenom)},</p><p style=\"{$p_}\">Merci ! Votre paiement de {$e($montant)} est confirmé : <strong>{$e($nom)}</strong> est abonné(e) jusqu'au <strong>{$e($fin)}</strong>. Il ou elle en a été prévenu(e).</p>",
+            default => "<p style=\"{$p_}\">Bonjour {$e($this->beneficiaire->prenom)},</p><p style=\"{$p_}\">Votre paiement de {$e($montant)} est confirmé : votre abonnement annuel au REJCC est actif jusqu'au <strong>{$e($fin)}</strong>.</p>",
+        };
+        $titre = match ($this->pour) {
+            'beneficiaire' => 'Un abonnement vous a été offert',
+            'payeur' => 'Merci pour votre cadeau',
+            default => 'Votre abonnement est actif',
         };
 
-        return new Content(htmlString: $corps."
-            <p>Reçu n° {$e($p->recu_numero)} — téléchargeable dans votre espace : <a href=\"{$lien}\">{$lien}</a></p>
-            <p>L'équipe REJCC</p>");
+        return new Content(htmlString: MailLayout::html($titre,
+            $corps.($this->pour === 'beneficiaire' ? '' : "<p style=\"margin:0\">Reçu n° <strong>{$e($p->recu_numero)}</strong>, téléchargeable à tout moment dans votre espace membre.</p>"),
+            $this->pour === 'beneficiaire' ? 'Voir mon abonnement' : 'Voir mon abonnement et mon reçu', $lien,
+            'E-mail envoyé automatiquement suite à un paiement sur la plateforme du REJCC.'));
     }
 }

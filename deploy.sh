@@ -299,6 +299,14 @@ done
 case "$(lire_env "$DOSSIER_BACKEND/.env" MAIL_MAILER)" in
     ''|log|array) avert "REJCC-Backend : MAIL_MAILER n'envoie pas de vrais e-mails (valeur actuelle : « $(lire_env "$DOSSIER_BACKEND/.env" MAIL_MAILER) »). Configurez le SMTP Hostinger dans .env." ;;
 esac
+EXPEDITEUR="$(lire_env "$DOSSIER_BACKEND/.env" MAIL_FROM_NAME)"
+[ "$EXPEDITEUR" = '${APP_NAME}' ] && EXPEDITEUR="$(lire_env "$DOSSIER_BACKEND/.env" APP_NAME)"
+case "$EXPEDITEUR" in
+    *API*|*Laravel*) avert "REJCC-Backend : les e-mails partiraient au nom de « $EXPEDITEUR ». Mettez MAIL_FROM_NAME=\"REJCC\" dans .env." ;;
+esac
+case "$(lire_env "$DOSSIER_BACKEND/.env" MAIL_FROM_ADDRESS)" in
+    *example.com*|'') avert "REJCC-Backend : MAIL_FROM_ADDRESS n'est pas une adresse du REJCC (ex. contact@rejcc.site)." ;;
+esac
 ok "Fichiers .env contrôlés"
 
 # Dépôts git : un seul si backend et frontend partagent le même clone.

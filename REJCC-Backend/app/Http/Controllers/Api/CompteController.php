@@ -329,7 +329,7 @@ class CompteController extends Controller
         if ($admin = config('mail.admin_email')) {
             Mailer::send($admin, new MessageCompte('REJCC — Clôture de compte demandée', MailLayout::html('Clôture de compte demandée',
                 '<p style="margin:0">'.e(trim($u->prenom.' '.$u->nom)).' ('.e($u->email).') a demandé la clôture de son compte. Suppression prévue le '.$dateTxt.'.'
-                .($u->suppression_motif ? '<br>Motif : « '.e($u->suppression_motif).' »' : '').'</p>', null, null, 'Notification interne.')));
+                .($u->suppression_motif ? '<br>Motif : « '.e($u->suppression_motif).' »' : '').'</p>', null, null, 'Notification interne.', signature: false)));
         }
 
         return response()->json(['ok' => true, 'suppression_le' => $date->toDateString(), 'fichiers' => $fichiers]);
