@@ -139,7 +139,10 @@ construire_assets_localement() {
         fi
         sortie="$(npm run build 2>&1)" || { printf '%s\n' "$sortie" | tail -n 30; echec "npm run build a échoué."; }
         echo "$sha" > public/build/.commit-rejcc
-        tar -czf "$racine/.deploy/build.tar.gz" -C public build
+        # Sur Mac, sans les métadonnées macOS (sinon avertissements côté serveur).
+        options_tar=()
+        tar --version 2>/dev/null | grep -q bsdtar && options_tar=(--no-xattrs --no-mac-metadata)
+        COPYFILE_DISABLE=1 tar "${options_tar[@]+"${options_tar[@]}"}" -czf "$racine/.deploy/build.tar.gz" -C public build
     )
     ok "Fichiers prêts ($(du -h "$racine/.deploy/build.tar.gz" | cut -f1))"
     ARCHIVE_ASSETS="$racine/.deploy/build.tar.gz"
