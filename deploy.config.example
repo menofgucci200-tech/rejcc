@@ -18,6 +18,8 @@
 SSH_HOTE=""                 # ex. 185.xxx.xxx.xxx ou ssh.hostinger.com
 SSH_PORT="65002"
 SSH_UTILISATEUR=""          # ex. u123456789
+# Clé SSH à utiliser (facultatif). Vide : clés habituelles de ssh.
+SSH_CLE=""
 
 # --- Branche mise en ligne
 BRANCHE="main"

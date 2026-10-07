@@ -83,6 +83,7 @@ fi
 : "${SSH_HOTE:=}"
 : "${SSH_PORT:=65002}"
 : "${SSH_UTILISATEUR:=}"
+: "${SSH_CLE:=}"
 : "${BRANCHE:=main}"
 : "${DOSSIER_BACKEND:=$HOME/domains/api.rejcc.site/repo-backend/REJCC-Backend}"
 : "${DOSSIER_FRONTEND:=$HOME/domains/rejcc.site/repo-frontend/REJCC-Frontend}"
@@ -146,7 +147,9 @@ construire_assets_localement() {
 
 lancer_sur_le_serveur() {
     local cible="$SSH_HOTE" mode_assets="$1" charge commande
+    local options_ssh=(-p "$SSH_PORT" -o ServerAliveInterval=30)
     [ -n "$SSH_UTILISATEUR" ] && cible="$SSH_UTILISATEUR@$SSH_HOTE"
+    [ -n "$SSH_CLE" ] && options_ssh+=(-i "${SSH_CLE/#\~/$HOME}" -o IdentitiesOnly=yes)
     # Le serveur reçoit la configuration suivie du script lui-même : il n'a
     # besoin d'aucun fichier préalable et utilise toujours cette version-ci.
     charge="REJCC_CONFIG_TRANSMISE=1"$'\n'
@@ -156,9 +159,9 @@ lancer_sur_le_serveur() {
     commande="REJCC_SUR_SERVEUR=1 REJCC_COULEURS=$([ -t 1 ] && echo 1 || echo 0) bash -c $(printf '%q' "$charge") deploy.sh"
     [ "${#ARGS[@]}" -gt 0 ] && commande+=" $(printf '%q ' "${ARGS[@]}")"
     if [ "$mode_assets" = recus ]; then
-        ssh -p "$SSH_PORT" -o ServerAliveInterval=30 "$cible" "$commande" < "$ARCHIVE_ASSETS"
+        ssh "${options_ssh[@]}" "$cible" "$commande" < "$ARCHIVE_ASSETS"
     else
-        ssh -p "$SSH_PORT" -o ServerAliveInterval=30 "$cible" "$commande" < /dev/null
+        ssh "${options_ssh[@]}" "$cible" "$commande" < /dev/null
     fi
 }
 
@@ -332,7 +335,7 @@ for r in "${DEPOTS[@]}"; do
     if [ "${AVANT[$r]}" != "${APRES[$r]}" ]; then
         A_METTRE_A_JOUR=1
         info "$(basename "$(dirname "$r")")/$(basename "$r") : $(git -C "$r" rev-list --count "${AVANT[$r]}..${APRES[$r]}") nouveau(x) commit(s)"
-        git -C "$r" log --format='      %h %s' "${AVANT[$r]}..${APRES[$r]}" | head -n 15
+        git -C "$r" log -n 15 --format='      %h %s' "${AVANT[$r]}..${APRES[$r]}"
     fi
 done
 ok "Dépôts git propres et à jour avec GitHub ($BRANCHE)"
