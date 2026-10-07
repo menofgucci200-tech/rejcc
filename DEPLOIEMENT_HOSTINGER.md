@@ -272,20 +272,96 @@ Pour **chacun des deux sites** :
 
 ---
 
-## Mises à jour futures
+## Mises à jour futures : `./deploy.sh`
 
-Après chaque `git push` sur `main`, en SSH pour chaque site :
+Une fois l'installation initiale faite (étapes 0 à 8), chaque mise en ligne se
+fait en **une seule commande**. Le script `deploy.sh`, à la racine du dépôt,
+enchaîne toutes les étapes dans le bon ordre et s'arrête proprement au moindre
+problème.
+
+### Ce que fait le script
+
+1. **Contrôles** : dossiers, version de PHP, Composer, Node.js, réglages
+   indispensables des `.env` (`APP_KEY`, `BACKEND_API_URL`, `APP_DEBUG`,
+   `CERTIFICATS_CLE_SIGNATURE`, `MAIL_MAILER`). Il refuse aussi de continuer
+   si des fichiers ont été modifiés à la main sur le serveur.
+2. **Sauvegarde** des deux bases de données et des deux `.env` dans
+   `~/sauvegardes-rejcc/`. Les 10 dernières sauvegardes sont conservées.
+3. **Page de maintenance** pendant la mise à jour, qui dure 1 à 2 minutes.
+4. **Code** : `git pull` de la branche `main`, sans jamais écraser d'historique.
+5. **Dépendances** : `composer install` dans les deux services.
+6. **Migrations** : `php artisan migrate --force` dans les deux services.
+7. **CSS/JS** : `npm run build`, sur le serveur si Node.js y est installé,
+   sinon sur votre ordinateur, puis envoi automatique des fichiers.
+8. **Caches Laravel**, lien `storage`, et sécurisation des anciennes pièces
+   d'identité (`pieces:securiser`).
+9. **Réouverture du site**. En cas d'erreur, le site est rouvert
+   automatiquement.
+10. **Tâche planifiée** (`schedule:run` chaque minute) : elle est ajoutée si
+    elle manque. Si l'hébergeur refuse, le script affiche la commande à
+    coller dans hPanel → Avancé → Tâches Cron.
+11. **Vérification** que `rejcc.site` et `api.rejcc.site` répondent bien.
+
+Un journal de chaque mise en ligne est gardé dans
+`~/sauvegardes-rejcc/journaux/`.
+
+### Option A : lancer depuis votre ordinateur (recommandé)
+
+Une seule fois, dans le dossier du dépôt cloné sur votre ordinateur :
 
 ```bash
-cd ~/domains/<site>/repo-.../REJCC-<Backend|Frontend>
-git pull origin main
-composer install --no-dev --optimize-autoloader   # si composer.json a changé
-php artisan migrate --force                        # si une migration a été ajoutée
-php artisan config:clear && php artisan config:cache
-npm run build                                       # frontend uniquement, si les assets ont changé
+cp deploy.config.example deploy.config
 ```
 
-Ceci reste manuel sur ce pack Business (pas d'automatisation façon Docker) —
-si l'app passe un jour sur un VPS Hostinger, le `Dockerfile` +
-`docker-entrypoint.sh` déjà présents dans chaque service pourront être
-réutilisés tels quels.
+Ouvrez `deploy.config` et renseignez `SSH_HOTE`, `SSH_PORT` et
+`SSH_UTILISATEUR`. Ces valeurs se trouvent dans hPanel → Avancé → Accès SSH.
+
+Ensuite, à chaque mise en ligne :
+
+```bash
+./deploy.sh
+```
+
+Le mot de passe SSH vous est demandé. Pour ne plus le saisir, installez une
+fois votre clé SSH : `ssh-copy-id -p <port> <utilisateur>@<hôte>`, ou
+hPanel → Accès SSH → Clés SSH.
+
+Sous Windows, lancez la commande dans **Git Bash**, installé avec Git.
+
+### Option B : lancer directement sur le serveur
+
+```bash
+ssh <utilisateur>@<hôte> -p <port>
+cd ~/domains/rejcc.site/repo-frontend
+git pull origin main
+./deploy.sh
+```
+
+Sans fichier `deploy.config`, le script utilise les emplacements de ce guide.
+Si Node.js n'est pas installé sur le serveur, il faut passer par l'option A.
+
+### Options utiles
+
+| Commande | Effet |
+|---|---|
+| `./deploy.sh --verifier` | Contrôle tout et montre ce qui serait mis en ligne, sans rien modifier. |
+| `./deploy.sh --forcer` | Relance toutes les étapes, même si le serveur est déjà à jour. |
+| `./deploy.sh --sans-maintenance` | Laisse le site ouvert pendant la mise à jour. |
+| `./deploy.sh --aide` | Liste des options. |
+
+### En cas de problème
+
+- Le script affiche l'étape qui a échoué et le chemin du journal complet.
+- Pour restaurer une base MySQL à partir de la sauvegarde faite juste avant :
+  ```bash
+  gunzip -c ~/sauvegardes-rejcc/<date>-backend.sql.gz | mysql -u <utilisateur> -p <base>
+  ```
+- Pour revenir au code précédent, le commit d'avant figure au début du
+  journal :
+  ```bash
+  git -C <dépôt> reset --hard <commit>
+  ```
+  Relancez ensuite `composer install` et les caches, ou demandez-moi.
+
+Le `Dockerfile` et le `docker-entrypoint.sh` de chaque service restent
+utilisables tels quels si l'application passe un jour sur un VPS.

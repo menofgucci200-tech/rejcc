@@ -1,1 +1,5 @@
 .claude/
+
+# Déploiement : réglages personnels et fichiers de travail de ./deploy.sh
+deploy.config
+.deploy/

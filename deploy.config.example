@@ -1,0 +1,54 @@
+# =============================================================================
+#  REJCC : configuration du déploiement (lue par ./deploy.sh)
+#
+#  1. Copiez ce fichier :      cp deploy.config.example deploy.config
+#  2. Adaptez les valeurs ci-dessous (en général, seule la partie « Connexion
+#     SSH » est à remplir).
+#  3. Lancez :                 ./deploy.sh
+#
+#  deploy.config n'est jamais envoyé sur GitHub (.gitignore).
+#  N'y mettez AUCUN mot de passe : ceux des bases de données sont lus
+#  directement dans les fichiers .env du serveur.
+# =============================================================================
+
+# --- Connexion SSH (uniquement pour lancer ./deploy.sh depuis votre ordinateur)
+# Laissez SSH_HOTE vide si vous lancez le script directement sur le serveur.
+# Les valeurs se trouvent dans hPanel : Sites web → rejcc.site → Gérer →
+# Avancé → Accès SSH.
+SSH_HOTE=""                 # ex. 185.xxx.xxx.xxx ou ssh.hostinger.com
+SSH_PORT="65002"
+SSH_UTILISATEUR=""          # ex. u123456789
+
+# --- Branche mise en ligne
+BRANCHE="main"
+
+# --- Emplacements sur le serveur (ceux du guide DEPLOIEMENT_HOSTINGER.md)
+DOSSIER_BACKEND="$HOME/domains/api.rejcc.site/repo-backend/REJCC-Backend"
+DOSSIER_FRONTEND="$HOME/domains/rejcc.site/repo-frontend/REJCC-Frontend"
+
+# --- Adresses publiques, pour la vérification finale
+URL_SITE="https://rejcc.site"
+URL_API="https://api.rejcc.site/api"
+
+# --- Programmes sur le serveur
+# Si la commande « php -v » du serveur n'affiche pas PHP 8.2 ou plus, indiquez
+# le chemin complet, ex. PHP="/opt/alt/php83/usr/bin/php".
+PHP="php"
+# Laissez vide pour la détection automatique (composer, composer2 ou ~/composer.phar).
+COMPOSER_BIN=""
+
+# --- Fichiers CSS/JS du site (npm run build)
+#   auto    : construits sur le serveur si Node.js y est disponible, sinon sur
+#             votre ordinateur puis envoyés (dans ce cas, lancez ./deploy.sh
+#             depuis votre ordinateur, avec Node.js installé).
+#   serveur : toujours sur le serveur.
+#   local   : toujours sur votre ordinateur.
+ASSETS="auto"
+
+# --- Sauvegarde des bases de données avant chaque mise à jour
+SAUVEGARDE="oui"
+DOSSIER_SAUVEGARDES="$HOME/sauvegardes-rejcc"
+SAUVEGARDES_A_GARDER=10
+
+# --- Page « maintenance » pendant la mise à jour (1 à 2 minutes)
+MAINTENANCE="oui"
