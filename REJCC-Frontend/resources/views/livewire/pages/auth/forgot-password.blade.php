@@ -4,7 +4,7 @@ use App\Support\Api;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 
-new #[Layout('layouts.site')] class extends Component
+new #[Layout('layouts.site', ['noindex' => true, 'title' => 'Mot de passe oublié'])] class extends Component
 {
     public string $email = '';
 

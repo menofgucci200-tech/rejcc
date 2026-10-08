@@ -39,4 +39,10 @@ return [
         'url' => env('BACKEND_API_URL', 'http://127.0.0.1:8000/api'),
     ],
 
+
+    // Search Console : code de la balise « google-site-verification » (méthode Balise HTML).
+    'google' => [
+        'site_verification' => env('GOOGLE_SITE_VERIFICATION'),
+    ],
+
 ];

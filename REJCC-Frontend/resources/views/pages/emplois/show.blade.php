@@ -9,9 +9,33 @@
         'Secteur' => $o['groupe']['nom'] ?? null,
         'Date limite' => $o['deadline'] ? \Illuminate\Support\Carbon::parse($o['deadline'])->locale('fr')->isoFormat('D MMMM YYYY') : null,
     ]);
+
+    // Données structurées « JobPosting » : l'offre peut apparaître dans
+    // Google pour l'emploi (Google Jobs).
+    $finValidite = $o['deadline'] ?: ($o['expire_le'] ?? null);
+    $schema = array_filter([
+        '@type' => 'JobPosting',
+        'title' => $o['title'],
+        'description' => nl2br(e($o['description'])),
+        'datePosted' => $o['publie_at'] ?? $o['created_at'] ?? null,
+        'validThrough' => $finValidite ? \Illuminate\Support\Carbon::parse($finValidite)->endOfDay()->toIso8601String() : null,
+        'employmentType' => match ($o['type']) {
+            'stage', 'alternance' => 'INTERN',
+            'freelance', 'mission' => 'CONTRACTOR',
+            default => match ($o['contrat'] ?? null) { 'cdd', 'interim' => 'TEMPORARY', default => 'FULL_TIME' },
+        },
+        'hiringOrganization' => array_filter(['@type' => 'Organization', 'name' => $o['entreprise'], 'sameAs' => $o['site_url'] ?: null]),
+        'jobLocation' => ['@type' => 'Place', 'address' => ['@type' => 'PostalAddress', 'addressLocality' => $o['lieu'], 'addressCountry' => 'CI']],
+        'jobLocationType' => ($o['teletravail'] ?? '') === 'distance' ? 'TELECOMMUTE' : null,
+        'applicantLocationRequirements' => ($o['teletravail'] ?? '') === 'distance' ? ['@type' => 'Country', 'name' => 'Côte d\'Ivoire'] : null,
+        'industry' => $o['groupe']['nom'] ?? null,
+        'skills' => ($o['competences'] ?? []) ? implode(', ', $o['competences']) : null,
+        'directApply' => true,
+        'url' => rtrim((string) config('app.url'), '/').'/emplois/'.$o['id'],
+    ]);
 @endphp
 
-<x-site-layout :title="$o['title'].' — '.$o['entreprise']" :description="\Illuminate\Support\Str::limit($o['description'], 150)">
+<x-site-layout :title="$o['title'].' — '.$o['entreprise']" :description="\Illuminate\Support\Str::limit($o['description'], 150)" :schema="$schema">
     <x-page-header :eyebrow="$o['type_label']" crumb="Emplois" :subtitle="$o['entreprise'].' · '.$o['lieu']">
         {{ $o['title'] }}
     </x-page-header>

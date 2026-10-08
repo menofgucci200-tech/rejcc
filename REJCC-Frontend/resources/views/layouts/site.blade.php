@@ -18,14 +18,24 @@
                 ? $adminTitle.' · '.$site['name']
                 : (($title ?? null) ? $title.' · '.$site['name'] : $site['name'].' — '.$site['fullName']);
             $seoDescription = $adminDescription ?? $description ?? "Le REJCC accompagne les jeunes entrepreneurs catholiques de Côte d'Ivoire : formations en entrepreneuriat, mentorat, réseautage, incubateur de projets et opportunités professionnelles à Abidjan et dans tous les diocèses.";
-            $seoImage = $image ?? asset('brand/rejcc-logo-color.png');
+            $seoImage = $image ?? asset('brand/rejcc-partage.jpg');
+            // Adresse canonique toujours sur le domaine officiel (APP_URL), quel que
+            // soit l'hôte demandé (www, IP…), pour éviter les doublons dans Google.
+            $seoCanonical = rtrim((string) config('app.url'), '/').(request()->path() === '/' ? '/' : '/'.request()->path());
+            $seoUrl = rtrim((string) config('app.url'), '/');
+            $seoSocials = collect(\App\Support\Content\SiteConfig::socials())->pluck('href')->filter(fn ($h) => str_starts_with($h, 'http'))->values()->all();
         @endphp
 
         <title>{{ $seoTitle }}</title>
         <meta name="description" content="{{ $seoDescription }}">
-        <link rel="canonical" href="{{ url()->current() }}">
+        <link rel="canonical" href="{{ $seoCanonical }}">
         @if ($noindex ?? false)
             <meta name="robots" content="noindex, nofollow">
+        @else
+            <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+        @endif
+        @if ($verificationGoogle = config('services.google.site_verification'))
+            <meta name="google-site-verification" content="{{ $verificationGoogle }}">
         @endif
         @include('partials.favicon')
 
@@ -34,8 +44,13 @@
         <meta property="og:type" content="{{ $type ?? 'website' }}">
         <meta property="og:title" content="{{ $seoTitle }}">
         <meta property="og:description" content="{{ $seoDescription }}">
-        <meta property="og:url" content="{{ url()->current() }}">
+        <meta property="og:url" content="{{ $seoCanonical }}">
         <meta property="og:image" content="{{ $seoImage }}">
+        @if (! isset($image))
+            <meta property="og:image:width" content="1200">
+            <meta property="og:image:height" content="630">
+        @endif
+        <meta property="og:image:alt" content="{{ $site['fullName'] }}">
         <meta name="twitter:card" content="summary_large_image">
         <meta name="twitter:title" content="{{ $seoTitle }}">
         <meta name="twitter:description" content="{{ $seoDescription }}">
@@ -43,19 +58,36 @@
 
         <script type="application/ld+json">{!! json_encode([
             '@context' => 'https://schema.org',
-            '@type' => 'Organization',
-            'name' => $site['name'],
-            'legalName' => $site['fullName'],
-            'description' => $site['positioning'],
-            'url' => url('/'),
-            'logo' => asset('brand/rejcc-logo-color.png'),
-            'email' => $site['contact']['email'],
-            'address' => [
-                '@type' => 'PostalAddress',
-                'addressLocality' => $site['contact']['city'],
-                'addressCountry' => 'CI',
-            ],
-        ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
+            '@graph' => array_values(array_filter([
+                array_filter([
+                    '@type' => 'Organization',
+                    '@id' => $seoUrl.'/#organisation',
+                    'name' => $site['name'],
+                    'legalName' => $site['fullName'],
+                    'alternateName' => $site['fullName'],
+                    'description' => $site['positioning'],
+                    'url' => $seoUrl.'/',
+                    'logo' => asset('brand/rejcc-logo-color.png'),
+                    'email' => $site['contact']['email'],
+                    'address' => [
+                        '@type' => 'PostalAddress',
+                        'addressLocality' => $site['contact']['city'],
+                        'addressCountry' => 'CI',
+                    ],
+                    'sameAs' => $seoSocials ?: null,
+                ]),
+                [
+                    '@type' => 'WebSite',
+                    '@id' => $seoUrl.'/#site',
+                    'name' => $site['name'],
+                    'alternateName' => $site['fullName'],
+                    'url' => $seoUrl.'/',
+                    'inLanguage' => 'fr',
+                    'publisher' => ['@id' => $seoUrl.'/#organisation'],
+                ],
+                $schema ?? null,
+            ])),
+        ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) !!}</script>
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @livewireStyles

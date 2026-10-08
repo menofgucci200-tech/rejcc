@@ -12,6 +12,9 @@ class SiteLayout extends Component
         public ?string $description = null,
         public ?string $image = null,
         public string $type = 'website',
+        // Données structurées schema.org propres à la page (Event, JobPosting…).
+        public ?array $schema = null,
+        public bool $noindex = false,
     ) {
     }
 

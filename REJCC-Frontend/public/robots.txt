@@ -1,9 +1,16 @@
+# REJCC — Réseau Entrepreneurial des Jeunes Chrétiens Catholiques
 User-agent: *
 Disallow: /admin
 Disallow: /espace-membre
 Disallow: /mon-espace
 Disallow: /connexion
+Disallow: /mot-de-passe-oublie
+Disallow: /reinitialiser-mot-de-passe
 Disallow: /livewire
 Disallow: /carte
+Disallow: /billet/
+Disallow: /confirmer-email/
+Disallow: /suivre-ma-candidature
+Disallow: /verifier/
 
 Sitemap: https://rejcc.site/sitemap.xml

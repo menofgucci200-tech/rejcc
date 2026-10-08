@@ -11,7 +11,7 @@ use Livewire\Component;
  * Billet d'un invité inscrit par le formulaire public : QR code à présenter
  * à l'entrée (pointage), rappel de la date et du lieu.
  */
-#[Layout('layouts.site')]
+#[Layout('layouts.site', ['noindex' => true])]
 #[Title('Mon billet')]
 class Billet extends Component
 {

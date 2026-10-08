@@ -13,7 +13,7 @@
     $headerSubtitle = SiteRemote::field('contact', 'header', 'subtitle', "Une question, un projet, une envie de collaborer ? L'équipe du REJCC vous répond.");
 @endphp
 
-<x-site-layout title="Contact" description="Contactez le REJCC — Réseau Entrepreneurial des Jeunes Chrétiens Catholiques : questions, adhésions, partenariats.">
+<x-site-layout title="Nous contacter" description="Contactez le REJCC — Réseau Entrepreneurial des Jeunes Chrétiens Catholiques : questions, adhésions, partenariats.">
     <x-page-header eyebrow="Parlons-en" crumb="Contact" :subtitle="$headerSubtitle">
         @if ($headerTitle) {{ $headerTitle }} @else Nous <span class="font-serif italic normal-case text-azure">contacter</span> @endif
     </x-page-header>

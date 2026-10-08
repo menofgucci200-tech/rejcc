@@ -7,7 +7,7 @@
     $headerSubtitle = SiteRemote::field('domaines', 'header', 'subtitle', 'Le réseau rassemble des entrepreneurs de tous les secteurs. Trouvez le vôtre et connectez-vous aux bonnes personnes.');
 @endphp
 
-<x-site-layout title="Domaines d'activité" description="Agriculture, numérique, commerce, artisanat, finance… les secteurs d'activité accompagnés par le REJCC en Côte d'Ivoire.">
+<x-site-layout title="Domaines d'activité des entrepreneurs" description="Agriculture, numérique, commerce, artisanat, finance… les secteurs d'activité accompagnés par le REJCC en Côte d'Ivoire.">
     <x-page-header :eyebrow="$total.' domaines · 9 pôles'" crumb="Domaines" :subtitle="$headerSubtitle">
         @if ($headerTitle) {{ $headerTitle }} @else Domaines d'<span class="font-serif italic normal-case text-azure">activité</span> @endif
     </x-page-header>

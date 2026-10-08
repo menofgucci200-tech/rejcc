@@ -15,7 +15,7 @@
     ];
 @endphp
 
-<x-site-layout title="À propos" description="Découvrez le REJCC : mission, vision et valeurs du réseau de référence des jeunes entrepreneurs catholiques de Côte d'Ivoire — foi, innovation et entrepreneuriat.">
+<x-site-layout title="À propos : mission, vision et valeurs" description="Découvrez le REJCC : mission, vision et valeurs du réseau de référence des jeunes entrepreneurs catholiques de Côte d'Ivoire — foi, innovation et entrepreneuriat.">
     <x-page-header eyebrow="Le réseau" crumb="À propos" :subtitle="$headerSubtitle">
         @if ($headerTitle) {{ $headerTitle }} @else À propos du <span class="font-serif italic normal-case text-azure">REJCC</span> @endif
     </x-page-header>

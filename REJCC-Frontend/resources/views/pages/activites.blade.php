@@ -6,7 +6,7 @@
     $headerSubtitle = SiteRemote::field('activites', 'header', 'subtitle', "Un programme riche pour apprendre, entreprendre et grandir ensemble, tout au long de l'année.");
 @endphp
 
-<x-site-layout title="Nos activités" description="Formations en entrepreneuriat, mentorat, réseautage et incubation de projets : les activités du REJCC pour les jeunes entrepreneurs catholiques en Côte d'Ivoire.">
+<x-site-layout title="Formations, mentorat et réseautage" description="Formations en entrepreneuriat, mentorat, réseautage et incubation de projets : les activités du REJCC pour les jeunes entrepreneurs catholiques en Côte d'Ivoire.">
     <x-page-header eyebrow="Ce que nous faisons" crumb="Activités" :subtitle="$headerSubtitle">
         @if ($headerTitle) {{ $headerTitle }} @else Nos <span class="font-serif italic normal-case text-azure">activités</span> @endif
     </x-page-header>
