@@ -1,4 +1,19 @@
-<x-site-layout :title="$article->title" :description="$article->excerpt" type="article">
+@php
+    // Données structurées « NewsArticle ».
+    $schema = array_filter([
+        '@type' => 'NewsArticle',
+        'headline' => \Illuminate\Support\Str::limit($article->title, 110),
+        'description' => $article->excerpt,
+        'datePublished' => $article->published_at?->toIso8601String(),
+        'image' => [$article->image ?? asset('brand/rejcc-partage.jpg')],
+        'author' => ['@type' => 'Organization', 'name' => ($article->author ?? null) ?: 'REJCC'],
+        'publisher' => ['@id' => rtrim((string) config('app.url'), '/').'/#organisation'],
+        'mainEntityOfPage' => rtrim((string) config('app.url'), '/').'/'.request()->path(),
+        'inLanguage' => 'fr',
+    ]);
+@endphp
+
+<x-site-layout :title="$article->title" :description="$article->excerpt" type="article" :image="$article->image ?? null" :schema="$schema">
     <x-page-header :eyebrow="$article->category" crumb="Actualités" :subtitle="$article->excerpt">
         {{ $article->title }}
     </x-page-header>

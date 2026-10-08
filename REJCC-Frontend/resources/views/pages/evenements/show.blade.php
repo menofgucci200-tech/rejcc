@@ -4,9 +4,29 @@
     $lienMembre = url('/espace-membre/evenements?evenement='.$event->id);
     $annule = $event->statut === 'annule';
     $horaire = $event->time_label ?: $d->format('H\hi').($event->ends_at && $event->ends_at->isSameDay($d) ? ' – '.$event->ends_at->format('H\hi') : '');
+
+    // Référencement : description de repli et données structurées « Event »
+    // (affichage enrichi de la date et du lieu dans les résultats Google).
+    $seoDescription = $event->excerpt ?: \Illuminate\Support\Str::limit(trim(strip_tags((string) ($event->description ?: $event->body))), 155);
+    $seoUrl = rtrim((string) config('app.url'), '/').'/evenements/'.$event->slug;
+    $schema = array_filter([
+        '@type' => 'Event',
+        'name' => $event->title,
+        'description' => $seoDescription ?: null,
+        'startDate' => $d->toIso8601String(),
+        'endDate' => $event->ends_at?->toIso8601String(),
+        'eventStatus' => $annule ? 'https://schema.org/EventCancelled' : 'https://schema.org/EventScheduled',
+        'eventAttendanceMode' => $event->en_ligne ? 'https://schema.org/OnlineEventAttendanceMode' : 'https://schema.org/OfflineEventAttendanceMode',
+        'location' => $event->en_ligne
+            ? ['@type' => 'VirtualLocation', 'url' => $seoUrl]
+            : ['@type' => 'Place', 'name' => $event->location ?: 'Abidjan', 'address' => ['@type' => 'PostalAddress', 'addressLocality' => $event->location ?: 'Abidjan', 'addressCountry' => 'CI']],
+        'image' => $event->image ? [$event->image] : [asset('brand/rejcc-partage.jpg')],
+        'organizer' => ['@type' => 'Organization', 'name' => 'REJCC — Réseau Entrepreneurial des Jeunes Chrétiens Catholiques', 'url' => rtrim((string) config('app.url'), '/').'/'],
+        'url' => $seoUrl,
+    ]);
 @endphp
 
-<x-site-layout :title="$event->title" :description="$event->excerpt">
+<x-site-layout :title="$event->title" :description="$seoDescription" :image="$event->image ?: null" :schema="$schema">
     <x-page-header :eyebrow="$event->category" crumb="Événements" :subtitle="$event->excerpt">
         {{ $event->title }}
     </x-page-header>

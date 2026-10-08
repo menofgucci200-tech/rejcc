@@ -6,7 +6,7 @@ use App\Support\Api;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
-#[Layout('layouts.site')]
+#[Layout('layouts.site', ['noindex' => true, 'title' => 'Suivre ma candidature'])]
 class AdhesionStatusCheck extends Component
 {
     public string $email = '';

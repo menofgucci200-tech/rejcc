@@ -44,4 +44,9 @@ return [
         'url' => env('DASHBOARD_URL', 'https://dashboard.rejcc.site'),
     ],
 
+    // Search Console : code de la balise « google-site-verification » (méthode Balise HTML).
+    'google' => [
+        'site_verification' => env('GOOGLE_SITE_VERIFICATION'),
+    ],
+
 ];

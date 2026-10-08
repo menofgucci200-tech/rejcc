@@ -1,4 +1,4 @@
-<x-site-layout title="Galerie" description="La vie du REJCC en images : assemblées, formations, rencontres et célébrations du Réseau Entrepreneurial des Jeunes Chrétiens Catholiques.">
+<x-site-layout title="Galerie photos" description="La vie du REJCC en images : assemblées, formations, rencontres et célébrations du Réseau Entrepreneurial des Jeunes Chrétiens Catholiques.">
     <x-page-header eyebrow="La vie du réseau" crumb="Galerie" subtitle="Assemblées, formations, rencontres et célébrations : retrouvez les moments forts du REJCC, album par album.">
         En <span class="font-serif italic normal-case text-azure">images</span>
     </x-page-header>
