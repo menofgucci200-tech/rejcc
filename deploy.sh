@@ -271,9 +271,11 @@ done
 ok "Dossiers backend et frontend trouvés"
 
 # Dashboard (dashboard.rejcc.site) : déployé s'il est installé sur le serveur.
+# Première installation : son dossier ne contient encore que .env, le code
+# arrive avec la mise à jour du dépôt ci-dessous.
 SERVICES=("$DOSSIER_BACKEND" "$DOSSIER_FRONTEND")
 WEB=("$DOSSIER_FRONTEND")
-if [ -f "$DOSSIER_DASHBOARD/artisan" ]; then
+if [ -f "$DOSSIER_DASHBOARD/artisan" ] || [ -f "$DOSSIER_DASHBOARD/.env" ]; then
     [ -f "$DOSSIER_DASHBOARD/.env" ] || echec "Fichier .env absent dans $DOSSIER_DASHBOARD (voir « Dashboard » dans DEPLOIEMENT_HOSTINGER.md)."
     SERVICES+=("$DOSSIER_DASHBOARD")
     WEB+=("$DOSSIER_DASHBOARD")
@@ -329,7 +331,7 @@ for d in "${SERVICES[@]}"; do
     [ "$(lire_env "$d/.env" APP_ENV)" = production ] || avert "$nom : APP_ENV n'est pas « production » dans .env."
 done
 [ -n "$(lire_env "$DOSSIER_FRONTEND/.env" BACKEND_API_URL)" ] || echec "REJCC-Frontend : BACKEND_API_URL est vide dans .env (ex. https://api.rejcc.site/api)."
-if [ -f "$DOSSIER_DASHBOARD/artisan" ]; then
+if [ -f "$DOSSIER_DASHBOARD/.env" ]; then
     [ -n "$(lire_env "$DOSSIER_DASHBOARD/.env" BACKEND_API_URL)" ] || echec "REJCC-Dashboard : BACKEND_API_URL est vide dans .env (ex. https://api.rejcc.site/api)."
     # Le coffre-fort des membres est chiffré avec la clé du site : même clé.
     [ "$(lire_env "$DOSSIER_DASHBOARD/.env" APP_KEY)" = "$(lire_env "$DOSSIER_FRONTEND/.env" APP_KEY)" ] \
@@ -471,6 +473,7 @@ if [ "$FAIRE_MAINTENANCE" = 1 ]; then
 etape "Page de maintenance"
 # ----------------------------------------------------------------------------
     for d in "${WEB[@]}" "$DOSSIER_BACKEND"; do
+        [ -f "$d/artisan" ] || continue   # dashboard pas encore installé
         (cd "$d" && artisan down --retry=60 >/dev/null)
         EN_MAINTENANCE+=("$d")
     done
@@ -589,7 +592,7 @@ verifier_url() {
 if command -v curl >/dev/null 2>&1; then
     verifier_url "$URL_API/home-content"
     verifier_url "$URL_SITE/"
-    [ -f "$DOSSIER_DASHBOARD/artisan" ] && verifier_url "$URL_DASHBOARD/connexion"
+    [ -f "$DOSSIER_DASHBOARD/.env" ] && verifier_url "$URL_DASHBOARD/connexion"
 else
     info "curl absent : ouvrez $URL_SITE dans votre navigateur pour vérifier."
 fi
