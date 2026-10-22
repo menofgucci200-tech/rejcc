@@ -16,11 +16,6 @@ class CoffreFichierController extends Controller
         return $this->servir(Api::get("/mes-documents/{$id}/acces", [], Api::token()));
     }
 
-    public function equipe(int $id, ?string $slug = null)
-    {
-        return $this->servir(Api::get("/admin/documents-personnels/{$id}/acces", [], Api::token()));
-    }
-
     private function servir(array $r)
     {
         if (! ($r['ok'] ?? false)) {

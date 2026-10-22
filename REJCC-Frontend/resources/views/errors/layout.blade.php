@@ -70,7 +70,7 @@
                                 <a href="{{ url('/') }}" class="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-[13.5px] font-bold text-white shadow-sm hover:bg-accent-600">Retour à l'accueil</a>
                             @endif
                             @if ($connecte)
-                                <a href="{{ $admin ? url('/admin') : url('/espace-membre') }}" class="inline-flex items-center gap-2 rounded-full border border-brand/15 bg-white px-5 py-2.5 text-[13.5px] font-bold text-brand hover:bg-cloud">{{ $admin ? 'Administration' : 'Mon espace membre' }}</a>
+                                <a href="{{ url('/espace-membre') }}" class="inline-flex items-center gap-2 rounded-full border border-brand/15 bg-white px-5 py-2.5 text-[13.5px] font-bold text-brand hover:bg-cloud">Mon espace membre</a>
                             @endif
                             <button type="button" onclick="history.length > 1 ? history.back() : location.assign('{{ url('/') }}')" class="inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-[13.5px] font-bold text-[#5B677A] hover:text-brand">← Page précédente</button>
                         </div>

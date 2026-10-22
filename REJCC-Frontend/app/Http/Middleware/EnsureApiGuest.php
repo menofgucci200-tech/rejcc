@@ -13,7 +13,7 @@ class EnsureApiGuest
         $user = session('api_user');
 
         if ($user) {
-            return redirect(($user['role'] ?? null) === 'admin' ? '/admin' : '/espace-membre');
+            return redirect('/espace-membre');
         }
 
         return $next($request);

@@ -12,7 +12,6 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'admin.web' => \App\Http\Middleware\RequireAdminWeb::class,
             'api.auth' => \App\Http\Middleware\EnsureApiAuthenticated::class,
             'api.guest' => \App\Http\Middleware\EnsureApiGuest::class,
         ]);

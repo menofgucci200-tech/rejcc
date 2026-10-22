@@ -125,7 +125,7 @@
                 <a href="{{ $href }}" wire:navigate class="flex items-center gap-2.5 px-4 py-2 font-semibold text-brand hover:bg-cloud"><x-ui.icon :name="$icon" class="size-4 text-[#5B677A]" /> {{ $label }}</a>
             @endforeach
             @if (($user->role ?? null) === 'admin')
-                <a href="{{ route('admin.dashboard') }}" wire:navigate class="flex items-center gap-2.5 px-4 py-2 font-semibold text-brand hover:bg-cloud"><x-ui.icon name="layout-dashboard" class="size-4 text-[#5B677A]" /> Administration</a>
+                <a href="{{ config('services.dashboard.url') }}" target="_blank" rel="noopener" class="flex items-center gap-2.5 px-4 py-2 font-semibold text-brand hover:bg-cloud"><x-ui.icon name="layout-dashboard" class="size-4 text-[#5B677A]" /> Administration</a>
             @endif
             <a href="{{ url('/') }}" class="flex items-center gap-2.5 px-4 py-2 font-semibold text-brand hover:bg-cloud"><x-ui.icon name="globe" class="size-4 text-[#5B677A]" /> Retour au site</a>
             <div class="my-1 h-px bg-cloud-200"></div>

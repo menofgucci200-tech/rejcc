@@ -3,25 +3,6 @@
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\NewsController;
-use App\Livewire\Admin\Actualites as AdminActualites;
-use App\Livewire\Admin\Adhesions as AdminAdhesions;
-use App\Livewire\Admin\Audit as AdminAudit;
-use App\Livewire\Admin\Certificats as AdminCertificats;
-use App\Livewire\Admin\Marketplace as AdminMarketplace;
-use App\Livewire\Admin\Contacts as AdminContacts;
-use App\Livewire\Admin\Contenu as AdminContenu;
-use App\Livewire\Admin\Dashboard as AdminDashboard;
-use App\Livewire\Admin\Documents as AdminDocuments;
-use App\Livewire\Admin\Emplois as AdminEmplois;
-use App\Livewire\Admin\Evenements as AdminEvenements;
-use App\Livewire\Admin\Formations as AdminFormations;
-use App\Livewire\Admin\Parcours as AdminParcours;
-use App\Livewire\Admin\Members as AdminMembers;
-use App\Livewire\Admin\Mentors as AdminMentors;
-use App\Livewire\Admin\Newsletter as AdminNewsletter;
-use App\Livewire\Admin\Notifications as AdminNotifications;
-use App\Livewire\Admin\Partenariats as AdminPartenariats;
-use App\Livewire\Admin\Projets as AdminProjets;
 use App\Livewire\Member\Abonnement as MemberAbonnement;
 use App\Livewire\Member\Carte as MemberCarte;
 use App\Livewire\Member\Catalogue as MemberCatalogue;
@@ -88,7 +69,7 @@ Route::get('/mon-espace', function () {
         return redirect()->route('login');
     }
 
-    return redirect(($user['role'] ?? null) === 'admin' ? '/admin' : '/espace-membre');
+    return redirect('/espace-membre');
 })->name('mon-espace');
 
 Route::middleware('api.auth')->prefix('espace-membre')->name('espace-membre.')->group(function () {
@@ -126,44 +107,9 @@ Route::middleware('api.auth')->prefix('espace-membre')->name('espace-membre.')->
     Route::get('/abonnement/recus/{ref}', [\App\Http\Controllers\RecuController::class, 'membre'])->where('ref', '[A-Za-z0-9\-]+')->name('abonnement.recu');
 });
 
-Route::middleware(['api.auth', 'admin.web'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/', AdminDashboard::class)->name('dashboard');
-    Route::get('/membres', AdminMembers::class)->name('members');
-    Route::get('/membres/documents/{id}/fichier/{nom?}', [\App\Http\Controllers\CoffreFichierController::class, 'equipe'])->whereNumber('id')->name('members.document');
-    Route::get('/export/{dataset}', [\App\Http\Controllers\ExportController::class, 'download'])->name('export');
-    Route::get('/inscription', \App\Livewire\Admin\Inscription::class)->name('inscription');
-    Route::get('/adhesions', AdminAdhesions::class)->name('adhesions');
-    Route::get('/mentors', AdminMentors::class)->name('mentors');
-    Route::get('/formations', AdminFormations::class)->name('formations');
-    Route::get('/parcours', AdminParcours::class)->name('parcours');
-    Route::get('/evenements', AdminEvenements::class)->name('evenements');
-    Route::get('/evenements/{id}/pointage', \App\Livewire\Admin\EvenementPointage::class)->whereNumber('id')->name('evenements.pointage');
-    // Ancien module « Inscriptions (QR) », fusionné dans les événements.
-    Route::redirect('/inscriptions', '/admin/evenements')->name('inscriptions');
-    Route::get('/projets', AdminProjets::class)->name('projets');
-    Route::get('/marketplace', AdminMarketplace::class)->name('marketplace');
-    Route::redirect('/communaute', '/admin/marketplace');
-    Route::get('/abonnements', \App\Livewire\Admin\Abonnements::class)->name('abonnements');
-    Route::get('/abonnements/recus/{ref}', [\App\Http\Controllers\RecuController::class, 'admin'])->where('ref', '[A-Za-z0-9\-]+')->name('abonnements.recu');
-    Route::get('/certificats', AdminCertificats::class)->name('certificats');
-    Route::get('/certificats/{id}/pdf', [\App\Http\Controllers\CertificatPdfController::class, 'admin'])->whereNumber('id')->name('certificats.pdf');
-    Route::get('/certificats/apercu', [\App\Http\Controllers\CertificatPdfController::class, 'apercu'])->name('certificats.apercu');
-    Route::get('/emplois', AdminEmplois::class)->name('emplois');
-    Route::get('/groupes', \App\Livewire\Admin\Groupes::class)->name('groupes');
-    Route::get('/signalements', \App\Livewire\Admin\Signalements::class)->name('signalements');
-    Route::get('/actualites', AdminActualites::class)->name('actualites');
-    Route::get('/contenu', AdminContenu::class)->name('contenu');
-    Route::get('/pages', \App\Livewire\Admin\Pages::class)->name('pages');
-    Route::get('/reglages', \App\Livewire\Admin\Reglages::class)->name('reglages');
-    Route::get('/pages-legales', \App\Livewire\Admin\PagesLegales::class)->name('legal');
-    Route::get('/mediatheque', \App\Livewire\Admin\Mediatheque::class)->name('mediatheque');
-    Route::get('/newsletter', AdminNewsletter::class)->name('newsletter');
-    Route::get('/documents', AdminDocuments::class)->name('documents');
-    Route::get('/contacts', AdminContacts::class)->name('contacts');
-    Route::get('/partenariats', AdminPartenariats::class)->name('partenariats');
-    Route::get('/notifications', AdminNotifications::class)->name('notifications');
-    Route::get('/audit', AdminAudit::class)->name('audit');
-    Route::get('/suggestions', \App\Livewire\Admin\Suggestions::class)->name('suggestions'); // retours des comptes de test
-});
+// L'administration a déménagé sur le dashboard (dashboard.rejcc.site) :
+// les anciens liens /admin/… y mènent.
+Route::get('/admin/{chemin?}', fn (?string $chemin = null) => redirect()->away(rtrim((string) config('services.dashboard.url'), '/').'/admin'.($chemin ? '/'.$chemin : ''), 301))
+    ->where('chemin', '.*')->name('admin.redirection');
 
 require __DIR__.'/auth.php';

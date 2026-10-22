@@ -1,0 +1,511 @@
+/* build: rejcc-css-v1 */
+@import "tailwindcss";
+@import "./fonts.css";
+@import "./home-motion.css";
+@import "./tour.css";
+@plugin "@tailwindcss/forms";
+
+/* ============================================================
+   REJCC — Design system (Tailwind v4)
+   Couleurs & typographie issues de la charte graphique officielle.
+   ============================================================ */
+@theme {
+  /* Brand palette */
+  --color-brand: #031d59; /* bleu — dominante */
+  --color-brand-700: #0a2c6e; /* step clair pour dégradés */
+  --color-brand-900: #021541; /* step sombre */
+  --color-azure: #4f6fbf; /* bleu clair — secondaire */
+  --color-accent: #ac0100; /* rouge — accent */
+  --color-accent-600: #c8160f; /* rouge clair (hover) */
+  --color-cloud: #f4f6f8; /* gris clair — neutre */
+  --color-cloud-200: #e7ebf1;
+  --color-ink: #333333; /* gris foncé — texte */
+
+  /* Typographic families */
+  --font-display: var(--ff-display); /* Anton  → ex-Impact */
+  --font-sans: var(--ff-sans); /* Manrope → ex-Avenir Next */
+  --font-serif: var(--ff-serif); /* Libre Caslon → ex-Big Caslon */
+
+  /* Radii */
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.75rem;
+  --radius-3xl: 2.25rem;
+
+  /* Easing & motion tokens */
+  --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Animations */
+  --animate-aurora: aurora 18s ease-in-out infinite;
+  --animate-float: float 7s ease-in-out infinite;
+  --animate-marquee: marquee 38s linear infinite;
+  --animate-shimmer: shimmer 2.4s linear infinite;
+}
+
+@keyframes aurora {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: translate3d(3%, -4%, 0) scale(1.08);
+    opacity: 1;
+  }
+}
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-14px);
+  }
+}
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+@keyframes shimmer {
+  from {
+    background-position: -200% 0;
+  }
+  to {
+    background-position: 200% 0;
+  }
+}
+
+/* ============================================================
+   Base
+   ============================================================ */
+:root {
+  --bg: #ffffff;
+  --fg: #333333;
+  /* Barre de progression Livewire (wire:navigate) aux couleurs de la marque.
+     !important nécessaire : Livewire injecte son propre <style>:root{...}
+     APRÈS le nôtre au premier chargement, qui l'emporterait sinon dans la cascade. */
+  --livewire-progress-bar-color: var(--color-accent) !important;
+}
+
+/* La barre nprogress est injectée en JS par Livewire : on la surcharge en
+   spécificité pour lui donner un dégradé de marque + un peu plus d'épaisseur. */
+#nprogress .bar {
+  height: 3px !important;
+  background: linear-gradient(90deg, var(--color-accent), var(--color-azure)) !important;
+}
+
+/* Couleur de bordure par défaut, dans la couche « base » pour que les
+   classes de couleur (border-azure/40, border-accent…) restent prioritaires. */
+@layer base {
+  * {
+    border-color: color-mix(in oklab, var(--color-brand) 12%, transparent);
+  }
+}
+
+[x-cloak] {
+  display: none !important;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-feature-settings: "ss01", "cv01";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+  transition: opacity 160ms ease;
+}
+
+/* Transition douce entre les pages lors d'une navigation wire:navigate.
+   Opacité seule sur <body> : un transform casserait le position:fixed
+   de la navbar et de la barre d'onglets mobile pendant la transition.
+   L'échelle légère est appliquée à <main> à l'entrée (page-enter). */
+html.is-navigating body {
+  opacity: 0;
+}
+
+/* Entrée de page : le <body> étant remplacé à chaque wire:navigate,
+   l'animation rejoue naturellement à chaque navigation. */
+main {
+  animation: page-enter 0.5s var(--ease-smooth);
+}
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.99);
+  }
+}
+
+/* ============================================================
+   Micro-interactions de navigation (dashboard admin & espace membre)
+   ============================================================ */
+
+/* Carte cliquable générique : légère élévation + accent au survol. */
+@utility card-hover {
+  transition: transform 220ms var(--ease-smooth), box-shadow 220ms var(--ease-smooth),
+    border-color 220ms var(--ease-smooth);
+  will-change: transform;
+}
+@media (pointer: fine) {
+  .card-hover:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 32px rgba(3, 29, 89, 0.14);
+  }
+}
+.card-hover:active {
+  transform: translateY(-1px) scale(0.99);
+}
+
+/* Icône qui glisse légèrement au survol de son lien parent (flèches "→"). */
+.group:hover .nudge-x {
+  transform: translateX(3px);
+}
+.nudge-x {
+  transition: transform 200ms var(--ease-smooth);
+}
+
+/* Pastille d'onglet actif (barre d'onglets mobile) : petite apparition. */
+@keyframes tab-pop {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.tab-dot {
+  animation: tab-pop 0.35s var(--ease-smooth);
+}
+
+/* Panneau de formulaire (création/édition) : Livewire remonte le contenu à
+   chaque ouverture, l'animation d'entrée rejoue donc naturellement à chaque fois. */
+@keyframes panel-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+}
+.panel-enter {
+  animation: panel-enter 0.32s var(--ease-smooth);
+}
+
+/* Bouton d'action icône (voir / modifier / supprimer / QR…) dans les tableaux. */
+.icon-btn {
+  transition: transform 200ms var(--ease-smooth), background-color 200ms var(--ease-smooth),
+    color 200ms var(--ease-smooth);
+}
+.icon-btn:hover {
+  transform: scale(1.12);
+}
+.icon-btn:active {
+  transform: scale(0.9);
+}
+
+/* Retour tactile générique pour les boutons d'action pleins (Enregistrer, Publier…). */
+.btn-tap {
+  transition: transform 200ms var(--ease-smooth), background-color 200ms var(--ease-smooth),
+    box-shadow 200ms var(--ease-smooth), opacity 200ms var(--ease-smooth);
+}
+@media (pointer: fine) {
+  .btn-tap:hover {
+    transform: translateY(-1px);
+  }
+}
+.btn-tap:active {
+  transform: translateY(0) scale(0.96);
+}
+
+/* Ligne de tableau/liste : légère teinte au survol. */
+.row-hover {
+  transition: background-color 200ms ease;
+}
+.row-hover:hover {
+  background-color: color-mix(in oklab, var(--color-cloud) 65%, white);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body {
+    transition: none;
+  }
+}
+
+/* When Lenis smooth-scroll is active */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+::selection {
+  background: var(--color-accent);
+  color: #fff;
+}
+
+/* Focus clavier des liens et boutons : un contour fin et discret. */
+:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--color-azure) 45%, transparent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Champs de saisie : un seul repère, doux (bordure bleutée + halo léger),
+   au lieu du double contour bleu (plugin forms) + rouge (focus-visible). */
+input:where(:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="submit"], [type="button"], [type="color"])):focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: color-mix(in oklab, var(--color-azure) 60%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-azure) 12%, transparent);
+}
+input[type="checkbox"]:focus,
+input[type="radio"]:focus,
+input[type="file"]:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-azure) 16%, transparent);
+}
+/* Champ en erreur : la bordure rouge reste, le halo devient rouge pâle. */
+input[aria-invalid="true"]:focus,
+textarea[aria-invalid="true"]:focus,
+select[aria-invalid="true"]:focus,
+.rj-invalide:focus {
+  border-color: color-mix(in oklab, var(--color-accent) 55%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-accent) 10%, transparent);
+}
+
+/* Champ de recherche de l'espace membre : le focus est porté par son cadre. */
+.rj-search-input:focus,
+.rj-search-input:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  text-wrap: balance;
+}
+
+/* Custom scrollbar (desktop) */
+@media (pointer: fine) {
+  ::-webkit-scrollbar {
+    width: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--color-cloud);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: color-mix(in oklab, var(--color-brand) 35%, #fff);
+    border-radius: 999px;
+    border: 2px solid var(--color-cloud);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-brand);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================
+   Utilities
+   ============================================================ */
+@utility glass {
+  background: color-mix(in oklab, #fff 70%, transparent);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border: 1px solid color-mix(in oklab, #fff 60%, transparent);
+}
+
+@utility glass-dark {
+  background: color-mix(in oklab, var(--color-brand-900) 45%, transparent);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  border: 1px solid color-mix(in oklab, #fff 12%, transparent);
+}
+
+/* Gradient text in brand colours */
+.text-gradient {
+  background: linear-gradient(
+    100deg,
+    var(--color-brand) 0%,
+    var(--color-azure) 55%,
+    var(--color-brand) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.shimmer-text {
+  background: linear-gradient(
+    100deg,
+    var(--color-brand) 0%,
+    var(--color-azure) 25%,
+    #fff 50%,
+    var(--color-azure) 75%,
+    var(--color-brand) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 6s linear infinite;
+}
+
+/* Subtle dotted/grid backdrops */
+.bg-grid {
+  background-image: linear-gradient(
+      color-mix(in oklab, var(--color-brand) 7%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in oklab, var(--color-brand) 7%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 56px 56px;
+}
+.bg-dots {
+  background-image: radial-gradient(
+    color-mix(in oklab, var(--color-brand) 14%, transparent) 1px,
+    transparent 1.4px
+  );
+  background-size: 22px 22px;
+}
+
+/* Container helper */
+.container-px {
+  padding-inline: clamp(1.25rem, 5vw, 4rem);
+}
+
+/* ============================================================
+   Reveal on scroll (remplace les animations Framer Motion)
+   ============================================================ */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity var(--reveal-duration, 0.7s) var(--ease-smooth),
+    transform var(--reveal-duration, 0.7s) var(--ease-smooth);
+  transition-delay: var(--reveal-delay, 0s);
+}
+[data-reveal][data-reveal-direction="down"] {
+  transform: translateY(-28px);
+}
+[data-reveal][data-reveal-direction="left"] {
+  transform: translateX(28px);
+}
+[data-reveal][data-reveal-direction="right"] {
+  transform: translateX(-28px);
+}
+[data-reveal][data-reveal-direction="none"] {
+  transform: none;
+}
+[data-reveal].is-visible {
+  opacity: 1;
+  transform: translate(0, 0);
+}
+
+/* Fullscreen loader fade-out */
+#page-loader {
+  opacity: 1;
+}
+#page-loader.opacity-0 {
+  opacity: 0;
+}
+
+/* Le splash ne concerne que le tout premier chargement : une fois l'app
+   démarrée (classe posée sur <html>, qui survit aux wire:navigate), les
+   loaders présents dans les body suivants sont masqués immédiatement. */
+html.app-loaded #page-loader {
+  display: none;
+}
+
+
+/* Leçon d'un module de formation (Markdown rendu) */
+.lecon { color: var(--color-ink); font-size: 14px; line-height: 1.7; }
+.lecon > * + * { margin-top: .75em; }
+.lecon h1, .lecon h2, .lecon h3 { color: var(--color-brand); font-weight: 800; line-height: 1.3; margin-top: 1.2em; }
+.lecon h1 { font-size: 18px; } .lecon h2 { font-size: 16px; } .lecon h3 { font-size: 14.5px; }
+.lecon ul { list-style: disc; padding-left: 1.3em; } .lecon ol { list-style: decimal; padding-left: 1.3em; }
+.lecon li + li { margin-top: .25em; }
+.lecon a { color: var(--color-azure); text-decoration: underline; }
+.lecon blockquote { border-left: 3px solid var(--color-accent); padding-left: .9em; color: #5B677A; font-style: italic; }
+.lecon strong { color: var(--color-brand); }
+
+/* Pages légales : texte long, titres plus marqués et ancres sous la barre fixe */
+.legal-texte { font-size: 15.5px; }
+.legal-texte h2 { font-size: 21px; margin-top: 1.8em; padding-top: .4em; scroll-margin-top: 110px; }
+.legal-texte h3 { font-size: 17px; }
+
+/* ── Fenêtres de confirmation et notifications REJCC (rj-dialogs.js) ── */
+.rj-dialog {
+  animation: rj-fondu 0.16s ease-out;
+}
+.rj-dialog .rj-dialog-carte {
+  animation: rj-carte 0.22s var(--ease-smooth);
+}
+.rj-dialog.rj-dialog-sortie {
+  opacity: 0;
+  transition: opacity 0.15s ease-in;
+}
+html.rj-dialog-ouverte {
+  overflow: hidden;
+}
+.rj-toast {
+  animation: rj-toast 0.28s var(--ease-smooth);
+}
+.rj-toast.rj-toast-sortie {
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.18s ease-in, transform 0.18s ease-in;
+}
+.rj-erreur-champ {
+  animation: rj-fondu 0.18s ease-out;
+}
+input.rj-invalide,
+textarea.rj-invalide,
+select.rj-invalide {
+  border-color: color-mix(in oklab, var(--color-accent) 55%, transparent);
+}
+@keyframes rj-fondu {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes rj-carte {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes rj-toast {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Confort de lecture (Paramètres → Mon compte) : contenu de l'espace membre agrandi. */
+html.rj-texte-grand main {
+    zoom: 1.12;
+}

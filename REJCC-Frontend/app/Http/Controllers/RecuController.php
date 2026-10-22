@@ -15,11 +15,6 @@ class RecuController extends Controller
         return $this->relayer(Api::brut('/subscription/recus/'.rawurlencode($ref), Api::token()));
     }
 
-    public function admin(string $ref)
-    {
-        return $this->relayer(Api::brut('/admin/abonnements/recus/'.rawurlencode($ref), Api::token()));
-    }
-
     private function relayer(\Illuminate\Http\Client\Response $r)
     {
         if (! $r->successful() || ! str_starts_with((string) $r->header('Content-Type'), 'application/pdf')) {

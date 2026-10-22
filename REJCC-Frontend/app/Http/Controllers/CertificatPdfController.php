@@ -16,16 +16,6 @@ class CertificatPdfController extends Controller
         return $this->relayer(Api::brut("/my-certificates/{$id}/pdf", Api::token()));
     }
 
-    public function admin(int $id)
-    {
-        return $this->relayer(Api::brut("/admin/certificates/{$id}/pdf", Api::token()));
-    }
-
-    public function apercu()
-    {
-        return $this->relayer(Api::brut('/admin/certificats/apercu', Api::token()));
-    }
-
     public function public(string $code)
     {
         return $this->relayer(Api::brut('/certificats/verifier/'.rawurlencode($code).'/pdf', null, [

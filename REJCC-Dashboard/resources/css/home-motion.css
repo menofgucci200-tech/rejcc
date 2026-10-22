@@ -1,0 +1,455 @@
+/* ============================================================
+   REJCC — Motion design de l'accueil (intro + hero)
+   Charte : bleu #031d59 dominant, rouge #ac0100 en accent, gris #f4f6f8.
+   Le logo n'est jamais déformé, pivoté, recoloré ni « effecté » : les
+   pièces officielles glissent jusqu'à leur place exacte.
+   Toutes les animations sont en CSS (pilotées par des classes posées par
+   resources/js/home-motion.js) et désactivées si l'utilisateur demande
+   moins d'animations.
+   ============================================================ */
+
+/* ---------- Intro (plein écran, une fois par session) ---------- */
+html.rj-intro-on,
+html.rj-intro-on body {
+  overflow: hidden;
+}
+
+.rj-intro {
+  --navy: #031d59;
+  --red: #ac0100;
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  display: none; /* affichée seulement si le script l'a décidé (sans JS : jamais) */
+  place-items: center;
+  overflow: hidden;
+  background: #f4f6f8;
+  color: var(--navy);
+  font-family: var(--font-sans);
+  /* Filet de sécurité CSS : jamais bloquant plus de 9 s. */
+  animation: rj-intro-out 0.01s linear 9s forwards;
+}
+html.rj-intro-on .rj-intro {
+  display: grid;
+}
+.rj-intro:not(.is-playing) > :not(.rj-intro__wipe) {
+  opacity: 0;
+}
+.rj-intro.is-playing {
+  animation: rj-intro-out 0.3s ease 5.85s forwards;
+}
+@keyframes rj-intro-out {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+/* Repères de construction (coins, mentions) */
+.rj-intro__corner {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border-color: color-mix(in srgb, var(--navy) 35%, transparent);
+  border-style: solid;
+  border-width: 0;
+}
+.rj-intro__corner--tl { top: 22px; left: 22px; border-top-width: 1px; border-left-width: 1px; }
+.rj-intro__corner--tr { top: 22px; right: 22px; border-top-width: 1px; border-right-width: 1px; }
+.rj-intro__corner--bl { bottom: 22px; left: 22px; border-bottom-width: 1px; border-left-width: 1px; }
+.rj-intro__corner--br { bottom: 22px; right: 22px; border-bottom-width: 1px; border-right-width: 1px; }
+
+.rj-intro__meta {
+  position: absolute;
+  margin: 0;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--navy) 60%, transparent);
+}
+.rj-intro__meta--tl { top: 30px; left: 60px; }
+.rj-intro__meta--bl { bottom: 30px; left: 60px; }
+
+.rj-intro.is-playing .rj-intro__corner,
+.rj-intro.is-playing .rj-intro__meta {
+  animation:
+    rj-fade-in 0.6s ease 0.1s both,
+    rj-fade-out 0.4s ease 4.9s forwards;
+}
+
+/* Acte 1 — positionnement */
+.rj-intro__words {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+.rj-intro__word {
+  grid-area: 1 / 1;
+  overflow: hidden;
+  padding: 0.05em 0.04em 0.02em;
+  font-family: var(--font-display);
+  font-size: clamp(3.2rem, 12vw, 11rem);
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.rj-intro__word > span {
+  display: block;
+  transform: translateY(112%);
+}
+.rj-intro__word b,
+.rj-intro__slogan b {
+  font-weight: inherit;
+  color: var(--red);
+}
+.rj-intro.is-playing .rj-intro__word > span {
+  animation: rj-word 0.68s linear calc(0.12s + var(--i) * 0.4s) both;
+}
+@keyframes rj-word {
+  /* « push » : le mot sortant et le mot entrant partagent la même courbe */
+  0% {
+    transform: translateY(112%);
+    animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+  }
+  41% {
+    transform: translateY(0);
+  }
+  59% {
+    transform: translateY(0);
+    animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+  }
+  100% {
+    transform: translateY(-112%);
+  }
+}
+
+/* Actes 2-3 — construction du logo */
+.rj-intro__stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.rj-intro__logo {
+  display: block;
+  height: min(64vh, 118vw);
+  width: auto;
+  overflow: visible;
+}
+.rj-intro .rj-guides {
+  stroke: #4f6fbf;
+  stroke-width: 1.3;
+  opacity: 0.5;
+  stroke-dasharray: 1 1;
+  stroke-dashoffset: 1;
+}
+.rj-intro .rj-navy,
+.rj-intro .rj-ink { fill: var(--navy); }
+.rj-intro .rj-red { fill: var(--red); }
+.rj-intro .rj-ink use {
+  stroke: var(--navy);
+  stroke-width: 3;
+}
+
+.rj-intro.is-playing .rj-guides {
+  animation:
+    rj-stroke 0.9s cubic-bezier(0.65, 0, 0.35, 1) 1.3s both,
+    rj-fade-out 0.4s ease 3.75s forwards;
+}
+.rj-intro.is-playing .rj-draw {
+  stroke-dasharray: 1 1;
+  animation:
+    rj-stroke 1s cubic-bezier(0.65, 0, 0.35, 1) calc(1.4s + var(--d)) both,
+    rj-fill 0.45s ease calc(2.1s + var(--d) * 0.5) both,
+    rj-stroke-out 0.3s ease 2.9s forwards;
+}
+.rj-intro.is-playing .rj-slide-x {
+  animation: rj-from-left 0.85s cubic-bezier(0.16, 1, 0.3, 1) calc(2.15s + var(--d)) both;
+}
+.rj-intro.is-playing .rj-rise {
+  animation: rj-from-below 1s cubic-bezier(0.16, 1, 0.3, 1) 2.3s both;
+}
+.rj-intro.is-playing .rj-letter {
+  animation: rj-letter 0.65s cubic-bezier(0.16, 1, 0.3, 1) calc(2.95s + var(--i) * 0.06s) both;
+}
+.rj-intro.is-playing .rj-line {
+  animation: rj-unveil 0.75s cubic-bezier(0.65, 0, 0.35, 1) calc(3.2s + var(--i) * 0.12s) both;
+}
+
+@keyframes rj-stroke {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes rj-fill {
+  from { fill-opacity: 0; }
+  to { fill-opacity: 1; }
+}
+@keyframes rj-stroke-out {
+  to { stroke-opacity: 0; }
+}
+@keyframes rj-from-left {
+  from { transform: translateX(-190px); }
+}
+@keyframes rj-from-below {
+  from { transform: translateY(330px); }
+}
+@keyframes rj-letter {
+  from { transform: translateY(112px); }
+}
+@keyframes rj-unveil {
+  from { clip-path: inset(-20% 100% -20% 0); }
+  to { clip-path: inset(-20% -2% -20% 0); }
+}
+@keyframes rj-fade-in {
+  from { opacity: 0; }
+}
+@keyframes rj-fade-out {
+  to { opacity: 0; }
+}
+
+/* Slogan */
+.rj-intro__slogan {
+  margin: clamp(0.8rem, 2.4vh, 1.6rem) 0 0;
+  font-family: var(--font-serif);
+  font-size: clamp(1.25rem, 1.3rem + 1.1vh, 2.3rem);
+  line-height: 1.15;
+  color: var(--navy);
+  white-space: nowrap;
+}
+.rj-intro__slogan > span {
+  display: inline-block;
+  overflow: hidden;
+  padding: 0 0.02em 0.1em;
+  vertical-align: top;
+}
+.rj-intro__slogan > span > span {
+  display: inline-block;
+}
+.rj-intro.is-playing .rj-intro__slogan > span > span {
+  animation: rj-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) calc(3.85s + var(--i) * 0.08s) both;
+}
+
+/* Passer, progression, rideau */
+.rj-intro__skip {
+  position: absolute;
+  right: 60px;
+  bottom: 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--navy) 70%, transparent);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+.rj-intro__skip:hover,
+.rj-intro__skip:focus-visible {
+  color: var(--red);
+}
+.rj-intro__skip svg {
+  width: 14px;
+  height: 14px;
+}
+.rj-intro.is-playing .rj-intro__skip {
+  animation:
+    rj-fade-in 0.5s ease 0.6s both,
+    rj-fade-out 0.3s ease 4.95s forwards;
+}
+
+.rj-intro__progress {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--red);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+.rj-intro.is-playing .rj-intro__progress {
+  animation: rj-progress 5.1s linear both;
+}
+@keyframes rj-progress {
+  to { transform: scaleX(1); }
+}
+
+.rj-intro__wipe {
+  position: absolute;
+  inset: 0;
+  background: var(--navy);
+  clip-path: circle(0 at var(--wx, 50%) var(--wy, 50%));
+  pointer-events: none;
+}
+.rj-intro.is-playing .rj-intro__wipe {
+  animation: rj-wipe 0.8s cubic-bezier(0.7, 0, 0.2, 1) 5.1s both;
+}
+@keyframes rj-wipe {
+  from { clip-path: circle(0 at var(--wx, 50%) var(--wy, 50%)); }
+  to { clip-path: circle(150vmax at var(--wx, 50%) var(--wy, 50%)); }
+}
+
+@media (max-width: 640px) {
+  .rj-intro__corner--tl { top: 14px; left: 14px; }
+  .rj-intro__corner--tr { top: 14px; right: 14px; }
+  .rj-intro__corner--bl { bottom: 14px; left: 14px; }
+  .rj-intro__corner--br { bottom: 14px; right: 14px; }
+  .rj-intro__meta--tl { top: 22px; left: 50px; }
+  .rj-intro__meta--bl { bottom: 22px; left: 50px; }
+  .rj-intro__skip { right: 50px; bottom: 13px; }
+}
+
+/* ---------- Hero « Autour de la table » ---------- */
+.rj-hero {
+  --o: 0s; /* décalage : durée de l'intro quand elle joue */
+}
+.rj-mask {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  padding-top: 0.04em;
+}
+
+/* Scène : la salle de réunion (dimensionnée et placée par home-motion.js ;
+   valeurs CSS ci-dessous = repli « cover » sans JavaScript). L'écran de la
+   salle occupe x 0–35,65 %, y 15,19–60,07 % de l'illustration. */
+.rj-cine {
+  overflow: hidden;
+  background: var(--color-brand);
+}
+.rj-cine__scene {
+  position: absolute;
+  left: 50%;
+  top: 38%;
+  width: max(106%, calc(106svh * 1.5265));
+  aspect-ratio: 1728 / 1132;
+  translate: -50% -38%;
+  transform-origin: 0 0;
+  filter: blur(var(--rj-flou, 2.5px)) saturate(1.08);
+  will-change: transform;
+}
+.rj-cine__scene[style*="width"] {
+  translate: none;
+}
+.rj-cine__drift {
+  position: absolute;
+  inset: 0;
+}
+.rj-cine__salle {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+}
+.rj-cine__ecran {
+  position: absolute;
+  left: 0;
+  top: 15.19%;
+  width: 35.65%;
+  height: 44.88%;
+  overflow: hidden;
+  background: #031d59;
+}
+.rj-cine__ecran video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 40%;
+}
+.rj-cine__voile {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgb(2 21 65 / 0.7) 0%, transparent 22%),
+    radial-gradient(ellipse at 50% 50%, rgb(3 29 89 / 0.74) 0%, rgb(3 29 89 / 0.55) 48%, rgb(2 21 65 / 0.88) 100%);
+}
+.rj-cine__grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.07;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Ouverture : gros plan net sur l'écran, voile et grain absents. */
+.rj-hero.is-cine-zoom .rj-cine__scene {
+  --rj-flou: 0px;
+}
+.rj-hero.is-cine-zoom .rj-cine__voile,
+.rj-hero.is-cine-zoom .rj-cine__grain {
+  opacity: 0;
+}
+.rj-hero.is-cine-zoom .rj-anim {
+  opacity: 0;
+  pointer-events: none;
+}
+.rj-hero .rj-cine__voile,
+.rj-hero .rj-cine__grain {
+  transition: opacity 1.4s ease;
+}
+/* La scène n'apparaît qu'une fois placée (évite un saut au chargement). */
+html.rj-motion .rj-hero:not(.is-cine-ready) .rj-cine__scene {
+  opacity: 0;
+}
+.rj-hero.is-cine-ready .rj-cine__scene {
+  transition: opacity 0.45s ease;
+}
+/* Après le recul : lent panoramique, comme une caméra qui balaie la salle. */
+.rj-hero.is-cine-done .rj-cine__drift {
+  animation: rj-panoramique 26s ease-in-out infinite alternate;
+}
+@keyframes rj-panoramique {
+  from { transform: scale(1.02) translate3d(1.5%, 0, 0); }
+  to { transform: scale(1.05) translate3d(-1.5%, -1%, 0); }
+}
+
+/* État initial (avant lancement) — uniquement si les animations sont permises */
+html.rj-motion .rj-hero:not(.is-live) .rj-anim {
+  opacity: 0;
+}
+
+html.rj-motion .rj-hero.is-live .rj-up {
+  animation: rj-up 0.95s cubic-bezier(0.16, 1, 0.3, 1) calc(var(--o) + var(--d)) both;
+}
+html.rj-motion .rj-hero.is-live .rj-rule {
+  transform-origin: left;
+  animation: rj-rule 0.7s cubic-bezier(0.65, 0, 0.35, 1) calc(var(--o) + var(--d)) both;
+}
+html.rj-motion .rj-hero.is-live .rj-soft {
+  animation: rj-soft 0.9s cubic-bezier(0.16, 1, 0.3, 1) calc(var(--o) + var(--d)) both;
+}
+html.rj-motion .rj-hero.is-live .rj-fade {
+  animation: rj-fade-in 1.2s ease calc(var(--o) + var(--d)) both;
+}
+html.rj-motion .rj-hero.is-live .rj-marquee {
+  animation: marquee 60s linear infinite;
+}
+
+@keyframes rj-up {
+  from { transform: translateY(108%); }
+}
+@keyframes rj-rule {
+  from { transform: scaleX(0); }
+}
+@keyframes rj-soft {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rj-intro {
+    display: none !important;
+  }
+  .rj-cine__drift {
+    animation: none !important;
+  }
+}

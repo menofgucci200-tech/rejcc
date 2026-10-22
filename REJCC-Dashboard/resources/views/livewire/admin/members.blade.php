@@ -1,0 +1,287 @@
+<div>
+    <x-admin-light.topbar title="Membres" />
+
+    <div class="mx-auto max-w-[1280px] px-8 py-8">
+        <div class="mb-5">
+            <h2 class="mb-1 text-[17px] font-bold text-brand">Base de données des membres</h2>
+            <div class="h-[3px] w-9 rounded bg-accent"></div>
+            <p class="mt-2 text-xs text-[#9AA6B8]">{{ $total }} compte{{ $total > 1 ? 's' : '' }}</p>
+        </div>
+
+        <div class="mb-6 flex flex-wrap items-center gap-2 rounded-[14px] border border-brand/10 bg-white p-3 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+            <input wire:model.live.debounce.400ms="recherche" type="search" placeholder="Rechercher nom ou email…" class="w-52 rounded-full border border-brand/15 px-4 py-2 text-xs outline-none focus:border-azure" />
+            <span class="mx-1 h-5 w-px bg-brand/10"></span>
+            @foreach (['tous' => 'Tous les rôles', 'admin' => 'Administrateurs', 'mentor' => 'Mentors', 'member' => 'Membres'] as $value => $label)
+                <button wire:click="setFiltreRole('{{ $value }}')" class="rounded-full border px-3 py-1.5 text-xs font-semibold transition-all duration-200 ease-out active:scale-95 {{ $filtreRole === $value ? 'border-brand bg-brand text-white' : 'border-brand/10 bg-white text-[#5B677A] hover:border-brand/30 hover:text-brand' }}">{{ $label }}</button>
+            @endforeach
+            <span class="mx-1 h-5 w-px bg-brand/10"></span>
+            @foreach (['tous' => 'Tous', 'actifs' => 'Actifs', 'suspendus' => 'Suspendus'] as $value => $label)
+                <button wire:click="setFiltreStatut('{{ $value }}')" class="rounded-full border px-3 py-1.5 text-xs font-semibold transition-all duration-200 ease-out active:scale-95 {{ $filtreStatut === $value ? 'border-brand bg-brand text-white' : 'border-brand/10 bg-white text-[#5B677A] hover:border-brand/30 hover:text-brand' }}">{{ $label }}</button>
+            @endforeach
+            <span class="mx-1 h-5 w-px bg-brand/10"></span>
+            <select wire:model.live="periode" class="rounded-full border border-brand/15 px-3 py-1.5 text-xs font-semibold text-[#5B677A] outline-none">
+                <option value="toutes">Toute période</option>
+                <option value="30j">Inscrits — 30 derniers jours</option>
+                <option value="90j">Inscrits — 3 derniers mois</option>
+                <option value="annee">Inscrits — cette année</option>
+            </select>
+            <a href="{{ route('admin.export', 'members') }}" class="btn-tap ml-auto inline-flex items-center gap-1.5 rounded-full border border-brand/15 bg-white px-4 py-1.5 text-xs font-bold text-brand hover:bg-cloud">
+                <x-ui.icon name="download" class="size-3.5" /> Exporter (CSV/Excel)
+            </a>
+            <a href="{{ route('admin.inscription') }}" wire:navigate class="btn-tap rounded-full bg-accent px-4 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-accent-600 hover:shadow-md">+ Nouvelle inscription</a>
+        </div>
+
+        <div class="overflow-x-auto rounded-[18px] border border-brand/10 bg-white shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+            <table class="w-full min-w-[860px] text-left">
+                <thead>
+                    <tr class="border-b border-[#EDF0F5] text-[10.5px] font-bold uppercase tracking-[0.06em] text-[#9AA6B8]">
+                        <th class="px-5 py-3">Nom et prénom</th>
+                        <th class="px-3 py-3">Téléphone</th>
+                        <th class="px-3 py-3">Domaine de formation</th>
+                        <th class="px-3 py-3">Rôle</th>
+                        <th class="px-3 py-3">Statut</th>
+                        <th class="px-3 py-3">Inscrit le</th>
+                        <th class="px-5 py-3 text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @php
+                        $roleBadge = fn ($r) => match ($r) {
+                            'admin' => ['Administrateur', '#AC0100', '#F9E9E9', '#AC0100, #D95B5A'],
+                            'mentor' => ['Mentor', '#AC0100', '#FBE9E8', '#AC0100, #D95B5A'],
+                            default => ['Membre', '#031D59', '#E8EDF8', '#031D59, #4F6FBF'],
+                        };
+                    @endphp
+                    @forelse ($membres as $m)
+                        @php $rb = $roleBadge($m['role']); @endphp
+                        <tr class="border-b border-[#EDF0F5] align-middle transition-colors duration-200 {{ $m['actif'] ? '' : 'opacity-55' }} hover:bg-[#FAFBFD]">
+                            {{-- Nom et prénom --}}
+                            <td class="px-5 py-3">
+                                <div class="flex items-center gap-3">
+                                    <span class="flex size-9 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white" style="background: linear-gradient(135deg, {{ $rb[3] }})">{{ $m['initiales'] }}</span>
+                                    <div class="min-w-0">
+                                        <div class="flex items-center gap-1.5">
+                                            <p class="truncate text-[13px] font-bold text-brand">{{ $m['nom'] }}</p>
+                                            @if ($m['departement'])
+                                                <span class="truncate rounded-full bg-azure/10 px-1.5 py-0.5 text-[9px] font-bold uppercase text-azure">{{ $m['departement'] }}</span>
+                                            @elseif ($m['restreint'])
+                                                <span class="rounded-full bg-[#F5A623]/15 px-1.5 py-0.5 text-[9px] font-bold text-[#B87A0D]">LIMITÉ</span>
+                                            @endif
+                                        </div>
+                                        <p class="truncate text-[11.5px] text-[#9AA6B8]">{{ $m['email'] }}</p>
+                                    </div>
+                                </div>
+                            </td>
+                            {{-- Téléphone --}}
+                            <td class="px-3 py-3 text-[12.5px] text-[#5B677A]">{{ $m['telephone'] }}</td>
+                            {{-- Domaine de formation --}}
+                            <td class="px-3 py-3 text-[12.5px] text-[#5B677A]">
+                                <span class="line-clamp-2 max-w-[220px]">{{ $m['domaine'] }}</span>
+                            </td>
+                            {{-- Rôle --}}
+                            <td class="px-3 py-3">
+                                <span class="rounded-full px-2.5 py-1 text-[10.5px] font-bold" style="color: {{ $rb[1] }}; background: {{ $rb[2] }}">{{ $rb[0] }}</span>
+                            </td>
+                            {{-- Statut --}}
+                            <td class="px-3 py-3">
+                                @if ($m['actif'])
+                                    <span class="inline-flex items-center gap-1 text-[11.5px] font-semibold text-[#22A85A]"><span class="size-1.5 rounded-full bg-[#22A85A]"></span> Actif</span>
+                                @else
+                                    <span class="inline-flex items-center gap-1 text-[11.5px] font-semibold text-[#9AA6B8]"><span class="size-1.5 rounded-full bg-[#9AA6B8]"></span> Suspendu</span>
+                                @endif
+                            </td>
+                            {{-- Inscrit le --}}
+                            <td class="px-3 py-3 text-[12px] text-[#9AA6B8]">{{ $m['depuis'] }}</td>
+                            {{-- Action --}}
+                            <td class="px-5 py-3">
+                                <div class="flex items-center justify-end gap-0.5">
+                                    <button wire:click="voir({{ $m['id'] }})" title="Voir le dossier complet" class="icon-btn rounded-lg p-1.5 {{ $voirId === $m['id'] ? 'bg-brand/10 text-brand' : 'text-[#9AA6B8] hover:bg-brand/10 hover:text-brand' }}">
+                                        <x-ui.icon name="eye" class="size-4" />
+                                    </button>
+                                    <button wire:click="openEdit({{ $m['id'] }})" title="Modifier" class="icon-btn rounded-lg p-1.5 {{ $editingId === $m['id'] ? 'bg-brand/10 text-brand' : 'text-[#9AA6B8] hover:bg-brand/10 hover:text-brand' }}">
+                                        <x-ui.icon name="pencil" class="size-4" />
+                                    </button>
+                                    <button wire:click="qr({{ $m['id'] }})" title="Carte membre & QR code" class="icon-btn rounded-lg p-1.5 {{ $qrId === $m['id'] ? 'bg-brand/10 text-brand' : 'text-[#9AA6B8] hover:bg-brand/10 hover:text-brand' }}">
+                                        <x-ui.icon name="qr-code" class="size-4" />
+                                    </button>
+                                    <button wire:click="toggleStatut({{ $m['id'] }}, {{ $m['actif'] ? 'true' : 'false' }})" title="{{ $m['actif'] ? 'Suspendre' : 'Réactiver' }}" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-[#F5A623]/10 hover:text-[#B87A0D]">
+                                        <x-ui.icon name="{{ $m['actif'] ? 'user-x' : 'user-check' }}" class="size-4" />
+                                    </button>
+                                    @if ($m['role'] !== 'admin')
+                                        <button wire:click="delete({{ $m['id'] }})" wire:confirm="Supprimer définitivement le compte de {{ $m['nom'] }} ? Cette action est irréversible." title="Supprimer" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-accent/10 hover:text-accent">
+                                            <x-ui.icon name="trash-2" class="size-4" />
+                                        </button>
+                                    @endif
+                                </div>
+                            </td>
+                        </tr>
+
+                        {{-- Panneau déplié : Voir / Modifier / QR --}}
+                        @if (($voirId === $m['id'] && $dossier !== []) || $editingId === $m['id'] || ($qrId === $m['id'] && $qrData !== []))
+                            <tr class="border-b border-[#EDF0F5] bg-[#F8FAFC]">
+                                <td colspan="7" class="panel-enter px-5 py-4">
+                                    {{-- Dossier complet --}}
+                                    @if ($voirId === $m['id'] && $dossier !== [])
+                                        @php $d = $dossier['member']; $app = $dossier['application']; @endphp
+                                        <p class="mb-2.5 text-[11.5px] font-bold uppercase tracking-[0.05em] text-brand">Profil</p>
+                                        <div class="grid grid-cols-1 gap-x-6 gap-y-2.5 sm:grid-cols-3">
+                                            @foreach ([
+                                                'Référence' => $d['reference'], 'Code carte' => $d['code'], 'Email' => $d['email'],
+                                                'Téléphone' => $d['telephone'], 'Genre' => $d['genre'], 'Ville' => $d['ville'],
+                                                'Paroisse' => $d['paroisse'], 'Secteur' => $d['secteur'], 'Profil' => $d['profil'],
+                                                'Organisation' => $d['organisation'], 'Date de naissance' => $d['date_naissance'], "Date d'adhésion" => $d['date_adhesion'],
+                                                'Abonnement' => $d['abonnement_actif'] ? 'Actif'.($d['abonnement_expire_le'] ? ' jusqu\'au '.\Carbon\Carbon::parse($d['abonnement_expire_le'])->translatedFormat('d/m/Y') : '') : 'Non actif',
+                                            ] as $label => $value)
+                                                @if (! empty($value))
+                                                    <div>
+                                                        <p class="text-[11px] font-bold text-[#5B677A]">{{ $label }}</p>
+                                                        <p class="mt-0.5 text-[12.5px] text-ink">{{ $value }}</p>
+                                                    </div>
+                                                @endif
+                                            @endforeach
+                                        </div>
+                                        @if ($d['bio'])
+                                            <p class="mt-3 text-[12.5px] italic text-[#5B677A]">« {{ $d['bio'] }} »</p>
+                                        @endif
+                                        @if (! empty($dossier['formations']))
+                                            <p class="mb-2 mt-4 text-[11.5px] font-bold uppercase tracking-[0.05em] text-brand">Formations</p>
+                                            <div class="flex flex-wrap gap-2">
+                                                @foreach ($dossier['formations'] as $f)
+                                                    <span class="rounded-full px-3 py-1 text-[11px] font-semibold {{ $f['completed'] ? 'bg-[#22A85A]/10 text-[#22A85A]' : 'bg-azure/10 text-azure' }}">{{ $f['title'] }} · {{ $f['progress'] }}%{{ $f['completed'] ? ' ✓' : '' }}</span>
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                        @if (! empty($dossier['documents_partages']))
+                                            <p class="mb-2 mt-4 text-[11.5px] font-bold uppercase tracking-[0.05em] text-brand">Documents partagés par le membre</p>
+                                            <div class="flex flex-wrap gap-2" data-test="docs-partages">
+                                                @foreach ($dossier['documents_partages'] as $pd)
+                                                    <a href="{{ route('admin.members.document', ['id' => $pd['id'], 'nom' => (\Illuminate\Support\Str::slug($pd['libelle']) ?: 'document').($pd['apercu'] === 'pdf' ? '.pdf' : '')]) }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 rounded-full border border-azure/25 bg-azure/[.06] px-3 py-1 text-[11.5px] font-semibold text-brand hover:bg-azure/10">
+                                                        <x-ui.icon name="lock" class="size-3" /> {{ $pd['libelle'] }}@if ($pd['expire_le']) <span class="{{ $pd['etat'] === 'expire' ? 'text-accent' : 'text-[#9AA6B8]' }}">· exp. {{ \Illuminate\Support\Carbon::parse($pd['expire_le'])->format('d/m/Y') }}</span>@endif
+                                                    </a>
+                                                @endforeach
+                                            </div>
+                                            <p class="mt-1 text-[11px] text-[#9AA6B8]">Chaque consultation est enregistrée et signalée au membre.</p>
+                                        @endif
+                                        @if ($app)
+                                            <p class="mb-2.5 mt-4 text-[11.5px] font-bold uppercase tracking-[0.05em] text-brand">Formulaire d'adhésion</p>
+                                            <div class="grid grid-cols-1 gap-x-6 gap-y-2.5 sm:grid-cols-3">
+                                                @foreach ([
+                                                    'Sexe' => $app['sexe'] ?? null, "Tranche d'âge" => $app['tranche_age'] ?? null, 'Téléphone' => $app['whatsapp'] ?? null,
+                                                    'Diocèse' => $app['diocese'] ?? null, 'Paroisse' => $app['paroisse'] ?? null,
+                                                    'Statut actuel' => implode(', ', $app['statut_actuel'] ?? []), "Niveau d'études" => $app['niveau_etudes'] ?? null,
+                                                    'Domaines de formation' => $app['domaines_formation'] ?? null, 'Compétences' => implode(', ', $app['competences'] ?? []),
+                                                    'A une activité ?' => $app['a_activite'] ?? null, 'Activité' => $app['nom_activite'] ?? null,
+                                                    'Attentes' => implode(', ', $app['attentes'] ?? []), 'Formations souhaitées' => implode(', ', $app['formations_interet'] ?? []),
+                                                    'Défi principal' => $app['defi_principal'] ?? null, 'Revenu mensuel' => $app['revenu_mensuel'] ?? null,
+                                                ] as $label => $value)
+                                                    @if (! empty($value))
+                                                        <div>
+                                                            <p class="text-[11px] font-bold text-[#5B677A]">{{ $label }}</p>
+                                                            <p class="mt-0.5 text-[12.5px] text-ink">{{ $value }}</p>
+                                                        </div>
+                                                    @endif
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                    @endif
+
+                                    {{-- Modification --}}
+                                    @if ($editingId === $m['id'])
+                                        <div class="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+                                            <div>
+                                                <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Prénom</label>
+                                                <input wire:model="prenom" type="text" class="w-full rounded-[9px] border border-brand/15 bg-white px-3 py-2 text-sm outline-none focus:border-azure" />
+                                                @error('prenom') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                                            </div>
+                                            <div>
+                                                <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Nom</label>
+                                                <input wire:model="nom" type="text" class="w-full rounded-[9px] border border-brand/15 bg-white px-3 py-2 text-sm outline-none focus:border-azure" />
+                                                @error('nom') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                                            </div>
+                                            <div>
+                                                <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Téléphone</label>
+                                                <input wire:model="telephone" type="text" class="w-full rounded-[9px] border border-brand/15 bg-white px-3 py-2 text-sm outline-none focus:border-azure" />
+                                                @error('telephone') <span class="text-xs text-accent">{{ $message }}</span> @enderror
+                                            </div>
+                                            <div>
+                                                <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Ville</label>
+                                                <input wire:model="ville" type="text" class="w-full rounded-[9px] border border-brand/15 bg-white px-3 py-2 text-sm outline-none focus:border-azure" />
+                                            </div>
+                                            @if ($peutGererLesDroits)
+                                            <div>
+                                                <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Rôle</label>
+                                                <select wire:model.live="role" class="w-full rounded-[9px] border border-brand/15 bg-white px-3 py-2 text-sm outline-none focus:border-azure">
+                                                    <option value="member">Membre</option>
+                                                    <option value="mentor">Mentor</option>
+                                                    <option value="admin">Administrateur</option>
+                                                </select>
+                                            </div>
+                                            @if ($role === 'admin')
+                                                <div class="rounded-[10px] border border-brand/10 bg-white p-3 sm:col-span-2">
+                                                    <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Département du Bureau</label>
+                                                    <select wire:model.live="bureauDepartement" data-test="choix-departement" class="mb-3 w-full rounded-[9px] border border-brand/15 bg-white px-3 py-2 text-sm outline-none focus:border-azure sm:w-80">
+                                                        <option value="">Administration générale (aucun département)</option>
+                                                        @foreach ($departements as $d)
+                                                            <option value="{{ $d['slug'] }}">{{ $d['label'] }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                    @if ($bureauDepartement === '')
+                                                    <label class="inline-flex items-center gap-2 text-xs font-bold text-brand">
+                                                        <input wire:model.live="accesComplet" type="checkbox" class="size-4 rounded border-brand/20 text-brand" /> Accès complet à toute l'administration
+                                                    </label>
+                                                    @else
+                                                    <p class="text-xs text-[#5B677A]">Rubriques du département cochées par défaut ; vous pouvez les ajuster.</p>
+                                                    @endif
+                                                    @if (! $accesComplet || $bureauDepartement !== '')
+                                                        <div class="mt-2.5 grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+                                                            @foreach ($sectionsDisponibles as $slug => $label)
+                                                                <label class="inline-flex items-center gap-2 text-xs text-[#5B677A]">
+                                                                    <input wire:model="sections" type="checkbox" value="{{ $slug }}" class="size-3.5 rounded border-brand/20 text-brand" /> {{ $label }}
+                                                                </label>
+                                                            @endforeach
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            @endif
+                                            @endif
+                                            @if ($erreurEdition)
+                                                <p class="rounded-[9px] bg-accent/5 px-3 py-2 text-xs font-semibold text-accent sm:col-span-2">{{ $erreurEdition }}</p>
+                                            @endif
+                                            <div class="flex gap-2 sm:col-span-2">
+                                                <button wire:click="saveEdit" wire:loading.attr="disabled" class="btn-tap rounded-[9px] bg-brand px-5 py-2 text-sm font-bold text-white shadow-sm hover:bg-brand/90 hover:shadow-md disabled:opacity-60">Enregistrer</button>
+                                                <button wire:click="closeEdit" class="btn-tap rounded-[9px] border border-[#C9D3E6] px-5 py-2 text-sm font-bold text-brand hover:bg-cloud">Annuler</button>
+                                            </div>
+                                        </div>
+                                    @endif
+
+                                    {{-- Carte membre & QR --}}
+                                    @if ($qrId === $m['id'] && $qrData !== [])
+                                        <div class="flex flex-wrap items-center gap-6" wire:key="qr-{{ $m['id'] }}">
+                                            <div x-data x-init="window.QRCode && window.QRCode.toCanvas($refs.canvas, '{{ $qrData['url'] }}', { width: 140, margin: 1, color: { dark: '#031D59' } })" class="rounded-[12px] border border-brand/10 bg-white p-3">
+                                                <canvas x-ref="canvas"></canvas>
+                                            </div>
+                                            <div>
+                                                <p class="text-[14px] font-bold text-brand">{{ $qrData['nom'] }}</p>
+                                                <p class="mt-1 text-xs text-[#5B677A]">Code carte : <span class="font-bold text-brand">{{ $qrData['code'] }}</span></p>
+                                                <p class="text-xs text-[#5B677A]">N° membre : {{ $qrData['reference'] }}</p>
+                                                <a href="{{ $qrData['url'] }}" target="_blank" class="btn-tap mt-2 inline-flex items-center gap-1.5 rounded-full border border-azure/25 bg-azure/10 px-3.5 py-1.5 text-xs font-semibold text-azure hover:bg-azure/20">
+                                                    <x-ui.icon name="external-link" class="size-3.5" /> Ouvrir la carte membre
+                                                </a>
+                                            </div>
+                                        </div>
+                                    @endif
+                                </td>
+                            </tr>
+                        @endif
+                    @empty
+                        <tr>
+                            <td colspan="7" class="px-5 py-12 text-center text-sm text-[#5B677A]">Aucun compte ne correspond à ces filtres.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        <x-ui.pager :meta="$meta" />
+    </div>
+</div>

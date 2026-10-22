@@ -36,11 +36,12 @@ new #[Layout('layouts.site')] class extends Component
             session()->flash('rj_toast', ['message' => 'Bon retour parmi nous ! La clôture de votre compte a été annulée.', 'type' => 'success']);
         }
 
-        $admin = ($result['user']['role'] ?? null) === 'admin';
-        $target = $admin ? '/admin' : '/espace-membre';
-        // Retour vers la page demandée avant la connexion, si elle est de son espace.
+        // L'administration se connecte sur le dashboard ; ici, tout le monde
+        // arrive dans son espace membre.
+        $target = '/espace-membre';
+        // Retour vers la page demandée avant la connexion, si elle est de l'espace membre.
         $voulu = (string) session()->pull('url.intended', '');
-        if (str_starts_with($voulu, $admin ? '/admin' : '/espace-membre')) {
+        if (str_starts_with($voulu, '/espace-membre')) {
             $target = $voulu;
         }
 

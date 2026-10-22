@@ -39,4 +39,9 @@ return [
         'url' => env('BACKEND_API_URL', 'http://127.0.0.1:8000/api'),
     ],
 
+    // Dashboard (administration et départements du Bureau) : autre application.
+    'dashboard' => [
+        'url' => env('DASHBOARD_URL', 'https://dashboard.rejcc.site'),
+    ],
+
 ];

@@ -284,7 +284,55 @@ Pour **chacun des deux sites** :
   répond bien.
 - Ouvrir `https://rejcc.site/connexion`, se connecter avec l'`ADMIN_EMAIL` /
   `ADMIN_PASSWORD` du `.env` backend.
-- Vérifier `https://rejcc.site/admin` après connexion.
+- Vérifier `https://dashboard.rejcc.site` après connexion (voir « Dashboard » ci-dessous ; `https://rejcc.site/admin` y renvoie).
+
+---
+
+## Dashboard — dashboard.rejcc.site (administration et départements)
+
+Le dashboard (`REJCC-Dashboard`) est une troisième application : l'administration
+générale et l'espace de chaque département du Bureau. Il a sa propre page de
+connexion, réservée aux comptes d'administration. Il passe par l'API comme le
+site et **partage les fichiers du site** (documents, médias, coffre-fort des
+membres). À faire une seule fois :
+
+1. **Sous-domaine** : hPanel → Sites web → `rejcc.site` → Gérer → Domaines →
+   Sous-domaines, taper `dashboard`, **Créer** (comme `api` à l'étape 1).
+2. **Code** (SSH) :
+
+   ```bash
+   cd ~/domains/dashboard.rejcc.site
+   git clone https://github.com/menofgucci200-tech/rejcc.git repo-dashboard
+   rm -rf public_html
+   ln -s repo-dashboard/REJCC-Dashboard/public public_html
+   ```
+
+3. **Réglages** (`.env`) :
+
+   ```bash
+   cd ~/domains/dashboard.rejcc.site/repo-dashboard/REJCC-Dashboard
+   cp .env.example .env
+   nano .env
+   ```
+
+   - `APP_KEY` : **copier exactement celle de** `REJCC-Frontend/.env`
+     (les documents personnels des membres sont chiffrés avec elle).
+   - Remplacer `UTILISATEUR` par votre identifiant Hostinger dans
+     `SHARED_PRIVATE_ROOT` et `SHARED_UPLOADS_ROOT` (commande `echo $HOME`
+     pour voir le chemin complet).
+   - Dans `REJCC-Frontend/.env`, ajouter `DASHBOARD_URL=https://dashboard.rejcc.site`.
+
+4. **SSL** : activer le certificat gratuit pour `dashboard.rejcc.site` (étape 7).
+5. Lancer `./deploy.sh` : il détecte le dashboard, l'installe et le vérifie.
+   Tant que le dashboard n'est pas installé, le script l'ignore (simple
+   avertissement) et met à jour le site et l'API comme avant.
+
+**Comptes** : l'administrateur général se connecte sur
+`https://dashboard.rejcc.site/connexion`. Il crée les comptes des départements
+dans **Comptes membres → Inscrire** : type « Administrateur », puis le
+département (ses rubriques sont cochées automatiquement). Un compte de
+département arrive directement dans l'espace de son département et ne voit que
+ses rubriques. Les membres continuent de se connecter sur `rejcc.site/connexion`.
 
 ---
 

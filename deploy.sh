@@ -87,7 +87,9 @@ fi
 : "${BRANCHE:=main}"
 : "${DOSSIER_BACKEND:=$HOME/domains/api.rejcc.site/repo-backend/REJCC-Backend}"
 : "${DOSSIER_FRONTEND:=$HOME/domains/rejcc.site/repo-frontend/REJCC-Frontend}"
+: "${DOSSIER_DASHBOARD:=$HOME/domains/dashboard.rejcc.site/repo-dashboard/REJCC-Dashboard}"
 : "${URL_SITE:=https://rejcc.site}"
+: "${URL_DASHBOARD:=https://dashboard.rejcc.site}"
 : "${URL_API:=https://api.rejcc.site/api}"
 : "${PHP:=php}"
 : "${COMPOSER_BIN:=}"
@@ -129,20 +131,30 @@ construire_assets_localement() {
         git -C "$racine" worktree add -q --detach "$arbre" "$sha"
     fi
     info "Version : $(git -C "$arbre" log -1 --format='%h %s')"
+    # Archive : build/ (site, REJCC-Frontend) et build-dashboard/ (REJCC-Dashboard).
+    local paquet="$racine/.deploy/paquet"
+    rm -rf "$paquet" && mkdir -p "$paquet"
+    for appli in REJCC-Frontend REJCC-Dashboard; do
+        [ -d "$arbre/$appli" ] || continue
+        (
+            cd "$arbre/$appli"
+            empreinte="$(git hash-object package-lock.json)"
+            if [ ! -d node_modules ] || [ "$(cat node_modules/.empreinte-rejcc 2>/dev/null)" != "$empreinte" ]; then
+                info "$appli : installation des dépendances (npm ci)…"
+                sortie="$(npm ci --no-audit --no-fund 2>&1)" || { printf '%s\n' "$sortie" | tail -n 30; echec "npm ci a échoué ($appli)."; }
+                echo "$empreinte" > node_modules/.empreinte-rejcc
+            fi
+            sortie="$(npm run build 2>&1)" || { printf '%s\n' "$sortie" | tail -n 30; echec "npm run build a échoué ($appli)."; }
+            echo "$sha" > public/build/.commit-rejcc
+        )
+        cp -R "$arbre/$appli/public/build" "$paquet/$([ "$appli" = REJCC-Frontend ] && echo build || echo build-dashboard)"
+    done
     (
-        cd "$arbre/REJCC-Frontend"
-        empreinte="$(git hash-object package-lock.json)"
-        if [ ! -d node_modules ] || [ "$(cat node_modules/.empreinte-rejcc 2>/dev/null)" != "$empreinte" ]; then
-            info "Installation des dépendances (npm ci)…"
-            sortie="$(npm ci --no-audit --no-fund 2>&1)" || { printf '%s\n' "$sortie" | tail -n 30; echec "npm ci a échoué."; }
-            echo "$empreinte" > node_modules/.empreinte-rejcc
-        fi
-        sortie="$(npm run build 2>&1)" || { printf '%s\n' "$sortie" | tail -n 30; echec "npm run build a échoué."; }
-        echo "$sha" > public/build/.commit-rejcc
         # Sur Mac, sans les métadonnées macOS (sinon avertissements côté serveur).
         options_tar=()
         tar --version 2>/dev/null | grep -q bsdtar && options_tar=(--no-xattrs --no-mac-metadata)
-        COPYFILE_DISABLE=1 tar "${options_tar[@]+"${options_tar[@]}"}" -czf "$racine/.deploy/build.tar.gz" -C public build
+        cd "$paquet"
+        COPYFILE_DISABLE=1 tar "${options_tar[@]+"${options_tar[@]}"}" -czf "$racine/.deploy/build.tar.gz" build $( [ -d build-dashboard ] && echo build-dashboard )
     )
     ok "Fichiers prêts ($(du -h "$racine/.deploy/build.tar.gz" | cut -f1))"
     ARCHIVE_ASSETS="$racine/.deploy/build.tar.gz"
@@ -258,6 +270,18 @@ for d in "$DOSSIER_BACKEND" "$DOSSIER_FRONTEND"; do
 done
 ok "Dossiers backend et frontend trouvés"
 
+# Dashboard (dashboard.rejcc.site) : déployé s'il est installé sur le serveur.
+SERVICES=("$DOSSIER_BACKEND" "$DOSSIER_FRONTEND")
+WEB=("$DOSSIER_FRONTEND")
+if [ -f "$DOSSIER_DASHBOARD/artisan" ]; then
+    [ -f "$DOSSIER_DASHBOARD/.env" ] || echec "Fichier .env absent dans $DOSSIER_DASHBOARD (voir « Dashboard » dans DEPLOIEMENT_HOSTINGER.md)."
+    SERVICES+=("$DOSSIER_DASHBOARD")
+    WEB+=("$DOSSIER_DASHBOARD")
+    ok "Dashboard trouvé"
+else
+    avert "Dashboard non installé ($DOSSIER_DASHBOARD) : il n'est pas mis à jour. Voir « Dashboard » dans DEPLOIEMENT_HOSTINGER.md."
+fi
+
 command -v "$PHP" >/dev/null 2>&1 || echec "PHP introuvable ($PHP). Indiquez le bon chemin dans PHP= (deploy.config)."
 VERSION_PHP="$("$PHP" -r 'echo PHP_VERSION_ID;')"
 [ "$VERSION_PHP" -ge 80200 ] || echec "PHP $("$PHP" -r 'echo PHP_VERSION;') trop ancien : il faut PHP 8.2 ou plus. Indiquez par ex. PHP=\"/opt/alt/php83/usr/bin/php\" dans deploy.config."
@@ -298,13 +322,24 @@ case "$ASSETS" in
 esac
 
 # Réglages indispensables des .env
-for d in "$DOSSIER_BACKEND" "$DOSSIER_FRONTEND"; do
+for d in "${SERVICES[@]}"; do
     nom="$(basename "$d")"
     [ -n "$(lire_env "$d/.env" APP_KEY)" ] || echec "$nom : APP_KEY est vide dans .env (lancez « php artisan key:generate » dans $d)."
     [ "$(lire_env "$d/.env" APP_DEBUG)" = true ] && avert "$nom : APP_DEBUG=true dans .env. En production, mettez APP_DEBUG=false (sinon les erreurs affichent des informations internes)."
     [ "$(lire_env "$d/.env" APP_ENV)" = production ] || avert "$nom : APP_ENV n'est pas « production » dans .env."
 done
 [ -n "$(lire_env "$DOSSIER_FRONTEND/.env" BACKEND_API_URL)" ] || echec "REJCC-Frontend : BACKEND_API_URL est vide dans .env (ex. https://api.rejcc.site/api)."
+if [ -f "$DOSSIER_DASHBOARD/artisan" ]; then
+    [ -n "$(lire_env "$DOSSIER_DASHBOARD/.env" BACKEND_API_URL)" ] || echec "REJCC-Dashboard : BACKEND_API_URL est vide dans .env (ex. https://api.rejcc.site/api)."
+    # Le coffre-fort des membres est chiffré avec la clé du site : même clé.
+    [ "$(lire_env "$DOSSIER_DASHBOARD/.env" APP_KEY)" = "$(lire_env "$DOSSIER_FRONTEND/.env" APP_KEY)" ] \
+        || echec "REJCC-Dashboard : APP_KEY doit être la même que celle de REJCC-Frontend (documents chiffrés des membres)."
+    for v in SHARED_PRIVATE_ROOT SHARED_UPLOADS_ROOT SHARED_UPLOADS_URL; do
+        [ -n "$(lire_env "$DOSSIER_DASHBOARD/.env" "$v")" ] || echec "REJCC-Dashboard : $v est vide dans .env (fichiers partagés avec le site)."
+    done
+    [ -d "$(lire_env "$DOSSIER_DASHBOARD/.env" SHARED_PRIVATE_ROOT)" ] || echec "REJCC-Dashboard : SHARED_PRIVATE_ROOT ne désigne pas un dossier existant."
+    [ -n "$(lire_env "$DOSSIER_FRONTEND/.env" DASHBOARD_URL)" ] || avert "REJCC-Frontend : DASHBOARD_URL est vide dans .env (ex. https://dashboard.rejcc.site) : /admin n'y renverra pas."
+fi
 [ -n "$(lire_env "$DOSSIER_BACKEND/.env" CERTIFICATS_CLE_SIGNATURE)" ] || avert "REJCC-Backend : CERTIFICATS_CLE_SIGNATURE est vide dans .env. Les certificats ne seront pas signés électroniquement."
 case "$(lire_env "$DOSSIER_BACKEND/.env" MAIL_MAILER)" in
     ''|log|array) avert "REJCC-Backend : MAIL_MAILER n'envoie pas de vrais e-mails (valeur actuelle : « $(lire_env "$DOSSIER_BACKEND/.env" MAIL_MAILER) »). Configurez le SMTP Hostinger dans .env." ;;
@@ -321,7 +356,7 @@ ok "Fichiers .env contrôlés"
 
 # Dépôts git : un seul si backend et frontend partagent le même clone.
 DEPOTS=()
-for d in "$DOSSIER_BACKEND" "$DOSSIER_FRONTEND"; do
+for d in "${SERVICES[@]}"; do
     r="$(git -C "$d" rev-parse --show-toplevel 2>/dev/null)" || echec "$d n'est pas dans un dépôt git."
     [[ " ${DEPOTS[*]-} " == *" $r "* ]] || DEPOTS+=("$r")
 done
@@ -390,7 +425,7 @@ if [ "$FAIRE_SAUVEGARDE" = 1 ]; then
 etape "Sauvegarde des bases de données"
 # ----------------------------------------------------------------------------
     SAUVEGARDES_FAITES="$DOSSIER_SAUVEGARDES"
-    for d in "$DOSSIER_BACKEND" "$DOSSIER_FRONTEND"; do
+    for d in "${SERVICES[@]}"; do
         nom="$(basename "$d" | tr '[:upper:]' '[:lower:]' | sed 's/^rejcc-//')"
         cible="$DOSSIER_SAUVEGARDES/$HORODATAGE-$nom"
         cp "$d/.env" "$cible.env"; chmod 600 "$cible.env"
@@ -423,7 +458,7 @@ etape "Sauvegarde des bases de données"
         ok "$nom → $(ls "$cible".*.gz) ($(du -h "$cible".*.gz | cut -f1))"
     done
     # On ne garde que les plus récentes.
-    for nom in backend frontend; do
+    for nom in backend frontend dashboard; do
         ls -1t "$DOSSIER_SAUVEGARDES"/*-"$nom".*.gz 2>/dev/null | tail -n +"$((SAUVEGARDES_A_GARDER + 1))" | while read -r f; do
             rm -f "$f" "${f%%.sql.gz}.env" "${f%%.sqlite.gz}.env"
         done || true
@@ -435,7 +470,7 @@ fi
 if [ "$FAIRE_MAINTENANCE" = 1 ]; then
 etape "Page de maintenance"
 # ----------------------------------------------------------------------------
-    for d in "$DOSSIER_FRONTEND" "$DOSSIER_BACKEND"; do
+    for d in "${WEB[@]}" "$DOSSIER_BACKEND"; do
         (cd "$d" && artisan down --retry=60 >/dev/null)
         EN_MAINTENANCE+=("$d")
     done
@@ -453,7 +488,7 @@ done
 # ----------------------------------------------------------------------------
 etape "Dépendances PHP (composer)"
 # ----------------------------------------------------------------------------
-for d in "$DOSSIER_BACKEND" "$DOSSIER_FRONTEND"; do
+for d in "${SERVICES[@]}"; do
     # --no-scripts : proc_open est désactivé sur Hostinger, les scripts de
     # Composer échouent. On lance package:discover directement ensuite.
     sortie="$(cd "$d" && "${COMPOSER_CMD[@]}" install --no-dev --optimize-autoloader --no-scripts --no-interaction --no-progress --no-ansi 2>&1 \
@@ -465,7 +500,7 @@ done
 # ----------------------------------------------------------------------------
 etape "Base de données (migrations)"
 # ----------------------------------------------------------------------------
-for d in "$DOSSIER_BACKEND" "$DOSSIER_FRONTEND"; do
+for d in "${SERVICES[@]}"; do
     a_une_base "$d" || { ok "$(basename "$d") : pas de base de données"; continue; }
     sortie="$(cd "$d" && artisan migrate --force 2>&1)" || { printf '%s\n' "$sortie"; echec "Migration échouée ($(basename "$d")). Le site est rouvert ; la sauvegarde de la base est dans $DOSSIER_SAUVEGARDES."; }
     n="$(printf '%s\n' "$sortie" | grep -c 'DONE' || true)"
@@ -478,31 +513,38 @@ etape "Fichiers CSS/JS"
 if [ "$ASSETS" = recus ]; then
     rm -rf "$TMP/assets" && mkdir -p "$TMP/assets"
     tar -xzf "$TMP/build.tar.gz" -C "$TMP/assets"
-    rm -rf "$DOSSIER_FRONTEND/public/build.ancien"
-    [ -d "$DOSSIER_FRONTEND/public/build" ] && mv "$DOSSIER_FRONTEND/public/build" "$DOSSIER_FRONTEND/public/build.ancien"
-    mv "$TMP/assets/build" "$DOSSIER_FRONTEND/public/build"
-    rm -rf "$DOSSIER_FRONTEND/public/build.ancien"
-    ok "Fichiers reçus installés"
-else
-    empreinte="$(git -C "$DOSSIER_FRONTEND" hash-object package-lock.json)"
-    if [ ! -d "$DOSSIER_FRONTEND/node_modules" ] || [ "$(cat "$DOSSIER_FRONTEND/node_modules/.empreinte-rejcc" 2>/dev/null)" != "$empreinte" ]; then
-        sortie="$(cd "$DOSSIER_FRONTEND" && npm ci --no-audit --no-fund 2>&1)" \
-            || { printf '%s\n' "$sortie" | tail -n 30; echec "npm ci a échoué."; }
-        echo "$empreinte" > "$DOSSIER_FRONTEND/node_modules/.empreinte-rejcc"
-        ok "npm ci (dépendances mises à jour)"
-    fi
-    sortie="$(cd "$DOSSIER_FRONTEND" && npm run build 2>&1)" \
-        || { printf '%s\n' "$sortie" | tail -n 30; echec "npm run build a échoué."; }
-    ok "npm run build"
 fi
-[ -f "$DOSSIER_FRONTEND/public/build/manifest.json" ] || echec "public/build/manifest.json absent après la construction."
+for d in "${WEB[@]}"; do
+    nom="$(basename "$d")"
+    if [ "$ASSETS" = recus ]; then
+        source_build="$TMP/assets/$([ "$d" = "$DOSSIER_FRONTEND" ] && echo build || echo build-dashboard)"
+        [ -f "$source_build/manifest.json" ] || echec "$nom : fichiers CSS/JS absents de l'archive envoyée. Relancez ./deploy.sh."
+        rm -rf "$d/public/build.ancien"
+        [ -d "$d/public/build" ] && mv "$d/public/build" "$d/public/build.ancien"
+        mv "$source_build" "$d/public/build"
+        rm -rf "$d/public/build.ancien"
+        ok "$nom : fichiers reçus installés"
+    else
+        empreinte="$(git -C "$d" hash-object package-lock.json)"
+        if [ ! -d "$d/node_modules" ] || [ "$(cat "$d/node_modules/.empreinte-rejcc" 2>/dev/null)" != "$empreinte" ]; then
+            sortie="$(cd "$d" && npm ci --no-audit --no-fund 2>&1)" \
+                || { printf '%s\n' "$sortie" | tail -n 30; echec "npm ci a échoué ($nom)."; }
+            echo "$empreinte" > "$d/node_modules/.empreinte-rejcc"
+            ok "$nom : npm ci (dépendances mises à jour)"
+        fi
+        sortie="$(cd "$d" && npm run build 2>&1)" \
+            || { printf '%s\n' "$sortie" | tail -n 30; echec "npm run build a échoué ($nom)."; }
+        ok "$nom : npm run build"
+    fi
+    [ -f "$d/public/build/manifest.json" ] || echec "$nom : public/build/manifest.json absent après la construction."
+done
 
 # ----------------------------------------------------------------------------
 etape "Réglages et caches Laravel"
 # ----------------------------------------------------------------------------
 (cd "$DOSSIER_FRONTEND" && { [ -e public/storage ] || artisan storage:link >/dev/null; })
 (cd "$DOSSIER_FRONTEND" && artisan pieces:securiser | sed 's/^/  /')
-for d in "$DOSSIER_BACKEND" "$DOSSIER_FRONTEND"; do
+for d in "${SERVICES[@]}"; do
     chmod -R ug+rwX "$d/storage" "$d/bootstrap/cache" 2>/dev/null || true
     # Pas de « optimize » global : l'API n'a pas de dossier resources/views.
     caches=(config:cache route:cache event:cache)
@@ -516,7 +558,7 @@ done
 if [ "${#EN_MAINTENANCE[@]}" -gt 0 ]; then
 etape "Réouverture du site"
 # ----------------------------------------------------------------------------
-    for d in "$DOSSIER_BACKEND" "$DOSSIER_FRONTEND"; do
+    for d in "${SERVICES[@]}"; do
         (cd "$d" && artisan up >/dev/null)
     done
     EN_MAINTENANCE=()
@@ -547,6 +589,7 @@ verifier_url() {
 if command -v curl >/dev/null 2>&1; then
     verifier_url "$URL_API/home-content"
     verifier_url "$URL_SITE/"
+    [ -f "$DOSSIER_DASHBOARD/artisan" ] && verifier_url "$URL_DASHBOARD/connexion"
 else
     info "curl absent : ouvrez $URL_SITE dans votre navigateur pour vérifier."
 fi
