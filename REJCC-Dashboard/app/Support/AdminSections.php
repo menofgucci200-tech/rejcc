@@ -42,6 +42,7 @@ class AdminSections
         'admin.abonnements.recu' => 'membres',
         'admin.formations' => 'formations',
         'admin.parcours' => 'formations',
+        'admin.lives' => 'formations',
         'admin.evenements' => 'evenements',
         'admin.evenements.pointage' => 'evenements',
         'admin.projets' => 'projets',

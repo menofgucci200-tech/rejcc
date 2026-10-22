@@ -3,8 +3,9 @@
 namespace App\Support;
 
 /**
- * Les 11 départements du Bureau exécutif du REJCC (organigramme officiel ;
- * la Présidence n'en est pas un). Chaque département a son espace dans le
+ * Les départements du Bureau exécutif du REJCC : les 11 de l'organigramme
+ * officiel (la Présidence n'en est pas un), plus la Formation, pôle du
+ * département Projets doté de son propre espace. Chaque département a son espace dans le
  * dashboard et, par défaut, accès aux rubriques d'administration liées à
  * ses missions. L'administrateur général peut ajuster les rubriques de
  * chaque compte.
@@ -51,8 +52,13 @@ class Departements
         ],
         'projets' => [
             'label' => 'Projets',
-            'mission' => 'Étude et suivi des projets des membres, formations, concours et financements.',
-            'sections' => ['projets', 'opportunites', 'formations', 'certificats'],
+            'mission' => 'Étude, validation et suivi des projets des membres, business plans, concours et financements.',
+            'sections' => ['projets', 'opportunites'],
+        ],
+        'formation' => [
+            'label' => 'Formation',
+            'mission' => 'Sessions de formation des membres (création d\'entreprise, leadership, développement personnel) : formations en ligne, sessions live en visio et certificats.',
+            'sections' => ['formations', 'certificats'],
         ],
         'relations-exterieures' => [
             'label' => 'Relations Extérieures',

@@ -54,6 +54,7 @@
 
             <div class="mt-6 grid items-start gap-6 lg:grid-cols-[1.6fr_1fr]">
                 <div class="flex min-w-0 flex-col gap-6">
+                    <x-formations.sessions-live :sessions="$f['sessions_live'] ?? []" />
                     @if ($f['description'])
                         <section class="rounded-[18px] border border-brand/10 bg-white p-6 shadow-[0_2px_8px_rgba(3,29,89,.05)]" data-test="fiche-description">
                             <h2 class="text-[15px] font-extrabold text-brand">Présentation</h2>

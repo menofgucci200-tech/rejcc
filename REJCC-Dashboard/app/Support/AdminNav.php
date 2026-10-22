@@ -19,6 +19,7 @@ class AdminNav
         ['label' => 'Activité réseau', 'icon' => 'network', 'items' => [
             ['label' => 'Groupes sectoriels', 'icon' => 'network', 'route' => 'admin.groupes'],
             ['label' => 'Formations', 'icon' => 'graduation-cap', 'route' => 'admin.formations'],
+            ['label' => 'Formations live', 'icon' => 'calendar-days', 'route' => 'admin.lives'],
             ['label' => 'Parcours', 'icon' => 'nav-route', 'route' => 'admin.parcours'],
             ['label' => 'Certificats', 'icon' => 'award', 'route' => 'admin.certificats'],
             ['label' => 'Événements', 'icon' => 'calendar-days', 'route' => 'admin.evenements'],

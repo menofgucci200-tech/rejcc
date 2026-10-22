@@ -296,6 +296,15 @@ Route::middleware('auth.token')->group(function () {
 Route::middleware(['auth.token', 'audit.log'])->prefix('admin')->group(function () {
     Route::get('/stats', [AdminController::class, 'stats'])->middleware('auth.admin');
     Route::get('/departements', [AdminController::class, 'departements'])->middleware('auth.admin');
+
+    // Sessions live des formations (département Formation).
+    Route::middleware('auth.admin:formations')->group(function () {
+        Route::get('/formations-live', [\App\Http\Controllers\Api\FormationLiveController::class, 'index']);
+        Route::post('/formations-live', [\App\Http\Controllers\Api\FormationLiveController::class, 'store']);
+        Route::put('/formations-live/{id}', [\App\Http\Controllers\Api\FormationLiveController::class, 'update'])->whereNumber('id');
+        Route::post('/formations-live/{id}/annuler', [\App\Http\Controllers\Api\FormationLiveController::class, 'annuler'])->whereNumber('id');
+        Route::get('/formations-live/{id}/inscrits', [\App\Http\Controllers\Api\FormationLiveController::class, 'inscrits'])->whereNumber('id');
+    });
     Route::get('/a-traiter', [\App\Http\Controllers\Api\AdminNavController::class, 'aTraiter'])->middleware('auth.admin');
     Route::get('/recherche', [\App\Http\Controllers\Api\AdminNavController::class, 'recherche'])->middleware('auth.admin');
 

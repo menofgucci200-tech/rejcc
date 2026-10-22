@@ -524,31 +524,10 @@ class EventController extends Controller
         // Annonce aux membres à la publication (case à cocher).
         $annonces = 0;
         if ($annoncer && $event->statut === 'publie' && ! $event->annonce_at) {
-            $annonces = $this->annoncer($event);
+            $annonces = $event->annoncer();
         }
 
         return response()->json(['ok' => true, 'event' => $event->fresh(), 'prevenus' => $prevenus, 'annonces' => $annonces]);
-    }
-
-    /** Notifie tous les membres actifs d'un nouvel événement (une seule fois). */
-    private function annoncer(Event $e): int
-    {
-        $body = "{$this->quand($e)}".($e->en_ligne ? ' — en ligne' : ($e->location ? " — {$e->location}" : ''))
-            .($e->reserve_abonnes ? '. Réservé aux membres à jour de leur abonnement.' : '. Inscrivez-vous depuis la fiche de l\'événement.');
-        $n = 0;
-        User::where('is_active', true)->whereIn('role', ['member', 'mentor'])->select('id')
-            ->chunkById(500, function ($users) use ($e, $body, &$n) {
-                $now = now();
-                MemberNotification::insert($users->map(fn ($u) => [
-                    'user_id' => $u->id, 'type' => 'info', 'title' => "Nouvel événement : {$e->title}",
-                    'body' => ucfirst($body), 'link' => "/espace-membre/evenements?evenement={$e->id}",
-                    'created_at' => $now, 'updated_at' => $now,
-                ])->all());
-                $n += $users->count();
-            });
-        $e->forceFill(['annonce_at' => now()])->save();
-
-        return $n;
     }
 
     /** Génère une clé stable par question et nettoie sa définition. */

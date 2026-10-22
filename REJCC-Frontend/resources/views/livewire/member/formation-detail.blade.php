@@ -170,6 +170,8 @@
                 @endforeach
             </div>
 
+            <x-formations.sessions-live :sessions="$sessionsLive" class="mt-6" />
+
             {{-- Examen final de certification --}}
             @if ($examen)
                 <section id="examen" data-test="examen" class="mt-6 rounded-[16px] border p-5 shadow-[0_2px_8px_rgba(3,29,89,.05)] {{ $examen['reussi'] ? 'border-[#22A85A]/30 bg-[#F2FBF5]' : 'border-brand/10 bg-white' }}">

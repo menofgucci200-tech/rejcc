@@ -95,6 +95,7 @@ class FormationController extends Controller
             'enrolled' => (bool) $e,
             'completed' => $e?->completed_at !== null,
             'progress' => $e?->progress,
+            'sessions_live' => $this->sessionsLive($f->id, $user->id),
         ]]);
     }
 
@@ -246,7 +247,31 @@ class FormationController extends Controller
             'completed' => $enrollment->completed_at !== null,
             'telechargement_autorise' => $peutTelecharger,
             'examen' => $this->etatExamen($enrollment),
+            'sessions_live' => $this->sessionsLive($enrollment->formation_id, $request->user()->id),
         ]);
+    }
+
+    /**
+     * Sessions live à venir (ou en cours) d'une formation, avec l'inscription du
+     * membre. L'inscription et le lien de la visio se font depuis la fiche de
+     * l'événement, dans le calendrier.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function sessionsLive(int $formationId, int $userId): array
+    {
+        return \App\Models\Event::lives()->where('formation_id', $formationId)->where('statut', 'publie')
+            ->where(fn ($q) => $q->where('ends_at', '>', now())->orWhere(fn ($q) => $q->whereNull('ends_at')->where('starts_at', '>', now())))
+            ->orderBy('starts_at')->limit(10)->get()
+            ->map(fn (\App\Models\Event $ev) => [
+                'id' => $ev->id,
+                'title' => $ev->title,
+                'animateur' => $ev->animateur,
+                'starts_at' => $ev->starts_at->toIso8601String(),
+                'ends_at' => $ev->ends_at?->toIso8601String(),
+                'en_cours' => $ev->starts_at->isPast(),
+                'inscrit' => $ev->registrations()->where('user_id', $userId)->exists(),
+            ])->values()->all();
     }
 
     /** État de l'examen final pour une inscription (null si la formation n'en a pas). */

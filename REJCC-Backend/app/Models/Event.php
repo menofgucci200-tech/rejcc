@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 class Event extends Model
 {
     protected $fillable = [
-        'title', 'slug', 'description', 'excerpt', 'body', 'location', 'en_ligne', 'lien_visio', 'category', 'statut', 'motif_annulation',
+        'title', 'slug', 'description', 'excerpt', 'body', 'location', 'en_ligne', 'lien_visio', 'category', 'formation_id', 'animateur', 'statut', 'motif_annulation',
         'starts_at', 'ends_at', 'time_label', 'image', 'capacity', 'reserve_abonnes', 'inscriptions_ouvertes', 'date_limite',
         'inscription_publique', 'champs', 'ancien_slug', 'attestation',
     ];
@@ -27,6 +27,52 @@ class Event extends Model
         'champs' => 'array',
         'capacity' => 'integer',
     ];
+
+    /** Catégorie des sessions live de formation (événements en ligne rattachés à une formation). */
+    public const CATEGORIE_LIVE = 'Formation live';
+
+    public function formation()
+    {
+        return $this->belongsTo(Formation::class);
+    }
+
+    /** Sessions live de formation. */
+    public function scopeLives($query)
+    {
+        return $query->where('category', self::CATEGORIE_LIVE);
+    }
+
+    public function estLive(): bool
+    {
+        return $this->category === self::CATEGORIE_LIVE;
+    }
+
+    public function quand(): string
+    {
+        return $this->starts_at->locale('fr')->isoFormat('dddd D MMMM [à] HH[h]mm');
+    }
+
+    /** Notifie tous les membres actifs d'un nouvel événement (une seule fois). */
+    public function annoncer(): int
+    {
+        $body = $this->quand().($this->en_ligne ? ' — en ligne' : ($this->location ? " — {$this->location}" : ''))
+            .($this->reserve_abonnes ? '. Réservé aux membres à jour de leur abonnement.' : '. Inscrivez-vous depuis la fiche de l\'événement.');
+        $titre = $this->estLive() ? "Nouvelle session live : {$this->title}" : "Nouvel événement : {$this->title}";
+        $n = 0;
+        User::where('is_active', true)->whereIn('role', ['member', 'mentor'])->select('id')
+            ->chunkById(500, function ($users) use ($body, $titre, &$n) {
+                $now = now();
+                MemberNotification::insert($users->map(fn ($u) => [
+                    'user_id' => $u->id, 'type' => 'info', 'title' => $titre,
+                    'body' => ucfirst($body), 'link' => "/espace-membre/evenements?evenement={$this->id}",
+                    'created_at' => $now, 'updated_at' => $now,
+                ])->all());
+                $n += $users->count();
+            });
+        $this->forceFill(['annonce_at' => now()])->save();
+
+        return $n;
+    }
 
     public function registrations()
     {

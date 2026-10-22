@@ -6,25 +6,28 @@
             <a href="{{ route('departements.index') }}" wire:navigate class="mb-4 inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-[#5B677A] hover:text-brand"><x-ui.icon name="chevron-right" class="size-3.5 rotate-180" /> Tous les départements</a>
         @endif
 
-        <section class="mb-8 rounded-[18px] border border-brand/10 bg-white p-6 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
-            <p class="text-[11px] font-bold uppercase tracking-[0.12em] text-accent">Département</p>
-            <h1 class="mt-1 text-[24px] font-bold text-brand">{{ $departement['label'] }}</h1>
-            <p class="mt-2 max-w-3xl text-[14px] leading-relaxed text-[#5B677A]">{{ $departement['mission'] }}</p>
+        <section class="mb-8 flex flex-wrap items-center gap-5 rounded-[22px] border border-[#F3E3D3] bg-gradient-to-br from-[#FFF8F1] via-[#FFFDF8] to-[#F2FAF5] p-6">
+            <x-ui.illustration :name="\App\Support\Espace::ILLUSTRATIONS[$departement['slug']] ?? 'etoile'" size="size-16" />
+            <div class="min-w-[220px] flex-1">
+                <p class="text-[11px] font-bold uppercase tracking-[0.12em] text-[#E07A5F]">Département</p>
+                <h1 class="mt-1 text-[24px] font-bold text-[#3B3F5C]">{{ $departement['label'] }}</h1>
+                <p class="mt-2 max-w-3xl text-[14px] leading-relaxed text-[#6B6F86]">{{ $departement['mission'] }}</p>
+            </div>
         </section>
 
         <section class="mb-8">
-            <h2 class="mb-1 text-[17px] font-bold text-brand">Vos rubriques</h2>
-            <div class="mb-4 h-[3px] w-9 rounded bg-accent"></div>
+            <h2 class="mb-4 text-[17px] font-bold text-[#3B3F5C]">Vos rubriques</h2>
             @if ($rubriques->isEmpty())
                 <p class="rounded-[18px] border border-brand/10 bg-white px-5 py-10 text-center text-sm text-[#5B677A]">Aucune rubrique n'est encore ouverte à ce compte. L'administrateur général peut les ajouter.</p>
             @else
                 <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     @foreach ($rubriques as $r)
                         @php $n = $pastilles[$r['route']] ?? 0; @endphp
+                        @php $fond = ['#FFF3E8', '#EFFAF4', '#F3EFFC', '#FFF8E1', '#EEF6FD'][$loop->index % 5]; @endphp
                         <a href="{{ route($r['route']) }}" wire:navigate data-test="rubrique-{{ \Illuminate\Support\Str::slug($r['label']) }}"
-                            class="group flex items-center gap-3 rounded-[14px] border border-brand/10 bg-white px-4 py-3.5 transition-colors hover:border-azure/40">
-                            <span class="flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-cloud text-brand group-hover:text-azure"><x-ui.icon :name="$r['icon']" class="size-[18px]" /></span>
-                            <span class="min-w-0 flex-1 truncate text-[14px] font-bold text-brand">{{ $r['label'] }}</span>
+                            class="group flex items-center gap-3.5 rounded-[18px] border border-[#EDE9F3] bg-white px-4 py-3.5 shadow-[0_2px_10px_-6px_rgba(59,63,92,.2)] transition hover:-translate-y-0.5 hover:shadow-[0_10px_24px_-14px_rgba(59,63,92,.35)]">
+                            <span class="flex size-12 shrink-0 items-center justify-center rounded-[14px]" style="background: {{ $fond }}"><x-ui.illustration :name="\App\Support\Espace::ILLUSTRATIONS_RUBRIQUES[$r['route']] ?? 'etoile'" size="size-8" /></span>
+                            <span class="min-w-0 flex-1 truncate text-[14px] font-bold text-[#3B3F5C]">{{ $r['label'] }}</span>
                             @if ($n > 0)
                                 <span class="shrink-0 rounded-full bg-accent px-2 py-0.5 text-[11px] font-bold text-white">{{ $n }} à traiter</span>
                             @endif
@@ -35,12 +38,11 @@
         </section>
 
         <section>
-            <h2 class="mb-1 text-[17px] font-bold text-brand">L'équipe du département</h2>
-            <div class="mb-4 h-[3px] w-9 rounded bg-accent"></div>
-            <div class="rounded-[18px] border border-brand/10 bg-white px-5 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+            <h2 class="mb-4 flex items-center gap-2.5 text-[17px] font-bold text-[#3B3F5C]"><x-ui.illustration name="equipe" size="size-8" /> L'équipe du département</h2>
+            <div class="rounded-[18px] border border-[#EDE9F3] bg-white px-5 shadow-[0_2px_10px_-6px_rgba(59,63,92,.2)]">
                 @forelse ($departement['membres'] as $m)
                     <div class="flex items-center gap-3.5 border-t border-[#EDF0F5] py-3.5 first:border-t-0">
-                        <span class="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand text-[12px] font-bold text-white">{{ mb_strtoupper(mb_substr($m['prenom'] ?? '', 0, 1).mb_substr($m['nom'] ?? '', 0, 1)) }}</span>
+                        <span class="flex size-9 shrink-0 items-center justify-center rounded-full text-[12px] font-bold text-[#3B3F5C]" style="background: {{ ['#FFD9A8', '#B8E6D1', '#D9CFF5', '#C3E3F7'][$loop->index % 4] }}">{{ mb_strtoupper(mb_substr($m['prenom'] ?? '', 0, 1).mb_substr($m['nom'] ?? '', 0, 1)) }}</span>
                         <div class="min-w-0 flex-1">
                             <p class="truncate text-[13.5px] font-bold text-brand">{{ $m['prenom'] }} {{ $m['nom'] }}</p>
                             <p class="truncate text-xs text-[#5B677A]">{{ $m['email'] }}</p>

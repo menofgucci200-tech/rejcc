@@ -34,9 +34,10 @@ class DepartementsBureauTest extends TestCase
         ];
     }
 
-    public function test_il_y_a_onze_departements_sans_la_presidence(): void
+    public function test_les_onze_departements_de_l_organigramme_plus_la_formation_sans_la_presidence(): void
     {
-        $this->assertCount(11, Departements::slugs());
+        $this->assertCount(12, Departements::slugs());
+        $this->assertContains('formation', Departements::slugs());
         $this->assertNotContains('presidence', Departements::slugs());
     }
 
@@ -67,7 +68,7 @@ class DepartementsBureauTest extends TestCase
 
         $general = $this->tokenFor(User::factory()->create(['role' => 'admin', 'permissions' => null]));
         $tous = $this->withToken($general)->getJson('/api/admin/departements')->assertOk();
-        $this->assertCount(11, $tous->json('departements'));
+        $this->assertCount(12, $tous->json('departements'));
         $this->assertCount(1, collect($tous->json('departements'))->firstWhere('slug', 'tresorerie')['membres']);
     }
 
