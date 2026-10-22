@@ -45,7 +45,7 @@ class AuthController extends Controller
                 'id', 'prenom', 'nom', 'email', 'telephone', 'genre',
                 'ville', 'paroisse', 'secteur', 'profil',
                 'organisation', 'titre', 'diocese', 'bio', 'competences', 'parcours', 'liens',
-                'photo', 'piece_identite', 'role', 'permissions',
+                'photo', 'piece_identite', 'role', 'permissions', 'departement',
             ]),
             'reference' => $u->memberNumber(),
             'numero' => $u->memberNumber(),

@@ -45,6 +45,7 @@ class User extends Authenticatable
         'piece_identite',
         'role',
         'permissions',
+        'departement',
         'reference',
         'is_active',
         'subscription_expires_at',
@@ -108,6 +109,18 @@ class User extends Authenticatable
     public function scopeAbonnementEnCours($q)
     {
         return $q->where('subscription_expires_at', '>', now()->subDays(\App\Support\Abonnement::GRACE_JOURS));
+    }
+
+    /**
+     * Rubriques d'administration interdites aux comptes de test : aucun envoi
+     * de masse ni aucune décision ne doit toucher de vrais membres.
+     */
+    public const RUBRIQUES_INTERDITES_TESTEURS = ['newsletter', 'notifications', 'adhesions'];
+
+    /** Compte de test d'un département (campagne de test sur le site réel). */
+    public function estTesteur(): bool
+    {
+        return $this->departement !== null;
     }
 
     public function isExemptFromSubscription(): bool

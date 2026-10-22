@@ -1,0 +1,4 @@
+departement;prenom;nom;email;acces;sections
+Communication;Prénom;Nom;prenom.nom@exemple.ci;admin;actualites|evenements
+Communication;Prénom;Nom;prenom.nom+membre@exemple.ci;membre;
+Formation;Prénom;Nom;autre.personne@exemple.ci;admin;formations|certificats

@@ -34,6 +34,7 @@
         </style>
     </head>
     <body class="min-h-screen bg-cloud font-sans text-ink antialiased">
+        <x-mode-test :livewire="false" />
         <div class="relative flex min-h-screen flex-col overflow-hidden">
             {{-- Décor : halos aux couleurs de la charte --}}
             <div aria-hidden="true" class="pointer-events-none absolute -left-40 -top-40 size-[520px] rounded-full bg-azure/15 blur-3xl"></div>

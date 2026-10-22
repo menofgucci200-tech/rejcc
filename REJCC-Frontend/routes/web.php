@@ -79,6 +79,7 @@ Route::redirect('/inscription', '/adhesion');
 Route::view('/contact', 'pages.contact');
 
 Route::post('/logout', LogoutController::class)->middleware('api.auth')->name('logout');
+Route::post('/retour-testeur', \App\Http\Controllers\RetourTesteurController::class)->middleware(['api.auth', 'throttle:20,1'])->name('retour-testeur');
 
 Route::get('/mon-espace', function () {
     $user = session('api_user');
@@ -162,6 +163,7 @@ Route::middleware(['api.auth', 'admin.web'])->prefix('admin')->name('admin.')->g
     Route::get('/partenariats', AdminPartenariats::class)->name('partenariats');
     Route::get('/notifications', AdminNotifications::class)->name('notifications');
     Route::get('/audit', AdminAudit::class)->name('audit');
+    Route::get('/suggestions', \App\Livewire\Admin\Suggestions::class)->name('suggestions'); // retours des comptes de test
 });
 
 require __DIR__.'/auth.php';

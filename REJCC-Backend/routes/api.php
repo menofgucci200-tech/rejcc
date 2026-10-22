@@ -93,6 +93,10 @@ Route::middleware('auth.token')->group(function () {
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::put('/auth/profile', [AuthController::class, 'updateProfile']);
+
+    // Comptes de test : retours (bugs, suggestions) déposés depuis le site.
+    Route::get('/suggestions', [\App\Http\Controllers\Api\SuggestionController::class, 'mesSuggestions']);
+    Route::post('/suggestions', [\App\Http\Controllers\Api\SuggestionController::class, 'store'])->middleware('throttle:30,1');
     Route::put('/auth/password', [\App\Http\Controllers\Api\CompteController::class, 'motDePasse'])->middleware('throttle:compte-mdp');
     Route::put('/auth/preferences', [AuthController::class, 'updatePreferences']);
     // Paramètres du compte
@@ -357,6 +361,11 @@ Route::middleware(['auth.token', 'audit.log'])->prefix('admin')->group(function 
         Route::get('/membership-applications/{id}', [MembershipApplicationController::class, 'show']);
         Route::post('/membership-applications/{id}/accept', [MembershipApplicationController::class, 'accept']);
         Route::post('/membership-applications/{id}/reject', [MembershipApplicationController::class, 'reject']);
+    });
+
+    Route::middleware('auth.admin:suggestions')->group(function () {
+        Route::get('/suggestions', [\App\Http\Controllers\Api\SuggestionController::class, 'index']);
+        Route::put('/suggestions/{id}', [\App\Http\Controllers\Api\SuggestionController::class, 'update'])->whereNumber('id');
     });
 
     Route::middleware('auth.admin:contacts')->group(function () {

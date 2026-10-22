@@ -20,6 +20,10 @@ class RequireAdmin
             return response()->json(['ok' => false, 'message' => 'Accès réservé aux administrateurs.'], 403);
         }
 
+        if ($section !== null && $user->estTesteur() && in_array($section, \App\Models\User::RUBRIQUES_INTERDITES_TESTEURS, true)) {
+            return response()->json(['ok' => false, 'message' => 'Cette rubrique n\'est pas ouverte aux comptes de test.'], 403);
+        }
+
         if ($section !== null && is_array($user->permissions) && ! in_array($section, $user->permissions, true)) {
             return response()->json(['ok' => false, 'message' => 'Votre compte administrateur n\'a pas accès à cette section.'], 403);
         }

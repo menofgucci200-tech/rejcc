@@ -30,6 +30,7 @@ class AdminSections
         'partenariats' => 'Partenariats',
         'notifications' => 'Notifications',
         'audit' => "Journal d'audit",
+        'suggestions' => 'Retours des testeurs',
     ];
 
     /** nom de route web => slug de permission requis. */
@@ -62,6 +63,7 @@ class AdminSections
         'admin.partenariats' => 'partenariats',
         'admin.notifications' => 'notifications',
         'admin.audit' => 'audit',
+        'admin.suggestions' => 'suggestions',
     ];
 
     /** L'utilisateur (tableau de session api_user) a-t-il accès à cette section ? */

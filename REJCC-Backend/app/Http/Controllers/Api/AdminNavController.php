@@ -62,6 +62,8 @@ class AdminNavController extends Controller
             ['cle' => 'avis', 'section' => 'groupes', 'route' => 'admin.groupes', 'libelle' => 'Avis de membres signalés',
                 'nombre' => \App\Models\MemberReview::whereNotNull('signale_at')->where('masque', false)->count()],
         ];
+        $elements[] = ['cle' => 'suggestions', 'section' => 'suggestions', 'route' => 'admin.suggestions', 'libelle' => 'Retours des comptes de test',
+            'nombre' => \App\Models\Suggestion::where('statut', 'nouvelle')->count()];
 
         $elements = array_values(array_filter($elements, fn ($e) => $this->autorise($me, $e['section'])));
 

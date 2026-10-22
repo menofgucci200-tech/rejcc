@@ -19,8 +19,38 @@ use Illuminate\Http\Request;
  */
 class ExportController extends Controller
 {
+    /** Rubrique d'administration requise pour chaque export. */
+    private const SECTIONS = [
+        'members' => 'membres',
+        'candidatures' => 'adhesions',
+        'contacts' => 'contacts',
+        'newsletter' => 'newsletter',
+        'formations' => 'formations',
+        'evenements' => 'evenements',
+        'opportunites' => 'opportunites',
+        'participants' => 'evenements',
+        'groupes' => 'groupes',
+        'projets' => 'projets',
+        'documents' => 'documents',
+        'certificats' => 'certificats',
+        'abonnements' => 'membres',
+        'paiements' => 'membres',
+        'suggestions' => 'suggestions',
+    ];
+
     public function data(Request $request, string $dataset)
     {
+        // Un admin restreint n'exporte que les données de ses rubriques (la
+        // liste des membres n'est pas accessible depuis « Actualités »…).
+        $section = self::SECTIONS[$dataset] ?? null;
+        $user = $request->user();
+        if ($section !== null && (
+            (is_array($user->permissions) && ! in_array($section, $user->permissions, true))
+            || ($user->estTesteur() && in_array($section, \App\Models\User::RUBRIQUES_INTERDITES_TESTEURS, true))
+        )) {
+            return response()->json(['ok' => false, 'message' => 'Votre compte administrateur n\'a pas accès à cet export.'], 403);
+        }
+
         $export = match ($dataset) {
             'members' => $this->members(),
             'candidatures' => $this->candidatures(),
@@ -36,6 +66,7 @@ class ExportController extends Controller
             'certificats' => $this->certificats(),
             'abonnements' => $this->abonnements(),
             'paiements' => $this->paiements(),
+            'suggestions' => $this->suggestions(),
             default => null,
         };
 
@@ -295,6 +326,27 @@ class ExportController extends Controller
         return [
             'columns' => ['Groupe', 'N° membre', 'Prénom', 'Nom', 'Email', 'Téléphone', 'Ville', 'Spécialité', 'Services', "Zone d'intervention", 'Disponibilités', 'Note', 'Statut', 'Rejoint le'],
             'rows' => $rows,
+        ];
+    }
+
+    private function suggestions(): array
+    {
+        $s = \App\Models\Suggestion::class;
+
+        return [
+            'columns' => ['Date', 'Département', 'Auteur', 'E-mail', 'Type', 'Page', 'Navigateur', 'Retour', 'Statut', 'Réponse'],
+            'rows' => $s::with('user:id,prenom,nom,email')->orderBy('departement')->orderBy('created_at')->get()->map(fn ($x) => [
+                $x->created_at?->format('d/m/Y H:i'),
+                $x->departement ?? '—',
+                $x->user ? trim($x->user->prenom.' '.$x->user->nom) : '',
+                $x->user?->email ?? '',
+                $s::CATEGORIES[$x->categorie] ?? $x->categorie,
+                $x->page ?? '',
+                $x->navigateur ?? '',
+                $x->message,
+                $s::STATUTS[$x->statut] ?? $x->statut,
+                $x->reponse ?? '',
+            ])->all(),
         ];
     }
 }

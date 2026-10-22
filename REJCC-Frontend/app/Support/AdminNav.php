@@ -42,6 +42,7 @@ class AdminNav
             ['label' => 'Partenariats', 'icon' => 'heart-handshake', 'route' => 'admin.partenariats'],
             ['label' => 'Notifications', 'icon' => 'bell', 'route' => 'admin.notifications'],
             ['label' => "Journal d'audit", 'icon' => 'clock', 'route' => 'admin.audit'],
+            ['label' => 'Retours des testeurs', 'icon' => 'lightbulb', 'route' => 'admin.suggestions'],
         ]],
     ];
 

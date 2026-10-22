@@ -125,10 +125,12 @@
                 <p class="mb-4 text-[13px] text-[#5B677A]">Téléchargez un jeu de données au format CSV (ouvrable directement dans Excel, Google Sheets ou LibreOffice).</p>
                 <div class="flex flex-wrap gap-2.5">
                     @foreach ([
-                        'members' => 'Membres', 'candidatures' => 'Candidatures', 'contacts' => 'Contacts',
-                        'newsletter' => 'Newsletter', 'formations' => 'Formations', 'evenements' => 'Événements',
-                        'opportunites' => 'Opportunités',
-                    ] as $ds => $label)
+                        'members' => ['Membres', 'membres'], 'candidatures' => ['Candidatures', 'adhesions'], 'contacts' => ['Contacts', 'contacts'],
+                        'newsletter' => ['Newsletter', 'newsletter'], 'formations' => ['Formations', 'formations'], 'evenements' => ['Événements', 'evenements'],
+                        'opportunites' => ['Opportunités', 'opportunites'],
+                    ] as $ds => [$label, $section])
+                        {{-- Uniquement les exports des rubriques de l'admin connecté. --}}
+                        @continue(! \App\Support\AdminSections::allowed(session('api_user'), $section))
                         <a href="{{ route('admin.export', $ds) }}" class="inline-flex items-center gap-2 rounded-[10px] border border-brand/15 bg-cloud/60 px-4 py-2.5 text-xs font-bold text-brand transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-azure/30 hover:bg-cloud hover:shadow-md active:scale-95">
                             <x-ui.icon name="download" class="size-3.5 text-azure" /> {{ $label }}
                         </a>
