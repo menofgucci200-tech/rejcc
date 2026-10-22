@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 class Event extends Model
 {
     protected $fillable = [
-        'title', 'slug', 'description', 'excerpt', 'body', 'location', 'en_ligne', 'lien_visio', 'category', 'formation_id', 'animateur', 'statut', 'motif_annulation',
+        'title', 'slug', 'description', 'excerpt', 'body', 'location', 'en_ligne', 'lien_visio', 'category', 'formation_id', 'animateur', 'cible_formation', 'cible_groupes', 'cible_profils', 'google_event_id', 'statut', 'motif_annulation',
         'starts_at', 'ends_at', 'time_label', 'image', 'capacity', 'reserve_abonnes', 'inscriptions_ouvertes', 'date_limite',
         'inscription_publique', 'champs', 'ancien_slug', 'attestation',
     ];
@@ -25,6 +25,9 @@ class Event extends Model
         'inscription_publique' => 'boolean',
         'attestation' => 'boolean',
         'champs' => 'array',
+        'cible_formation' => 'boolean',
+        'cible_groupes' => 'array',
+        'cible_profils' => 'array',
         'capacity' => 'integer',
     ];
 
@@ -47,6 +50,69 @@ class Event extends Model
         return $this->category === self::CATEGORIE_LIVE;
     }
 
+    public function formateurs()
+    {
+        return $this->belongsToMany(Formateur::class, 'event_formateur')->withPivot('jeton')->withTimestamps();
+    }
+
+    /** Profils de membres que l'on peut viser (champ « profil » du compte). */
+    public const PROFILS = ['etudiant' => 'Étudiants', 'porteur' => 'Porteurs de projet', 'entrepreneur' => 'Entrepreneurs'];
+
+    /** La session vise-t-elle un public restreint ? */
+    public function estCiblee(): bool
+    {
+        return $this->cible_formation || ! empty($this->cible_groupes) || ! empty($this->cible_profils);
+    }
+
+    /**
+     * Membres visés (actifs). Les critères se cumulent : inscrits à la
+     * formation liée, ET membres d'un des groupes sectoriels choisis, ET d'un
+     * des profils choisis. Sans critère : tous les membres.
+     */
+    public function publicVise()
+    {
+        $q = User::query()->where('is_active', true)->whereIn('role', ['member', 'mentor']);
+        if ($this->cible_formation && $this->formation_id) {
+            $q->whereIn('id', FormationEnrollment::where('formation_id', $this->formation_id)->select('user_id'));
+        }
+        if (! empty($this->cible_groupes)) {
+            $q->whereIn('id', \Illuminate\Support\Facades\DB::table('group_user')->whereIn('group_id', $this->cible_groupes)->select('user_id'));
+        }
+        if (! empty($this->cible_profils)) {
+            $q->whereIn('profil', $this->cible_profils);
+        }
+
+        return $q;
+    }
+
+    /** Ce membre fait-il partie du public visé ? (les administrateurs voient tout) */
+    public function viseLeMembre(User $user): bool
+    {
+        if (! $this->estCiblee() || $user->role === 'admin') {
+            return true;
+        }
+
+        return $this->publicVise()->whereKey($user->id)->exists();
+    }
+
+    /**
+     * Garde, dans une liste d'événements, ceux que ce membre peut voir : les
+     * événements ouverts à tous et les sessions qui le visent (les
+     * administrateurs voient tout).
+     */
+    public static function filtrerPourLeMembre($events, User $user)
+    {
+        if ($user->role === 'admin') {
+            return $events;
+        }
+        $formations = FormationEnrollment::where('user_id', $user->id)->pluck('formation_id')->map(fn ($f) => (int) $f)->all();
+        $groupes = \Illuminate\Support\Facades\DB::table('group_user')->where('user_id', $user->id)->pluck('group_id')->map(fn ($g) => (int) $g)->all();
+
+        return $events->filter(fn (self $e) => (! $e->cible_formation || in_array((int) $e->formation_id, $formations, true))
+            && (empty($e->cible_groupes) || array_intersect(array_map('intval', $e->cible_groupes), $groupes) !== [])
+            && (empty($e->cible_profils) || in_array($user->profil, $e->cible_profils, true)))->values();
+    }
+
     public function quand(): string
     {
         return $this->starts_at->locale('fr')->isoFormat('dddd D MMMM [à] HH[h]mm');
@@ -59,7 +125,7 @@ class Event extends Model
             .($this->reserve_abonnes ? '. Réservé aux membres à jour de leur abonnement.' : '. Inscrivez-vous depuis la fiche de l\'événement.');
         $titre = $this->estLive() ? "Nouvelle session live : {$this->title}" : "Nouvel événement : {$this->title}";
         $n = 0;
-        User::where('is_active', true)->whereIn('role', ['member', 'mentor'])->select('id')
+        $this->publicVise()->select('id')
             ->chunkById(500, function ($users) use ($body, $titre, &$n) {
                 $now = now();
                 MemberNotification::insert($users->map(fn ($u) => [

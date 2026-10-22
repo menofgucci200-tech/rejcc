@@ -43,6 +43,7 @@ class AdminSections
         'admin.formations' => 'formations',
         'admin.parcours' => 'formations',
         'admin.lives' => 'formations',
+        'admin.formateurs' => 'formations',
         'admin.evenements' => 'evenements',
         'admin.evenements.pointage' => 'evenements',
         'admin.projets' => 'projets',

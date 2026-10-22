@@ -60,4 +60,12 @@ return [
         'private_key' => env('WEBPUSH_PRIVATE_KEY'),
     ],
 
+    // Compte Google du REJCC : création des réunions Google Meet des sessions live.
+    // Identifiants OAuth créés dans la console Google Cloud (voir le guide).
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI', rtrim((string) env('APP_URL', 'https://api.rejcc.site'), '/').'/api/google/callback'),
+    ],
+
 ];

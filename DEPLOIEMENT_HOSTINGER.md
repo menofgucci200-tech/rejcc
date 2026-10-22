@@ -342,6 +342,41 @@ ses rubriques. Les membres continuent de se connecter sur `rejcc.site/connexion`
 
 ---
 
+## Google Meet — compte Google du REJCC (sessions live)
+
+Pour que la plateforme crée elle-même les réunions Meet des sessions live avec
+le compte Google du REJCC (ex. `contact.rejcc@gmail.com`). À faire une fois,
+**connecté à ce compte Google** :
+
+1. Ouvrir <https://console.cloud.google.com>, créer un projet « REJCC ».
+2. **API et services → Bibliothèque** : activer **Google Calendar API**.
+3. **API et services → Écran de consentement OAuth** : type **Externe**, nom
+   « REJCC », adresse d'assistance du compte ; ajouter le domaine `rejcc.site`.
+   Puis **Publier l'application** (statut « En production ») : en mode
+   « Test », Google coupe l'accès au bout de 7 jours.
+4. **API et services → Identifiants → Créer des identifiants → ID client
+   OAuth** : type **Application Web** ; URI de redirection autorisé :
+   `https://api.rejcc.site/api/google/callback`.
+5. Copier l'**ID client** et le **code secret du client** dans
+   `REJCC-Backend/.env` :
+
+   ```
+   GOOGLE_CLIENT_ID=...
+   GOOGLE_CLIENT_SECRET=...
+   GOOGLE_REDIRECT_URI=https://api.rejcc.site/api/google/callback
+   DASHBOARD_URL=https://dashboard.rejcc.site
+   ```
+
+6. Dashboard → **Formations live** → **Connecter le compte Google** : la
+   personne qui a la main sur le compte autorise l'accès au calendrier (Google
+   peut afficher « application non validée » : Paramètres avancés → Continuer).
+   Aucun mot de passe n'est donné à la plateforme.
+
+Le jour de la session, une personne connectée à ce compte ouvre la réunion,
+admet les participants et gère la salle ; le formateur anime avec son lien.
+
+---
+
 ## Mises à jour futures : `./deploy.sh`
 
 Une fois l'installation initiale faite (étapes 0 à 8), chaque mise en ligne se

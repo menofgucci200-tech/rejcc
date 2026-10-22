@@ -50,6 +50,7 @@ class AuthController extends Controller
             ]),
             'bureau_departement_label' => Departements::label($u->bureau_departement),
             'admin_complet' => $u->estAdminComplet(),
+            'est_formateur' => \App\Models\Formateur::where('user_id', $u->id)->where('actif', true)->exists(),
             'reference' => $u->memberNumber(),
             'numero' => $u->memberNumber(),
             'code' => $u->cardCode(),

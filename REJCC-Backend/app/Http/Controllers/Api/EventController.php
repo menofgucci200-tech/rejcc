@@ -52,7 +52,9 @@ class EventController extends Controller
     /** Liste publique des événements (vitrine) : publiés et annulés. */
     public function publicIndex()
     {
+        // Les sessions réservées à un public (formation, groupes, profils) ne sont pas sur le site.
         $events = Event::visibles()->withCount('registrations')->orderBy('starts_at')->get()
+            ->reject(fn (Event $e) => $e->estCiblee())
             ->map(fn (Event $e) => $this->payloadPublic($e));
 
         return response()->json(['ok' => true, 'events' => $events->values()]);
@@ -63,7 +65,7 @@ class EventController extends Controller
     {
         $event = Event::visibles()->withCount('registrations')->where('slug', $slug)->first();
 
-        if (! $event) {
+        if (! $event || $event->estCiblee()) {
             return response()->json(['ok' => false, 'message' => 'Événement introuvable.'], 404);
         }
 
@@ -138,7 +140,7 @@ class EventController extends Controller
         $moi = $request->user();
         $inscrits = EventRegistration::where('user_id', $moi->id)->pluck('event_id')->flip();
 
-        $events = Event::visibles()->withCount('registrations')->orderBy('starts_at')->get()
+        $events = Event::filtrerPourLeMembre(Event::visibles()->withCount('registrations')->orderBy('starts_at')->get(), $moi)
             ->map(fn (Event $e) => $this->payloadMembre($e, $moi, isset($inscrits[$e->id])));
 
         return response()->json(['ok' => true, 'events' => $events->values()]);
@@ -149,10 +151,11 @@ class EventController extends Controller
     {
         $moi = $request->user();
         $e = Event::visibles()->withCount('registrations')->find($id);
-        if (! $e) {
+        $inscription = $e ? EventRegistration::where('event_id', $e->id)->where('user_id', $moi->id)->first() : null;
+        // Session réservée à un autre public : introuvable (sauf pour qui y est déjà inscrit).
+        if (! $e || (! $inscription && ! $e->viseLeMembre($moi))) {
             return response()->json(['ok' => false, 'message' => 'Événement introuvable.'], 404);
         }
-        $inscription = EventRegistration::where('event_id', $e->id)->where('user_id', $moi->id)->first();
 
         return response()->json(['ok' => true, 'event' => $this->payloadMembre($e, $moi, (bool) $inscription) + [
             'participants' => $this->participants($e, $moi),
@@ -168,7 +171,7 @@ class EventController extends Controller
     {
         $moi = $request->user();
         $e = Event::visibles()->find($id);
-        if (! $e) {
+        if (! $e || ! $e->viseLeMembre($moi)) {
             return response()->json(['ok' => false, 'message' => 'Événement introuvable.'], 404);
         }
         if (EventRegistration::where('event_id', $e->id)->where('user_id', $moi->id)->exists()) {

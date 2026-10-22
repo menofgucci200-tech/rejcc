@@ -19,6 +19,7 @@
             ['label' => 'Catalogue', 'icon' => 'nav-compass', 'route' => 'espace-membre.catalogue'],
             ['label' => 'Mes parcours', 'icon' => 'nav-route', 'route' => 'espace-membre.parcours'],
             ['label' => 'Certificats', 'icon' => 'award', 'route' => 'espace-membre.certificats'],
+            ...(($user->est_formateur ?? false) ? [['label' => 'Mes sessions (formateur)', 'icon' => 'calendar-days', 'route' => 'espace-membre.sessions-animees']] : []),
         ],
         'Réseau' => [
             ['label' => 'Mentorat', 'icon' => 'hand-heart', 'route' => 'espace-membre.mentorat', 'badge' => $compteurs['mentorat'] ?? 0],

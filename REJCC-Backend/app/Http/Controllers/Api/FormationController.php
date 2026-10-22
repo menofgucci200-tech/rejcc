@@ -260,9 +260,12 @@ class FormationController extends Controller
      */
     private function sessionsLive(int $formationId, int $userId): array
     {
-        return \App\Models\Event::lives()->where('formation_id', $formationId)->where('statut', 'publie')
+        $moi = \App\Models\User::find($userId);
+        $sessions = \App\Models\Event::lives()->where('formation_id', $formationId)->where('statut', 'publie')
             ->where(fn ($q) => $q->where('ends_at', '>', now())->orWhere(fn ($q) => $q->whereNull('ends_at')->where('starts_at', '>', now())))
-            ->orderBy('starts_at')->limit(10)->get()
+            ->orderBy('starts_at')->limit(10)->get();
+
+        return \App\Models\Event::filtrerPourLeMembre($sessions, $moi)
             ->map(fn (\App\Models\Event $ev) => [
                 'id' => $ev->id,
                 'title' => $ev->title,

@@ -39,7 +39,7 @@ class Espace
 
     /** Icône illustrée des rubriques d'administration, par route. */
     public const ILLUSTRATIONS_RUBRIQUES = [
-        'admin.formations' => 'livre', 'admin.lives' => 'visio', 'admin.parcours' => 'etoile', 'admin.certificats' => 'diplome',
+        'admin.formations' => 'livre', 'admin.lives' => 'visio', 'admin.formateurs' => 'equipe', 'admin.parcours' => 'etoile', 'admin.certificats' => 'diplome',
         'admin.evenements' => 'agenda', 'admin.actualites' => 'megaphone', 'admin.pages' => 'globe', 'admin.contenu' => 'crayon',
         'admin.legal' => 'balance', 'admin.mediatheque' => 'dossier', 'admin.reglages' => 'horloge', 'admin.documents' => 'dossier',
         'admin.members' => 'equipe', 'admin.adhesions' => 'cahier', 'admin.abonnements' => 'argent', 'admin.mentors' => 'equipe',

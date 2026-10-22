@@ -39,6 +39,9 @@ Route::get('/albums/{slug}', [\App\Http\Controllers\Api\GalerieController::class
 Route::get('/news', [NewsArticleController::class, 'index']);
 Route::get('/news/{slug}', [NewsArticleController::class, 'show']);
 Route::get('/public-events', [EventController::class, 'publicIndex']);
+// Sessions live : espace animateur par lien personnel, retour de Google.
+Route::get('/animer/{jeton}', [\App\Http\Controllers\Api\FormateurController::class, 'espaceAnimateur'])->where('jeton', '[A-Za-z0-9]{32,64}')->middleware('throttle:30,1');
+Route::get('/google/callback', [\App\Http\Controllers\Api\GoogleMeetController::class, 'callback'])->middleware('throttle:10,1');
 Route::get('/public-opportunities', [OpportunityController::class, 'publicIndex']);
 Route::get('/public-opportunities/{id}', [OpportunityController::class, 'publicShow'])->whereNumber('id');
 Route::get('/public-projects', [\App\Http\Controllers\Api\ProjectController::class, 'publicIndex']);
@@ -184,6 +187,7 @@ Route::middleware('auth.token')->group(function () {
 
     // Événements
     Route::get('/events', [EventController::class, 'index']);
+    Route::get('/mes-sessions-animees', [\App\Http\Controllers\Api\FormateurController::class, 'mesSessions']);
     Route::post('/events/{id}/register', [EventController::class, 'register']);
     Route::get('/events/{id}', [EventController::class, 'show'])->whereNumber('id');
     Route::post('/events/{id}/inscription', [EventController::class, 'inscrire'])->whereNumber('id');
@@ -304,6 +308,14 @@ Route::middleware(['auth.token', 'audit.log'])->prefix('admin')->group(function 
         Route::put('/formations-live/{id}', [\App\Http\Controllers\Api\FormationLiveController::class, 'update'])->whereNumber('id');
         Route::post('/formations-live/{id}/annuler', [\App\Http\Controllers\Api\FormationLiveController::class, 'annuler'])->whereNumber('id');
         Route::get('/formations-live/{id}/inscrits', [\App\Http\Controllers\Api\FormationLiveController::class, 'inscrits'])->whereNumber('id');
+        Route::post('/formations-live/public', [\App\Http\Controllers\Api\FormationLiveController::class, 'compterPublic']);
+        Route::get('/formateurs', [\App\Http\Controllers\Api\FormateurController::class, 'index']);
+        Route::get('/formateurs/membres', [\App\Http\Controllers\Api\FormateurController::class, 'chercherMembres']);
+        Route::post('/formateurs', [\App\Http\Controllers\Api\FormateurController::class, 'store']);
+        Route::put('/formateurs/{id}', [\App\Http\Controllers\Api\FormateurController::class, 'update'])->whereNumber('id');
+        Route::get('/google-meet', [\App\Http\Controllers\Api\GoogleMeetController::class, 'etat']);
+        Route::post('/google-meet/connexion', [\App\Http\Controllers\Api\GoogleMeetController::class, 'connexion']);
+        Route::delete('/google-meet', [\App\Http\Controllers\Api\GoogleMeetController::class, 'deconnexion']);
     });
     Route::get('/a-traiter', [\App\Http\Controllers\Api\AdminNavController::class, 'aTraiter'])->middleware('auth.admin');
     Route::get('/recherche', [\App\Http\Controllers\Api\AdminNavController::class, 'recherche'])->middleware('auth.admin');

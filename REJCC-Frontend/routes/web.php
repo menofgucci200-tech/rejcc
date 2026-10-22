@@ -48,6 +48,8 @@ Route::get('/carte/{code}', [\App\Http\Controllers\CardController::class, 'show'
 Route::get('/carte/{code}/contact.vcf', [\App\Http\Controllers\CardController::class, 'vcard'])->name('carte.vcard');
 Route::get('/participer/{slug}', \App\Livewire\EventSignup::class)->name('event.signup');
 Route::get('/billet/{code}', \App\Livewire\Billet::class)->name('billet');
+// Espace animateur d'une session live (lien personnel du formateur).
+Route::get('/animer/{jeton}', \App\Livewire\Animer::class)->where('jeton', '[A-Za-z0-9]{32,64}')->middleware('throttle:30,1')->name('animer');
 
 // Vérification publique des certificats et attestations (le registre fait foi)
 Route::get('/verifier/{code?}', \App\Livewire\VerifierCertificat::class)->name('verifier');
@@ -101,6 +103,7 @@ Route::middleware('api.auth')->prefix('espace-membre')->name('espace-membre.')->
     Route::get('/projets', MemberProjets::class)->name('projets');
     Route::get('/emplois', MemberEmplois::class)->name('emplois');
     Route::get('/certificats', MemberCertificats::class)->name('certificats');
+    Route::get('/mes-sessions', \App\Livewire\Member\SessionsAnimees::class)->name('sessions-animees');
     Route::get('/certificats/{id}/pdf', [\App\Http\Controllers\CertificatPdfController::class, 'membre'])->whereNumber('id')->name('certificats.pdf');
     Route::get('/carte', MemberCarte::class)->name('carte');
     Route::get('/abonnement', MemberAbonnement::class)->name('abonnement');

@@ -4,5 +4,6 @@ Disallow: /mon-espace
 Disallow: /connexion
 Disallow: /livewire
 Disallow: /carte
+Disallow: /animer
 
 Sitemap: https://rejcc.site/sitemap.xml

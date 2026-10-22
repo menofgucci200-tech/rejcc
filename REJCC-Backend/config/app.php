@@ -57,6 +57,9 @@ return [
     // URL publique du site vitrine/espace membre (liens dans les e-mails).
     'frontend_url' => env('FRONTEND_URL', 'https://rejcc.site'),
 
+    // Dashboard (administration et départements) : retour après la connexion du compte Google.
+    'dashboard_url' => env('DASHBOARD_URL', 'https://dashboard.rejcc.site'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone
