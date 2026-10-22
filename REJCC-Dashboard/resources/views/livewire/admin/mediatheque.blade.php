@@ -6,7 +6,7 @@
             <div>
                 <h2 class="mb-1 text-[17px] font-bold text-brand">Médiathèque</h2>
                 <div class="h-[3px] w-9 rounded bg-accent"></div>
-                <p class="mt-2 max-w-2xl text-xs text-[#9AA6B8]">Tous les fichiers uploadés sur le site. Copiez le lien d'un fichier pour le réutiliser dans n'importe quel formulaire (galerie, articles, annonces…). Les documents personnels des membres n'apparaissent pas ici.</p>
+                <p class="mt-2 max-w-2xl text-xs text-[#5B677A]">Tous les fichiers uploadés sur le site. Copiez le lien d'un fichier pour le réutiliser dans n'importe quel formulaire (galerie, articles, annonces…). Les documents personnels des membres n'apparaissent pas ici.</p>
             </div>
             <div class="flex flex-wrap gap-2">
                 @foreach (['tous' => 'Tous', 'images' => 'Images', 'videos' => 'Vidéos', 'documents' => 'Documents'] as $value => $label)
@@ -21,9 +21,9 @@
 
         {{-- Zone d'upload --}}
         <label class="mb-6 flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-[16px] border border-dashed border-brand/25 bg-white px-4 py-6 text-center transition-colors hover:bg-cloud/60" wire:loading.class="opacity-50" wire:target="fichiers">
-            <x-ui.icon name="image" class="size-7 text-[#9AA6B8]" />
+            <x-ui.icon name="image" class="size-7 text-[#5B677A]" />
             <span class="text-[13px] font-semibold text-[#5B677A]">Cliquez pour ajouter des fichiers à la médiathèque</span>
-            <span class="text-[11px] text-[#9AA6B8]">Images, vidéos, PDF, documents — 20 Mo max par fichier, sélection multiple possible</span>
+            <span class="text-[11px] text-[#5B677A]">Images, vidéos, PDF, documents — 20 Mo max par fichier, sélection multiple possible</span>
             <input type="file" wire:model="fichiers" multiple class="hidden">
         </label>
         <div wire:loading wire:target="fichiers" class="-mt-4 mb-4 text-[12px] font-semibold text-azure">Envoi des fichiers…</div>
@@ -44,12 +44,12 @@
                             </video>
                         @else
                             <div class="flex h-28 items-center justify-center bg-cloud">
-                                <x-ui.icon name="file-text" class="size-8 text-[#9AA6B8]" />
+                                <x-ui.icon name="file-text" class="size-8 text-[#5B677A]" />
                             </div>
                         @endif
                         <div class="p-3">
                             <p class="truncate text-[11.5px] font-bold text-brand" title="{{ $f['name'] }}">{{ $f['name'] }}</p>
-                            <p class="mt-0.5 text-[10.5px] text-[#9AA6B8]">{{ $f['size'] }} · {{ \Illuminate\Support\Carbon::createFromTimestamp($f['modified'])->translatedFormat('d M Y') }}</p>
+                            <p class="mt-0.5 text-[10.5px] text-[#5B677A]">{{ $f['size'] }} · {{ \Illuminate\Support\Carbon::createFromTimestamp($f['modified'])->translatedFormat('d M Y') }}</p>
                             <div class="mt-2.5 flex items-center gap-1.5">
                                 <button
                                     type="button"
@@ -59,10 +59,10 @@
                                     <span x-show="!copied">Copier le lien</span>
                                     <span x-show="copied" x-cloak class="text-[#1C8F4C]">✓ Copié !</span>
                                 </button>
-                                <a href="{{ $f['url'] }}" target="_blank" rel="noopener" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-brand/10 hover:text-brand" title="Ouvrir">
+                                <a href="{{ $f['url'] }}" target="_blank" rel="noopener" class="icon-btn rounded-lg p-1.5 text-[#5B677A] hover:bg-brand/10 hover:text-brand" title="Ouvrir">
                                     <x-ui.icon name="external-link" class="size-3.5" />
                                 </a>
-                                <button wire:click="supprimer('{{ $f['path'] }}')" wire:confirm="Supprimer définitivement « {{ $f['name'] }} » ? Les contenus qui l'utilisent afficheront une image manquante." class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-accent/10 hover:text-accent" title="Supprimer">
+                                <button wire:click="supprimer('{{ $f['path'] }}')" wire:confirm="Supprimer définitivement « {{ $f['name'] }} » ? Les contenus qui l'utilisent afficheront une image manquante." class="icon-btn rounded-lg p-1.5 text-[#5B677A] hover:bg-accent/10 hover:text-accent" title="Supprimer">
                                     <x-ui.icon name="trash-2" class="size-3.5" />
                                 </button>
                             </div>

@@ -3,7 +3,7 @@
 
     <div class="mx-auto max-w-[860px] px-8 py-8">
         <div class="mb-2">
-            <a href="{{ route('espace-membre.parcours') }}" wire:navigate class="inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#9AA6B8] hover:text-brand">
+            <a href="{{ route('espace-membre.parcours') }}" wire:navigate class="inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#5B677A] hover:text-brand">
                 <x-ui.icon name="arrow-left" class="size-3.5" /> Tous les parcours
             </a>
         </div>
@@ -67,7 +67,7 @@
                 @foreach ($formations as $f)
                     @php $dispo = $f['disponible'] ?? true; @endphp
                     <div data-test="etape" class="flex items-center gap-4 rounded-[16px] border bg-white p-4 shadow-[0_2px_8px_rgba(3,29,89,.05)] {{ ! $dispo ? 'border-brand/10 opacity-60' : ($f['conseillee'] ? 'border-azure/40 ring-2 ring-azure/10' : 'border-brand/10') }}">
-                        <span class="flex size-9 shrink-0 items-center justify-center rounded-full text-[13px] font-bold {{ $f['completed'] ? 'bg-[#22A85A]/10 text-[#22A85A]' : (! $dispo ? 'bg-cloud text-[#9AA6B8]' : 'bg-azure/10 text-azure') }}">
+                        <span class="flex size-9 shrink-0 items-center justify-center rounded-full text-[13px] font-bold {{ $f['completed'] ? 'bg-[#22A85A]/10 text-[#22A85A]' : (! $dispo ? 'bg-cloud text-[#5B677A]' : 'bg-azure/10 text-azure') }}">
                             @if ($f['completed'])
                                 <x-ui.icon name="check" class="size-4" />
                             @elseif (! $dispo)
@@ -82,7 +82,7 @@
                             @else
                                 <p class="truncate text-[13.5px] font-bold text-brand">{{ $f['title'] }}</p>
                             @endif
-                            <p class="mt-0.5 text-[11.5px] text-[#9AA6B8]">{{ $f['category'] }}@if ($f['duration']) · {{ $f['duration'] }}@endif@if ($f['is_certifying']) · Certifiante @endif</p>
+                            <p class="mt-0.5 text-[11.5px] text-[#5B677A]">{{ $f['category'] }}@if ($f['duration']) · {{ $f['duration'] }}@endif@if ($f['is_certifying']) · Certifiante @endif</p>
                             @if (! $dispo)
                                 <p class="mt-1 text-[11.5px] text-[#5B677A]">Contenu en préparation : cette étape ne bloque pas la suite du parcours.</p>
                             @elseif ($f['conseillee_apres'])
@@ -96,7 +96,7 @@
                         @if ($f['completed'])
                             <span class="shrink-0 rounded-full bg-[#22A85A]/10 px-3 py-1.5 text-[11.5px] font-bold text-[#22A85A]">Terminée</span>
                         @elseif (! $dispo)
-                            <span class="shrink-0 rounded-full bg-cloud px-3 py-1.5 text-[11.5px] font-bold text-[#9AA6B8]">Bientôt disponible</span>
+                            <span class="shrink-0 rounded-full bg-cloud px-3 py-1.5 text-[11.5px] font-bold text-[#5B677A]">Bientôt disponible</span>
                         @elseif ($f['enrolled'])
                             <a href="{{ route('espace-membre.formations.detail', $f['id']) }}" wire:navigate class="btn-tap shrink-0 rounded-full bg-brand px-4 py-2 text-[12px] font-bold text-white hover:bg-brand/90">Continuer</a>
                         @else

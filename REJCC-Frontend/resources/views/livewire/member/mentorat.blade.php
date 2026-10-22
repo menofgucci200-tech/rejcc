@@ -35,7 +35,7 @@
             </div>
 
             <section data-test="demandes-recues" class="mb-8">
-                <h2 class="mb-3 text-[12px] font-bold uppercase tracking-[0.08em] text-[#9AA6B8]">Demandes reçues</h2>
+                <h2 class="mb-3 text-[12px] font-bold uppercase tracking-[0.08em] text-[#5B677A]">Demandes reçues</h2>
                 @forelse ($demandes as $r)
                     <article data-test="demande" wire:key="demande-{{ $r['id'] }}" class="mb-3 rounded-[16px] border border-[#F5A623]/30 bg-white p-5 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
                         <div class="flex items-start gap-3">
@@ -43,7 +43,7 @@
                             <div class="min-w-0 flex-1">
                                 <div class="flex flex-wrap items-center justify-between gap-2">
                                     <p class="text-[13.5px] font-bold text-brand">{{ $r['autre']['prenom'] }} {{ $r['autre']['nom'] }}</p>
-                                    <span class="text-[11.5px] text-[#9AA6B8]">{{ ucfirst(\Carbon\Carbon::parse($r['cree_le'])->diffForHumans()) }}</span>
+                                    <span class="text-[11.5px] text-[#5B677A]">{{ ucfirst(\Carbon\Carbon::parse($r['cree_le'])->diffForHumans()) }}</span>
                                 </div>
                                 <p class="text-[12px] text-[#5B677A]">{{ collect([$r['autre']['titre'] ?? null, $r['autre']['secteur'] ?? null, $r['autre']['ville'] ?? null])->filter()->join(' · ') }}</p>
                             </div>
@@ -68,7 +68,7 @@
 
             @if ($suivis->isNotEmpty())
                 <section data-test="mes-mentores" class="mb-8">
-                    <h2 class="mb-3 text-[12px] font-bold uppercase tracking-[0.08em] text-[#9AA6B8]">Mes mentorés</h2>
+                    <h2 class="mb-3 text-[12px] font-bold uppercase tracking-[0.08em] text-[#5B677A]">Mes mentorés</h2>
                     <div class="grid gap-3 md:grid-cols-2">
                         @foreach ($suivis as $r)
                             <article data-test="mentore" class="rounded-[16px] border border-brand/10 bg-white p-4 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
@@ -79,7 +79,7 @@
                                             <p class="truncate text-[13.5px] font-bold text-brand">{{ $r['autre']['prenom'] }} {{ $r['autre']['nom'] }}</p>
                                             <x-mentorat.statut :statut="$r['statut']" :label="$r['statut_label']" />
                                         </div>
-                                        <p class="mt-0.5 text-[11.5px] text-[#9AA6B8]">Depuis le {{ \Carbon\Carbon::parse($r['repondu_le'])->translatedFormat('j F Y') }}</p>
+                                        <p class="mt-0.5 text-[11.5px] text-[#5B677A]">Depuis le {{ \Carbon\Carbon::parse($r['repondu_le'])->translatedFormat('j F Y') }}</p>
                                     </div>
                                 </div>
                                 <p class="mt-3 text-[12.5px] text-ink"><span class="font-semibold text-brand">Objectif :</span> {{ $r['objectif'] }}</p>
@@ -112,7 +112,7 @@
                     <h2 class="text-[15px] font-bold text-brand">Ma fiche de mentor</h2>
                     <div class="mt-4 flex flex-col gap-4">
                         <div>
-                            <label for="mentor-expertises" class="mb-1 block text-xs font-semibold text-[#5B677A]">Domaines d'expertise <span class="font-normal text-[#9AA6B8]">(séparés par des virgules, 8 au plus)</span></label>
+                            <label for="mentor-expertises" class="mb-1 block text-xs font-semibold text-[#5B677A]">Domaines d'expertise <span class="font-normal text-[#5B677A]">(séparés par des virgules, 8 au plus)</span></label>
                             <input id="mentor-expertises" wire:model="expertises" type="text" placeholder="Ex : Finance, Levée de fonds, Agro-business" class="w-full rounded-[10px] border border-brand/15 px-3 py-2.5 text-sm outline-none focus:border-azure" />
                         </div>
                         <div>
@@ -154,7 +154,7 @@
                 </section>
 
                 <aside class="flex flex-col gap-3">
-                    <p class="text-[11px] font-bold uppercase tracking-[0.08em] text-[#9AA6B8]">Aperçu vu par les membres</p>
+                    <p class="text-[11px] font-bold uppercase tracking-[0.08em] text-[#5B677A]">Aperçu vu par les membres</p>
                     <x-mentorat.profil :mentor="$user->mentor ?? null" class="bg-white" />
                     <a href="{{ route('espace-membre.carte') }}" wire:navigate class="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-accent hover:underline">
                         <x-ui.icon name="qr-code" class="size-3.5" /> Voir ma carte de mentor
@@ -166,7 +166,7 @@
             {{-- Mes demandes et mentorats --}}
             @if ($mentorats->isNotEmpty())
                 <section data-test="mes-mentorats" class="mb-8">
-                    <h2 class="mb-3 text-[12px] font-bold uppercase tracking-[0.08em] text-[#9AA6B8]">Mes demandes et mentorats</h2>
+                    <h2 class="mb-3 text-[12px] font-bold uppercase tracking-[0.08em] text-[#5B677A]">Mes demandes et mentorats</h2>
                     <div class="grid gap-3 md:grid-cols-2">
                         @foreach ($mentorats as $r)
                             <article data-test="relation" class="rounded-[16px] border border-brand/10 bg-white p-4 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
@@ -177,7 +177,7 @@
                                             <p class="truncate text-[13.5px] font-bold text-brand">{{ $r['autre']['prenom'] }} {{ $r['autre']['nom'] }}</p>
                                             <x-mentorat.statut :statut="$r['statut']" :label="$r['statut_label']" />
                                         </div>
-                                        <p class="mt-0.5 text-[11.5px] text-[#9AA6B8]">Demande du {{ \Carbon\Carbon::parse($r['cree_le'])->translatedFormat('j F Y') }}</p>
+                                        <p class="mt-0.5 text-[11.5px] text-[#5B677A]">Demande du {{ \Carbon\Carbon::parse($r['cree_le'])->translatedFormat('j F Y') }}</p>
                                     </div>
                                 </div>
                                 <p class="mt-3 text-[12.5px] text-ink"><span class="font-semibold text-brand">Objectif :</span> {{ $r['objectif'] }}</p>
@@ -206,10 +206,10 @@
 
             {{-- Trouver un mentor --}}
             <section data-test="trouver-mentor">
-                <h2 class="mb-3 text-[12px] font-bold uppercase tracking-[0.08em] text-[#9AA6B8]">Trouver un mentor</h2>
+                <h2 class="mb-3 text-[12px] font-bold uppercase tracking-[0.08em] text-[#5B677A]">Trouver un mentor</h2>
                 <div class="mb-4 flex flex-wrap items-center gap-3">
                     <div class="relative w-full max-w-[380px]">
-                        <x-ui.icon name="search" class="pointer-events-none absolute left-3.5 top-1/2 size-[15px] -translate-y-1/2 text-[#9AA6B8]" />
+                        <x-ui.icon name="search" class="pointer-events-none absolute left-3.5 top-1/2 size-[15px] -translate-y-1/2 text-[#5B677A]" />
                         <input wire:model.live.debounce.300ms="recherche" type="search" data-test="recherche-mentor" placeholder="Nom, expertise, secteur, ville…" class="w-full rounded-xl border border-brand/10 bg-white py-2.5 pl-10 pr-4 text-[13.5px] text-ink outline-none focus:border-azure" />
                     </div>
                 </div>
@@ -244,14 +244,14 @@
                                     </div>
                                 @endif
                                 @if (($m['mentor']['stats']['accompagnes'] ?? 0) > 0)
-                                    <p class="mt-2.5 text-[11.5px] font-semibold text-brand">{{ $m['mentor']['stats']['accompagnes'] }} membre{{ $m['mentor']['stats']['accompagnes'] > 1 ? 's' : '' }} accompagné{{ $m['mentor']['stats']['accompagnes'] > 1 ? 's' : '' }}@if ($m['mentor']['stats']['note_moyenne']) · <span class="text-[#B27007]">★ {{ number_format($m['mentor']['stats']['note_moyenne'], 1, ',', '') }}</span> <span class="font-normal text-[#9AA6B8]">({{ $m['mentor']['stats']['nb_avis'] }} avis)</span>@endif</p>
+                                    <p class="mt-2.5 text-[11.5px] font-semibold text-brand">{{ $m['mentor']['stats']['accompagnes'] }} membre{{ $m['mentor']['stats']['accompagnes'] > 1 ? 's' : '' }} accompagné{{ $m['mentor']['stats']['accompagnes'] > 1 ? 's' : '' }}@if ($m['mentor']['stats']['note_moyenne']) · <span class="text-[#B27007]">★ {{ number_format($m['mentor']['stats']['note_moyenne'], 1, ',', '') }}</span> <span class="font-normal text-[#5B677A]">({{ $m['mentor']['stats']['nb_avis'] }} avis)</span>@endif</p>
                                 @endif
                                 <p class="mt-3 flex flex-1 flex-wrap gap-x-3 gap-y-1 text-[11.5px] text-[#5B677A]">
                                     @if ($m['mentor']['format_label'])<span class="inline-flex items-center gap-1"><x-ui.icon name="video" class="size-3.5" /> {{ $m['mentor']['format_label'] }}</span>@endif
                                     @if ($m['ville'])<span class="inline-flex items-center gap-1"><x-ui.icon name="map-pin" class="size-3.5" /> {{ $m['ville'] }}</span>@endif
                                 </p>
                                 <div class="mt-4 flex items-center justify-between gap-2">
-                                    <span class="text-[11.5px] font-semibold {{ $m['disponible'] ? 'text-[#1C8F4C]' : 'text-[#9AA6B8]' }}">
+                                    <span class="text-[11.5px] font-semibold {{ $m['disponible'] ? 'text-[#1C8F4C]' : 'text-[#5B677A]' }}">
                                         {{ $m['disponible'] ? $m['places_restantes'].' place'.($m['places_restantes'] > 1 ? 's' : '').' disponible'.($m['places_restantes'] > 1 ? 's' : '') : 'Complet pour le moment' }}
                                     </span>
                                     @php $rel = $m['ma_relation']; @endphp
@@ -290,7 +290,7 @@
                 @if ($formCandidature)
                     <div data-test="form-candidature" class="panel-enter mt-5 grid gap-3 sm:grid-cols-2">
                         <div class="sm:col-span-2">
-                            <label for="cand-expertises" class="mb-1 block text-xs font-semibold text-[#5B677A]">Domaines d'expertise <span class="font-normal text-[#9AA6B8]">(séparés par des virgules)</span></label>
+                            <label for="cand-expertises" class="mb-1 block text-xs font-semibold text-[#5B677A]">Domaines d'expertise <span class="font-normal text-[#5B677A]">(séparés par des virgules)</span></label>
                             <input id="cand-expertises" wire:model="candExpertises" type="text" placeholder="Ex : Agrobusiness, Export, Gestion d'équipe" class="w-full rounded-[10px] border border-brand/15 bg-white px-3 py-2.5 text-sm outline-none focus:border-azure" />
                         </div>
                         <div class="sm:col-span-2">
@@ -302,7 +302,7 @@
                             <textarea id="cand-motivation" wire:model="candMotivation" rows="2" maxlength="1500" placeholder="Pourquoi souhaitez-vous accompagner des jeunes entrepreneurs ?" class="w-full rounded-[10px] border border-brand/15 bg-white px-3 py-2.5 text-sm outline-none focus:border-azure"></textarea>
                         </div>
                         <div>
-                            <label for="cand-dispo" class="mb-1 block text-xs font-semibold text-[#5B677A]">Disponibilités <span class="font-normal text-[#9AA6B8]">(facultatif)</span></label>
+                            <label for="cand-dispo" class="mb-1 block text-xs font-semibold text-[#5B677A]">Disponibilités <span class="font-normal text-[#5B677A]">(facultatif)</span></label>
                             <input id="cand-dispo" wire:model="candDispo" type="text" placeholder="Ex : samedi matin" class="w-full rounded-[10px] border border-brand/15 bg-white px-3 py-2.5 text-sm outline-none focus:border-azure" />
                         </div>
                         @if ($erreurCandidature)
@@ -340,7 +340,7 @@
                                 @else
                                     <label for="demande-objectif" class="mb-1 block text-xs font-semibold text-[#5B677A]">Votre objectif</label>
                                     <input id="demande-objectif" wire:model="objectif" type="text" maxlength="200" placeholder="Ex : structurer les finances de mon atelier" class="w-full rounded-[10px] border border-brand/15 px-3 py-2.5 text-sm outline-none focus:border-azure" />
-                                    <label for="demande-besoin" class="mb-1 mt-3 block text-xs font-semibold text-[#5B677A]">Votre situation et vos besoins <span class="font-normal text-[#9AA6B8]">(facultatif)</span></label>
+                                    <label for="demande-besoin" class="mb-1 mt-3 block text-xs font-semibold text-[#5B677A]">Votre situation et vos besoins <span class="font-normal text-[#5B677A]">(facultatif)</span></label>
                                     <textarea id="demande-besoin" wire:model="besoin" rows="4" maxlength="2000" placeholder="Où en est votre projet ? Sur quoi aimeriez-vous être accompagné ?" class="w-full rounded-[10px] border border-brand/15 px-3 py-2.5 text-sm outline-none focus:border-azure"></textarea>
                                     @if ($erreurDemande)
                                         <p data-test="erreur-demande" role="alert" class="mt-3 flex items-start gap-2 rounded-[12px] bg-accent/5 px-3.5 py-2.5 text-[12.5px] font-semibold text-accent"><x-ui.icon name="alert-circle" class="mt-px size-4 shrink-0" /> <span>{{ $erreurDemande }} @if ($abonnementRequis)<a href="{{ route('espace-membre.abonnement') }}" wire:navigate class="underline">Voir mon abonnement</a>@endif</span></p>

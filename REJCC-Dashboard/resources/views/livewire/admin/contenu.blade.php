@@ -5,7 +5,7 @@
         <div class="mb-5">
             <h2 class="mb-1 text-[17px] font-bold text-brand">Contenu éditorial de la vitrine</h2>
             <div class="h-[3px] w-9 rounded bg-accent"></div>
-            <p class="mt-2 text-xs text-[#9AA6B8]">Tout ce que vous modifiez ici est publié immédiatement sur le site public.</p>
+            <p class="mt-2 text-xs text-[#5B677A]">Tout ce que vous modifiez ici est publié immédiatement sur le site public.</p>
         </div>
 
         <div class="mb-5 flex flex-wrap gap-2">
@@ -74,7 +74,7 @@
                         <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Site web (optionnel)</label>
                         <input wire:model="site_url" type="url" placeholder="https://…" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
                         @error('site_url') <span class="text-xs text-accent">{{ $message }}</span> @enderror
-                        <p class="mt-1 text-[11px] text-[#9AA6B8]">Le logo deviendra cliquable et ouvrira ce site.</p>
+                        <p class="mt-1 text-[11px] text-[#5B677A]">Le logo deviendra cliquable et ouvrira ce site.</p>
                     </div>
                     <div class="sm:col-span-2">
                         <x-ui.media-field label="Logo du partenaire (optionnel)" hint="Uploadez le logo (PNG ou SVG à fond transparent de préférence), ou collez son lien. Sans logo, le nom du partenaire s'affiche à la place sur la vitrine." :media-url="$mediaUrl" :media-name="$mediaName" :media-size="$mediaSize" />
@@ -138,7 +138,7 @@
                         <label class="mb-1 block text-xs font-semibold text-[#5B677A]">{{ $editingId ? 'Ajouter des photos à cet album' : 'Photos de l\'album' }}</label>
                         <label class="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-[12px] border-2 border-dashed border-brand/15 bg-cloud/60 px-4 py-6 text-center transition-colors hover:border-azure">
                             <span class="text-sm font-bold text-brand">Choisir des photos</span>
-                            <span class="text-xs text-[#9AA6B8]">Plusieurs à la fois · JPG, PNG ou WebP · 10 Mo max. par photo</span>
+                            <span class="text-xs text-[#5B677A]">Plusieurs à la fois · JPG, PNG ou WebP · 10 Mo max. par photo</span>
                             <input wire:model="photosAlbum" type="file" multiple accept="image/jpeg,image/png,image/webp" class="sr-only" />
                         </label>
                         <div x-show="envoi" class="mt-2 h-1.5 overflow-hidden rounded-full bg-brand/10"><div class="h-full bg-azure transition-all" :style="`width: ${progression}%`"></div></div>
@@ -201,16 +201,16 @@
                         @if ($onglet === 'sectors')
                             <p class="text-[13.5px] font-bold text-brand">{{ $item['title'] }}</p>
                             <p class="line-clamp-1 text-xs text-[#5B677A]">{{ $item['blurb'] }}</p>
-                            <p class="mt-0.5 text-[11px] text-[#9AA6B8]">{{ count($item['items'] ?? []) }} filière(s) · icône {{ $item['icon'] }}</p>
+                            <p class="mt-0.5 text-[11px] text-[#5B677A]">{{ count($item['items'] ?? []) }} filière(s) · icône {{ $item['icon'] }}</p>
                         @elseif ($onglet === 'testimonials')
-                            <p class="text-[13.5px] font-bold text-brand">{{ $item['name'] }} <span class="font-normal text-[#9AA6B8]">— {{ $item['role'] }}</span></p>
+                            <p class="text-[13.5px] font-bold text-brand">{{ $item['name'] }} <span class="font-normal text-[#5B677A]">— {{ $item['role'] }}</span></p>
                             <p class="line-clamp-2 text-xs italic text-[#5B677A]">« {{ $item['quote'] }} »</p>
                         @elseif ($onglet === 'partners')
                             <div class="flex items-center gap-3">
                                 @if ($item['logo'] ?? null)
                                     <img src="{{ $item['logo'] }}" alt="" class="h-10 w-16 shrink-0 rounded-lg border border-brand/10 bg-white object-contain p-1">
                                 @else
-                                    <span class="flex h-10 w-16 shrink-0 items-center justify-center rounded-lg bg-brand/[.06] text-[10px] font-bold text-[#9AA6B8]">Sans logo</span>
+                                    <span class="flex h-10 w-16 shrink-0 items-center justify-center rounded-lg bg-brand/[.06] text-[10px] font-bold text-[#5B677A]">Sans logo</span>
                                 @endif
                                 <div class="min-w-0">
                                     <p class="truncate text-[13.5px] font-bold text-brand">{{ $item['name'] }}</p>
@@ -231,7 +231,7 @@
                                 @if ($item['couverture_url'] ?? null)
                                     <img src="{{ $item['couverture_url'] }}" alt="" class="h-12 w-16 shrink-0 rounded-lg object-cover">
                                 @else
-                                    <span class="flex h-12 w-16 shrink-0 items-center justify-center rounded-lg bg-brand/[.06] text-[10px] font-bold text-[#9AA6B8]">Vide</span>
+                                    <span class="flex h-12 w-16 shrink-0 items-center justify-center rounded-lg bg-brand/[.06] text-[10px] font-bold text-[#5B677A]">Vide</span>
                                 @endif
                                 <div class="min-w-0">
                                     <p class="truncate text-[13.5px] font-bold text-brand">
@@ -241,7 +241,7 @@
                                     <p class="truncate text-xs text-[#5B677A]">
                                         {{ ($item['date_evenement'] ?? null) ? \Illuminate\Support\Carbon::parse($item['date_evenement'])->locale('fr')->translatedFormat('j F Y') : 'Sans date' }}@if ($item['lieu'] ?? null) · {{ $item['lieu'] }}@endif
                                     </p>
-                                    <p class="mt-0.5 text-[11px] text-[#9AA6B8]">
+                                    <p class="mt-0.5 text-[11px] text-[#5B677A]">
                                         {{ $item['photos_count'] }} photo{{ $item['photos_count'] > 1 ? 's' : '' }}
                                         @if (($item['publie'] ?? true) && $item['photos_count'] > 0)
                                             · <a href="{{ \App\Support\Site::url('/galerie/'.$item['slug']) }}" target="_blank" rel="noopener" class="text-azure hover:underline">Voir sur le site</a>
@@ -266,10 +266,10 @@
                         @if ($onglet === 'albums')
                             <button wire:click="voirPhotosAlbum({{ $item['id'] }})" class="btn-tap rounded-lg border border-brand/15 px-2.5 py-1 text-[11.5px] font-bold text-brand hover:border-brand/40">Photos</button>
                         @endif
-                        <button wire:click="openEdit({{ $item['id'] }})" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-brand/10 hover:text-brand">
+                        <button wire:click="openEdit({{ $item['id'] }})" class="icon-btn rounded-lg p-1.5 text-[#5B677A] hover:bg-brand/10 hover:text-brand">
                             <x-ui.icon name="pencil" class="size-3.5" />
                         </button>
-                        <button wire:click="delete({{ $item['id'] }})" wire:confirm="{{ $onglet === 'albums' ? 'Supprimer cet album ? Ses photos restent dans la galerie, sans album.' : 'Supprimer cet élément du site ?' }}" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-accent/10 hover:text-accent">
+                        <button wire:click="delete({{ $item['id'] }})" wire:confirm="{{ $onglet === 'albums' ? 'Supprimer cet album ? Ses photos restent dans la galerie, sans album.' : 'Supprimer cet élément du site ?' }}" class="icon-btn rounded-lg p-1.5 text-[#5B677A] hover:bg-accent/10 hover:text-accent">
                             <x-ui.icon name="trash-2" class="size-3.5" />
                         </button>
                     </div>

@@ -6,7 +6,7 @@
             <div>
                 <h2 class="mb-1 text-[17px] font-bold text-brand">Parcours guidés</h2>
                 <div class="h-[3px] w-9 rounded bg-accent"></div>
-                <p class="mt-2 text-xs text-[#9AA6B8]">Séquences de formations vers un objectif, dans un ordre conseillé, avec un badge de fin.</p>
+                <p class="mt-2 text-xs text-[#5B677A]">Séquences de formations vers un objectif, dans un ordre conseillé, avec un badge de fin.</p>
             </div>
             <button wire:click="openCreate" class="btn-tap rounded-[10px] bg-accent px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-accent-600 hover:shadow-md">+ Nouveau parcours</button>
         </div>
@@ -73,10 +73,10 @@
                         <button wire:click="togglePublication({{ $p['id'] }})" class="shrink-0 rounded-[9px] border border-[#C9D3E6] px-3 py-1.5 text-xs font-bold text-brand hover:bg-cloud">{{ $p['is_published'] ? 'Dépublier' : 'Publier' }}</button>
                         <button wire:click="toggleFormations({{ $p['id'] }})" class="shrink-0 rounded-[9px] border border-[#C9D3E6] px-3 py-1.5 text-xs font-bold text-brand hover:bg-cloud">{{ $formationsPathId === $p['id'] ? 'Fermer' : 'Formations' }}</button>
                         <div class="flex shrink-0 items-center gap-1.5">
-                            <button wire:click="openEdit({{ $p['id'] }})" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-brand/10 hover:text-brand">
+                            <button wire:click="openEdit({{ $p['id'] }})" class="icon-btn rounded-lg p-1.5 text-[#5B677A] hover:bg-brand/10 hover:text-brand">
                                 <x-ui.icon name="pencil" class="size-3.5" />
                             </button>
-                            <button wire:click="delete({{ $p['id'] }})" wire:confirm="Supprimer « {{ $p['title'] }} » ?" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-accent/10 hover:text-accent">
+                            <button wire:click="delete({{ $p['id'] }})" wire:confirm="Supprimer « {{ $p['title'] }} » ?" class="icon-btn rounded-lg p-1.5 text-[#5B677A] hover:bg-accent/10 hover:text-accent">
                                 <x-ui.icon name="trash-2" class="size-3.5" />
                             </button>
                         </div>
@@ -86,22 +86,22 @@
                     @if ($formationsPathId === $p['id'])
                         <div class="panel-enter mb-4 grid grid-cols-1 gap-4 rounded-[14px] bg-cloud/50 p-4 sm:grid-cols-2">
                             <div>
-                                <p class="mb-2 text-[12px] font-bold uppercase tracking-[0.05em] text-[#9AA6B8]">Dans le parcours (ordre)</p>
+                                <p class="mb-2 text-[12px] font-bold uppercase tracking-[0.05em] text-[#5B677A]">Dans le parcours (ordre)</p>
                                 <div class="flex flex-col gap-1.5 rounded-[10px] bg-white p-2">
                                     @forelse ($formationsChoisies as $i => $f)
                                         @php $etat = ! ($f['is_published'] ?? true) ? 'Non publiée' : (($f['modules_reels_count'] ?? 0) === 0 ? 'Sans contenu' : null); @endphp
                                         <div class="flex items-center gap-2 rounded-[8px] bg-cloud/60 px-2.5 py-2">
-                                            <span class="w-5 shrink-0 text-center text-[11px] font-bold text-[#9AA6B8]">{{ $i + 1 }}</span>
+                                            <span class="w-5 shrink-0 text-center text-[11px] font-bold text-[#5B677A]">{{ $i + 1 }}</span>
                                             <span class="min-w-0 flex-1 truncate text-[12.5px] font-semibold text-brand">{{ $f['title'] }}</span>
                                             @if ($etat)
                                                 <span class="shrink-0 rounded-full bg-[#FFF8EC] px-2 py-0.5 text-[10.5px] font-bold text-[#8A5A00]">{{ $etat }}</span>
                                             @endif
-                                            <button wire:click="monter({{ $i }})" class="icon-btn shrink-0 rounded p-1 text-[#9AA6B8] hover:bg-brand/10 hover:text-brand" title="Monter"><x-ui.icon name="chevron-right" class="size-3.5 -rotate-90" /></button>
-                                            <button wire:click="descendre({{ $i }})" class="icon-btn shrink-0 rounded p-1 text-[#9AA6B8] hover:bg-brand/10 hover:text-brand" title="Descendre"><x-ui.icon name="chevron-right" class="size-3.5 rotate-90" /></button>
-                                            <button wire:click="retirerFormation({{ $f['id'] }})" class="icon-btn shrink-0 rounded p-1 text-[#9AA6B8] hover:bg-accent/10 hover:text-accent"><x-ui.icon name="x" class="size-3.5" /></button>
+                                            <button wire:click="monter({{ $i }})" class="icon-btn shrink-0 rounded p-1 text-[#5B677A] hover:bg-brand/10 hover:text-brand" title="Monter"><x-ui.icon name="chevron-right" class="size-3.5 -rotate-90" /></button>
+                                            <button wire:click="descendre({{ $i }})" class="icon-btn shrink-0 rounded p-1 text-[#5B677A] hover:bg-brand/10 hover:text-brand" title="Descendre"><x-ui.icon name="chevron-right" class="size-3.5 rotate-90" /></button>
+                                            <button wire:click="retirerFormation({{ $f['id'] }})" class="icon-btn shrink-0 rounded p-1 text-[#5B677A] hover:bg-accent/10 hover:text-accent"><x-ui.icon name="x" class="size-3.5" /></button>
                                         </div>
                                     @empty
-                                        <p class="px-2 py-3 text-center text-[12px] text-[#9AA6B8]">Aucune formation ajoutée.</p>
+                                        <p class="px-2 py-3 text-center text-[12px] text-[#5B677A]">Aucune formation ajoutée.</p>
                                     @endforelse
                                 </div>
                                 <button wire:click="enregistrerFormations" wire:loading.attr="disabled" class="btn-tap mt-3 rounded-full bg-brand px-4 py-2 text-[12px] font-bold text-white hover:bg-brand/90 disabled:opacity-60">Enregistrer l'ordre</button>
@@ -110,7 +110,7 @@
                                 @endif
                             </div>
                             <div>
-                                <p class="mb-2 text-[12px] font-bold uppercase tracking-[0.05em] text-[#9AA6B8]">Formations disponibles</p>
+                                <p class="mb-2 text-[12px] font-bold uppercase tracking-[0.05em] text-[#5B677A]">Formations disponibles</p>
                                 <div class="flex max-h-[260px] flex-col gap-1.5 overflow-y-auto rounded-[10px] bg-white p-2">
                                     @forelse ($formationsDisponibles as $f)
                                         @php $etat = ! ($f['is_published'] ?? true) ? 'Non publiée' : (($f['modules_reels_count'] ?? 0) === 0 ? 'Sans contenu' : null); @endphp
@@ -122,7 +122,7 @@
                                             <x-ui.icon name="plus" class="size-3.5 shrink-0 text-azure" />
                                         </button>
                                     @empty
-                                        <p class="px-2 py-3 text-center text-[12px] text-[#9AA6B8]">Toutes les formations sont déjà dans ce parcours.</p>
+                                        <p class="px-2 py-3 text-center text-[12px] text-[#5B677A]">Toutes les formations sont déjà dans ce parcours.</p>
                                     @endforelse
                                 </div>
                             </div>

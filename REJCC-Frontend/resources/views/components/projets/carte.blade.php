@@ -50,7 +50,7 @@
                 @elseif (($p['relation'] ?? null) === 'invite')
                     <span class="rounded-full bg-accent px-2 py-0.5 text-[10.5px] font-bold text-white">Invitation à rejoindre</span>
                 @elseif (($p['relation'] ?? null) === 'demande')
-                    <span class="font-semibold text-[#9AA6B8]">Demande envoyée</span>
+                    <span class="font-semibold text-[#5B677A]">Demande envoyée</span>
                 @elseif (($p['relation'] ?? null) === 'membre')
                     <span class="font-semibold text-brand">Équipe{{ ($p['mon_role'] ?? null) ? ' · '.$p['mon_role'] : '' }}</span>
                 @elseif ($p['porteur'] ?? null)
@@ -59,9 +59,9 @@
                 @endif
             </span>
             @if (($p['equipe_taille'] ?? 1) > 1)
-                <span class="inline-flex shrink-0 items-center gap-1 text-[11px] text-[#9AA6B8]"><x-ui.icon name="users" class="size-3" /> {{ $p['equipe_taille'] }}</span>
+                <span class="inline-flex shrink-0 items-center gap-1 text-[11px] text-[#5B677A]"><x-ui.icon name="users" class="size-3" /> {{ $p['equipe_taille'] }}</span>
             @elseif ($p['ville'] ?? null)
-                <span class="inline-flex shrink-0 items-center gap-1 text-[11px] text-[#9AA6B8]"><x-ui.icon name="map-pin" class="size-3" /> {{ $p['ville'] }}</span>
+                <span class="inline-flex shrink-0 items-center gap-1 text-[11px] text-[#5B677A]"><x-ui.icon name="map-pin" class="size-3" /> {{ $p['ville'] }}</span>
             @endif
         </div>
     </div>

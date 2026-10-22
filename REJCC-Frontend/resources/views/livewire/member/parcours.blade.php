@@ -13,7 +13,7 @@
         @else
             @foreach ($groupes as $titre => $liste)
                 <section data-test="groupe-parcours" class="mb-8">
-                    <h2 class="mb-3 text-[12px] font-bold uppercase tracking-[0.08em] text-[#9AA6B8]">{{ $titre }} <span class="text-[#C9D3E6]">· {{ $liste->count() }}</span></h2>
+                    <h2 class="mb-3 text-[12px] font-bold uppercase tracking-[0.08em] text-[#5B677A]">{{ $titre }} <span class="text-[#C9D3E6]">· {{ $liste->count() }}</span></h2>
                     <div class="grid gap-4" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr))">
                         @foreach ($liste as $p)
                             <a data-test="parcours-carte" href="{{ route('espace-membre.parcours.detail', $p['id']) }}" wire:navigate class="card-hover flex flex-col rounded-[16px] border border-brand/10 bg-white p-5 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
@@ -40,7 +40,7 @@
                                     </div>
                                     <p class="mt-1.5 text-[11.5px] font-semibold text-[#5B677A]">Formations terminées : {{ $p['formations_terminees'] }}/{{ $p['total_formations'] }}</p>
                                     @if ($p['a_venir'] ?? 0)
-                                        <p class="mt-0.5 text-[11px] text-[#9AA6B8]">+ {{ $p['a_venir'] }} étape{{ $p['a_venir'] > 1 ? 's' : '' }} bientôt disponible{{ $p['a_venir'] > 1 ? 's' : '' }}</p>
+                                        <p class="mt-0.5 text-[11px] text-[#5B677A]">+ {{ $p['a_venir'] }} étape{{ $p['a_venir'] > 1 ? 's' : '' }} bientôt disponible{{ $p['a_venir'] > 1 ? 's' : '' }}</p>
                                     @endif
                                 </div>
                             </a>

@@ -6,7 +6,7 @@
         @php $couleur = $groupe['couleur'] ?? '#031D59'; @endphp
         <div class="mx-auto max-w-[1280px] px-4 py-8 sm:px-8" data-test="apercu-groupe">
             <div class="mb-2">
-                <a href="{{ route('espace-membre.groupes') }}" wire:navigate class="inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#9AA6B8] hover:text-brand">
+                <a href="{{ route('espace-membre.groupes') }}" wire:navigate class="inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#5B677A] hover:text-brand">
                     <x-ui.icon name="arrow-left" class="size-3.5" /> Tous les groupes
                 </a>
             </div>
@@ -39,7 +39,7 @@
                 </div>
                 @if (! empty($apercu['services']))
                     <div class="mb-5">
-                        <p class="mb-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#9AA6B8]">Services proposés dans ce groupe</p>
+                        <p class="mb-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#5B677A]">Services proposés dans ce groupe</p>
                         <div class="flex flex-wrap gap-1.5" data-test="apercu-services">
                             @foreach ($apercu['services'] as $service)
                                 <span class="rounded-full border border-brand/10 bg-white px-3 py-1 text-[12px] font-semibold text-brand">{{ $service }}</span>
@@ -83,7 +83,7 @@
     @else
     <div class="mx-auto max-w-[1280px] px-8 py-8">
         <div class="mb-2">
-            <a href="{{ route('espace-membre.groupes') }}" wire:navigate class="inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#9AA6B8] hover:text-brand">
+            <a href="{{ route('espace-membre.groupes') }}" wire:navigate class="inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#5B677A] hover:text-brand">
                 <x-ui.icon name="arrow-left" class="size-3.5" /> Tous les groupes
             </a>
         </div>
@@ -136,27 +136,27 @@
 
         {{-- Onglets : membres du groupe | discussion du groupe (sur la plateforme) --}}
         <div class="mb-5 flex gap-1 border-b border-brand/10" role="tablist">
-            <button type="button" role="tab" wire:click="$set('vue', 'membres')" data-test="onglet-membres" class="-mb-px inline-flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-[13px] font-bold transition-colors {{ $vue === 'membres' ? 'border-accent text-brand' : 'border-transparent text-[#9AA6B8] hover:text-brand' }}">
+            <button type="button" role="tab" wire:click="$set('vue', 'membres')" data-test="onglet-membres" class="-mb-px inline-flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-[13px] font-bold transition-colors {{ $vue === 'membres' ? 'border-accent text-brand' : 'border-transparent text-[#5B677A] hover:text-brand' }}">
                 <x-ui.icon name="users" class="size-4" /> Membres
             </button>
-            <button type="button" role="tab" wire:click="$set('vue', 'discussion')" data-test="onglet-discussion" class="-mb-px inline-flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-[13px] font-bold transition-colors {{ $vue === 'discussion' ? 'border-accent text-brand' : 'border-transparent text-[#9AA6B8] hover:text-brand' }}">
+            <button type="button" role="tab" wire:click="$set('vue', 'discussion')" data-test="onglet-discussion" class="-mb-px inline-flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-[13px] font-bold transition-colors {{ $vue === 'discussion' ? 'border-accent text-brand' : 'border-transparent text-[#5B677A] hover:text-brand' }}">
                 <x-ui.icon name="message-circle" class="size-4" /> Discussion
                 @if ($vue !== 'discussion' && ($groupe['discussion']['non_lus'] ?? 0) > 0)
                     <span data-test="discussion-non-lus" class="rounded-full bg-accent px-1.5 text-[10.5px] font-bold leading-4 text-white">{{ ($groupe['discussion']['non_lus'] ?? 0) }}</span>
                 @endif
             </button>
             @if (($nbProjets ?? 0) > 0)
-                <a href="{{ route('espace-membre.projets', ['groupe' => $groupId]) }}" wire:navigate data-test="projets-du-groupe" class="-mb-px inline-flex items-center gap-1.5 border-b-2 border-transparent px-4 py-2.5 text-[13px] font-bold text-[#9AA6B8] transition-colors hover:text-brand">
+                <a href="{{ route('espace-membre.projets', ['groupe' => $groupId]) }}" wire:navigate data-test="projets-du-groupe" class="-mb-px inline-flex items-center gap-1.5 border-b-2 border-transparent px-4 py-2.5 text-[13px] font-bold text-[#5B677A] transition-colors hover:text-brand">
                     <x-ui.icon name="nav-projects" class="size-4" /> Projets <span class="rounded-full bg-brand/10 px-1.5 text-[10.5px] leading-4 text-brand">{{ $nbProjets }}</span>
                 </a>
             @endif
             @if (($nbOffres ?? 0) > 0)
-                <a href="{{ route('espace-membre.emplois', ['groupe' => $groupId]) }}" wire:navigate data-test="offres-du-groupe" class="-mb-px inline-flex items-center gap-1.5 border-b-2 border-transparent px-4 py-2.5 text-[13px] font-bold text-[#9AA6B8] transition-colors hover:text-brand">
+                <a href="{{ route('espace-membre.emplois', ['groupe' => $groupId]) }}" wire:navigate data-test="offres-du-groupe" class="-mb-px inline-flex items-center gap-1.5 border-b-2 border-transparent px-4 py-2.5 text-[13px] font-bold text-[#5B677A] transition-colors hover:text-brand">
                     <x-ui.icon name="nav-briefcase" class="size-4" /> Offres <span class="rounded-full bg-brand/10 px-1.5 text-[10.5px] leading-4 text-brand">{{ $nbOffres }}</span>
                 </a>
             @endif
             @if (($nbDocuments ?? 0) > 0)
-                <a href="{{ route('espace-membre.documents', ['groupe' => $groupId]) }}" wire:navigate data-test="documents-du-groupe" class="-mb-px inline-flex items-center gap-1.5 border-b-2 border-transparent px-4 py-2.5 text-[13px] font-bold text-[#9AA6B8] transition-colors hover:text-brand">
+                <a href="{{ route('espace-membre.documents', ['groupe' => $groupId]) }}" wire:navigate data-test="documents-du-groupe" class="-mb-px inline-flex items-center gap-1.5 border-b-2 border-transparent px-4 py-2.5 text-[13px] font-bold text-[#5B677A] transition-colors hover:text-brand">
                     <x-ui.icon name="file-text" class="size-4" /> Documents <span class="rounded-full bg-brand/10 px-1.5 text-[10.5px] leading-4 text-brand">{{ $nbDocuments }}</span>
                 </a>
             @endif
@@ -167,7 +167,7 @@
         @else
             <div class="mb-6 flex flex-wrap items-center gap-3">
                 <div class="relative min-w-0 flex-1 basis-[280px] sm:max-w-[460px]">
-                    <x-ui.icon name="search" class="pointer-events-none absolute left-3.5 top-1/2 size-[15px] -translate-y-1/2 text-[#9AA6B8]" />
+                    <x-ui.icon name="search" class="pointer-events-none absolute left-3.5 top-1/2 size-[15px] -translate-y-1/2 text-[#5B677A]" />
                     <input
                         wire:model.live.debounce.300ms="query"
                         type="search"

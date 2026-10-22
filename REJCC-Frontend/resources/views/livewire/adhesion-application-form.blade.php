@@ -23,7 +23,7 @@
                 </a>
                 <div class="min-w-0 pt-0.5">
                     <h1 class="text-[19px] font-extrabold leading-tight text-brand">Formulaire d'adhésion</h1>
-                    <p class="mt-0.5 text-[11px] font-bold uppercase tracking-[0.06em] text-[#9AA6B8]">Réseau Entrepreneurial des Jeunes Chrétiens Catholiques</p>
+                    <p class="mt-0.5 text-[11px] font-bold uppercase tracking-[0.06em] text-[#5B677A]">Réseau Entrepreneurial des Jeunes Chrétiens Catholiques</p>
                     <p class="mt-1.5 text-[13px] font-bold text-brand">Étape {{ $step + 1 }} sur 8 · {{ $stepTitles[$step] }}</p>
                 </div>
             </div>
@@ -94,7 +94,7 @@
                         <label for="ma-password-confirmation" class="text-[13px] font-bold text-brand">Confirmer le mot de passe *</label>
                         <x-ui.password-input wire:model="password_confirmation" id="ma-password-confirmation" autocomplete="new-password" class="w-full rounded-[9px] border border-brand/15 px-3.5 py-2.5 text-sm text-ink outline-none focus:border-azure" />
                     </div>
-                    <p class="text-xs text-[#9AA6B8]">Ce mot de passe vous servira à vous connecter à votre espace membre une fois votre candidature acceptée.</p>
+                    <p class="text-xs text-[#5B677A]">Ce mot de passe vous servira à vous connecter à votre espace membre une fois votre candidature acceptée.</p>
                 @endif
 
                 @if ($step === 1)
@@ -129,7 +129,7 @@
                     <p class="mb-4.5 text-[12.5px] leading-relaxed text-[#5B677A]">Quelques informations sur votre situation actuelle.</p>
 
                     <div class="mb-5">
-                        <p class="mb-2.5 text-[13px] font-bold text-brand">Quel est votre statut actuel ? * <span class="font-medium text-[#9AA6B8]">(plusieurs choix possibles)</span></p>
+                        <p class="mb-2.5 text-[13px] font-bold text-brand">Quel est votre statut actuel ? * <span class="font-medium text-[#5B677A]">(plusieurs choix possibles)</span></p>
                         <div class="flex flex-wrap gap-2">
                             @foreach ($statutsActuels as $option)
                                 <x-ui.chip wire:click="toggle('statut_actuel', {{ \Illuminate\Support\Js::from($option) }})" :active="in_array($option, $statut_actuel, true)">{{ $option }}</x-ui.chip>
@@ -161,7 +161,7 @@
                     </div>
 
                     <div class="mb-4.5">
-                        <p class="mb-2.5 text-[13px] font-bold text-brand">Dans quels domaines avez-vous des compétences ? * <span class="font-medium text-[#9AA6B8]">(plusieurs choix possibles)</span></p>
+                        <p class="mb-2.5 text-[13px] font-bold text-brand">Dans quels domaines avez-vous des compétences ? * <span class="font-medium text-[#5B677A]">(plusieurs choix possibles)</span></p>
                         <div class="flex flex-wrap gap-2">
                             @foreach ($competencesOptions as $option)
                                 <x-ui.chip wire:click="toggle('competences', {{ \Illuminate\Support\Js::from($option) }})" :active="in_array($option, $competences, true)">{{ $option }}</x-ui.chip>
@@ -171,7 +171,7 @@
                     </div>
 
                     <div class="flex flex-col gap-1.5">
-                        <label for="ma-competences-desc" class="text-[13px] font-bold text-brand">Décrivez brièvement vos compétences ou activités <span class="font-medium text-[#9AA6B8]">(facultatif)</span></label>
+                        <label for="ma-competences-desc" class="text-[13px] font-bold text-brand">Décrivez brièvement vos compétences ou activités <span class="font-medium text-[#5B677A]">(facultatif)</span></label>
                         <textarea wire:model="description_competences" id="ma-competences-desc" rows="3" placeholder="Quelques lignes sur ce que vous savez faire…" class="resize-y rounded-[9px] border border-brand/15 px-3.5 py-2.5 text-sm text-ink outline-none focus:border-azure"></textarea>
                         @error('description_competences') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
                     </div>
@@ -193,12 +193,12 @@
 
                     @if ($a_activite === 'Oui')
                         <div class="mb-4.5 flex flex-col gap-1.5">
-                            <label for="ma-nom-activite" class="text-[13px] font-bold text-brand">Nom de vos activités ou entreprises <span class="font-medium text-[#9AA6B8]">(facultatif)</span></label>
+                            <label for="ma-nom-activite" class="text-[13px] font-bold text-brand">Nom de vos activités ou entreprises <span class="font-medium text-[#5B677A]">(facultatif)</span></label>
                             <input wire:model="nom_activite" id="ma-nom-activite" type="text" placeholder="Ex. Boutique solidaire" class="rounded-[9px] border border-brand/15 px-3.5 py-2.5 text-sm text-ink outline-none focus:border-azure" />
                         </div>
 
                         <div class="mb-4.5">
-                            <p class="mb-2.5 text-[13px] font-bold text-brand">Le ou les secteurs d'activités * <span class="font-medium text-[#9AA6B8]">(plusieurs choix possibles)</span></p>
+                            <p class="mb-2.5 text-[13px] font-bold text-brand">Le ou les secteurs d'activités * <span class="font-medium text-[#5B677A]">(plusieurs choix possibles)</span></p>
                             <div class="flex flex-wrap gap-2">
                                 @foreach ($secteursActivite as $option)
                                     <x-ui.chip wire:click="toggle('secteurs_activite', {{ \Illuminate\Support\Js::from($option) }})" :active="in_array($option, $secteurs_activite, true)">{{ $option }}</x-ui.chip>
@@ -225,7 +225,7 @@
                     <p class="mb-4.5 text-[12.5px] leading-relaxed text-[#5B677A]">Même sans activité aujourd'hui, quels secteurs vous intéressent ?</p>
 
                     <div>
-                        <p class="mb-2.5 text-[13px] font-bold text-brand">Dans quels domaines souhaitez-vous créer une activité dans le futur ? @if ($a_activite === 'Non') * @endif <span class="font-medium text-[#9AA6B8]">(plusieurs choix possibles)</span></p>
+                        <p class="mb-2.5 text-[13px] font-bold text-brand">Dans quels domaines souhaitez-vous créer une activité dans le futur ? @if ($a_activite === 'Non') * @endif <span class="font-medium text-[#5B677A]">(plusieurs choix possibles)</span></p>
                         <div class="flex flex-wrap gap-2">
                             @foreach ($secteursActivite as $option)
                                 <x-ui.chip wire:click="toggle('domaines_futurs', {{ \Illuminate\Support\Js::from($option) }})" :active="in_array($option, $domaines_futurs, true)">{{ $option }}</x-ui.chip>
@@ -240,7 +240,7 @@
                     <p class="mb-4.5 text-[12.5px] leading-relaxed text-[#5B677A]">Dernière ligne droite : parlons de vos attentes et de vos besoins.</p>
 
                     <div class="mb-4.5">
-                        <p class="mb-2.5 text-[13px] font-bold text-brand">Qu'attendez-vous principalement du réseau ? * <span class="font-medium text-[#9AA6B8]">(plusieurs choix possibles)</span></p>
+                        <p class="mb-2.5 text-[13px] font-bold text-brand">Qu'attendez-vous principalement du réseau ? * <span class="font-medium text-[#5B677A]">(plusieurs choix possibles)</span></p>
                         <div class="flex flex-wrap gap-2">
                             @foreach ($attentesOptions as $option)
                                 <x-ui.chip wire:click="toggle('attentes', {{ \Illuminate\Support\Js::from($option) }})" :active="in_array($option, $attentes, true)">{{ $option }}</x-ui.chip>
@@ -250,7 +250,7 @@
                     </div>
 
                     <div class="mb-4.5">
-                        <p class="mb-2.5 text-[13px] font-bold text-brand">Quelles formations vous intéressent le plus ? * <span class="font-medium text-[#9AA6B8]">(plusieurs choix possibles)</span></p>
+                        <p class="mb-2.5 text-[13px] font-bold text-brand">Quelles formations vous intéressent le plus ? * <span class="font-medium text-[#5B677A]">(plusieurs choix possibles)</span></p>
                         <div class="flex flex-wrap gap-2">
                             @foreach ($formationsInteretOptions as $option)
                                 <x-ui.chip wire:click="toggle('formations_interet', {{ \Illuminate\Support\Js::from($option) }})" :active="in_array($option, $formations_interet, true)">{{ $option }}</x-ui.chip>
@@ -290,7 +290,7 @@
                     <div class="flex flex-col gap-3">
                         @foreach ($recap as $r)
                             <div class="border-t border-[#EDF0F5] pt-2.5 first:border-t-0 first:pt-0">
-                                <p class="text-[11.5px] font-bold uppercase tracking-[0.04em] text-[#9AA6B8]">{{ $r['label'] }}</p>
+                                <p class="text-[11.5px] font-bold uppercase tracking-[0.04em] text-[#5B677A]">{{ $r['label'] }}</p>
                                 <p class="mt-0.5 text-[13.5px] leading-relaxed text-ink">{{ $r['value'] }}</p>
                             </div>
                         @endforeach

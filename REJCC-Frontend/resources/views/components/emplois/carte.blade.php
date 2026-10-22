@@ -31,7 +31,7 @@
             @if ($avecStatut && in_array($o['statut'], ['a_corriger', 'refusee'], true) && ($o['motif'] ?? null))
                 <p class="mt-2 rounded-lg px-2.5 py-1.5 text-[11.5px] font-semibold" style="background: {{ $sc }}12; color: {{ $sc }}">{{ $o['statut'] === 'refusee' ? 'Motif' : "Demande de l'équipe" }} : {{ $o['motif'] }}</p>
             @endif
-            <p class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[#9AA6B8]">
+            <p class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[#5B677A]">
                 @if ($o['groupe']) <span style="color: {{ $o['groupe']['couleur'] }}">{{ $o['groupe']['nom'] }}</span> @endif
                 @if ($o['publie_at']) <span>Publiée {{ \App\Support\Texte::depuis($o['publie_at']) }}</span> @endif
                 @if ($limite)

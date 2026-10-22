@@ -28,7 +28,7 @@
             <button wire:click="setOnglet('bibliotheque')" role="tab" class="btn-tap rounded-full px-4 py-1.5 text-xs font-bold {{ $onglet === 'bibliotheque' ? 'bg-brand text-white' : 'border border-brand/15 bg-white text-brand hover:bg-cloud' }}">Bibliothèque</button>
             @if ($propositions->isNotEmpty() || $onglet === 'propositions')
                 <button wire:click="setOnglet('propositions')" role="tab" data-test="onglet-propositions" class="btn-tap inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold {{ $onglet === 'propositions' ? 'bg-brand text-white' : 'border border-brand/15 bg-white text-brand hover:bg-cloud' }}">
-                    Mes propositions <span class="{{ $onglet === 'propositions' ? 'text-white/70' : 'text-[#9AA6B8]' }}">{{ $propositions->count() }}</span>
+                    Mes propositions <span class="{{ $onglet === 'propositions' ? 'text-white/70' : 'text-[#5B677A]' }}">{{ $propositions->count() }}</span>
                 </button>
             @endif
             <button wire:click="setOnglet('personnels')" role="tab" data-test="onglet-personnels" class="btn-tap inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold {{ $onglet === 'personnels' ? 'bg-brand text-white' : 'border border-brand/15 bg-white text-brand hover:bg-cloud' }}">
@@ -59,14 +59,14 @@
                         <div class="flex flex-wrap items-center gap-2 rounded-[10px] border border-brand/10 bg-cloud/50 px-3 py-2.5">
                             <x-ui.icon name="file-text" class="size-4 text-azure" />
                             <span data-test="fichier-propose" class="min-w-0 flex-1 truncate text-[13px] font-semibold text-brand">{{ $pFichier->getClientOriginalName() }}</span>
-                            <span class="text-[11.5px] text-[#9AA6B8]">{{ $pFichier->getSize() >= 1048576 ? number_format($pFichier->getSize() / 1048576, 1, ',', ' ').' Mo' : max(1, (int) round($pFichier->getSize() / 1024)).' Ko' }}</span>
+                            <span class="text-[11.5px] text-[#5B677A]">{{ $pFichier->getSize() >= 1048576 ? number_format($pFichier->getSize() / 1048576, 1, ',', ' ').' Mo' : max(1, (int) round($pFichier->getSize() / 1024)).' Ko' }}</span>
                             <label class="cursor-pointer text-[12px] font-bold text-azure hover:underline">Remplacer<input type="file" wire:model="pFichier" class="hidden" /></label>
                         </div>
                     @else
                         <label class="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-[12px] border border-dashed border-brand/25 bg-cloud/30 px-4 py-6 text-center hover:bg-cloud/60">
                             <x-ui.icon name="download" class="size-5 rotate-180 text-azure" />
                             <span class="text-[13px] font-bold text-brand">Choisir un fichier</span>
-                            <span class="text-[11px] text-[#9AA6B8]">PDF, Word, Excel, PowerPoint, image, audio ou vidéo MP4 — 20 Mo max</span>
+                            <span class="text-[11px] text-[#5B677A]">PDF, Word, Excel, PowerPoint, image, audio ou vidéo MP4 — 20 Mo max</span>
                             <input type="file" wire:model="pFichier" data-test="fichier-proposition" class="hidden" />
                         </label>
                     @endif
@@ -104,7 +104,7 @@
             {{-- ══════════ Mes propositions ══════════ --}}
             @if ($propositions->isEmpty())
                 <div class="rounded-[16px] border border-dashed border-brand/20 bg-white px-6 py-12 text-center">
-                    <x-ui.icon name="folder-open" class="mx-auto mb-3 size-9 text-[#9AA6B8]" />
+                    <x-ui.icon name="folder-open" class="mx-auto mb-3 size-9 text-[#5B677A]" />
                     <p class="text-sm font-bold text-brand">Vous n'avez encore proposé aucun document</p>
                 </div>
             @else
@@ -114,7 +114,7 @@
                         <div wire:key="prop-{{ $d['id'] }}" data-test="ligne-proposition" class="flex flex-wrap items-start gap-3 border-t border-[#EDF0F5] px-4 py-3.5 first:border-t-0 sm:px-5">
                             <button type="button" wire:click="ouvrir({{ $d['id'] }})" class="min-w-0 flex-1 text-left">
                                 <p class="flex flex-wrap items-center gap-2 text-[13.5px] font-semibold text-brand">{{ $d['title'] }} <span class="rounded-full px-2 py-0.5 text-[10.5px] font-bold {{ $sc }}">{{ $sl }}</span></p>
-                                <p class="mt-0.5 text-[11.5px] text-[#9AA6B8]">{{ collect([$d['category'], $d['type'], $d['taille'], 'envoyé le '.\Illuminate\Support\Carbon::parse($d['created_at'])->locale('fr')->isoFormat('D MMMM YYYY')])->filter()->join(' · ') }}</p>
+                                <p class="mt-0.5 text-[11.5px] text-[#5B677A]">{{ collect([$d['category'], $d['type'], $d['taille'], 'envoyé le '.\Illuminate\Support\Carbon::parse($d['created_at'])->locale('fr')->isoFormat('D MMMM YYYY')])->filter()->join(' · ') }}</p>
                                 @if ($d['statut'] === 'publie')
                                     <p class="mt-1 text-[11.5px] text-[#5B677A]">{{ $d['vues'] }} consultation{{ $d['vues'] > 1 ? 's' : '' }} · {{ $d['telechargements'] }} téléchargement{{ $d['telechargements'] > 1 ? 's' : '' }}</p>
                                 @endif
@@ -149,14 +149,14 @@
                 <button wire:click="setCategorie('')" class="btn-tap rounded-full px-3.5 py-1.5 text-xs font-bold {{ $categorie === '' ? 'bg-brand text-white' : 'border border-brand/15 bg-white text-brand hover:bg-cloud' }}">Toutes</button>
                 @foreach ($categories->where('nombre', '>', 0) as $c)
                     <button wire:click="setCategorie('{{ $c['id'] }}')" wire:key="cat-{{ $c['id'] }}" data-test="categorie-doc" class="btn-tap rounded-full px-3.5 py-1.5 text-xs font-bold {{ $categorie === (string) $c['id'] ? 'bg-brand text-white' : 'border border-brand/15 bg-white text-brand hover:bg-cloud' }}">
-                        {{ $c['nom'] }} <span class="{{ $categorie === (string) $c['id'] ? 'text-white/70' : 'text-[#9AA6B8]' }}">{{ $c['nombre'] }}</span>
+                        {{ $c['nom'] }} <span class="{{ $categorie === (string) $c['id'] ? 'text-white/70' : 'text-[#5B677A]' }}">{{ $c['nombre'] }}</span>
                     </button>
                 @endforeach
             </div>
 
             @if ($docs->isEmpty())
                 <div class="rounded-[16px] border border-dashed border-brand/20 bg-white px-6 py-12 text-center">
-                    <x-ui.icon name="folder-open" class="mx-auto mb-3 size-9 text-[#9AA6B8]" />
+                    <x-ui.icon name="folder-open" class="mx-auto mb-3 size-9 text-[#5B677A]" />
                     <p class="text-sm font-bold text-brand">{{ $filtresActifs ? 'Aucun document ne correspond à votre recherche' : 'Aucun document disponible pour le moment' }}</p>
                 </div>
             @else
@@ -175,7 +175,7 @@
                                     @if ($d['nouveau'])<span class="rounded-full bg-accent px-1.5 text-[9.5px] font-bold uppercase leading-4 text-white">Nouveau</span>@endif
                                 </p>
                                 @if ($d['description'])<p class="mt-0.5 line-clamp-2 text-xs text-[#5B677A]">{{ $d['description'] }}</p>@endif
-                                <p class="mt-1.5 text-[11px] text-[#9AA6B8]">{{ collect([$d['category'], ($d['disponible'] ?? true) ? $d['type'] : 'Bientôt disponible', $d['taille'], $d['verrouille'] ? $d['acces_label'] : null, $d['contributeur'] ? 'par '.$d['contributeur'] : null])->filter()->join(' · ') }}</p>
+                                <p class="mt-1.5 text-[11px] text-[#5B677A]">{{ collect([$d['category'], ($d['disponible'] ?? true) ? $d['type'] : 'Bientôt disponible', $d['taille'], $d['verrouille'] ? $d['acces_label'] : null, $d['contributeur'] ? 'par '.$d['contributeur'] : null])->filter()->join(' · ') }}</p>
                             </div>
                         </button>
                     @endforeach

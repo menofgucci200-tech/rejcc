@@ -9,7 +9,7 @@
 
         @if ($items->isEmpty())
             <div class="py-12 text-center">
-                <x-ui.icon name="bell" class="mx-auto mb-3.5 size-9 text-[#9AA6B8]" />
+                <x-ui.icon name="bell" class="mx-auto mb-3.5 size-9 text-[#5B677A]" />
                 <p class="text-sm text-[#5B677A]">Aucune notification pour l'instant.</p>
             </div>
         @else
@@ -29,7 +29,7 @@
                                 @if ($n->body)
                                     <p class="mt-1 text-[13px] leading-relaxed text-[#5B677A]">{{ $n->body }}</p>
                                 @endif
-                                <p class="mt-1.5 text-[11.5px] text-[#9AA6B8]">{{ $n->created_at->locale('fr')->translatedFormat('d F, H:i') }}</p>
+                                <p class="mt-1.5 text-[11.5px] text-[#5B677A]">{{ $n->created_at->locale('fr')->translatedFormat('d F, H:i') }}</p>
                             </div>
                             @if (! $n->read_at)
                                 <span class="mt-1.5 size-2 shrink-0 rounded-full bg-accent"></span>

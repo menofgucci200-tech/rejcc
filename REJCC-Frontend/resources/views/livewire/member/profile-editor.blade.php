@@ -57,7 +57,7 @@
                                     <button type="button" wire:click="removePhoto" wire:confirm="Retirer votre photo de profil ?" class="{{ $btn2 }} !py-2 !text-[12px]">Retirer</button>
                                 @endif
                             </div>
-                            <p class="mt-2 text-[11px] text-[#9AA6B8]">Vous pourrez la recadrer avant l'envoi. Elle apparaît sur votre carte membre et dans l'annuaire.</p>
+                            <p class="mt-2 text-[11px] text-[#5B677A]">Vous pourrez la recadrer avant l'envoi. Elle apparaît sur votre carte membre et dans l'annuaire.</p>
                             @error('photoFile') <span class="{{ $err }}">{{ $message }}</span> @enderror
                         </div>
 
@@ -75,9 +75,9 @@
                                         <div class="pointer-events-none absolute inset-0 rounded-full border-2 border-white/80"></div>
                                     </div>
                                     <div class="mt-4 flex items-center gap-3">
-                                        <x-ui.icon name="image" class="size-3.5 text-[#9AA6B8]" />
+                                        <x-ui.icon name="image" class="size-3.5 text-[#5B677A]" />
                                         <input type="range" x-bind:min="min" x-bind:max="min * 4" step="0.001" x-bind:value="zoom" x-on:input="zoomer($event.target.value)" class="w-full accent-[#031D59]" aria-label="Zoom">
-                                        <x-ui.icon name="image" class="size-5 text-[#9AA6B8]" />
+                                        <x-ui.icon name="image" class="size-5 text-[#5B677A]" />
                                     </div>
                                     <div class="mt-5 flex justify-end gap-2">
                                         <button type="button" x-on:click="fermer()" class="{{ $btn2 }}">Annuler</button>
@@ -174,7 +174,7 @@
                         <div><label class="{{ $lab }}">Fonction / titre</label><input wire:model="titre" type="text" placeholder="Ex : Fondatrice d'AgroVert, consultante en agrobusiness" class="{{ $in }}" />@error('titre') <span class="{{ $err }}">{{ $message }}</span> @enderror</div>
                         <div><label class="{{ $lab }}">Diocèse</label><input wire:model="diocese" type="text" placeholder="Ex : Archidiocèse d'Abidjan" class="{{ $in }}" /></div>
                         <div x-data="{ n: {{ mb_strlen($bio) }} }">
-                            <label class="{{ $lab }} flex justify-between">À propos de moi <span class="font-normal text-[#9AA6B8]" x-text="n + ' / 1 500'"></span></label>
+                            <label class="{{ $lab }} flex justify-between">À propos de moi <span class="font-normal text-[#5B677A]" x-text="n + ' / 1 500'"></span></label>
                             <textarea wire:model="bio" x-on:input="n = $event.target.value.length" rows="7" maxlength="1500" placeholder="Votre histoire, votre vision, ce qui vous anime, ce que vous apportez au réseau…" class="{{ $in }} resize-y"></textarea>
                             @error('bio') <span class="{{ $err }}">{{ $message }}</span> @enderror
                         </div>
@@ -256,7 +256,7 @@
                                 <span x-show="etat === 'ios-installer'" class="text-[#B27007]">Sur iPhone, ajoutez d'abord la plateforme à votre écran d'accueil (voir ci-dessous), puis ouvrez-la depuis l'icône REJCC.</span>
                             </p>
                             @if ($appareilsPush)
-                                <p class="mt-1 text-[11.5px] text-[#9AA6B8]">{{ $appareilsPush }} appareil(s) reçoivent vos notifications.</p>
+                                <p class="mt-1 text-[11.5px] text-[#5B677A]">{{ $appareilsPush }} appareil(s) reçoivent vos notifications.</p>
                             @endif
                         </div>
                         <div class="flex flex-wrap gap-2">
@@ -281,14 +281,14 @@
                     <p class="mt-0.5 text-[12px] text-[#5B677A]">Les notifications restent toujours visibles dans la cloche de votre espace. Un e-mail n'est envoyé que si vous ne les avez pas vues sur la plateforme.</p>
 
                     <div class="mt-4 divide-y divide-cloud-200">
-                        <div class="hidden grid-cols-[1fr_180px_110px] gap-4 pb-2 text-[10.5px] font-bold uppercase tracking-[0.06em] text-[#9AA6B8] sm:grid">
+                        <div class="hidden grid-cols-[1fr_180px_110px] gap-4 pb-2 text-[10.5px] font-bold uppercase tracking-[0.06em] text-[#5B677A] sm:grid">
                             <span>Catégorie</span><span>Par e-mail</span><span class="text-center">Sur l'appareil</span>
                         </div>
                         @foreach ($categories as $c)
                             <div wire:key="cat-{{ $c['cle'] }}" data-test="categorie-{{ $c['cle'] }}" class="grid gap-3 py-3.5 sm:grid-cols-[1fr_180px_110px] sm:items-center sm:gap-4">
                                 <div>
                                     <p class="text-[13px] font-semibold text-ink">{{ $c['libelle'] }}</p>
-                                    <p class="text-[11.5px] text-[#9AA6B8]">{{ $c['detail'] }}</p>
+                                    <p class="text-[11.5px] text-[#5B677A]">{{ $c['detail'] }}</p>
                                 </div>
                                 <label class="flex items-center gap-2 sm:block">
                                     <span class="w-24 shrink-0 text-[11.5px] font-semibold text-[#5B677A] sm:hidden">Par e-mail</span>
@@ -353,7 +353,7 @@
                         <div class="mt-2 divide-y divide-cloud-200">
                             @foreach ($vie as $cle => [$l, $d, $on])
                                 <div data-test="pref-{{ $cle }}" class="flex items-center justify-between gap-4 py-3.5">
-                                    <div><p class="text-[13px] font-semibold text-ink">{{ $l }}</p><p class="text-[11.5px] text-[#9AA6B8]">{{ $d }}</p></div>
+                                    <div><p class="text-[13px] font-semibold text-ink">{{ $l }}</p><p class="text-[11.5px] text-[#5B677A]">{{ $d }}</p></div>
                                     <button type="button" wire:click="togglePreference('{{ $cle }}')" role="switch" aria-checked="{{ $on ? 'true' : 'false' }}" aria-label="{{ $l }}" class="{{ $interrupteur($on) }}">
                                         <span class="absolute top-[3px] size-[18px] rounded-full bg-white shadow transition-all duration-200" style="left: {{ $on ? '21px' : '3px' }}"></span>
                                     </button>
@@ -377,20 +377,20 @@
                     <p class="{{ $titreCarte }}">Ce que voient les autres</p>
                     <div class="mt-4 space-y-4 text-[12.5px]">
                         <div>
-                            <p class="mb-1.5 text-[11px] font-bold uppercase tracking-[0.06em] text-[#9AA6B8]">Les membres abonnés</p>
+                            <p class="mb-1.5 text-[11px] font-bold uppercase tracking-[0.06em] text-[#5B677A]">Les membres abonnés</p>
                             <ul class="space-y-1.5">
-                                <li class="flex gap-2"><x-ui.icon :name="$annuaire ? 'check-circle' : 'x-circle'" class="mt-px size-4 shrink-0 {{ $annuaire ? 'text-[#1C8F4C]' : 'text-[#9AA6B8]' }}" /> {{ $annuaire ? 'Vous trouvent dans l\'annuaire (nom, photo, ville, secteur, compétences)' : 'Ne vous trouvent pas dans l\'annuaire' }}</li>
-                                <li class="flex gap-2"><x-ui.icon :name="$coordMembres ? 'check-circle' : 'x-circle'" class="mt-px size-4 shrink-0 {{ $coordMembres ? 'text-[#1C8F4C]' : 'text-[#9AA6B8]' }}" /> {{ $coordMembres ? 'Voient votre téléphone et votre e-mail' : 'Ne voient pas vos coordonnées : ils vous écrivent par la messagerie' }}</li>
+                                <li class="flex gap-2"><x-ui.icon :name="$annuaire ? 'check-circle' : 'x-circle'" class="mt-px size-4 shrink-0 {{ $annuaire ? 'text-[#1C8F4C]' : 'text-[#5B677A]' }}" /> {{ $annuaire ? 'Vous trouvent dans l\'annuaire (nom, photo, ville, secteur, compétences)' : 'Ne vous trouvent pas dans l\'annuaire' }}</li>
+                                <li class="flex gap-2"><x-ui.icon :name="$coordMembres ? 'check-circle' : 'x-circle'" class="mt-px size-4 shrink-0 {{ $coordMembres ? 'text-[#1C8F4C]' : 'text-[#5B677A]' }}" /> {{ $coordMembres ? 'Voient votre téléphone et votre e-mail' : 'Ne voient pas vos coordonnées : ils vous écrivent par la messagerie' }}</li>
                             </ul>
                         </div>
                         <div>
-                            <p class="mb-1.5 text-[11px] font-bold uppercase tracking-[0.06em] text-[#9AA6B8]">Le public (QR code de votre carte)</p>
+                            <p class="mb-1.5 text-[11px] font-bold uppercase tracking-[0.06em] text-[#5B677A]">Le public (QR code de votre carte)</p>
                             <ul class="space-y-1.5">
                                 <li class="flex gap-2"><x-ui.icon name="check-circle" class="mt-px size-4 shrink-0 text-[#1C8F4C]" /> Votre page : nom, photo, titre, présentation, parcours, certificats choisis</li>
-                                <li class="flex gap-2"><x-ui.icon :name="$coordPublic ? 'check-circle' : 'x-circle'" class="mt-px size-4 shrink-0 {{ $coordPublic ? 'text-[#1C8F4C]' : 'text-[#9AA6B8]' }}" /> {{ $coordPublic ? 'Votre téléphone et votre e-mail' : 'Pas vos coordonnées' }}</li>
+                                <li class="flex gap-2"><x-ui.icon :name="$coordPublic ? 'check-circle' : 'x-circle'" class="mt-px size-4 shrink-0 {{ $coordPublic ? 'text-[#1C8F4C]' : 'text-[#5B677A]' }}" /> {{ $coordPublic ? 'Votre téléphone et votre e-mail' : 'Pas vos coordonnées' }}</li>
                             </ul>
                         </div>
-                        <p class="flex gap-2 text-[11.5px] text-[#9AA6B8]"><x-ui.icon name="lock" class="mt-px size-3.5 shrink-0" /> Votre date de naissance, votre paroisse et vos documents personnels ne sont jamais montrés.</p>
+                        <p class="flex gap-2 text-[11.5px] text-[#5B677A]"><x-ui.icon name="lock" class="mt-px size-3.5 shrink-0" /> Votre date de naissance, votre paroisse et vos documents personnels ne sont jamais montrés.</p>
                         @if ($pagePublique)
                             <a href="{{ $pagePublique }}" target="_blank" rel="noopener" class="{{ $btn2 }} w-full"><x-ui.icon name="external-link" class="size-3.5" /> Voir ma page publique</a>
                         @endif
@@ -415,13 +415,13 @@
                                     <span class="h-1.5 flex-1 rounded-full transition-colors" x-bind:class="force >= {{ $i }} ? ['bg-accent','bg-[#F5A623]','bg-[#4F6FBF]','bg-[#22A85A]'][force - 1] : 'bg-cloud-200'"></span>
                                 @endforeach
                             </div>
-                            <p class="mt-1 text-[11px] text-[#9AA6B8]" x-text="['8 caractères minimum, avec au moins une lettre et un chiffre.', 'Trop faible', 'Moyen', 'Bon', 'Excellent'][force]"></p>
+                            <p class="mt-1 text-[11px] text-[#5B677A]" x-text="['8 caractères minimum, avec au moins une lettre et un chiffre.', 'Trop faible', 'Moyen', 'Bon', 'Excellent'][force]"></p>
                             @error('password') <span class="{{ $err }}">{{ $message }}</span> @enderror
                         </div>
                         <div><label class="{{ $lab }}">Confirmer le nouveau mot de passe</label><x-ui.password-input wire:model="password_confirmation" autocomplete="new-password" class="{{ $in }}" /></div>
                         <label class="flex items-start gap-2.5 text-[12.5px] text-ink">
                             <input type="checkbox" wire:model="deconnecterAutres" class="mt-0.5 size-4 rounded border-brand/25 text-brand">
-                            <span>Déconnecter mes autres appareils <span class="block text-[11.5px] text-[#9AA6B8]">Recommandé si vous pensez qu'une autre personne connaît votre mot de passe.</span></span>
+                            <span>Déconnecter mes autres appareils <span class="block text-[11.5px] text-[#5B677A]">Recommandé si vous pensez qu'une autre personne connaît votre mot de passe.</span></span>
                         </label>
                     </div>
                     <button type="submit" wire:loading.attr="disabled" wire:target="updatePassword" data-test="enregistrer-mot-de-passe" class="{{ $btn }} mt-5">Mettre à jour le mot de passe</button>
@@ -441,7 +441,7 @@
                             <div><label class="{{ $lab }}">Nouvelle adresse</label><input wire:model="nouvelEmail" type="email" autocomplete="email" placeholder="prenom.nom@exemple.com" class="{{ $in }}" />@error('nouvelEmail') <span class="{{ $err }}">{{ $message }}</span> @enderror</div>
                             <div><label class="{{ $lab }}">Mot de passe</label><x-ui.password-input wire:model="motDePasseEmail" autocomplete="current-password" class="{{ $in }}" />@error('motDePasseEmail') <span class="{{ $err }}">{{ $message }}</span> @enderror</div>
                         </div>
-                        <p class="mt-2 text-[11.5px] text-[#9AA6B8]">Nous enverrons un lien de confirmation à la nouvelle adresse ; l'actuelle reste valable en attendant.</p>
+                        <p class="mt-2 text-[11.5px] text-[#5B677A]">Nous enverrons un lien de confirmation à la nouvelle adresse ; l'actuelle reste valable en attendant.</p>
                         <button type="submit" wire:loading.attr="disabled" wire:target="demanderEmail" class="{{ $btn2 }} mt-4">Changer d'adresse</button>
                     </form>
 
@@ -458,7 +458,7 @@
                                     <span class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-cloud text-brand"><x-ui.icon :name="preg_match('/Android|iPhone|iPad/', $a['appareil']) ? 'smartphone' : 'nav-projects'" class="size-4" /></span>
                                     <div class="min-w-0 flex-1">
                                         <p class="truncate text-[13px] font-semibold text-ink">{{ $a['appareil'] }} @if ($a['courant'])<span class="ml-1 rounded-full bg-[#22A85A]/12 px-2 py-0.5 text-[10.5px] font-bold text-[#1C8F4C]">Cet appareil</span>@endif</p>
-                                        <p class="truncate text-[11.5px] text-[#9AA6B8]">Actif le {{ $date($a['actif_le']) }}{{ $a['ip'] ? ' · '.$a['ip'] : '' }}</p>
+                                        <p class="truncate text-[11.5px] text-[#5B677A]">Actif le {{ $date($a['actif_le']) }}{{ $a['ip'] ? ' · '.$a['ip'] : '' }}</p>
                                     </div>
                                     @unless ($a['courant'])
                                         <button type="button" wire:click="deconnecterAppareil({{ $a['id'] }})" wire:confirm="Déconnecter « {{ $a['appareil'] }} » ?" class="shrink-0 text-[12px] font-bold text-[#5B677A] hover:text-accent">Déconnecter</button>
@@ -469,7 +469,7 @@
                                 <li x-show="!tout" class="pt-3"><button type="button" x-on:click="tout = true" class="text-[12px] font-bold text-azure hover:underline">Voir les {{ count($appareils) - 5 }} autres sessions</button></li>
                             @endif
                         </ul>
-                        <p class="mt-2 text-[11.5px] text-[#9AA6B8]">Un appareil inconnu ? Déconnectez-le et changez votre mot de passe.</p>
+                        <p class="mt-2 text-[11.5px] text-[#5B677A]">Un appareil inconnu ? Déconnectez-le et changez votre mot de passe.</p>
                     </div>
                 </div>
             </div>
@@ -524,7 +524,7 @@
                     <p class="{{ $titreCarte }}">Journal de mon compte</p>
                     <p class="mt-0.5 text-[12px] text-[#5B677A]">Connexions, changements de sécurité, téléchargements et consultations de vos documents par l'équipe.</p>
                     @if (empty($journal))
-                        <p class="mt-6 text-center text-[12.5px] text-[#9AA6B8]">Rien pour le moment.</p>
+                        <p class="mt-6 text-center text-[12.5px] text-[#5B677A]">Rien pour le moment.</p>
                     @else
                         <ol class="mt-4 space-y-0.5">
                             @foreach ($journal as $e)
@@ -541,7 +541,7 @@
                                     <x-ui.icon :name="$ic[0]" class="mt-0.5 size-4 shrink-0 {{ $ic[1] }}" />
                                     <div class="min-w-0 flex-1">
                                         <p class="text-[12.5px] font-semibold text-ink">{{ $e['libelle'] }}{{ $e['detail'] ? ' — '.$e['detail'] : '' }}</p>
-                                        <p class="text-[11px] text-[#9AA6B8]">{{ $date($e['le']) }}{{ $e['appareil'] ? ' · '.$e['appareil'] : '' }}{{ $e['ip'] ? ' · '.$e['ip'] : '' }}</p>
+                                        <p class="text-[11px] text-[#5B677A]">{{ $date($e['le']) }}{{ $e['appareil'] ? ' · '.$e['appareil'] : '' }}{{ $e['ip'] ? ' · '.$e['ip'] : '' }}</p>
                                     </div>
                                 </li>
                             @endforeach

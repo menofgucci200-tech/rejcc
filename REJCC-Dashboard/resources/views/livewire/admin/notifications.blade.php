@@ -59,7 +59,7 @@
                     @forelse ($historique as $h)
                         <div class="row-hover -mx-5 border-t border-[#EDF0F5] px-5 py-3.5 first:border-t-0">
                             <p class="text-[13px] font-bold text-brand">{{ $h->title }}</p>
-                            <p class="mt-0.5 text-[11.5px] text-[#9AA6B8]">{{ $typeLabels[$h->type] ?? $h->type }} · envoyée {{ $h->created_at->diffForHumans() }} · {{ $h->destinataires }} destinataires</p>
+                            <p class="mt-0.5 text-[11.5px] text-[#5B677A]">{{ $typeLabels[$h->type] ?? $h->type }} · envoyée {{ $h->created_at->diffForHumans() }} · {{ $h->destinataires }} destinataires</p>
                         </div>
                     @empty
                         <p class="py-10 text-center text-sm text-[#5B677A]">Aucune diffusion pour le moment.</p>

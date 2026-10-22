@@ -68,7 +68,7 @@
                         <p class="max-w-sm text-sm text-ink/70">Merci {{ $prenom }}, votre place est réservée pour <strong>{{ $event['title'] ?? "l'événement" }}</strong>.</p>
                         @if ($billet)
                             <div class="mt-2 w-full max-w-xs rounded-2xl border border-brand/10 bg-cloud/50 p-4" x-data x-init="$nextTick(() => window.QRCode && window.QRCode.toCanvas($refs.qr, $el.dataset.code, { width: 180, margin: 1, color: { dark: '#031D59' } }))" data-code="{{ $billet }}">
-                                <p class="text-[11px] font-bold uppercase tracking-[0.12em] text-[#9AA6B8]">Votre billet</p>
+                                <p class="text-[11px] font-bold uppercase tracking-[0.12em] text-[#5B677A]">Votre billet</p>
                                 <canvas x-ref="qr" class="mx-auto my-2 rounded-lg bg-white p-1"></canvas>
                                 <p class="font-mono text-sm font-bold text-brand">{{ $billet }}</p>
                                 <p class="mt-1 text-[11.5px] text-[#5B677A]">Présentez ce QR code à l'entrée. Faites une capture d'écran ou gardez ce lien :</p>
@@ -76,7 +76,7 @@
                             </div>
                         @endif
                         @if ($email)
-                            <p class="text-[12px] text-[#9AA6B8]">Une confirmation avec votre billet a été envoyée à {{ $email }}.</p>
+                            <p class="text-[12px] text-[#5B677A]">Une confirmation avec votre billet a été envoyée à {{ $email }}.</p>
                         @endif
                         <a href="{{ route('adhesion') }}" class="mt-2 text-[12.5px] font-semibold text-brand hover:underline">Rejoindre le REJCC pour profiter de tout le réseau →</a>
                     </div>
@@ -145,7 +145,7 @@
                         </div>
 
                         <div class="flex flex-col gap-1.5">
-                            <label class="text-xs font-semibold text-[#5B677A]">E-mail <span class="font-normal text-[#9AA6B8]">(optionnel)</span></label>
+                            <label class="text-xs font-semibold text-[#5B677A]">E-mail <span class="font-normal text-[#5B677A]">(optionnel)</span></label>
                             <input wire:model="email" type="email" placeholder="vous@exemple.com" class="rounded-xl border border-brand/15 bg-white px-3.5 py-2.5 text-sm text-brand outline-none focus:border-azure focus:ring-2 focus:ring-accent/15" />
                             @error('email') <span class="text-xs font-medium text-accent">{{ $message }}</span> @enderror
                         </div>
@@ -161,7 +161,7 @@
                                 @error('answers.'.$key) <span class="-mt-2 text-xs font-medium text-accent">{{ $message }}</span> @enderror
                             @else
                                 <div class="flex flex-col gap-1.5">
-                                    <label class="text-xs font-semibold text-[#5B677A]">{{ $f['label'] }} @if ($req) <span class="text-accent">*</span> @else <span class="font-normal text-[#9AA6B8]">(optionnel)</span> @endif</label>
+                                    <label class="text-xs font-semibold text-[#5B677A]">{{ $f['label'] }} @if ($req) <span class="text-accent">*</span> @else <span class="font-normal text-[#5B677A]">(optionnel)</span> @endif</label>
 
                                     @if ($f['type'] === 'textarea')
                                         <textarea wire:model="answers.{{ $key }}" rows="3" class="{{ $inputClass }}"></textarea>
@@ -175,7 +175,7 @@
                                     @elseif ($f['type'] === 'file')
                                         <input wire:model="uploads.{{ $key }}" type="file" accept="image/*,application/pdf,video/*,.doc,.docx" class="text-xs text-[#5B677A] file:mr-3 file:rounded-full file:border-0 file:bg-brand/10 file:px-3.5 file:py-2 file:text-xs file:font-bold file:text-brand hover:file:bg-brand/15" />
                                         <span wire:loading wire:target="uploads.{{ $key }}" class="text-[11px] font-semibold text-azure">Envoi du fichier…</span>
-                                        <span class="text-[11px] text-[#9AA6B8]">Image, PDF, Word ou vidéo — 20 Mo max.</span>
+                                        <span class="text-[11px] text-[#5B677A]">Image, PDF, Word ou vidéo — 20 Mo max.</span>
                                     @else
                                         <input wire:model="answers.{{ $key }}" type="text" class="{{ $inputClass }}" />
                                     @endif
@@ -195,7 +195,7 @@
                             <span wire:loading.remove wire:target="register">Je réserve ma place</span>
                             <span wire:loading wire:target="register">Inscription…</span>
                         </button>
-                        <p class="text-center text-[11px] text-[#9AA6B8]">Vos informations servent uniquement à l'organisation de l'événement.</p>
+                        <p class="text-center text-[11px] text-[#5B677A]">Vos informations servent uniquement à l'organisation de l'événement.</p>
                     </form>
                 @endif
                 </div>

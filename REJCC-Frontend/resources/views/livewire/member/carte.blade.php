@@ -64,7 +64,7 @@
                 class="btn-tap inline-flex items-center gap-2 rounded-full border border-brand/15 bg-white px-4 py-2 text-xs font-bold text-brand hover:bg-cloud disabled:opacity-60">
                 <x-ui.icon name="image" class="size-3.5" /> <span x-text="busy ? 'Préparation…' : 'Télécharger en image'">Télécharger en image</span>
             </button>
-            <span wire:loading wire:target="photoUpload" class="text-xs font-semibold text-[#9AA6B8]">Envoi de la photo…</span>
+            <span wire:loading wire:target="photoUpload" class="text-xs font-semibold text-[#5B677A]">Envoi de la photo…</span>
         </div>
 
         {{-- Mode « Présenter » : plein écran, QR en grand pour être scanné

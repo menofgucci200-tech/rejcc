@@ -111,7 +111,7 @@
                     <div>
                         <label class="{{ $lab }}">Date limite de candidature (optionnel)</label>
                         <input wire:model="deadline" type="date" min="{{ now()->toDateString() }}" class="{{ $input }}" />
-                        <p class="mt-1 text-[11px] text-[#9AA6B8]">Sans date, l'offre reste en ligne 60 jours (prolongeable).</p>
+                        <p class="mt-1 text-[11px] text-[#5B677A]">Sans date, l'offre reste en ligne 60 jours (prolongeable).</p>
                         @error('deadline') <span class="text-xs text-accent">{{ $message }}</span> @enderror
                     </div>
                     <div>
@@ -133,7 +133,7 @@
                         <button wire:click="publier" wire:loading.attr="disabled" wire:target="publier" data-test="envoyer-offre" class="btn-tap rounded-[9px] bg-brand px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-brand/90 disabled:opacity-60">
                             {{ ! $editingId ? "Envoyer à l'équipe pour publication" : (in_array($statutEdition, ['a_corriger', 'refusee'], true) ? 'Renvoyer en validation' : 'Enregistrer') }}
                         </button>
-                        <p class="mt-2 text-[11px] text-[#9AA6B8]">{{ $editingId && $statutEdition === 'publiee' ? 'Les modifications sont visibles immédiatement.' : "L'équipe REJCC vérifie chaque offre avant de la publier." }}</p>
+                        <p class="mt-2 text-[11px] text-[#5B677A]">{{ $editingId && $statutEdition === 'publiee' ? 'Les modifications sont visibles immédiatement.' : "L'équipe REJCC vérifie chaque offre avant de la publier." }}</p>
                     </div>
                 </div>
             </div>
@@ -143,7 +143,7 @@
         <div class="mb-4 flex flex-wrap items-center gap-1.5">
             <button wire:click="setOnglet('offres')" class="btn-tap rounded-full px-4 py-1.5 text-xs font-bold {{ $onglet === 'offres' ? 'bg-brand text-white' : 'border border-brand/15 bg-white text-brand hover:bg-cloud' }}">Offres du réseau</button>
             <button wire:click="setOnglet('mes')" data-test="onglet-mes-offres" class="btn-tap inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold {{ $onglet === 'mes' ? 'bg-brand text-white' : 'border border-brand/15 bg-white text-brand hover:bg-cloud' }}">
-                Mes offres <span class="{{ $onglet === 'mes' ? 'text-white/70' : 'text-[#9AA6B8]' }}">{{ $mesOffres->count() }}</span>
+                Mes offres <span class="{{ $onglet === 'mes' ? 'text-white/70' : 'text-[#5B677A]' }}">{{ $mesOffres->count() }}</span>
                 @if ($aCorriger) <span class="rounded-full bg-[#B27007] px-1.5 text-[10px] leading-4 text-white">{{ $aCorriger }}</span> @endif
             </button>
             <button wire:click="setOnglet('candidatures')" data-test="onglet-candidatures" class="btn-tap rounded-full px-4 py-1.5 text-xs font-bold {{ $onglet === 'candidatures' ? 'bg-brand text-white' : 'border border-brand/15 bg-white text-brand hover:bg-cloud' }}">Mes candidatures</button>
@@ -178,7 +178,7 @@
                 <div class="mt-2 flex flex-wrap items-center gap-2 px-1 text-[11.5px]">
                     <label class="inline-flex cursor-pointer items-center gap-1.5 font-semibold text-[#5B677A]"><input wire:model.live="favoris" type="checkbox" class="size-3.5 rounded border-brand/25 text-accent" /> Mes offres sauvegardées ({{ $nbFavoris }})</label>
                     @if ($filtresActifs)
-                        <span class="text-[#9AA6B8]">· {{ $offres->count() }} offre{{ $offres->count() > 1 ? 's' : '' }}</span>
+                        <span class="text-[#5B677A]">· {{ $offres->count() }} offre{{ $offres->count() > 1 ? 's' : '' }}</span>
                         <button wire:click="effacerFiltres" class="font-semibold text-azure hover:underline">Effacer les filtres</button>
                     @endif
                     <span class="ml-auto flex items-center gap-2">
@@ -192,9 +192,9 @@
                     <div wire:key="liste-alertes" class="mt-2 space-y-1 border-t border-[#EDF0F5] px-1 pt-2">
                         @foreach ($alertes as $al)
                             <p wire:key="al-{{ $al['id'] }}" data-test="alerte" class="flex items-center gap-2 text-[12px] text-brand"><x-ui.icon name="bell" class="size-3.5 text-azure" /> {{ $al['libelle'] }}
-                                <button wire:click="supprimerAlerte({{ $al['id'] }})" class="ml-auto text-[11.5px] font-semibold text-[#9AA6B8] hover:text-accent">Supprimer</button></p>
+                                <button wire:click="supprimerAlerte({{ $al['id'] }})" class="ml-auto text-[11.5px] font-semibold text-[#5B677A] hover:text-accent">Supprimer</button></p>
                         @endforeach
-                        <p class="text-[11px] text-[#9AA6B8]">Vous recevez une notification dès qu'une offre correspondante est publiée.</p>
+                        <p class="text-[11px] text-[#5B677A]">Vous recevez une notification dès qu'une offre correspondante est publiée.</p>
                     </div>
                 @endif
             </div>

@@ -56,14 +56,14 @@
                     <div class="min-w-[220px] flex-1">
                         <p class="text-[13.5px] font-bold text-brand">{{ $a['titre'] }}</p>
                         <p class="mt-0.5 line-clamp-1 text-xs text-[#5B677A]">{{ $a['extrait'] }}</p>
-                        <p class="mt-1 text-[11px] text-[#9AA6B8]">{{ $a['categorie'] }} · publié le {{ $a['publie'] }}@if ($a['lecture']) · {{ $a['lecture'] }}@endif</p>
+                        <p class="mt-1 text-[11px] text-[#5B677A]">{{ $a['categorie'] }} · publié le {{ $a['publie'] }}@if ($a['lecture']) · {{ $a['lecture'] }}@endif</p>
                     </div>
                     <a href="{{ \App\Support\Site::url('/actualites/'.$a['slug']) }}" target="_blank" class="shrink-0 rounded-[9px] border border-[#C9D3E6] px-3 py-1.5 text-xs font-bold text-brand hover:bg-cloud">Voir</a>
                     <div class="flex shrink-0 items-center gap-1.5">
-                        <button wire:click="openEdit({{ $a['id'] }})" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-brand/10 hover:text-brand">
+                        <button wire:click="openEdit({{ $a['id'] }})" class="icon-btn rounded-lg p-1.5 text-[#5B677A] hover:bg-brand/10 hover:text-brand">
                             <x-ui.icon name="pencil" class="size-3.5" />
                         </button>
-                        <button wire:click="delete({{ $a['id'] }})" wire:confirm="Supprimer l'article « {{ $a['titre'] }} » ?" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-accent/10 hover:text-accent">
+                        <button wire:click="delete({{ $a['id'] }})" wire:confirm="Supprimer l'article « {{ $a['titre'] }} » ?" class="icon-btn rounded-lg p-1.5 text-[#5B677A] hover:bg-accent/10 hover:text-accent">
                             <x-ui.icon name="trash-2" class="size-3.5" />
                         </button>
                     </div>

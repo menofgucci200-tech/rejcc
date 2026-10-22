@@ -5,7 +5,7 @@
         <div class="mb-5">
             <h2 class="mb-1 text-[17px] font-bold text-brand">Pages du site vitrine</h2>
             <div class="h-[3px] w-9 rounded bg-accent"></div>
-            <p class="mt-2 text-xs text-[#9AA6B8]">Modifiez les textes, affichez ou masquez des sections, ajustez le référencement Google — publié immédiatement.</p>
+            <p class="mt-2 text-xs text-[#5B677A]">Modifiez les textes, affichez ou masquez des sections, ajustez le référencement Google — publié immédiatement.</p>
         </div>
 
         {{-- Sélecteur de page --}}
@@ -40,11 +40,11 @@
                                             <span class="ml-1.5 rounded-full bg-azure/10 px-2 py-0.5 text-[10px] font-bold text-azure">Modifiée</span>
                                         @endif
                                         @if (! $s['visible'])
-                                            <span class="ml-1.5 rounded-full bg-[#EEF1F5] px-2 py-0.5 text-[10px] font-bold text-[#9AA6B8]">Masquée</span>
+                                            <span class="ml-1.5 rounded-full bg-[#EEF1F5] px-2 py-0.5 text-[10px] font-bold text-[#5B677A]">Masquée</span>
                                         @endif
                                     </p>
                                     @if ($s['hint'])
-                                        <p class="mt-0.5 text-[11px] text-[#9AA6B8]">{{ $s['hint'] }}</p>
+                                        <p class="mt-0.5 text-[11px] text-[#5B677A]">{{ $s['hint'] }}</p>
                                     @endif
                                 </div>
 
@@ -64,7 +64,7 @@
                                         <span class="absolute top-[3px] size-[18px] rounded-full bg-white shadow transition-all duration-200 ease-out" style="left: {{ $s['visible'] ? '21px' : '3px' }}"></span>
                                     </button>
                                 @else
-                                    <span class="shrink-0 text-[10.5px] font-semibold text-[#9AA6B8]">Toujours visible</span>
+                                    <span class="shrink-0 text-[10.5px] font-semibold text-[#5B677A]">Toujours visible</span>
                                 @endif
                             </div>
 
@@ -79,7 +79,7 @@
                                                 <input wire:model="fields.{{ $fieldKey }}" type="text" class="rounded-[9px] border border-brand/15 bg-white px-3 py-2 text-sm font-normal outline-none focus:border-azure" />
                                             @endif
                                             @if ($field['default'] !== '')
-                                                <span class="font-normal text-[#9AA6B8]">Texte d'origine : « {{ \Illuminate\Support\Str::limit($field['default'], 90) }} » — videz le champ pour y revenir.</span>
+                                                <span class="font-normal text-[#5B677A]">Texte d'origine : « {{ \Illuminate\Support\Str::limit($field['default'], 90) }} » — videz le champ pour y revenir.</span>
                                             @endif
                                         </label>
                                     @endforeach
@@ -98,7 +98,7 @@
             {{-- SEO de la page --}}
             <section class="rounded-[18px] border border-brand/10 bg-white p-[22px] shadow-[0_2px_8px_rgba(3,29,89,.05)]">
                 <p class="mb-1 text-sm font-bold text-brand">Référencement Google (SEO)</p>
-                <p class="mb-4 text-[11.5px] text-[#9AA6B8]">Titre et description affichés dans les résultats de recherche et lors des partages WhatsApp / Facebook. Laissez vide pour garder les valeurs automatiques.</p>
+                <p class="mb-4 text-[11.5px] text-[#5B677A]">Titre et description affichés dans les résultats de recherche et lors des partages WhatsApp / Facebook. Laissez vide pour garder les valeurs automatiques.</p>
                 <div class="flex flex-col gap-3">
                     <label class="flex flex-col gap-1 text-xs font-semibold text-[#5B677A]">Titre (70 caractères max)
                         <input wire:model="seoTitle" type="text" class="rounded-[9px] border border-brand/15 px-3 py-2 text-sm font-normal outline-none focus:border-azure" />
@@ -113,7 +113,7 @@
 
                 {{-- Aperçu Google --}}
                 <div class="mt-5 rounded-xl border border-brand/10 bg-cloud/50 p-4">
-                    <p class="mb-2 text-[10.5px] font-bold uppercase tracking-[0.08em] text-[#9AA6B8]">Aperçu Google</p>
+                    <p class="mb-2 text-[10.5px] font-bold uppercase tracking-[0.08em] text-[#5B677A]">Aperçu Google</p>
                     <p class="truncate text-[15px] font-medium text-[#1a0dab]">{{ $seoTitle ?: $current['label'].' · REJCC' }}</p>
                     <p class="text-[12px] text-[#006621]">rejcc.site{{ $current['path'] === '/' ? '' : $current['path'] }}</p>
                     <p class="line-clamp-2 text-[12.5px] leading-snug text-[#545454]">{{ $seoDescription ?: 'Description automatique de la page (générée à partir du contenu actuel).' }}</p>

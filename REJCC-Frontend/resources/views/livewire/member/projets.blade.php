@@ -153,7 +153,7 @@
                     <label class="flex items-start gap-2.5 rounded-[9px] border border-brand/10 bg-cloud/50 px-3 py-2.5 text-sm text-ink/80 sm:col-span-2">
                         <input wire:model="publicOk" type="checkbox" data-test="public-ok" class="mt-0.5 size-4 rounded border-brand/25 text-brand" />
                         <span><span class="font-semibold text-brand">Présenter mon projet sur le site public du REJCC</span>
-                            <span class="block text-[11.5px] text-[#9AA6B8]">Une fois validé, le projet (titre, présentation, visuel, secteur, ville, besoins et votre prénom) peut être affiché sur le site pour attirer partenaires et nouveaux membres. Jamais vos coordonnées. Vous pouvez retirer votre accord à tout moment.</span></span>
+                            <span class="block text-[11.5px] text-[#5B677A]">Une fois validé, le projet (titre, présentation, visuel, secteur, ville, besoins et votre prénom) peut être affiché sur le site pour attirer partenaires et nouveaux membres. Jamais vos coordonnées. Vous pouvez retirer votre accord à tout moment.</span></span>
                     </label>
                     @if ($erreur)
                         <p wire:key="form-erreur" class="rounded-[9px] bg-accent/10 px-3 py-2 text-xs font-semibold text-accent sm:col-span-2">{{ $erreur }}</p>
@@ -162,7 +162,7 @@
                         <button wire:click="enregistrer" wire:loading.attr="disabled" wire:target="enregistrer" data-test="envoyer-projet" class="btn-tap rounded-[9px] bg-brand px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-brand/90 disabled:opacity-60">
                             {{ ! $editingId ? "Soumettre à l'équipe" : (in_array($statutEdition, ['a_completer', 'refuse'], true) ? 'Renvoyer en évaluation' : 'Enregistrer') }}
                         </button>
-                        <p class="mt-2 text-[11px] text-[#9AA6B8]">{{ $editingId && $statutEdition === 'valide' ? 'Les modifications sont visibles immédiatement.' : "L'équipe REJCC examine chaque projet avant de le rendre visible aux membres." }}</p>
+                        <p class="mt-2 text-[11px] text-[#5B677A]">{{ $editingId && $statutEdition === 'valide' ? 'Les modifications sont visibles immédiatement.' : "L'équipe REJCC examine chaque projet avant de le rendre visible aux membres." }}</p>
                     </div>
                 </div>
             </div>
@@ -171,19 +171,19 @@
         {{-- ══════════ Onglets ══════════ --}}
         <div class="mb-4 flex flex-wrap gap-1.5">
             <button wire:click="setOnglet('reseau')" class="btn-tap rounded-full px-4 py-1.5 text-xs font-bold {{ $onglet === 'reseau' ? 'bg-brand text-white' : 'border border-brand/15 bg-white text-brand hover:bg-cloud' }}">
-                Projets du réseau <span class="{{ $onglet === 'reseau' ? 'text-white/70' : 'text-[#9AA6B8]' }}">{{ $totalValides }}</span>
+                Projets du réseau <span class="{{ $onglet === 'reseau' ? 'text-white/70' : 'text-[#5B677A]' }}">{{ $totalValides }}</span>
             </button>
             <button wire:click="setOnglet('mes')" data-test="onglet-mes-projets" class="btn-tap inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold {{ $onglet === 'mes' ? 'bg-brand text-white' : 'border border-brand/15 bg-white text-brand hover:bg-cloud' }}">
-                Mes projets <span class="{{ $onglet === 'mes' ? 'text-white/70' : 'text-[#9AA6B8]' }}">{{ $mesProjets->count() }}</span>
+                Mes projets <span class="{{ $onglet === 'mes' ? 'text-white/70' : 'text-[#5B677A]' }}">{{ $mesProjets->count() }}</span>
                 @if ($aTraiter) <span class="rounded-full bg-[#B27007] px-1.5 text-[10px] leading-4 text-white" title="À compléter">{{ $aTraiter }}</span> @endif
             </button>
             @php $invitations = $mesEquipes->where('relation', 'invite')->count(); @endphp
             <button wire:click="setOnglet('equipes')" data-test="onglet-equipes" class="btn-tap inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold {{ $onglet === 'equipes' ? 'bg-brand text-white' : 'border border-brand/15 bg-white text-brand hover:bg-cloud' }}">
-                Mes équipes <span class="{{ $onglet === 'equipes' ? 'text-white/70' : 'text-[#9AA6B8]' }}">{{ $mesEquipes->count() }}</span>
+                Mes équipes <span class="{{ $onglet === 'equipes' ? 'text-white/70' : 'text-[#5B677A]' }}">{{ $mesEquipes->count() }}</span>
                 @if ($invitations) <span class="rounded-full bg-accent px-1.5 text-[10px] leading-4 text-white" title="Invitations">{{ $invitations }}</span> @endif
             </button>
             <button wire:click="setOnglet('suivis')" class="btn-tap rounded-full px-4 py-1.5 text-xs font-bold {{ $onglet === 'suivis' ? 'bg-brand text-white' : 'border border-brand/15 bg-white text-brand hover:bg-cloud' }}">
-                Suivis <span class="{{ $onglet === 'suivis' ? 'text-white/70' : 'text-[#9AA6B8]' }}">{{ $suivis->count() }}</span>
+                Suivis <span class="{{ $onglet === 'suivis' ? 'text-white/70' : 'text-[#5B677A]' }}">{{ $suivis->count() }}</span>
             </button>
         </div>
 

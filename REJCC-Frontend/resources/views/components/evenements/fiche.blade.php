@@ -89,7 +89,7 @@
                 @endif
 
                 @if ($apres = $e['apres'] ?? null)
-                    <section data-test="apres-session" class="mt-5 rounded-[14px] border border-[#E8E1F7] bg-[#F7F4FD] p-4">
+                    <section data-test="apres-session" class="mt-5 rounded-[14px] border border-[#E7E1D6] bg-[#FAF6EF] p-4">
                         <p class="mb-1 text-[13px] font-bold text-[#4A3F86]">{{ $e['registered'] ? 'Revoir la session' : 'Vous avez manqué cette session ?' }}</p>
                         @if ($apres['replay_url'] || $apres['support_url'])
                             <div class="mt-2 flex flex-wrap gap-2">
@@ -109,7 +109,7 @@
                 @php $p = $e['participants'] ?? ['total' => 0, 'visible' => false, 'membres' => []]; @endphp
                 @if ($p['total'] > 0)
                     <section data-test="ils-participent" class="mt-5 rounded-[14px] border border-brand/10 p-4" x-data="{ tous: false }">
-                        <p class="mb-2.5 text-[11px] font-bold uppercase tracking-[0.1em] text-[#9AA6B8]">
+                        <p class="mb-2.5 text-[11px] font-bold uppercase tracking-[0.1em] text-[#5B677A]">
                             {{ $e['passe'] ? 'Ils ont participé' : 'Ils participent' }} · {{ $p['total'] }} membre{{ $p['total'] > 1 ? 's' : '' }}{{ $e['registered'] ? ' en plus de vous' : '' }}
                         </p>
                         @if ($p['visible'])
@@ -119,7 +119,7 @@
                                         <x-messagerie.avatar :personne="$m" taille="size-9" texte="text-[11px]" />
                                         <span class="min-w-0 flex-1">
                                             <span class="block truncate text-[12.5px] font-bold text-brand">{{ $m['prenom'] }} {{ $m['nom'] }}@if ($m['role'] === 'mentor') <span class="ml-0.5 rounded-full bg-accent px-1.5 align-middle text-[8.5px] font-bold uppercase text-white">Mentor</span>@endif</span>
-                                            <span class="block truncate text-[11px] text-[#9AA6B8]">{{ collect([$m['titre'], $m['ville']])->filter()->join(' · ') }}</span>
+                                            <span class="block truncate text-[11px] text-[#5B677A]">{{ collect([$m['titre'], $m['ville']])->filter()->join(' · ') }}</span>
                                         </span>
                                         <a href="{{ route('espace-membre.messaging', ['to' => $m['id']]) }}" wire:navigate data-test="ecrire-participant" title="Écrire à {{ $m['prenom'] }}" class="icon-btn shrink-0 rounded-lg p-1.5 text-azure hover:bg-azure/10"><x-ui.icon name="message-circle" class="size-4" /></a>
                                     </li>
@@ -160,7 +160,7 @@
                                                 @if ($e['present'] ?? false)
                                                     <p class="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[#22A85A]/10 px-3 py-1 text-[12px] font-bold text-[#1C8F4C]"><x-ui.icon name="check-circle" class="size-4" /> Présence enregistrée</p>
                                                 @else
-                                                    <p class="mt-3 text-[11.5px] text-[#9AA6B8]">Présentez ce QR code à l'accueil (votre carte membre fonctionne aussi).</p>
+                                                    <p class="mt-3 text-[11.5px] text-[#5B677A]">Présentez ce QR code à l'accueil (votre carte membre fonctionne aussi).</p>
                                                 @endif
                                                 <button type="button" x-on:click="billet = false" class="mt-4 text-[12.5px] font-semibold text-azure hover:underline">Fermer</button>
                                             </div>
@@ -171,7 +171,7 @@
                         @endif
                         <x-evenements.rejoindre :e="$e" />
                         <a href="{{ route('espace-membre.evenements.agenda', $e['id']) }}" data-test="ajouter-agenda" class="btn-tap inline-flex items-center gap-2 rounded-full border border-brand/15 px-4 py-2.5 text-[13px] font-bold text-brand hover:bg-cloud"><x-ui.icon name="calendar" class="size-4" /> Ajouter à mon agenda</a>
-                        <button type="button" wire:click="desinscrire({{ $e['id'] }})" wire:confirm="Annuler votre inscription à « {{ $e['title'] }} » ?" data-test="desinscrire" class="text-[12.5px] font-semibold text-[#9AA6B8] hover:text-accent">Annuler mon inscription</button>
+                        <button type="button" wire:click="desinscrire({{ $e['id'] }})" wire:confirm="Annuler votre inscription à « {{ $e['title'] }} » ?" data-test="desinscrire" class="text-[12.5px] font-semibold text-[#5B677A] hover:text-accent">Annuler mon inscription</button>
                     @elseif ($e['refus'])
                         <span data-test="fiche-refus" class="rounded-full bg-cloud px-4 py-2.5 text-[13px] font-semibold text-[#5B677A]">{{ $e['refus'] }}</span>
                         @if ($e['reserve_abonnes'] && str_contains($e['refus'], 'abonnement'))

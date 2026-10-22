@@ -53,7 +53,7 @@
                                     @if ($e['en_ligne'])<span class="rounded-full bg-azure/10 px-2 py-0.5 text-[10px] font-bold text-azure">En ligne</span>@endif
                                 </div>
                                 <p class="text-[13.5px] font-bold text-brand">{{ $e['title'] }}</p>
-                                <p class="mt-0.5 text-xs text-[#9AA6B8]">{{ ucfirst($e['debut']->isoFormat('dddd D MMMM')) }} · {{ $e['time_label'] ?: $e['debut']->format('H\hi') }}{{ $e['en_ligne'] ? ' · En ligne' : ($e['location'] ? ' · '.$e['location'] : '') }}</p>
+                                <p class="mt-0.5 text-xs text-[#5B677A]">{{ ucfirst($e['debut']->isoFormat('dddd D MMMM')) }} · {{ $e['time_label'] ?: $e['debut']->format('H\hi') }}{{ $e['en_ligne'] ? ' · En ligne' : ($e['location'] ? ' · '.$e['location'] : '') }}</p>
                                 @if ($e['capacity'] !== null && ! $e['registered'])
                                     <p class="mt-0.5 text-[11.5px] font-semibold {{ $e['complet'] ? 'text-accent' : 'text-[#5B677A]' }}">{{ $e['complet'] ? 'Complet' : $e['places_restantes'].' place'.($e['places_restantes'] > 1 ? 's' : '').' restante'.($e['places_restantes'] > 1 ? 's' : '') }}</p>
                                 @endif
@@ -65,7 +65,7 @@
                             @elseif ($e['registered'])
                                 <span class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#22A85A]/10 px-3.5 py-1.5 text-xs font-semibold text-[#1C8F4C]"><x-ui.icon name="check" class="size-3.5" /> Inscrit</span>
                             @elseif ($e['refus'])
-                                <span class="shrink-0 rounded-full bg-cloud px-3.5 py-1.5 text-xs font-semibold text-[#9AA6B8]">{{ $e['complet'] ? 'Complet' : ($e['statut'] === 'annule' ? 'Annulé' : 'Fermé') }}</span>
+                                <span class="shrink-0 rounded-full bg-cloud px-3.5 py-1.5 text-xs font-semibold text-[#5B677A]">{{ $e['complet'] ? 'Complet' : ($e['statut'] === 'annule' ? 'Annulé' : 'Fermé') }}</span>
                             @else
                                 <button wire:click.stop="inscrire({{ $e['id'] }})" wire:loading.attr="disabled" data-test="inscrire" class="btn-tap shrink-0 rounded-full border border-azure/25 bg-azure/10 px-3.5 py-1.5 text-xs font-semibold text-azure hover:bg-azure/20 disabled:opacity-60">S'inscrire</button>
                             @endif
@@ -89,7 +89,7 @@
                         <p data-test="mois-calendrier" class="text-[13px] font-bold text-brand">{{ $moisLabel }}</p>
                         <button type="button" wire:click="moisSuivant" aria-label="Mois suivant" data-test="mois-suivant" class="icon-btn flex size-8 items-center justify-center rounded-full border border-brand/10 text-brand hover:bg-cloud"><x-ui.icon name="chevron-down" class="size-4 -rotate-90" /></button>
                     </div>
-                    <div class="mb-2 grid grid-cols-7 gap-1 text-center text-[10px] font-semibold text-[#9AA6B8]">
+                    <div class="mb-2 grid grid-cols-7 gap-1 text-center text-[10px] font-semibold text-[#5B677A]">
                         <span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span>
                     </div>
                     <div class="grid grid-cols-7 gap-1">
@@ -100,7 +100,7 @@
                                 @php $aEvenement = array_key_exists($date, $joursEvenements); $selection = $jour === $date; @endphp
                                 <button type="button" @if ($aEvenement) wire:click="choisirJour('{{ $date }}')" data-test="jour-evenement" @else disabled @endif
                                     class="relative mx-auto flex size-8 items-center justify-center rounded-full text-[11.5px] font-semibold transition-colors
-                                        {{ $selection ? 'bg-accent text-white' : ($date === $aujourdhui ? 'bg-brand text-white' : ($aEvenement ? 'text-brand hover:bg-cloud' : 'text-[#9AA6B8]')) }}">
+                                        {{ $selection ? 'bg-accent text-white' : ($date === $aujourdhui ? 'bg-brand text-white' : ($aEvenement ? 'text-brand hover:bg-cloud' : 'text-[#5B677A]')) }}">
                                     {{ (int) substr($date, 8, 2) }}
                                     @if ($aEvenement && ! $selection)
                                         <span class="absolute bottom-0.5 size-1.5 rounded-full {{ $joursEvenements[$date] ? 'bg-[#22A85A]' : 'bg-accent' }}"></span>
@@ -109,7 +109,7 @@
                             @endif
                         @endforeach
                     </div>
-                    <p class="mt-3 flex flex-wrap justify-center gap-x-3 gap-y-1 text-[10.5px] text-[#9AA6B8]">
+                    <p class="mt-3 flex flex-wrap justify-center gap-x-3 gap-y-1 text-[10.5px] text-[#5B677A]">
                         <span class="inline-flex items-center gap-1"><span class="size-1.5 rounded-full bg-accent"></span> Événement</span>
                         <span class="inline-flex items-center gap-1"><span class="size-1.5 rounded-full bg-[#22A85A]"></span> Inscrit</span>
                     </p>

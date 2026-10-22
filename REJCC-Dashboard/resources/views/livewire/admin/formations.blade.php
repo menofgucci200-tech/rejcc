@@ -71,7 +71,7 @@
                 </div>
                 <div class="sm:col-span-2 rounded-[12px] border border-brand/10 p-4">
                     <p class="text-[13px] font-bold text-brand">Compétences validées</p>
-                    <p class="mb-2 mt-0.5 text-[11.5px] text-[#9AA6B8]">Imprimées sur le certificat des formations certifiantes : une compétence par ligne (3 à 6 conseillées, 8 au plus). Laissez vide pour ne pas afficher la ligne.</p>
+                    <p class="mb-2 mt-0.5 text-[11.5px] text-[#5B677A]">Imprimées sur le certificat des formations certifiantes : une compétence par ligne (3 à 6 conseillées, 8 au plus). Laissez vide pour ne pas afficher la ligne.</p>
                     <textarea wire:model="competences" rows="3" data-test="competences-formation" placeholder="Budget prévisionnel&#10;Suivi de trésorerie&#10;Calcul des prix de vente" class="w-full rounded-[10px] border border-brand/15 px-3 py-2 text-sm"></textarea>
                 </div>
                 <div class="sm:col-span-2 rounded-[12px] border border-brand/10 p-4" data-test="editeur-examen">
@@ -81,7 +81,7 @@
                             <input wire:model="seuilReussite" type="number" min="50" max="100" class="w-16 rounded-[8px] border border-brand/15 px-2 py-1 text-sm outline-none focus:border-azure" /> %
                         </label>
                     </div>
-                    <p class="mb-3 text-[11.5px] text-[#9AA6B8]">Facultatif. S'il est défini, le membre le passe sur la plateforme une fois tous les modules validés ; la formation n'est terminée (et le certificat délivré) qu'après réussite. 3 essais, puis pause de 24 h.</p>
+                    <p class="mb-3 text-[11.5px] text-[#5B677A]">Facultatif. S'il est défini, le membre le passe sur la plateforme une fois tous les modules validés ; la formation n'est terminée (et le certificat délivré) qu'après réussite. 3 essais, puis pause de 24 h.</p>
                     <x-admin-light.quiz-editor champ="examen" :questions="$examen" label="Questions de l'examen" :max="40" />
                 </div>
                 <button wire:click="save" wire:loading.attr="disabled" class="btn-tap rounded-[9px] bg-brand px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-brand/90 hover:shadow-md disabled:opacity-60 sm:col-span-2 sm:w-fit">Enregistrer</button>
@@ -108,10 +108,10 @@
                         <a href="{{ route('admin.apprenants', $f['id']) }}" wire:navigate data-test="voir-apprenants" class="shrink-0 rounded-[9px] border border-[#C9D3E6] px-3 py-1.5 text-xs font-bold text-brand hover:bg-cloud">Apprenants</a>
                         <button wire:click="toggleModules({{ $f['id'] }})" class="shrink-0 rounded-[9px] border border-[#C9D3E6] px-3 py-1.5 text-xs font-bold text-brand hover:bg-cloud">{{ $modulesFormationId === $f['id'] ? 'Fermer' : 'Modules' }}</button>
                         <div class="flex shrink-0 items-center gap-1.5">
-                            <button wire:click="openEdit({{ $f['id'] }})" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-brand/10 hover:text-brand">
+                            <button wire:click="openEdit({{ $f['id'] }})" class="icon-btn rounded-lg p-1.5 text-[#5B677A] hover:bg-brand/10 hover:text-brand">
                                 <x-ui.icon name="pencil" class="size-3.5" />
                             </button>
-                            <button wire:click="delete({{ $f['id'] }})" wire:confirm="Supprimer « {{ $f['titre'] }} » et toutes ses inscriptions ?" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-accent/10 hover:text-accent">
+                            <button wire:click="delete({{ $f['id'] }})" wire:confirm="Supprimer « {{ $f['titre'] }} » et toutes ses inscriptions ?" class="icon-btn rounded-lg p-1.5 text-[#5B677A] hover:bg-accent/10 hover:text-accent">
                                 <x-ui.icon name="trash-2" class="size-3.5" />
                             </button>
                         </div>
@@ -143,7 +143,7 @@
                                     <div class="sm:col-span-2">
                                         <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Leçon (texte suivi sur la plateforme)</label>
                                         <textarea wire:model="moduleContenu" rows="8" data-test="module-contenu" placeholder="## Titre de partie&#10;Votre texte…&#10;- point clé&#10;- autre point" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 font-mono text-[12.5px] outline-none focus:border-azure"></textarea>
-                                        <p class="mt-1 text-[10.5px] text-[#9AA6B8]">Mise en forme : « ## » pour un titre, « - » pour une liste, **gras**, *italique*, [lien](https://…).</p>
+                                        <p class="mt-1 text-[10.5px] text-[#5B677A]">Mise en forme : « ## » pour un titre, « - » pour une liste, **gras**, *italique*, [lien](https://…).</p>
                                     </div>
                                     <div>
                                         <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Vidéo — lien YouTube/Vimeo ou fichier</label>
@@ -172,7 +172,7 @@
                                         @foreach ($moduleRessources as $i => $r)
                                             <div wire:key="ress-{{ $i }}" class="mb-1.5 flex items-center gap-2 rounded-[9px] border border-brand/10 bg-cloud/50 px-3 py-1.5">
                                                 <x-ui.icon name="folder-open" class="size-3.5 text-accent" />
-                                                <span class="min-w-0 flex-1 truncate text-[12px] font-semibold text-brand">{{ $r['nom'] }} <span class="font-normal text-[#9AA6B8]">{{ $r['taille'] ?? '' }}</span></span>
+                                                <span class="min-w-0 flex-1 truncate text-[12px] font-semibold text-brand">{{ $r['nom'] }} <span class="font-normal text-[#5B677A]">{{ $r['taille'] ?? '' }}</span></span>
                                                 <button type="button" wire:click="retirerRessource({{ $i }})" class="text-[11px] font-semibold text-accent hover:underline">Retirer</button>
                                             </div>
                                         @endforeach
@@ -198,10 +198,10 @@
 
                             @forelse ($modulesList as $m)
                                 <div class="flex items-center gap-3 border-t border-white py-2.5 first:border-t-0">
-                                    <span class="w-8 shrink-0 text-center text-[11.5px] font-bold text-[#9AA6B8]">{{ $m['ordre'] }}</span>
+                                    <span class="w-8 shrink-0 text-center text-[11.5px] font-bold text-[#5B677A]">{{ $m['ordre'] }}</span>
                                     <div class="min-w-0 flex-1">
                                         <p class="truncate text-[12.5px] font-bold text-brand">{{ $m['titre'] }}</p>
-                                        <p class="truncate text-[11px] text-[#9AA6B8]">
+                                        <p class="truncate text-[11px] text-[#5B677A]">
                                             {{ collect([
                                                 ($m['contenu'] ?? null) ? 'Leçon' : null,
                                                 $m['video_url'] ? 'Vidéo' : null,
@@ -212,11 +212,11 @@
                                             ])->filter()->join(' · ') }}
                                         </p>
                                     </div>
-                                    <button wire:click="openModuleEdit({{ $m['id'] }})" class="icon-btn shrink-0 rounded-lg p-1.5 text-[#9AA6B8] hover:bg-brand/10 hover:text-brand"><x-ui.icon name="pencil" class="size-3.5" /></button>
-                                    <button wire:click="deleteModule({{ $m['id'] }})" wire:confirm="Supprimer ce module ?" class="icon-btn shrink-0 rounded-lg p-1.5 text-[#9AA6B8] hover:bg-accent/10 hover:text-accent"><x-ui.icon name="trash-2" class="size-3.5" /></button>
+                                    <button wire:click="openModuleEdit({{ $m['id'] }})" class="icon-btn shrink-0 rounded-lg p-1.5 text-[#5B677A] hover:bg-brand/10 hover:text-brand"><x-ui.icon name="pencil" class="size-3.5" /></button>
+                                    <button wire:click="deleteModule({{ $m['id'] }})" wire:confirm="Supprimer ce module ?" class="icon-btn shrink-0 rounded-lg p-1.5 text-[#5B677A] hover:bg-accent/10 hover:text-accent"><x-ui.icon name="trash-2" class="size-3.5" /></button>
                                 </div>
                             @empty
-                                <p class="py-4 text-center text-[12px] text-[#9AA6B8]">Aucun module. Ajoutez-en pour donner un vrai contenu à cette formation.</p>
+                                <p class="py-4 text-center text-[12px] text-[#5B677A]">Aucun module. Ajoutez-en pour donner un vrai contenu à cette formation.</p>
                             @endforelse
                         </div>
                     @endif

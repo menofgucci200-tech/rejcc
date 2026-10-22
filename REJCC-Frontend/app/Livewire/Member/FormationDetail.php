@@ -101,7 +101,34 @@ class FormationDetail extends Component
         $this->message = ($result['completed'] ?? false)
             ? 'Formation terminée, bravo !'
             : ($score !== null ? "Quiz réussi ({$score} %) : module validé !" : 'Module validé !');
-        $this->moduleOuvert = null;
+
+        // Le message s'affiche en bas de l'écran (le membre est en fin de module),
+        // puis le module suivant s'ouvre et la page défile jusqu'à lui.
+        $this->dispatch('rj-toast', message: $this->message, type: 'succes');
+        $suivant = ($result['completed'] ?? false) ? null : $this->moduleSuivant();
+        $this->moduleOuvert = $suivant;
+        $this->js($suivant
+            ? "setTimeout(() => document.getElementById('module-{$suivant}')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150)"
+            : "setTimeout(() => document.getElementById('progression')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150)");
+    }
+
+    /** Ouvre le prochain module à suivre (bouton « Continuer »). */
+    public function continuer(): void
+    {
+        $this->erreur = null;
+        $suivant = $this->moduleSuivant();
+        if ($suivant) {
+            $this->moduleOuvert = $suivant;
+            $this->js("setTimeout(() => document.getElementById('module-{$suivant}')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150)");
+        }
+    }
+
+    /** Premier module ni validé ni verrouillé. */
+    private function moduleSuivant(): ?int
+    {
+        $modules = Api::get("/formations/{$this->formationId}/modules", [], Api::token())['modules'] ?? [];
+
+        return collect($modules)->first(fn ($m) => ! $m['termine'] && ! $m['verrouille'])['id'] ?? null;
     }
 
     public function render()

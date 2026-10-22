@@ -22,16 +22,16 @@
                 <div data-test="form-groupe" role="dialog" aria-modal="true" class="panel-enter max-h-[92vh] w-full max-w-[560px] overflow-y-auto rounded-[20px] bg-white p-6 shadow-2xl">
                     <div class="mb-3 flex items-start justify-between gap-3">
                         <div>
-                            <p class="text-[11px] font-bold uppercase tracking-[0.08em] text-[#9AA6B8]">{{ ($groupeForm['joined'] ?? false) ? 'Ma fiche dans le groupe' : 'Rejoindre le groupe' }}</p>
+                            <p class="text-[11px] font-bold uppercase tracking-[0.08em] text-[#5B677A]">{{ ($groupeForm['joined'] ?? false) ? 'Ma fiche dans le groupe' : 'Rejoindre le groupe' }}</p>
                             <p class="text-[16px] font-bold text-brand">{{ $groupeForm['name'] ?? '' }}</p>
                         </div>
                         <button type="button" wire:click="fermerFormulaire" aria-label="Fermer" class="icon-btn rounded-lg p-1.5 hover:bg-cloud"><x-ui.icon name="x" class="size-4 text-[#5B677A]" /></button>
                     </div>
-                    <label for="groupe-specialite" class="mb-1 block text-xs font-semibold text-[#5B677A]">Votre spécialité dans ce domaine <span class="font-normal text-[#9AA6B8]">(visible des membres abonnés)</span></label>
+                    <label for="groupe-specialite" class="mb-1 block text-xs font-semibold text-[#5B677A]">Votre spécialité dans ce domaine <span class="font-normal text-[#5B677A]">(visible des membres abonnés)</span></label>
                     <textarea id="groupe-specialite" wire:model="specialite" rows="3" autofocus placeholder="Ex : Plombier spécialisé en dépannage sanitaire et chauffage central, intervention rapide à domicile." class="w-full rounded-[10px] border border-brand/15 px-3 py-2.5 text-sm outline-none focus:border-azure"></textarea>
                     @error('specialite') <p data-test="erreur-specialite" class="mt-1 text-xs font-medium text-accent">{{ $message }}</p> @enderror
 
-                    <label for="groupe-services" class="mb-1 mt-3 block text-xs font-semibold text-[#5B677A]">Services proposés <span class="font-normal text-[#9AA6B8]">(séparés par des virgules)</span></label>
+                    <label for="groupe-services" class="mb-1 mt-3 block text-xs font-semibold text-[#5B677A]">Services proposés <span class="font-normal text-[#5B677A]">(séparés par des virgules)</span></label>
                     <input id="groupe-services" wire:model="services" type="text" placeholder="Ex : Dépannage urgent, Pose de chauffe-eau, Devis gratuit" class="w-full rounded-[10px] border border-brand/15 px-3 py-2.5 text-sm outline-none focus:border-azure" />
                     <div class="mt-3 grid gap-3 sm:grid-cols-2">
                         <div>
@@ -60,7 +60,7 @@
             <label for="je-cherche" class="block text-[15px] font-extrabold">Je cherche…</label>
             <p class="mt-0.5 text-[12.5px] text-white/70">Un métier, un service, un quartier : trouvez le bon professionnel parmi les membres de tous les groupes.</p>
             <div class="relative mt-3.5">
-                <x-ui.icon name="search" class="pointer-events-none absolute left-4 top-1/2 size-[17px] -translate-y-1/2 text-[#9AA6B8]" />
+                <x-ui.icon name="search" class="pointer-events-none absolute left-4 top-1/2 size-[17px] -translate-y-1/2 text-[#5B677A]" />
                 <input id="je-cherche" type="search" wire:model.live.debounce.400ms="cherche" data-test="je-cherche"
                     placeholder="Ex : un plombier à Cocody, une comptable, un traiteur…"
                     class="w-full rounded-[14px] border-0 bg-white py-3.5 pl-11 pr-4 text-[14px] text-ink shadow-inner outline-none" />
@@ -115,7 +115,7 @@
                         @endforeach
                     </div>
                     @if (($resultats['meta']['total'] ?? 0) > count($resultats['members']))
-                        <p class="mt-3 text-center text-[12px] text-[#9AA6B8]">{{ count($resultats['members']) }} premiers résultats affichés, les mieux notés d'abord. Précisez votre recherche ou ouvrez un groupe ci-dessus.</p>
+                        <p class="mt-3 text-center text-[12px] text-[#5B677A]">{{ count($resultats['members']) }} premiers résultats affichés, les mieux notés d'abord. Précisez votre recherche ou ouvrez un groupe ci-dessus.</p>
                     @endif
                 @else
                     <p class="rounded-[14px] bg-white p-5 text-center text-[13px] text-[#5B677A]">Essayez un autre mot (métier, service, quartier) ou parcourez les groupes ci-dessous.</p>
@@ -125,7 +125,7 @@
 
         @if ($mesGroupes->isNotEmpty())
             <div class="mb-6 rounded-[16px] border border-brand/10 bg-white p-4 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
-                <p class="mb-2.5 text-[12px] font-bold uppercase tracking-[0.1em] text-[#9AA6B8]">Mes groupes ({{ $mesGroupes->count() }})</p>
+                <p class="mb-2.5 text-[12px] font-bold uppercase tracking-[0.1em] text-[#5B677A]">Mes groupes ({{ $mesGroupes->count() }})</p>
                 <div class="flex flex-wrap gap-2">
                     @foreach ($mesGroupes as $g)
                         <a href="{{ route('espace-membre.groupes.membres', $g['id']) }}" wire:navigate class="inline-flex items-center gap-1.5 rounded-full bg-brand/[.06] px-3 py-1.5 text-[12px] font-semibold text-brand transition-colors hover:bg-brand hover:text-white">
@@ -216,7 +216,7 @@
                                 <span class="group-hover/lien:underline">{{ $g['members'] }} membre{{ $g['members'] > 1 ? 's' : '' }} · Voir</span>
                             </a>
                         @else
-                            <span class="text-[11.5px] text-[#9AA6B8]">Aucun membre pour l'instant</span>
+                            <span class="text-[11.5px] text-[#5B677A]">Aucun membre pour l'instant</span>
                         @endif
                         <div class="flex items-center gap-2">
                             @if ($g['joined'])

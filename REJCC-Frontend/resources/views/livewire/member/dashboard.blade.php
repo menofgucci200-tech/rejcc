@@ -171,14 +171,14 @@
                                             <div class="min-w-0 flex-1">
                                                 <div class="mb-1 flex items-center gap-2">
                                                     <span class="rounded-full bg-azure/15 px-2 py-0.5 text-[10.5px] font-semibold text-azure">{{ $ev->category }}</span>
-                                                    <span class="text-[11px] text-[#9AA6B8]">{{ $ev->starts_at->locale('fr')->translatedFormat('d M') }}</span>
+                                                    <span class="text-[11px] text-[#5B677A]">{{ $ev->starts_at->locale('fr')->translatedFormat('d M') }}</span>
                                                     @if (! empty($ev->registered))
                                                         <span class="inline-flex items-center gap-1 rounded-full bg-[#22A85A]/10 px-2 py-0.5 text-[10.5px] font-semibold text-[#22A85A]"><x-ui.icon name="check" class="size-3" /> Inscrit</span>
                                                     @endif
                                                 </div>
                                                 <p class="mb-0.5 text-[13.5px] font-semibold text-brand group-hover:underline">{{ $ev->title }}</p>
                                                 @if ($ev->location)
-                                                    <p class="text-xs text-[#9AA6B8]">📍 {{ $ev->location }}</p>
+                                                    <p class="text-xs text-[#5B677A]">📍 {{ $ev->location }}</p>
                                                 @endif
                                             </div>
                                             <x-ui.icon name="chevron-right" class="mt-2 size-4 shrink-0 text-[#C9D3E6] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-azure" />
@@ -224,7 +224,7 @@
                                         <div class="min-w-0 flex-1">
                                             <p class="truncate text-[13.5px] font-semibold text-brand">{{ $m->prenom }} {{ $m->nom }}</p>
                                             @if ($m->secteur || $m->ville)
-                                                <p class="mt-0.5 truncate text-xs text-[#9AA6B8]">{{ collect([$m->secteur, $m->ville])->filter()->join(' · ') }}</p>
+                                                <p class="mt-0.5 truncate text-xs text-[#5B677A]">{{ collect([$m->secteur, $m->ville])->filter()->join(' · ') }}</p>
                                             @endif
                                         </div>
                                         <a href="{{ route('espace-membre.messaging', ['to' => $m->id]) }}" wire:navigate title="Envoyer un message" class="flex size-[30px] shrink-0 items-center justify-center rounded-lg border border-brand/10 bg-cloud text-[#5B677A] transition-all duration-200 ease-out hover:scale-110 hover:border-azure/30 hover:text-azure active:scale-95">
@@ -286,7 +286,7 @@
                                         <x-ui.icon name="check" class="size-3 text-white" />
                                     @endif
                                 </span>
-                                <span class="flex-1 text-[13.5px] {{ $d['fait'] ? 'text-[#9AA6B8] line-through' : 'text-ink' }}">{{ $d['label'] }}</span>
+                                <span class="flex-1 text-[13.5px] {{ $d['fait'] ? 'text-[#5B677A] line-through' : 'text-ink' }}">{{ $d['label'] }}</span>
                                 <span class="text-[11.5px] font-bold text-azure">+{{ $d['xp'] }} XP</span>
                             </div>
                         @endforeach
@@ -314,7 +314,7 @@
                                     </span>
                                     <span class="min-w-0">
                                         <span class="block truncate text-[13px] font-bold text-brand">{{ $b['title'] }}</span>
-                                        <span class="block text-[11.5px] text-[#9AA6B8]">Obtenu le {{ \Carbon\Carbon::parse($b['badge_obtenu_le'])->translatedFormat('j F Y') }}</span>
+                                        <span class="block text-[11.5px] text-[#5B677A]">Obtenu le {{ \Carbon\Carbon::parse($b['badge_obtenu_le'])->translatedFormat('j F Y') }}</span>
                                     </span>
                                 </a>
                             @endforeach
@@ -336,7 +336,7 @@
                                 </div>
                                 <div>
                                     <p class="text-[13px] leading-snug text-ink">{{ $a['texte'] }}</p>
-                                    <p class="mt-0.5 text-[11.5px] text-[#9AA6B8]">{{ $a['quand'] }}</p>
+                                    <p class="mt-0.5 text-[11.5px] text-[#5B677A]">{{ $a['quand'] }}</p>
                                 </div>
                             </div>
                         @endforeach
@@ -363,7 +363,7 @@
                                 <x-ui.icon name="folder-open" class="size-4 text-accent" />
                             </div>
                             <p class="mb-1 text-[13.5px] font-semibold leading-tight text-brand">{{ $doc->title }}</p>
-                            <p data-test="document" class="mb-3.5 text-[11.5px] text-[#9AA6B8]">{{ $doc->category }}@if ($doc->ajoute) · ajouté {{ $doc->ajoute->diffForHumans() }}@endif</p>
+                            <p data-test="document" class="mb-3.5 text-[11.5px] text-[#5B677A]">{{ $doc->category }}@if ($doc->ajoute) · ajouté {{ $doc->ajoute->diffForHumans() }}@endif</p>
                             <a href="{{ route('espace-membre.documents', ['document' => $doc->id]) }}" wire:navigate class="inline-flex items-center gap-1.5 rounded-lg border border-azure/25 bg-azure/10 px-3 py-1.5 text-xs font-semibold text-azure transition-all duration-200 ease-out hover:bg-azure/20 active:scale-95">
                                 <x-ui.icon :name="($doc->verrouille ?? false) ? 'lock' : 'eye'" class="size-3" /> {{ ($doc->verrouille ?? false) ? 'Réservé' : 'Consulter' }}
                             </a>

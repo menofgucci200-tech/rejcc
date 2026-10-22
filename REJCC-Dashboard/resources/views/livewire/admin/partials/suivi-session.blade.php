@@ -1,18 +1,18 @@
 {{-- Panneaux de suivi d'une session live : émargement, après-session, message WhatsApp. --}}
 @if ($panneauDe === $s['id'] && $panneau === 'emargement')
-    <div class="panel-enter mt-3 rounded-[14px] bg-[#FBFAFD] p-4" data-test="emargement">
+    <div class="panel-enter mt-3 rounded-[14px] bg-[#FDFBF7] p-4" data-test="emargement">
         <div class="mb-3 flex flex-wrap items-center gap-2">
-            <p class="flex-1 text-[13px] font-bold text-[#3B3F5C]">Émargement · {{ collect($emargement)->where('present', true)->count() }} présent(s) sur {{ count($emargement) }} inscrit(s)</p>
+            <p class="flex-1 text-[13px] font-bold text-ink">Émargement · {{ collect($emargement)->where('present', true)->count() }} présent(s) sur {{ count($emargement) }} inscrit(s)</p>
             <button type="button" wire:click="presentsDepuisRejoindre" class="btn-tap rounded-full bg-brand px-3.5 py-1.5 text-[12px] font-bold text-white hover:bg-brand/90">Présents : ceux qui ont cliqué « Rejoindre »</button>
-            <a href="{{ route('admin.lives.emargement', $s['id']) }}" class="btn-tap rounded-full border border-[#E4E1EC] bg-white px-3.5 py-1.5 text-[12px] font-bold text-[#3B3F5C] hover:bg-[#F7F5FB]">Exporter (Excel)</a>
+            <a href="{{ route('admin.lives.emargement', $s['id']) }}" class="btn-tap rounded-full border border-[#E7E1D6] bg-white px-3.5 py-1.5 text-[12px] font-bold text-ink hover:bg-[#FAF6EF]">Exporter (Excel)</a>
         </div>
         @if ($s['attestation'])
             <p class="mb-2 text-[12px] text-[#5B677A]">Les présents reçoivent automatiquement leur attestation de présence.</p>
         @endif
         @forelse ($emargement as $i)
-            <label class="flex flex-wrap items-center gap-3 border-t border-[#EEEAF4] py-2 text-[12.5px] first:border-t-0" wire:key="em-{{ $i['id'] }}">
+            <label class="flex flex-wrap items-center gap-3 border-t border-[#EFEAE1] py-2 text-[12.5px] first:border-t-0" wire:key="em-{{ $i['id'] }}">
                 <input type="checkbox" @checked($i['present']) wire:click="basculerPresence({{ $i['id'] }}, {{ $i['present'] ? 'false' : 'true' }})" class="size-4 rounded">
-                <span class="min-w-0 flex-1 font-semibold text-[#3B3F5C]">{{ $i['nom'] }}</span>
+                <span class="min-w-0 flex-1 font-semibold text-ink">{{ $i['nom'] }}</span>
                 @if ($i['rejoint_at'])
                     <span class="rounded-full bg-[#EFFAF4] px-2 py-0.5 text-[11px] font-bold text-[#1C6B47]">a rejoint à {{ \Carbon\Carbon::parse($i['rejoint_at'])->format('H\hi') }}</span>
                 @endif
@@ -25,14 +25,14 @@
 @endif
 
 @if ($panneauDe === $s['id'] && $panneau === 'apres')
-    <div class="panel-enter mt-3 rounded-[14px] bg-[#FBFAFD] p-4" data-test="apres-session">
-        <p class="mb-1 text-[13px] font-bold text-[#3B3F5C]">Après la session</p>
+    <div class="panel-enter mt-3 rounded-[14px] bg-[#FDFBF7] p-4" data-test="apres-session">
+        <p class="mb-1 text-[13px] font-bold text-ink">Après la session</p>
         <p class="mb-3 text-[12px] text-[#5B677A]">Ces liens apparaissent sur la fiche de la session, pour ceux qui l'ont manquée ou veulent la revoir.</p>
         <div class="grid gap-2 sm:grid-cols-2">
-            <input wire:model="replayUrl" type="url" placeholder="Lien du replay (YouTube non répertorié, Drive…)" class="rounded-[10px] border border-[#E4E1EC] bg-white px-3 py-2 text-[13px] outline-none focus:border-azure">
-            <input wire:model="supportUrl" type="url" placeholder="Lien du support (PDF, présentation…)" class="rounded-[10px] border border-[#E4E1EC] bg-white px-3 py-2 text-[13px] outline-none focus:border-azure">
+            <input wire:model="replayUrl" type="url" placeholder="Lien du replay (YouTube non répertorié, Drive…)" class="rounded-[10px] border border-[#E7E1D6] bg-white px-3 py-2 text-[13px] outline-none focus:border-azure">
+            <input wire:model="supportUrl" type="url" placeholder="Lien du support (PDF, présentation…)" class="rounded-[10px] border border-[#E7E1D6] bg-white px-3 py-2 text-[13px] outline-none focus:border-azure">
         </div>
-        <label class="mt-2 flex items-center gap-2 text-[12.5px] text-[#3B3F5C]"><input type="checkbox" wire:model="prevenirApres" class="size-4 rounded"> Prévenir les inscrits</label>
+        <label class="mt-2 flex items-center gap-2 text-[12.5px] text-ink"><input type="checkbox" wire:model="prevenirApres" class="size-4 rounded"> Prévenir les inscrits</label>
         <button type="button" wire:click="enregistrerApres" class="btn-tap mt-3 rounded-full bg-brand px-4 py-2 text-[12.5px] font-bold text-white hover:bg-brand/90">Enregistrer</button>
     </div>
 @endif

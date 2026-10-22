@@ -5,7 +5,7 @@
         <div class="mb-5">
             <h2 class="mb-1 text-[17px] font-bold text-brand">Base de données des membres</h2>
             <div class="h-[3px] w-9 rounded bg-accent"></div>
-            <p class="mt-2 text-xs text-[#9AA6B8]">{{ $total }} compte{{ $total > 1 ? 's' : '' }}</p>
+            <p class="mt-2 text-xs text-[#5B677A]">{{ $total }} compte{{ $total > 1 ? 's' : '' }}</p>
         </div>
 
         <div class="mb-6 flex flex-wrap items-center gap-2 rounded-[14px] border border-brand/10 bg-white p-3 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
@@ -34,7 +34,7 @@
         <div class="overflow-x-auto rounded-[18px] border border-brand/10 bg-white shadow-[0_2px_8px_rgba(3,29,89,.05)]">
             <table class="w-full min-w-[860px] text-left">
                 <thead>
-                    <tr class="border-b border-[#EDF0F5] text-[10.5px] font-bold uppercase tracking-[0.06em] text-[#9AA6B8]">
+                    <tr class="border-b border-[#EDF0F5] text-[10.5px] font-bold uppercase tracking-[0.06em] text-[#5B677A]">
                         <th class="px-5 py-3">Nom et prénom</th>
                         <th class="px-3 py-3">Téléphone</th>
                         <th class="px-3 py-3">Domaine de formation</th>
@@ -68,7 +68,7 @@
                                                 <span class="rounded-full bg-[#F5A623]/15 px-1.5 py-0.5 text-[9px] font-bold text-[#B87A0D]">LIMITÉ</span>
                                             @endif
                                         </div>
-                                        <p class="truncate text-[11.5px] text-[#9AA6B8]">{{ $m['email'] }}</p>
+                                        <p class="truncate text-[11.5px] text-[#5B677A]">{{ $m['email'] }}</p>
                                     </div>
                                 </div>
                             </td>
@@ -87,28 +87,28 @@
                                 @if ($m['actif'])
                                     <span class="inline-flex items-center gap-1 text-[11.5px] font-semibold text-[#22A85A]"><span class="size-1.5 rounded-full bg-[#22A85A]"></span> Actif</span>
                                 @else
-                                    <span class="inline-flex items-center gap-1 text-[11.5px] font-semibold text-[#9AA6B8]"><span class="size-1.5 rounded-full bg-[#9AA6B8]"></span> Suspendu</span>
+                                    <span class="inline-flex items-center gap-1 text-[11.5px] font-semibold text-[#5B677A]"><span class="size-1.5 rounded-full bg-[#9AA6B8]"></span> Suspendu</span>
                                 @endif
                             </td>
                             {{-- Inscrit le --}}
-                            <td class="px-3 py-3 text-[12px] text-[#9AA6B8]">{{ $m['depuis'] }}</td>
+                            <td class="px-3 py-3 text-[12px] text-[#5B677A]">{{ $m['depuis'] }}</td>
                             {{-- Action --}}
                             <td class="px-5 py-3">
                                 <div class="flex items-center justify-end gap-0.5">
-                                    <button wire:click="voir({{ $m['id'] }})" title="Voir le dossier complet" class="icon-btn rounded-lg p-1.5 {{ $voirId === $m['id'] ? 'bg-brand/10 text-brand' : 'text-[#9AA6B8] hover:bg-brand/10 hover:text-brand' }}">
+                                    <button wire:click="voir({{ $m['id'] }})" title="Voir le dossier complet" class="icon-btn rounded-lg p-1.5 {{ $voirId === $m['id'] ? 'bg-brand/10 text-brand' : 'text-[#5B677A] hover:bg-brand/10 hover:text-brand' }}">
                                         <x-ui.icon name="eye" class="size-4" />
                                     </button>
-                                    <button wire:click="openEdit({{ $m['id'] }})" title="Modifier" class="icon-btn rounded-lg p-1.5 {{ $editingId === $m['id'] ? 'bg-brand/10 text-brand' : 'text-[#9AA6B8] hover:bg-brand/10 hover:text-brand' }}">
+                                    <button wire:click="openEdit({{ $m['id'] }})" title="Modifier" class="icon-btn rounded-lg p-1.5 {{ $editingId === $m['id'] ? 'bg-brand/10 text-brand' : 'text-[#5B677A] hover:bg-brand/10 hover:text-brand' }}">
                                         <x-ui.icon name="pencil" class="size-4" />
                                     </button>
-                                    <button wire:click="qr({{ $m['id'] }})" title="Carte membre & QR code" class="icon-btn rounded-lg p-1.5 {{ $qrId === $m['id'] ? 'bg-brand/10 text-brand' : 'text-[#9AA6B8] hover:bg-brand/10 hover:text-brand' }}">
+                                    <button wire:click="qr({{ $m['id'] }})" title="Carte membre & QR code" class="icon-btn rounded-lg p-1.5 {{ $qrId === $m['id'] ? 'bg-brand/10 text-brand' : 'text-[#5B677A] hover:bg-brand/10 hover:text-brand' }}">
                                         <x-ui.icon name="qr-code" class="size-4" />
                                     </button>
-                                    <button wire:click="toggleStatut({{ $m['id'] }}, {{ $m['actif'] ? 'true' : 'false' }})" title="{{ $m['actif'] ? 'Suspendre' : 'Réactiver' }}" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-[#F5A623]/10 hover:text-[#B87A0D]">
+                                    <button wire:click="toggleStatut({{ $m['id'] }}, {{ $m['actif'] ? 'true' : 'false' }})" title="{{ $m['actif'] ? 'Suspendre' : 'Réactiver' }}" class="icon-btn rounded-lg p-1.5 text-[#5B677A] hover:bg-[#F5A623]/10 hover:text-[#B87A0D]">
                                         <x-ui.icon name="{{ $m['actif'] ? 'user-x' : 'user-check' }}" class="size-4" />
                                     </button>
                                     @if ($m['role'] !== 'admin')
-                                        <button wire:click="delete({{ $m['id'] }})" wire:confirm="Supprimer définitivement le compte de {{ $m['nom'] }} ? Cette action est irréversible." title="Supprimer" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-accent/10 hover:text-accent">
+                                        <button wire:click="delete({{ $m['id'] }})" wire:confirm="Supprimer définitivement le compte de {{ $m['nom'] }} ? Cette action est irréversible." title="Supprimer" class="icon-btn rounded-lg p-1.5 text-[#5B677A] hover:bg-accent/10 hover:text-accent">
                                             <x-ui.icon name="trash-2" class="size-4" />
                                         </button>
                                     @endif
@@ -156,11 +156,11 @@
                                             <div class="flex flex-wrap gap-2" data-test="docs-partages">
                                                 @foreach ($dossier['documents_partages'] as $pd)
                                                     <a href="{{ route('admin.members.document', ['id' => $pd['id'], 'nom' => (\Illuminate\Support\Str::slug($pd['libelle']) ?: 'document').($pd['apercu'] === 'pdf' ? '.pdf' : '')]) }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 rounded-full border border-azure/25 bg-azure/[.06] px-3 py-1 text-[11.5px] font-semibold text-brand hover:bg-azure/10">
-                                                        <x-ui.icon name="lock" class="size-3" /> {{ $pd['libelle'] }}@if ($pd['expire_le']) <span class="{{ $pd['etat'] === 'expire' ? 'text-accent' : 'text-[#9AA6B8]' }}">· exp. {{ \Illuminate\Support\Carbon::parse($pd['expire_le'])->format('d/m/Y') }}</span>@endif
+                                                        <x-ui.icon name="lock" class="size-3" /> {{ $pd['libelle'] }}@if ($pd['expire_le']) <span class="{{ $pd['etat'] === 'expire' ? 'text-accent' : 'text-[#5B677A]' }}">· exp. {{ \Illuminate\Support\Carbon::parse($pd['expire_le'])->format('d/m/Y') }}</span>@endif
                                                     </a>
                                                 @endforeach
                                             </div>
-                                            <p class="mt-1 text-[11px] text-[#9AA6B8]">Chaque consultation est enregistrée et signalée au membre.</p>
+                                            <p class="mt-1 text-[11px] text-[#5B677A]">Chaque consultation est enregistrée et signalée au membre.</p>
                                         @endif
                                         @if ($app)
                                             <p class="mb-2.5 mt-4 text-[11.5px] font-bold uppercase tracking-[0.05em] text-brand">Formulaire d'adhésion</p>

@@ -21,6 +21,16 @@
   --color-cloud-200: #e7ebf1;
   --color-ink: #333333; /* gris foncé — texte */
 
+  /* Couleurs d'appoint (lot 3) : chaudes, pour sortir du « tout bleu » sans
+     quitter la charte. Le rouge reste réservé à l'action principale. */
+  --color-meta: #5b677a; /* texte secondaire lisible (≥ 4,5:1 sur blanc) */
+  --color-or: #d9a21b; /* mise en avant, certificats */
+  --color-or-700: #8a5a00; /* texte or sur fond clair */
+  --color-vert: #1f8a5b; /* en direct, présent, terminé */
+  --color-vert-700: #17734b;
+  --color-sable: #f6eee3; /* fonds de section */
+  --color-ivoire: #fbf8f3; /* fond des pages d'apprentissage */
+
   /* Typographic families */
   --font-display: var(--ff-display); /* Anton  → ex-Impact */
   --font-sans: var(--ff-sans); /* Manrope → ex-Avenir Next */

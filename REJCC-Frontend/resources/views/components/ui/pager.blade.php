@@ -12,7 +12,7 @@
 
 @if ($last > 1)
     <div class="mt-6 flex flex-wrap items-center justify-between gap-3">
-        <p class="text-xs text-[#9AA6B8]">{{ $total }} résultat{{ $total > 1 ? 's' : '' }} · page {{ $current }} / {{ $last }}</p>
+        <p class="text-xs text-[#5B677A]">{{ $total }} résultat{{ $total > 1 ? 's' : '' }} · page {{ $current }} / {{ $last }}</p>
         <div class="flex items-center gap-1">
             <button wire:click="gotoPage({{ $current - 1 }})" @disabled($current <= 1)
                 class="btn-tap rounded-lg border border-brand/15 bg-white px-3 py-1.5 text-xs font-semibold text-brand hover:bg-cloud disabled:opacity-40">Précédent</button>
@@ -20,7 +20,7 @@
             @if ($start > 1)
                 <button wire:click="gotoPage(1)" class="btn-tap rounded-lg px-2.5 py-1.5 text-xs font-semibold text-[#5B677A] hover:bg-cloud">1</button>
                 @if ($start > 2)
-                    <span class="px-1 text-[#9AA6B8]">…</span>
+                    <span class="px-1 text-[#5B677A]">…</span>
                 @endif
             @endif
 
@@ -31,7 +31,7 @@
 
             @if ($end < $last)
                 @if ($end < $last - 1)
-                    <span class="px-1 text-[#9AA6B8]">…</span>
+                    <span class="px-1 text-[#5B677A]">…</span>
                 @endif
                 <button wire:click="gotoPage({{ $last }})" class="btn-tap rounded-lg px-2.5 py-1.5 text-xs font-semibold text-[#5B677A] hover:bg-cloud">{{ $last }}</button>
             @endif

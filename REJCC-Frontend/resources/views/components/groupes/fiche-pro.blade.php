@@ -38,10 +38,10 @@
             <div class="p-6">
                 {{-- Activité dans le groupe --}}
                 <section data-test="fiche-pro-activite">
-                    <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#9AA6B8]">Spécialité</p>
+                    <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#5B677A]">Spécialité</p>
                     <p class="mt-1 whitespace-pre-line text-[14px] leading-relaxed text-ink">{{ $pro['specialite'] }}</p>
                     @if (! empty($pro['services']))
-                        <p class="mt-4 text-[11px] font-bold uppercase tracking-[0.1em] text-[#9AA6B8]">Services proposés</p>
+                        <p class="mt-4 text-[11px] font-bold uppercase tracking-[0.1em] text-[#5B677A]">Services proposés</p>
                         <ul class="mt-2 grid gap-1.5 sm:grid-cols-2">
                             @foreach ($pro['services'] as $service)
                                 <li class="flex items-start gap-2 text-[13px] text-ink"><x-ui.icon name="check-circle" class="mt-0.5 size-4 shrink-0 text-[#22A85A]" /> {{ $service }}</li>
@@ -58,7 +58,7 @@
                             @if ($valeur)
                                 <div class="flex items-start gap-2.5 rounded-[12px] bg-cloud/60 p-3">
                                     <x-ui.icon :name="$icon" class="mt-0.5 size-4 shrink-0 text-brand" />
-                                    <div><p class="text-[10.5px] font-bold uppercase tracking-[0.08em] text-[#9AA6B8]">{{ $label }}</p><p class="text-[13px] font-semibold text-ink">{{ $valeur }}</p></div>
+                                    <div><p class="text-[10.5px] font-bold uppercase tracking-[0.08em] text-[#5B677A]">{{ $label }}</p><p class="text-[13px] font-semibold text-ink">{{ $valeur }}</p></div>
                                 </div>
                             @endif
                         @endforeach
@@ -69,14 +69,14 @@
 
                 @if ($m['bio'] ?? null)
                     <section class="mt-5 border-t border-cloud-200 pt-4">
-                        <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#9AA6B8]">Présentation</p>
+                        <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#5B677A]">Présentation</p>
                         <p class="mt-1 whitespace-pre-line text-[13px] leading-relaxed text-[#5B677A]">{{ $m['bio'] }}</p>
                     </section>
                 @endif
 
                 @if (! empty($fiche['annonces']))
                     <section data-test="fiche-pro-annonces" class="mt-5 border-t border-cloud-200 pt-4">
-                        <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#9AA6B8]">Ses annonces sur la Marketplace</p>
+                        <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#5B677A]">Ses annonces sur la Marketplace</p>
                         <div class="mt-2 grid gap-2 sm:grid-cols-2">
                             @foreach ($fiche['annonces'] as $a)
                                 <a href="{{ route('espace-membre.marketplace', ['annonce' => $a['id']]) }}" wire:navigate class="flex items-center gap-2.5 rounded-[12px] border border-brand/10 p-2 hover:border-brand/30">
@@ -93,7 +93,7 @@
 
                 @if (! empty($fiche['autres_groupes']))
                     <section class="mt-5 border-t border-cloud-200 pt-4">
-                        <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#9AA6B8]">Aussi présent dans</p>
+                        <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#5B677A]">Aussi présent dans</p>
                         <div class="mt-2 flex flex-wrap gap-1.5">
                             @foreach ($fiche['autres_groupes'] as $g)
                                 <a href="{{ route('espace-membre.groupes.membres', $g['id']) }}" wire:navigate title="{{ $g['specialite'] }}" class="rounded-full bg-brand/[.06] px-2.5 py-1 text-[11.5px] font-semibold text-brand hover:bg-brand hover:text-white">{{ $g['nom'] }}</a>

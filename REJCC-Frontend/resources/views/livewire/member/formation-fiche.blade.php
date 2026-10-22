@@ -2,7 +2,7 @@
     <x-member-light.topbar title="Catalogue des formations" />
 
     <div class="mx-auto max-w-[1000px] px-4 py-6 sm:px-8 sm:py-8">
-        <a href="{{ route('espace-membre.catalogue') }}" wire:navigate class="mb-3 inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#9AA6B8] hover:text-brand">
+        <a href="{{ route('espace-membre.catalogue') }}" wire:navigate class="mb-3 inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#5B677A] hover:text-brand">
             <x-ui.icon name="arrow-left" class="size-3.5" /> Catalogue
         </a>
 
@@ -74,7 +74,7 @@
                                     @if ($m['description'])
                                         <p class="mt-0.5 text-[12.5px] text-[#5B677A]">{{ $m['description'] }}</p>
                                     @endif
-                                    <p class="mt-1 flex flex-wrap gap-x-3 text-[11.5px] text-[#9AA6B8]">
+                                    <p class="mt-1 flex flex-wrap gap-x-3 text-[11.5px] text-[#5B677A]">
                                         @if ($m['duree']) <span>{{ $m['duree'] }}</span> @endif
                                         @if ($m['quiz']) <span class="font-semibold text-azure">Quiz de validation</span> @endif
                                         @if ($m['ressources']) <span>{{ $m['ressources'] }} ressource{{ $m['ressources'] > 1 ? 's' : '' }}</span> @endif

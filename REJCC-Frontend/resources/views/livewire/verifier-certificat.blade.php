@@ -93,7 +93,7 @@
                     <div class="min-w-0 flex-1">
                         <p class="text-[16px] font-extrabold text-brand">Vous avez reçu le certificat en PDF ?</p>
                         <p class="mt-1 text-[13px] leading-relaxed text-[#5B677A]">Déposez-le ici : nous vérifions qu'il s'agit exactement du fichier délivré par le REJCC, sans la moindre modification. Le fichier est analysé sur place, il n'est ni transmis ni conservé.</p>
-                        <p class="mt-1.5 text-[12px] leading-relaxed text-[#9AA6B8]">Les certificats du REJCC sont délivrés uniquement au format PDF : une image (PNG, JPG), une photo ou une capture d'écran n'a aucune valeur officielle. Vérifiez alors le code inscrit sur le document.</p>
+                        <p class="mt-1.5 text-[12px] leading-relaxed text-[#5B677A]">Les certificats du REJCC sont délivrés uniquement au format PDF : une image (PNG, JPG), une photo ou une capture d'écran n'a aucune valeur officielle. Vérifiez alors le code inscrit sur le document.</p>
                     </div>
                     <label class="btn-tap inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-brand/15 bg-cloud px-5 py-3 text-[13px] font-bold text-brand hover:bg-cloud-200">
                         <x-ui.icon name="download" class="size-4 rotate-180" /> Déposer le PDF
@@ -144,7 +144,7 @@
                 @endforeach
             </div>
             @if ($resultat['cle_publique'] ?? null)
-                <p class="text-center text-[10.5px] text-[#9AA6B8]">Clé publique de signature (Ed25519) : <span class="font-mono break-all">{{ $resultat['cle_publique'] }}</span></p>
+                <p class="text-center text-[10.5px] text-[#5B677A]">Clé publique de signature (Ed25519) : <span class="font-mono break-all">{{ $resultat['cle_publique'] }}</span></p>
             @endif
         </div>
     </section>

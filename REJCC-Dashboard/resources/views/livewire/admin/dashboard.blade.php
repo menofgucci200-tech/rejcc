@@ -27,7 +27,7 @@
                         Tous les membres accèdent à toutes les fonctionnalités, sans abonnement. Activez les abonnements quand le paiement en ligne sera prêt.
                     @endif
                 </p>
-                <p class="mt-1.5 text-[11.5px] text-[#9AA6B8]">{{ $ab['abonnes'] }} abonné(s) à jour sur {{ $ab['membres'] }} membre(s){{ $ab['depuis'] ? ' · dernier changement le '.$ab['depuis'] : '' }}</p>
+                <p class="mt-1.5 text-[11.5px] text-[#5B677A]">{{ $ab['abonnes'] }} abonné(s) à jour sur {{ $ab['membres'] }} membre(s){{ $ab['depuis'] ? ' · dernier changement le '.$ab['depuis'] : '' }}</p>
                 @if ($messageAbonnements)
                     <p class="panel-enter mt-2 inline-flex items-center gap-1.5 text-[12px] font-bold text-[#1C8F4C]"><x-ui.icon name="check-circle" class="size-3.5" /> {{ $messageAbonnements }}</p>
                 @endif
@@ -43,7 +43,7 @@
                         class="btn-tap rounded-xl bg-accent px-5 py-2.5 text-[13px] font-bold text-white hover:bg-accent-600">Activer les abonnements</button>
                 @endif
             @else
-                <p class="text-[11.5px] text-[#9AA6B8]">Réglage réservé aux administrateurs ayant la section « Membres ».</p>
+                <p class="text-[11.5px] text-[#5B677A]">Réglage réservé aux administrateurs ayant la section « Membres ».</p>
             @endif
         </section>
 
@@ -91,7 +91,7 @@
                         <a href="{{ route($a['route']) }}" wire:navigate class="group flex items-center gap-3 border-t border-[#EDF0F5] py-3 -mx-4.5 px-4.5 transition-colors duration-200 first:border-t-0 hover:bg-cloud/60">
                             <span class="size-2 shrink-0 rounded-full" style="background: {{ $a['dot'] }}"></span>
                             <span class="min-w-0 flex-1 text-[13px] font-semibold text-ink">{{ $a['texte'] }}</span>
-                            <span class="nudge-x shrink-0 text-[11.5px] text-[#9AA6B8] group-hover:text-accent">→</span>
+                            <span class="nudge-x shrink-0 text-[11.5px] text-[#5B677A] group-hover:text-accent">→</span>
                         </a>
                     @empty
                         <p class="py-8 text-center text-sm text-[#5B677A]">Rien à traiter pour le moment.</p>

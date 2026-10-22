@@ -2,7 +2,7 @@
     <x-member-light.topbar title="Suivi du mentorat" />
 
     <div class="mx-auto max-w-[920px] px-8 py-8">
-        <a href="{{ route('espace-membre.mentorat') }}" wire:navigate class="mb-3 inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#9AA6B8] hover:text-brand">
+        <a href="{{ route('espace-membre.mentorat') }}" wire:navigate class="mb-3 inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#5B677A] hover:text-brand">
             <x-ui.icon name="arrow-left" class="size-3.5" /> Mentorat
         </a>
 
@@ -38,7 +38,7 @@
                         <p class="mt-1 whitespace-pre-line text-[12.5px] text-[#5B677A]">{{ $mentorat['besoin'] }}</p>
                     @endif
                     @if ($mentorat['debut'])
-                        <p class="mt-1.5 text-[11.5px] text-[#9AA6B8]">Mentorat commencé le {{ \Carbon\Carbon::parse($mentorat['debut'])->translatedFormat('j F Y') }}</p>
+                        <p class="mt-1.5 text-[11.5px] text-[#5B677A]">Mentorat commencé le {{ \Carbon\Carbon::parse($mentorat['debut'])->translatedFormat('j F Y') }}</p>
                     @endif
                 </div>
             </header>
@@ -53,7 +53,7 @@
             {{-- Séances à venir --}}
             <section data-test="seances-a-venir" class="mb-8">
                 <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
-                    <h2 class="text-[12px] font-bold uppercase tracking-[0.08em] text-[#9AA6B8]">Séances à venir</h2>
+                    <h2 class="text-[12px] font-bold uppercase tracking-[0.08em] text-[#5B677A]">Séances à venir</h2>
                     @if ($enCours && ! $formSeance)
                         <button wire:click="ouvrirFormSeance(@js($mentorat['format_mentor'] ?? 'visio'))" data-test="proposer-seance" class="btn-tap inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-2 text-[12px] font-bold text-white hover:bg-accent-600"><x-ui.icon name="plus" class="size-3.5" /> Proposer une séance</button>
                     @endif
@@ -83,11 +83,11 @@
                             </div>
                         </div>
                         <div class="sm:col-span-2">
-                            <label for="seance-lieu" class="mb-1 block text-xs font-semibold text-[#5B677A]">{{ $format === 'visio' ? 'Lien de la visio' : 'Lieu du rendez-vous' }} <span class="font-normal text-[#9AA6B8]">(facultatif)</span></label>
+                            <label for="seance-lieu" class="mb-1 block text-xs font-semibold text-[#5B677A]">{{ $format === 'visio' ? 'Lien de la visio' : 'Lieu du rendez-vous' }} <span class="font-normal text-[#5B677A]">(facultatif)</span></label>
                             <input id="seance-lieu" wire:model="lieu" type="text" maxlength="255" placeholder="{{ $format === 'visio' ? 'https://meet.google.com/…' : 'Adresse, quartier, café…' }}" class="w-full rounded-[10px] border border-brand/15 px-3 py-2.5 text-sm outline-none focus:border-azure" />
                         </div>
                         <div class="sm:col-span-2">
-                            <label for="seance-odj" class="mb-1 block text-xs font-semibold text-[#5B677A]">Ordre du jour <span class="font-normal text-[#9AA6B8]">(facultatif)</span></label>
+                            <label for="seance-odj" class="mb-1 block text-xs font-semibold text-[#5B677A]">Ordre du jour <span class="font-normal text-[#5B677A]">(facultatif)</span></label>
                             <textarea id="seance-odj" wire:model="ordreDuJour" rows="2" maxlength="1000" placeholder="Ce que vous souhaitez aborder" class="w-full rounded-[10px] border border-brand/15 px-3 py-2.5 text-sm outline-none focus:border-azure"></textarea>
                         </div>
                         <div class="flex flex-wrap gap-2 sm:col-span-2">
@@ -108,7 +108,7 @@
                         </div>
                         @if ($s['lieu'])
                             <p class="mt-2 text-[12.5px] text-ink">
-                                <x-ui.icon :name="$s['format'] === 'visio' ? 'video' : 'map-pin'" class="inline size-3.5 text-[#9AA6B8]" />
+                                <x-ui.icon :name="$s['format'] === 'visio' ? 'video' : 'map-pin'" class="inline size-3.5 text-[#5B677A]" />
                                 @if (str_starts_with($s['lieu'], 'http'))
                                     <a href="{{ $s['lieu'] }}" target="_blank" rel="noopener" class="font-semibold text-azure hover:underline">{{ $s['lieu'] }}</a>
                                 @else
@@ -136,7 +136,7 @@
             {{-- Séances passées et comptes rendus --}}
             @if ($passees->isNotEmpty())
                 <section data-test="seances-passees" class="mb-8">
-                    <h2 class="mb-3 text-[12px] font-bold uppercase tracking-[0.08em] text-[#9AA6B8]">Séances passées et comptes rendus</h2>
+                    <h2 class="mb-3 text-[12px] font-bold uppercase tracking-[0.08em] text-[#5B677A]">Séances passées et comptes rendus</h2>
                     @foreach ($passees as $s)
                         <article data-test="seance-passee" wire:key="passee-{{ $s['id'] }}" class="mb-3 rounded-[16px] border border-brand/10 bg-white p-4 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
                             <div class="flex flex-wrap items-start justify-between gap-2">
@@ -168,7 +168,7 @@
                             @elseif ($estMentor)
                                 <button wire:click="ouvrirCompteRendu({{ $s['id'] }})" data-test="rediger-cr" class="btn-tap mt-3 rounded-full bg-brand px-4 py-1.5 text-[12px] font-bold text-white hover:bg-brand/90">Rédiger le compte rendu</button>
                             @else
-                                <p class="mt-2 text-[12.5px] text-[#9AA6B8]">Le compte rendu de votre mentor apparaîtra ici.</p>
+                                <p class="mt-2 text-[12.5px] text-[#5B677A]">Le compte rendu de votre mentor apparaîtra ici.</p>
                             @endif
                         </article>
                     @endforeach
@@ -179,7 +179,7 @@
             @if ($mentorat['statut'] === 'termine')
                 <section data-test="mentorat-termine" class="mb-8 rounded-[18px] border border-brand/10 bg-white p-5 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
                     <h2 class="text-[15px] font-bold text-brand">Mentorat terminé</h2>
-                    <p class="mt-0.5 text-[12px] text-[#9AA6B8]">Le {{ \Carbon\Carbon::parse($mentorat['termine_le'])->translatedFormat('j F Y') }}{{ $mentorat['termine_par_moi'] ? ', par vous' : '' }}</p>
+                    <p class="mt-0.5 text-[12px] text-[#5B677A]">Le {{ \Carbon\Carbon::parse($mentorat['termine_le'])->translatedFormat('j F Y') }}{{ $mentorat['termine_par_moi'] ? ', par vous' : '' }}</p>
                     @if ($mentorat['bilan'])
                         <p class="mt-3 whitespace-pre-line rounded-[12px] bg-cloud/60 px-4 py-3 text-[13px] text-ink"><span class="font-semibold text-brand">Bilan :</span> {{ $mentorat['bilan'] }}</p>
                     @endif
@@ -218,7 +218,7 @@
                             </div>
                         </div>
                     @else
-                        <button wire:click="$set('formFin', true)" data-test="terminer-mentorat" class="text-[12.5px] font-semibold text-[#9AA6B8] hover:text-brand hover:underline">Objectif atteint ? Terminer le mentorat</button>
+                        <button wire:click="$set('formFin', true)" data-test="terminer-mentorat" class="text-[12.5px] font-semibold text-[#5B677A] hover:text-brand hover:underline">Objectif atteint ? Terminer le mentorat</button>
                     @endif
                 </section>
             @endif

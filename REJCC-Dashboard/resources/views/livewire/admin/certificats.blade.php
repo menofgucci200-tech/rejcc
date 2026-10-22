@@ -30,7 +30,7 @@
                 <div class="rounded-[16px] border border-brand/10 bg-white px-4 py-3.5 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
                     <p class="text-[11.5px] font-semibold text-[#5B677A]">{{ $l }}</p>
                     <p class="mt-1 text-[24px] font-extrabold leading-none {{ $c }}">{{ $n }}</p>
-                    <p class="mt-1 text-[10.5px] text-[#9AA6B8]">{{ $s }}</p>
+                    <p class="mt-1 text-[10.5px] text-[#5B677A]">{{ $s }}</p>
                 </div>
             @endforeach
         </div>
@@ -58,7 +58,7 @@
                 <div class="grid gap-4 md:grid-cols-2">
                     @foreach ($signataires as $i => $s)
                         <div wire:key="sig-{{ $i }}" class="rounded-[14px] border border-brand/10 p-4" data-test="signataire">
-                            <p class="mb-3 text-[13px] font-bold text-brand">Signataire {{ $i + 1 }} <span class="font-normal text-[#9AA6B8]">· {{ $i === 0 ? 'à gauche' : 'à droite' }}</span></p>
+                            <p class="mb-3 text-[13px] font-bold text-brand">Signataire {{ $i + 1 }} <span class="font-normal text-[#5B677A]">· {{ $i === 0 ? 'à gauche' : 'à droite' }}</span></p>
                             <div class="grid gap-3">
                                 <div><label class="{{ $lab }}">Nom (facultatif)</label><input wire:model="signataires.{{ $i }}.nom" type="text" placeholder="Ex. : Jean Kouadio" class="{{ $input }}" /></div>
                                 <div><label class="{{ $lab }}">Fonction</label><input wire:model="signataires.{{ $i }}.fonction" type="text" class="{{ $input }}" /></div>
@@ -86,7 +86,7 @@
                     @endforeach
                 </div>
                 <div class="rounded-[14px] border border-brand/10 p-4">
-                    <p class="mb-3 text-[13px] font-bold text-brand">Cachet officiel <span class="font-normal text-[#9AA6B8]">· facultatif, apposé près du second signataire</span></p>
+                    <p class="mb-3 text-[13px] font-bold text-brand">Cachet officiel <span class="font-normal text-[#5B677A]">· facultatif, apposé près du second signataire</span></p>
                     <div class="flex items-center gap-3">
                         <div class="flex size-20 shrink-0 items-center justify-center rounded-[10px] bg-brand">
                             @if ($cachetUpload)
@@ -134,7 +134,7 @@
                             </span>
                             <span class="block truncate text-[12px] text-[#5B677A]">{{ $c['intitule'] }} · {{ $c['titre'] }}</span>
                         </span>
-                        <span class="text-right text-[11px] text-[#9AA6B8]">
+                        <span class="text-right text-[11px] text-[#5B677A]">
                             <span class="block font-semibold tracking-wide text-brand">{{ $c['reference'] }}</span>
                             {{ $date($c['delivre_le']) }} · {{ $c['verifications'] }} vérif.
                         </span>
@@ -160,7 +160,7 @@
             <aside data-test="fiche-certificat" class="panel-enter flex h-full w-full max-w-[560px] flex-col overflow-y-auto bg-white shadow-2xl">
                 <div class="flex items-start gap-3 border-b border-[#EDF0F5] px-5 py-4">
                     <div class="min-w-0 flex-1">
-                        <p class="text-[11px] font-bold uppercase tracking-[0.12em] text-[#9AA6B8]">{{ $c['type_label'] }}</p>
+                        <p class="text-[11px] font-bold uppercase tracking-[0.12em] text-[#5B677A]">{{ $c['type_label'] }}</p>
                         <p class="text-[16px] font-bold text-brand">{{ $c['nom'] }}</p>
                         <p class="text-[12px] text-[#5B677A]">{{ $c['email'] ?: 'sans email' }}</p>
                     </div>
@@ -223,14 +223,14 @@
                         @forelse ($detail['journal'] as $v)
                             <p class="flex justify-between border-t border-[#EDF0F5] py-1.5 text-[12px] first:border-t-0">
                                 <span class="text-brand">{{ ['qr' => 'QR code', 'code' => 'Code saisi', 'fichier' => 'Fichier déposé'][$v['methode']] ?? $v['methode'] }} · <span class="{{ in_array($v['resultat'], ['valide', 'intact'], true) ? 'text-[#1C8F4C]' : 'text-accent' }}">{{ ['valide' => 'valide', 'intact' => 'fichier intact', 'revoque' => 'révoqué', 'modifie' => 'fichier modifié', 'inconnu' => 'inconnu'][$v['resultat']] ?? $v['resultat'] }}</span></span>
-                                <span class="text-[#9AA6B8]">{{ \Illuminate\Support\Carbon::parse($v['le'])->locale('fr')->isoFormat('D MMM YYYY, HH:mm') }}</span>
+                                <span class="text-[#5B677A]">{{ \Illuminate\Support\Carbon::parse($v['le'])->locale('fr')->isoFormat('D MMM YYYY, HH:mm') }}</span>
                             </p>
                         @empty
-                            <p class="text-[12px] text-[#9AA6B8]">Ce certificat n'a pas encore été vérifié.</p>
+                            <p class="text-[12px] text-[#5B677A]">Ce certificat n'a pas encore été vérifié.</p>
                         @endforelse
                     </div>
                     @if (! empty($c['empreinte']))
-                        <p class="break-all text-[10.5px] text-[#9AA6B8]">Empreinte SHA-256 du PDF délivré : <span class="font-mono">{{ $c['empreinte'] }}</span>{{ $c['signe_electroniquement'] ? ' · signé électroniquement' : '' }}</p>
+                        <p class="break-all text-[10.5px] text-[#5B677A]">Empreinte SHA-256 du PDF délivré : <span class="font-mono">{{ $c['empreinte'] }}</span>{{ $c['signe_electroniquement'] ? ' · signé électroniquement' : '' }}</p>
                     @endif
                 </div>
             </aside>

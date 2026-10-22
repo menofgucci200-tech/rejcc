@@ -39,7 +39,7 @@
                         <a href="{{ route('espace-membre.groupes.membres', $p['groupe']['id']) }}" wire:navigate class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold hover:underline" style="color: {{ $couleur }}; background: {{ $couleur }}14"><x-ui.icon :name="$p['groupe']['icone']" class="size-3" /> {{ $p['groupe']['nom'] }}</a>
                     @endif
                     @if ($p['ville'] ?? null)
-                        <span class="inline-flex items-center gap-1 text-[11.5px] font-semibold text-[#9AA6B8]"><x-ui.icon name="map-pin" class="size-3" /> {{ $p['ville'] }}</span>
+                        <span class="inline-flex items-center gap-1 text-[11.5px] font-semibold text-[#5B677A]"><x-ui.icon name="map-pin" class="size-3" /> {{ $p['ville'] }}</span>
                     @endif
                 </div>
                 <h2 data-test="fiche-projet-titre" class="text-[20px] font-extrabold leading-snug text-brand">{{ $p['title'] }}</h2>
@@ -80,7 +80,7 @@
                     <div class="mt-5 grid gap-3 sm:grid-cols-2">
                         @foreach ($sections as $titre => $texte)
                             <div class="rounded-[12px] bg-cloud/60 p-3.5">
-                                <p class="mb-1 text-[11px] font-bold uppercase tracking-[0.08em] text-[#9AA6B8]">{{ $titre }}</p>
+                                <p class="mb-1 text-[11px] font-bold uppercase tracking-[0.08em] text-[#5B677A]">{{ $titre }}</p>
                                 <p class="whitespace-pre-line text-[13px] leading-relaxed text-ink">{{ $texte }}</p>
                             </div>
                         @endforeach
@@ -89,7 +89,7 @@
 
                 @if (! empty($p['besoins']))
                     <section class="mt-5">
-                        <p class="mb-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#9AA6B8]">Le projet recherche</p>
+                        <p class="mb-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#5B677A]">Le projet recherche</p>
                         <div class="flex flex-wrap gap-1.5">
                             @foreach ($p['besoins'] as $b)
                                 <span class="rounded-full bg-accent/[.08] px-3 py-1 text-[12px] font-bold text-accent">{{ $besoinsLabels[$b] ?? $b }}</span>
@@ -104,7 +104,7 @@
 
                 {{-- Équipe --}}
                 <section class="mt-5 rounded-[14px] border border-brand/10 p-4">
-                    <p class="mb-3 text-[11px] font-bold uppercase tracking-[0.1em] text-[#9AA6B8]">L'équipe · {{ $p['equipe_taille'] ?? 1 }} membre{{ ($p['equipe_taille'] ?? 1) > 1 ? 's' : '' }} sur la plateforme</p>
+                    <p class="mb-3 text-[11px] font-bold uppercase tracking-[0.1em] text-[#5B677A]">L'équipe · {{ $p['equipe_taille'] ?? 1 }} membre{{ ($p['equipe_taille'] ?? 1) > 1 ? 's' : '' }} sur la plateforme</p>
                     <div class="space-y-2.5">
                         @php $personnes = collect([['role' => 'Porteur du projet', 'membre' => $p['porteur'] ?? null, 'id' => null]])->merge($p['equipe'] ?? [])->filter(fn ($x) => $x['membre']); @endphp
                         @foreach ($personnes as $x)
@@ -117,7 +117,7 @@
                                     <p class="truncate text-[11.5px] text-[#5B677A]">{{ $x['role'] ?: "Membre de l'équipe" }}</p>
                                 </div>
                                 @if ($x['id'] && $relation === 'porteur')
-                                    <button type="button" wire:click="retirerLien({{ $x['id'] }}, 'Membre retiré de l\'équipe.')" wire:confirm="Retirer {{ $x['membre']['prenom'] }} de l'équipe ?" class="text-[11.5px] font-semibold text-[#9AA6B8] hover:text-accent">Retirer</button>
+                                    <button type="button" wire:click="retirerLien({{ $x['id'] }}, 'Membre retiré de l\'équipe.')" wire:confirm="Retirer {{ $x['membre']['prenom'] }} de l'équipe ?" class="text-[11.5px] font-semibold text-[#5B677A] hover:text-accent">Retirer</button>
                                 @elseif ($x['membre']['id'] !== (\App\Support\Api::user()->id ?? null))
                                     <a href="{{ route('espace-membre.messaging', ['to' => $x['membre']['id']]) }}" wire:navigate class="icon-btn rounded-full border border-brand/15 p-2 text-brand hover:bg-cloud" title="Écrire"><x-ui.icon name="message-circle" class="size-3.5" /></a>
                                 @endif
@@ -128,7 +128,7 @@
                     {{-- En attente (visible de l'équipe) --}}
                     @if ($equipe && ! empty($p['en_attente']))
                         <div class="mt-4 border-t border-[#EDF0F5] pt-3">
-                            <p class="mb-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#9AA6B8]">En attente</p>
+                            <p class="mb-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#5B677A]">En attente</p>
                             @foreach ($p['en_attente'] as $x)
                                 <div wire:key="att-{{ $x['id'] }}" data-test="en-attente" class="mb-2 rounded-[10px] bg-cloud/60 p-2.5">
                                     <div class="flex items-center gap-2.5">
@@ -137,9 +137,9 @@
                                             <span class="text-[#5B677A]">{{ $x['statut'] === 'demande' ? 'demande à rejoindre' : 'invité(e)' }}{{ $x['role'] ? ' · '.$x['role'] : '' }}</span></p>
                                         @if ($x['statut'] === 'demande')
                                             <button type="button" wire:click="accepterLien({{ $x['id'] }})" data-test="accepter-demande" class="btn-tap rounded-full bg-brand px-3 py-1 text-[11.5px] font-bold text-white">Accepter</button>
-                                            <button type="button" wire:click="retirerLien({{ $x['id'] }}, 'Demande refusée : le membre est prévenu.')" class="text-[11.5px] font-semibold text-[#9AA6B8] hover:text-accent">Refuser</button>
+                                            <button type="button" wire:click="retirerLien({{ $x['id'] }}, 'Demande refusée : le membre est prévenu.')" class="text-[11.5px] font-semibold text-[#5B677A] hover:text-accent">Refuser</button>
                                         @elseif ($relation === 'porteur')
-                                            <button type="button" wire:click="retirerLien({{ $x['id'] }}, 'Invitation annulée.')" class="text-[11.5px] font-semibold text-[#9AA6B8] hover:text-accent">Annuler</button>
+                                            <button type="button" wire:click="retirerLien({{ $x['id'] }}, 'Invitation annulée.')" class="text-[11.5px] font-semibold text-[#5B677A] hover:text-accent">Annuler</button>
                                         @endif
                                     </div>
                                     @if ($x['message'])<p class="mt-1.5 pl-[42px] text-[12px] italic text-[#5B677A]">« {{ $x['message'] }} »</p>@endif
@@ -161,13 +161,13 @@
                                     @foreach ($candidats as $c)
                                         <div wire:key="cand-{{ $c['id'] }}" class="flex items-center gap-2.5 px-3 py-2">
                                             <x-messagerie.avatar :personne="$c" taille="size-8" texte="text-[10px]" />
-                                            <p class="min-w-0 flex-1 truncate text-[12.5px]"><span class="font-bold text-brand">{{ $c['prenom'] }} {{ $c['nom'] }}</span> <span class="text-[#9AA6B8]">{{ collect([$c['titre'] ?? null, $c['ville'] ?? null])->filter()->join(' · ') }}</span></p>
+                                            <p class="min-w-0 flex-1 truncate text-[12.5px]"><span class="font-bold text-brand">{{ $c['prenom'] }} {{ $c['nom'] }}</span> <span class="text-[#5B677A]">{{ collect([$c['titre'] ?? null, $c['ville'] ?? null])->filter()->join(' · ') }}</span></p>
                                             <button type="button" wire:click="inviter({{ $c['id'] }})" data-test="inviter-candidat" class="btn-tap rounded-full bg-brand px-3 py-1 text-[11.5px] font-bold text-white hover:bg-brand/90">Inviter</button>
                                         </div>
                                     @endforeach
                                 </div>
                             @elseif (mb_strlen(trim($recherche)) >= 2)
-                                <p class="mt-2 text-[12px] text-[#9AA6B8]">Aucun membre trouvé (seuls les membres visibles dans l'annuaire peuvent être invités).</p>
+                                <p class="mt-2 text-[12px] text-[#5B677A]">Aucun membre trouvé (seuls les membres visibles dans l'annuaire peuvent être invités).</p>
                             @endif
                         </div>
                     @endif
@@ -176,12 +176,12 @@
                 {{-- Avancées --}}
                 @if ($p['statut'] === 'valide' && (! empty($p['avancees']) || ($p['peut_publier'] ?? false)))
                     <section class="mt-5">
-                        <p class="mb-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#9AA6B8]">Les avancées du projet</p>
+                        <p class="mb-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#5B677A]">Les avancées du projet</p>
                         @if ($p['peut_publier'] ?? false)
                             <div class="mb-3 rounded-[12px] border border-brand/10 p-3">
                                 <textarea wire:model="texteAvancee" rows="2" maxlength="2000" data-test="texte-avancee" placeholder="Partagez une nouvelle : une étape franchie, un besoin, un événement…" class="w-full resize-none text-[13px] outline-none"></textarea>
                                 <div class="flex items-center justify-between gap-2">
-                                    <span class="text-[11px] text-[#9AA6B8]">Envoyée à ceux qui suivent le projet ({{ $p['nb_suivis'] ?? 0 }}) et à l'équipe.</span>
+                                    <span class="text-[11px] text-[#5B677A]">Envoyée à ceux qui suivent le projet ({{ $p['nb_suivis'] ?? 0 }}) et à l'équipe.</span>
                                     <button type="button" wire:click="publierAvancee" wire:loading.attr="disabled" data-test="publier-avancee" class="btn-tap shrink-0 rounded-full bg-brand px-4 py-1.5 text-[12px] font-bold text-white hover:bg-brand/90 disabled:opacity-60">Publier</button>
                                 </div>
                             </div>
@@ -191,14 +191,14 @@
                                 <div wire:key="av-{{ $a['id'] }}" data-test="avancee" class="flex gap-2.5">
                                     @if ($a['auteur'])<x-messagerie.avatar :personne="$a['auteur']" taille="size-8" texte="text-[10px]" />@endif
                                     <div class="min-w-0 flex-1 rounded-[12px] bg-cloud/60 px-3 py-2">
-                                        <p class="text-[11.5px] text-[#9AA6B8]"><span class="font-bold text-brand">{{ $a['auteur']['prenom'] ?? '' }} {{ $a['auteur']['nom'] ?? '' }}</span> · @php $d = \Illuminate\Support\Carbon::parse($a['date'])->locale('fr'); @endphp{{ $d->diffInSeconds(now()) < 60 ? "à l'instant" : $d->diffForHumans() }}
+                                        <p class="text-[11.5px] text-[#5B677A]"><span class="font-bold text-brand">{{ $a['auteur']['prenom'] ?? '' }} {{ $a['auteur']['nom'] ?? '' }}</span> · @php $d = \Illuminate\Support\Carbon::parse($a['date'])->locale('fr'); @endphp{{ $d->diffInSeconds(now()) < 60 ? "à l'instant" : $d->diffForHumans() }}
                                             @if ($a['supprimable'])<button type="button" wire:click="supprimerAvancee({{ $a['id'] }})" wire:confirm="Supprimer cette nouvelle ?" class="ml-1 font-semibold hover:text-accent">· Supprimer</button>@endif
                                         </p>
                                         <p class="mt-0.5 whitespace-pre-line text-[13px] leading-relaxed text-ink">{!! \App\Support\Texte::liens($a['body']) !!}</p>
                                     </div>
                                 </div>
                             @empty
-                                <p class="text-[12px] text-[#9AA6B8]">Aucune nouvelle publiée pour le moment.</p>
+                                <p class="text-[12px] text-[#5B677A]">Aucune nouvelle publiée pour le moment.</p>
                             @endforelse
                         </div>
                     </section>
@@ -231,7 +231,7 @@
                         </button>
                     @endif
                     @if ($relation === 'membre')
-                        <button type="button" wire:click="quitterEquipe" wire:confirm="Quitter l'équipe de ce projet ?" class="ml-auto text-[12px] font-semibold text-[#9AA6B8] hover:text-accent">Quitter l'équipe</button>
+                        <button type="button" wire:click="quitterEquipe" wire:confirm="Quitter l'équipe de ce projet ?" class="ml-auto text-[12px] font-semibold text-[#5B677A] hover:text-accent">Quitter l'équipe</button>
                     @endif
                     @if ($p['mine'])
                         @if ($p['modifiable'] ?? false)
@@ -243,12 +243,12 @@
                             <a href="{{ url('/projets/'.$p['id']) }}" target="_blank" class="text-[12px] font-semibold text-azure hover:underline">Voir sur le site public</a>
                         @endif
                         @if ($p['statut'] === 'valide')
-                            <span class="text-[12px] text-[#9AA6B8]">{{ $p['vues'] ?? 0 }} vue{{ ($p['vues'] ?? 0) > 1 ? 's' : '' }} par les membres</span>
+                            <span class="text-[12px] text-[#5B677A]">{{ $p['vues'] ?? 0 }} vue{{ ($p['vues'] ?? 0) > 1 ? 's' : '' }} par les membres</span>
                         @endif
                         @if ($p['statut'] !== 'retire')
-                            <button type="button" wire:click="retirer({{ $p['id'] }})" wire:confirm="Retirer ce projet ? Il ne sera plus visible des membres." class="ml-auto text-[12px] font-semibold text-[#9AA6B8] hover:text-accent">Retirer le projet</button>
+                            <button type="button" wire:click="retirer({{ $p['id'] }})" wire:confirm="Retirer ce projet ? Il ne sera plus visible des membres." class="ml-auto text-[12px] font-semibold text-[#5B677A] hover:text-accent">Retirer le projet</button>
                         @else
-                            <button type="button" wire:click="supprimer({{ $p['id'] }})" wire:confirm="Supprimer définitivement ce projet ?" class="ml-auto text-[12px] font-semibold text-[#9AA6B8] hover:text-accent">Supprimer</button>
+                            <button type="button" wire:click="supprimer({{ $p['id'] }})" wire:confirm="Supprimer définitivement ce projet ?" class="ml-auto text-[12px] font-semibold text-[#5B677A] hover:text-accent">Supprimer</button>
                         @endif
                     @endif
                     @if ($p['statut'] === 'valide')

@@ -43,7 +43,7 @@
                 ] as $label => $value)
                     @if ($value)
                         <div>
-                            <p class="text-[10.5px] font-bold uppercase tracking-[0.08em] text-[#9AA6B8]">{{ $label }}</p>
+                            <p class="text-[10.5px] font-bold uppercase tracking-[0.08em] text-[#5B677A]">{{ $label }}</p>
                             <p class="mt-0.5 text-[13px] font-semibold text-ink">{{ $value }}</p>
                         </div>
                     @endif
@@ -56,11 +56,11 @@
 
             @if (!empty($member['listings']))
                 <div class="mt-4 border-t border-cloud-200 pt-4">
-                    <p class="mb-2 text-[11px] font-bold uppercase tracking-[0.08em] text-[#9AA6B8]">Services &amp; produits proposés</p>
+                    <p class="mb-2 text-[11px] font-bold uppercase tracking-[0.08em] text-[#5B677A]">Services &amp; produits proposés</p>
                     <div class="flex flex-col gap-2">
                         @foreach ($member['listings'] as $l)
                             <div class="rounded-[10px] bg-cloud/50 px-3 py-2">
-                                <p class="text-[12.5px] font-bold text-brand">{{ $l['title'] }} <span class="font-normal text-[#9AA6B8]">· {{ $l['category'] }}</span></p>
+                                <p class="text-[12.5px] font-bold text-brand">{{ $l['title'] }} <span class="font-normal text-[#5B677A]">· {{ $l['category'] }}</span></p>
                             </div>
                         @endforeach
                     </div>

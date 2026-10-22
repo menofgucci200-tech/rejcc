@@ -48,7 +48,7 @@
                     <p class="text-[14px] font-bold text-brand">{{ $retour[1] }}</p>
                     <p class="mt-0.5 text-[12.5px] leading-relaxed text-[#5B677A]">{{ $retour[2] }}</p>
                 </div>
-                <button wire:click="$set('retour', null)" class="text-[#9AA6B8] hover:text-brand" aria-label="Fermer"><x-ui.icon name="x" class="size-4" /></button>
+                <button wire:click="$set('retour', null)" class="text-[#5B677A] hover:text-brand" aria-label="Fermer"><x-ui.icon name="x" class="size-4" /></button>
             </div>
         @endif
 
@@ -133,7 +133,7 @@
                     </div>
                 @endif
 
-                <p class="mt-4 flex items-center gap-1.5 text-[11.5px] text-[#9AA6B8]"><x-ui.icon name="lock" class="size-3.5" /> Paiement sécurisé via CinetPay : Wave, Orange Money, MTN Money, Moov Money ou carte bancaire. Après l'échéance, l'accès est maintenu {{ $graceJours }} jours.</p>
+                <p class="mt-4 flex items-center gap-1.5 text-[11.5px] text-[#5B677A]"><x-ui.icon name="lock" class="size-3.5" /> Paiement sécurisé via CinetPay : Wave, Orange Money, MTN Money, Moov Money ou carte bancaire. Après l'échéance, l'accès est maintenu {{ $graceJours }} jours.</p>
             </div>
 
             @if ($enAttente)
@@ -163,7 +163,7 @@
                         </div>
                     @endforeach
                 </div>
-                <p class="mt-3 text-[11.5px] text-[#9AA6B8]">Les formations, parcours, événements et documents ouverts à tous restent accessibles sans abonnement.</p>
+                <p class="mt-3 text-[11.5px] text-[#5B677A]">Les formations, parcours, événements et documents ouverts à tous restent accessibles sans abonnement.</p>
             </div>
         @endif
 
@@ -185,12 +185,12 @@
                 @if ($offrir)
                     <div class="panel-enter mt-5">
                         <div class="relative">
-                            <x-ui.icon name="search" class="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-[#9AA6B8]" />
+                            <x-ui.icon name="search" class="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-[#5B677A]" />
                             <input wire:model.live.debounce.400ms="recherche" type="search" data-test="recherche-beneficiaire" autocomplete="off"
                                 placeholder="Nom du membre ou numéro de membre (REJCC-…)"
                                 class="w-full rounded-xl border border-brand/15 bg-white py-2.5 pl-10 pr-4 text-[13px] text-ink placeholder:text-[#9AA6B8]" />
                         </div>
-                        <p class="mt-2 text-[11.5px] text-[#9AA6B8]">Seuls les membres visibles dans l'annuaire apparaissent par leur nom. Pour un autre membre, saisissez son numéro de membre complet, tel qu'il figure sur sa carte.</p>
+                        <p class="mt-2 text-[11.5px] text-[#5B677A]">Seuls les membres visibles dans l'annuaire apparaissent par leur nom. Pour un autre membre, saisissez son numéro de membre complet, tel qu'il figure sur sa carte.</p>
 
                         @if (mb_strlen(trim($recherche)) >= 3)
                             <div class="mt-3 divide-y divide-cloud-200 rounded-xl border border-cloud-200" wire:loading.class="opacity-60" wire:target="recherche">
@@ -203,7 +203,7 @@
                                         @endif
                                         <div class="min-w-0 flex-1">
                                             <p class="truncate text-[13px] font-semibold text-ink">{{ $m['nom'] }}</p>
-                                            <p class="truncate text-[11.5px] text-[#9AA6B8]">{{ $m['ville'] ?: 'Membre du réseau' }}</p>
+                                            <p class="truncate text-[11.5px] text-[#5B677A]">{{ $m['ville'] ?: 'Membre du réseau' }}</p>
                                         </div>
                                         @if ($m['peut_recevoir'])
                                             <button wire:click="offrirA({{ $m['id'] }})" wire:loading.attr="disabled" wire:target="offrirA({{ $m['id'] }})"
@@ -242,7 +242,7 @@
                                         Abonnement annuel
                                     @endif
                                 </p>
-                                <p class="mt-0.5 text-[11.5px] text-[#9AA6B8]">
+                                <p class="mt-0.5 text-[11.5px] text-[#5B677A]">
                                     {{ $d($h['paye_at'] ?? $h['created_at'], 'j M Y') }}
                                     @if ($h['periode_debut'] && $h['periode_fin']) · période du {{ $d($h['periode_debut'], 'j M Y') }} au {{ $d($h['periode_fin'], 'j M Y') }} @endif
                                     @if ($h['moyen']) · {{ $h['moyen'] }} @endif

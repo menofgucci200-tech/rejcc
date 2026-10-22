@@ -25,7 +25,7 @@
                     $a = $m['auteur'] ?? ['prenom' => '?', 'nom' => '', 'photo' => null, 'role' => 'member', 'referent' => false];
                 @endphp
                 @if ($jour !== $jourPrecedent)
-                    <div wire:key="dj-{{ $jour }}" class="my-1 flex items-center gap-3 text-[11px] font-semibold text-[#9AA6B8]">
+                    <div wire:key="dj-{{ $jour }}" class="my-1 flex items-center gap-3 text-[11px] font-semibold text-[#5B677A]">
                         <span class="h-px flex-1 bg-cloud-200"></span>
                         {{ $date->isToday() ? "Aujourd'hui" : ($date->isYesterday() ? 'Hier' : ucfirst($date->isoFormat('dddd D MMMM'))) }}
                         <span class="h-px flex-1 bg-cloud-200"></span>
@@ -39,9 +39,9 @@
                             <span class="font-bold {{ $m['moi'] ? 'text-azure' : 'text-brand' }}">{{ $m['moi'] ? 'Vous' : trim($a['prenom'].' '.$a['nom']) }}</span>
                             @if ($a['referent'] ?? false)<span class="rounded-full bg-brand px-1.5 text-[9px] font-bold uppercase leading-4 text-white">Référent</span>@endif
                             @if (($a['role'] ?? '') === 'mentor')<span class="rounded-full bg-accent px-1.5 text-[9px] font-bold uppercase leading-4 text-white">Mentor</span>@endif
-                            <span class="text-[11px] text-[#9AA6B8]">{{ $date->format('H:i') }}</span>
+                            <span class="text-[11px] text-[#5B677A]">{{ $date->format('H:i') }}</span>
                             @if ($m['peut_supprimer'])
-                                <button type="button" wire:click="supprimerMessage({{ $m['id'] }})" wire:confirm="Supprimer ce message de la discussion ?" data-test="supprimer-message-groupe" class="text-[11px] font-semibold text-[#9AA6B8] opacity-0 transition-opacity hover:text-accent group-hover/msg:opacity-100 focus:opacity-100">Supprimer</button>
+                                <button type="button" wire:click="supprimerMessage({{ $m['id'] }})" wire:confirm="Supprimer ce message de la discussion ?" data-test="supprimer-message-groupe" class="text-[11px] font-semibold text-[#5B677A] opacity-0 transition-opacity hover:text-accent group-hover/msg:opacity-100 focus:opacity-100">Supprimer</button>
                             @endif
                         </p>
                         <p class="mt-0.5 whitespace-pre-line break-words text-[13.5px] leading-relaxed text-ink">{!! \App\Support\Texte::liens($m['body'], 'font-semibold text-azure underline underline-offset-2') !!}</p>
@@ -49,7 +49,7 @@
                 </div>
             @empty
                 <div class="m-auto max-w-[360px] text-center">
-                    <x-ui.icon name="message-circle" class="mx-auto mb-3 size-8 text-[#9AA6B8]" />
+                    <x-ui.icon name="message-circle" class="mx-auto mb-3 size-8 text-[#5B677A]" />
                     <p class="text-[13px] text-[#5B677A]">La discussion du groupe est ouverte. Présentez-vous, partagez une opportunité ou posez une question aux membres du groupe.</p>
                 </div>
             @endforelse
@@ -68,7 +68,7 @@
                 <button x-ref="envoyer" type="submit" aria-label="Envoyer" data-test="envoyer-discussion" wire:loading.attr="disabled" wire:target="ecrire"
                     class="btn-tap flex size-[42px] shrink-0 items-center justify-center rounded-[11px] bg-accent text-white hover:bg-accent-600 disabled:opacity-50"><x-ui.icon name="send" class="size-[15px]" /></button>
             </div>
-            <p class="mt-1.5 hidden px-1 text-[11px] text-[#9AA6B8] sm:block">Visible des membres du groupe · Entrée pour envoyer · Maj + Entrée pour aller à la ligne</p>
+            <p class="mt-1.5 hidden px-1 text-[11px] text-[#5B677A] sm:block">Visible des membres du groupe · Entrée pour envoyer · Maj + Entrée pour aller à la ligne</p>
         </form>
     </div>
 @endif

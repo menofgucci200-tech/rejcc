@@ -25,12 +25,12 @@
             <aside class="flex min-h-0 flex-col border-r border-cloud-200 {{ $activeId ? 'hidden lg:flex' : 'flex' }}">
                 <div class="flex shrink-0 items-center gap-2 border-b border-cloud-200 p-3">
                     <div class="relative min-w-0 flex-1">
-                        <x-ui.icon name="search" class="pointer-events-none absolute left-3 top-1/2 size-[14px] -translate-y-1/2 text-[#9AA6B8]" />
+                        <x-ui.icon name="search" class="pointer-events-none absolute left-3 top-1/2 size-[14px] -translate-y-1/2 text-[#5B677A]" />
                         <input wire:model.live.debounce.300ms="recherche" type="search" data-test="recherche-conversations" aria-label="Rechercher une conversation" placeholder="Rechercher…"
                             class="w-full rounded-[10px] border border-brand/10 bg-cloud py-2 pl-9 pr-3 text-[13px] text-ink outline-none focus:border-azure" />
                     </div>
                     <button type="button" wire:click="ouvrirNouveau" data-test="nouveau-message" title="{{ $this->restreint() ? 'Nouveau message — réservé aux abonnés' : 'Nouveau message' }}" aria-label="Nouveau message"
-                        class="btn-tap flex size-9 shrink-0 items-center justify-center rounded-[10px] {{ $this->restreint() ? 'border border-brand/15 bg-white text-[#9AA6B8]' : 'bg-accent text-white hover:bg-accent-600' }}"><x-ui.icon :name="$this->restreint() ? 'lock' : 'pencil'" class="size-4" /></button>
+                        class="btn-tap flex size-9 shrink-0 items-center justify-center rounded-[10px] {{ $this->restreint() ? 'border border-brand/15 bg-white text-[#5B677A]' : 'bg-accent text-white hover:bg-accent-600' }}"><x-ui.icon :name="$this->restreint() ? 'lock' : 'pencil'" class="size-4" /></button>
                 </div>
 
                 @if ($voirArchives)
@@ -43,7 +43,7 @@
                     <p class="px-6 py-10 text-center text-[13px] text-[#5B677A]">Aucune conversation archivée.</p>
                 @elseif (empty($conversations))
                     <div class="px-6 py-10 text-center">
-                        <x-ui.icon name="message-circle" class="mx-auto mb-3 size-8 text-[#9AA6B8]" />
+                        <x-ui.icon name="message-circle" class="mx-auto mb-3 size-8 text-[#5B677A]" />
                         @if (trim($recherche) !== '')
                             <p class="text-[13.5px] text-[#5B677A]">Aucune conversation avec « {{ trim($recherche) }} ».</p>
                         @else
@@ -75,11 +75,11 @@
                                                 @if ($c['role'] === 'mentor')<span class="shrink-0 rounded-full bg-accent px-1.5 text-[9px] font-bold uppercase leading-4 tracking-[0.05em] text-white">Mentor</span>@endif
                                                 @if ($c['bloque'] ?? false)<span class="shrink-0 rounded-full bg-[#5B677A]/15 px-1.5 text-[9px] font-bold uppercase leading-4 tracking-[0.05em] text-[#5B677A]">Bloqué</span>@endif
                                             </span>
-                                            <span data-test="conversation-heure" class="shrink-0 text-[11px] {{ $nonLu ? 'font-bold text-accent' : 'text-[#9AA6B8]' }}">{{ $quand }}</span>
+                                            <span data-test="conversation-heure" class="shrink-0 text-[11px] {{ $nonLu ? 'font-bold text-accent' : 'text-[#5B677A]' }}">{{ $quand }}</span>
                                         </span>
                                         <span class="mt-0.5 flex items-center justify-between gap-2">
                                             <span data-test="conversation-apercu" class="truncate text-xs {{ $nonLu ? 'font-semibold text-ink' : 'text-[#5B677A]' }}">
-                                                @if ($c['last_moi'])<span class="text-[#9AA6B8]">Vous{{ $c['last_vu'] ? ' (vu)' : '' }} :</span> @endif{{ \Illuminate\Support\Str::limit(str_replace("\n", ' ', $c['last']), 80) }}
+                                                @if ($c['last_moi'])<span class="text-[#5B677A]">Vous{{ $c['last_vu'] ? ' (vu)' : '' }} :</span> @endif{{ \Illuminate\Support\Str::limit(str_replace("\n", ' ', $c['last']), 80) }}
                                             </span>
                                             @if ($nonLu)
                                                 <span class="flex min-w-5 shrink-0 items-center justify-center rounded-full bg-accent px-1 text-[10.5px] font-bold text-white">{{ $c['unread'] }}</span>
@@ -106,7 +106,7 @@
                     </div>
                 @elseif (! $partner)
                     <div data-test="fil-introuvable" class="flex flex-1 flex-col items-center justify-center gap-3 p-10 text-center">
-                        <x-ui.icon name="user-x" class="size-8 text-[#9AA6B8]" />
+                        <x-ui.icon name="user-x" class="size-8 text-[#5B677A]" />
                         <p class="text-sm text-[#5B677A]">{{ $erreur ?? 'Cette conversation est indisponible.' }}</p>
                         @if ($this->restreint())
                             <a href="{{ route('espace-membre.abonnement') }}" wire:navigate class="btn-tap rounded-full bg-accent px-4 py-2 text-[12.5px] font-bold text-white hover:bg-accent-600">M'abonner pour lui écrire</a>
@@ -137,7 +137,7 @@
                                 @endif
                                 <div class="my-1 h-px bg-cloud-200"></div>
                                 @if ($signalee)
-                                    <p class="px-4 py-2 text-[12px] text-[#9AA6B8]">Conversation signalée, en cours d'examen.</p>
+                                    <p class="px-4 py-2 text-[12px] text-[#5B677A]">Conversation signalée, en cours d'examen.</p>
                                 @else
                                     <button type="button" wire:click="ouvrirSignalement" x-on:click="ouvert = false" data-test="signaler-conversation" class="flex w-full items-center gap-2.5 px-4 py-2 text-left font-semibold text-accent hover:bg-accent/5"><x-ui.icon name="alert-circle" class="size-4" /> Signaler à l'administration</button>
                                 @endif
@@ -163,7 +163,7 @@
                                 $jour = $date->toDateString();
                             @endphp
                             @if ($jour !== $jourPrecedent)
-                                <div wire:key="jour-{{ $jour }}" data-test="separateur-jour" class="my-1 flex items-center gap-3 text-[11px] font-semibold text-[#9AA6B8]">
+                                <div wire:key="jour-{{ $jour }}" data-test="separateur-jour" class="my-1 flex items-center gap-3 text-[11px] font-semibold text-[#5B677A]">
                                     <span class="h-px flex-1 bg-cloud-200"></span>
                                     {{ $date->isToday() ? "Aujourd'hui" : ($date->isYesterday() ? 'Hier' : ucfirst($date->isoFormat($date->year === now()->year ? 'dddd D MMMM' : 'D MMMM YYYY'))) }}
                                     <span class="h-px flex-1 bg-cloud-200"></span>
@@ -176,9 +176,9 @@
                                         class="mb-1 flex max-w-[78%] items-center gap-2.5 rounded-[12px] border border-brand/10 bg-white p-2 pr-3 text-left hover:border-brand/30">
                                         <x-ui.media-thumb :url="$m['annonce']['photo']" mode="thumb" :fallback-icon="$m['annonce']['type'] === 'produit' ? 'shopping-bag' : 'nav-briefcase'" />
                                         <span class="min-w-0">
-                                            <span class="block text-[10.5px] font-bold uppercase tracking-[0.08em] text-[#9AA6B8]">À propos de l'annonce</span>
+                                            <span class="block text-[10.5px] font-bold uppercase tracking-[0.08em] text-[#5B677A]">À propos de l'annonce</span>
                                             <span class="block truncate text-[12.5px] font-bold text-brand">{{ $m['annonce']['title'] }}</span>
-                                            @if ($m['annonce']['statut'] !== 'approuve')<span class="block text-[11px] text-[#9AA6B8]">Annonce retirée</span>@endif
+                                            @if ($m['annonce']['statut'] !== 'approuve')<span class="block text-[11px] text-[#5B677A]">Annonce retirée</span>@endif
                                         </span>
                                     </a>
                                 @endif
@@ -187,7 +187,7 @@
                                         class="mb-1 flex max-w-[78%] items-center gap-2.5 rounded-[12px] border border-brand/10 bg-white p-2 pr-3 text-left hover:border-brand/30">
                                         <span class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand/[.06] text-brand"><x-ui.icon name="nav-briefcase" class="size-4" /></span>
                                         <span class="min-w-0">
-                                            <span class="block text-[10.5px] font-bold uppercase tracking-[0.08em] text-[#9AA6B8]">À propos de l'offre</span>
+                                            <span class="block text-[10.5px] font-bold uppercase tracking-[0.08em] text-[#5B677A]">À propos de l'offre</span>
                                             <span class="block truncate text-[12.5px] font-bold text-brand">{{ $m['offre']['title'] }}{{ $m['offre']['entreprise'] ? ' · '.$m['offre']['entreprise'] : '' }}</span>
                                         </span>
                                     </a>
@@ -197,7 +197,7 @@
                                         class="mb-1 flex max-w-[78%] items-center gap-2.5 rounded-[12px] border border-brand/10 bg-white p-2 pr-3 text-left hover:border-brand/30">
                                         <x-ui.media-thumb :url="$m['projet']['image']" mode="thumb" fallback-icon="nav-projects" />
                                         <span class="min-w-0">
-                                            <span class="block text-[10.5px] font-bold uppercase tracking-[0.08em] text-[#9AA6B8]">À propos du projet</span>
+                                            <span class="block text-[10.5px] font-bold uppercase tracking-[0.08em] text-[#5B677A]">À propos du projet</span>
                                             <span class="block truncate text-[12.5px] font-bold text-brand">{{ $m['projet']['title'] }}</span>
                                         </span>
                                     </a>
@@ -206,7 +206,7 @@
                                     class="max-w-[78%] whitespace-pre-line break-words rounded-[14px] px-3.5 py-2.5 text-[13.5px] leading-relaxed {{ $mine ? 'text-white' : 'border border-cloud-200 bg-cloud text-ink' }}"
                                     style="{{ $mine ? 'background: linear-gradient(135deg, #4F6FBF, #031D59);' : '' }}"
                                 >{!! \App\Support\Texte::liens($m['body'], $mine ? 'underline underline-offset-2 text-white' : 'font-semibold text-azure underline underline-offset-2') !!}</div>
-                                <span class="mt-1 px-1 text-[11px] text-[#9AA6B8]">
+                                <span class="mt-1 px-1 text-[11px] text-[#5B677A]">
                                     {{ $date->format('H:i') }}
                                     @if ($mine && $m['id'] === $dernierMienId)
                                         @if ($vuJusqua >= $m['id'])
@@ -218,7 +218,7 @@
                                 </span>
                             </div>
                         @empty
-                            <p class="m-auto max-w-[300px] text-center text-[13px] text-[#9AA6B8]">Écrivez votre premier message à {{ $partner['prenom'] }}.</p>
+                            <p class="m-auto max-w-[300px] text-center text-[13px] text-[#5B677A]">Écrivez votre premier message à {{ $partner['prenom'] }}.</p>
                         @endforelse
                     </div>
 
@@ -234,7 +234,7 @@
                                         <span class="block text-[10.5px] font-bold uppercase tracking-[0.08em] text-azure">À propos de l'annonce</span>
                                         <span class="block truncate text-[12.5px] font-bold text-brand">{{ $annonceContexte['title'] }}</span>
                                     </span>
-                                    <button type="button" wire:click="retirerAnnonce" aria-label="Ne plus rattacher l'annonce" class="icon-btn rounded-lg p-1 text-[#9AA6B8] hover:bg-white hover:text-brand"><x-ui.icon name="x" class="size-3.5" /></button>
+                                    <button type="button" wire:click="retirerAnnonce" aria-label="Ne plus rattacher l'annonce" class="icon-btn rounded-lg p-1 text-[#5B677A] hover:bg-white hover:text-brand"><x-ui.icon name="x" class="size-3.5" /></button>
                                 </div>
                             @endif
                             @if ($offreContexte)
@@ -244,7 +244,7 @@
                                         <span class="block text-[10.5px] font-bold uppercase tracking-[0.08em] text-azure">À propos de l'offre</span>
                                         <span class="block truncate text-[12.5px] font-bold text-brand">{{ $offreContexte['title'] }}</span>
                                     </span>
-                                    <button type="button" wire:click="retirerOffre" aria-label="Ne plus rattacher l'offre" class="icon-btn rounded-lg p-1 text-[#9AA6B8] hover:bg-white hover:text-brand"><x-ui.icon name="x" class="size-3.5" /></button>
+                                    <button type="button" wire:click="retirerOffre" aria-label="Ne plus rattacher l'offre" class="icon-btn rounded-lg p-1 text-[#5B677A] hover:bg-white hover:text-brand"><x-ui.icon name="x" class="size-3.5" /></button>
                                 </div>
                             @endif
                             @if ($projetContexte)
@@ -254,7 +254,7 @@
                                         <span class="block text-[10.5px] font-bold uppercase tracking-[0.08em] text-azure">À propos du projet</span>
                                         <span class="block truncate text-[12.5px] font-bold text-brand">{{ $projetContexte['title'] }}</span>
                                     </span>
-                                    <button type="button" wire:click="retirerProjet" aria-label="Ne plus rattacher le projet" class="icon-btn rounded-lg p-1 text-[#9AA6B8] hover:bg-white hover:text-brand"><x-ui.icon name="x" class="size-3.5" /></button>
+                                    <button type="button" wire:click="retirerProjet" aria-label="Ne plus rattacher le projet" class="icon-btn rounded-lg p-1 text-[#5B677A] hover:bg-white hover:text-brand"><x-ui.icon name="x" class="size-3.5" /></button>
                                 </div>
                             @endif
                             @if ($erreur)
@@ -279,7 +279,7 @@
                                     <x-ui.icon name="loader-2" class="size-[15px] animate-spin" wire:loading wire:target="send" />
                                 </button>
                             </div>
-                            <p class="mt-1.5 flex justify-between px-1 text-[11px] text-[#9AA6B8]">
+                            <p class="mt-1.5 flex justify-between px-1 text-[11px] text-[#5B677A]">
                                 <span class="hidden sm:inline">Entrée pour envoyer · Maj + Entrée pour aller à la ligne</span>
                                 <span x-show="n > 1500" style="display: none" :class="n >= 2000 ? 'text-accent font-semibold' : ''" x-text="n + ' / 2000'"></span>
                             </p>
@@ -307,7 +307,7 @@
             <div data-test="fenetre-signalement" role="dialog" aria-modal="true" class="panel-enter w-full max-w-[460px] rounded-[18px] bg-white p-6 shadow-2xl">
                 <p class="text-[15px] font-bold text-brand">Signaler la conversation avec {{ $partner['prenom'] }} {{ $partner['nom'] }}</p>
                 <p class="mt-1.5 text-[12.5px] leading-relaxed text-[#5B677A]">L'administration pourra lire cette conversation pour l'examiner. Signalez les propos injurieux, le harcèlement, les arnaques ou la publicité abusive.</p>
-                <label for="motif-signalement" class="mb-1 mt-4 block text-xs font-semibold text-[#5B677A]">Que s'est-il passé ? <span class="font-normal text-[#9AA6B8]">(facultatif)</span></label>
+                <label for="motif-signalement" class="mb-1 mt-4 block text-xs font-semibold text-[#5B677A]">Que s'est-il passé ? <span class="font-normal text-[#5B677A]">(facultatif)</span></label>
                 <textarea id="motif-signalement" wire:model="motif" rows="3" maxlength="500" class="w-full rounded-[10px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure"></textarea>
                 <label class="mt-3 flex items-center gap-2 text-[12.5px] text-ink"><input type="checkbox" wire:model="bloquerAussi" class="size-4 rounded border-brand/30 text-brand"> Bloquer aussi {{ $partner['prenom'] }}</label>
                 <div class="mt-5 flex gap-2">
@@ -331,7 +331,7 @@
                         class="w-full rounded-[10px] border border-brand/15 px-3.5 py-2.5 text-sm outline-none focus:border-azure" />
                     <div class="mt-3 max-h-[50vh] overflow-y-auto">
                         @if (mb_strlen(trim($rechercheMembre)) < 2)
-                            <p class="py-6 text-center text-[12.5px] text-[#9AA6B8]">Tapez au moins 2 lettres pour trouver un membre.</p>
+                            <p class="py-6 text-center text-[12.5px] text-[#5B677A]">Tapez au moins 2 lettres pour trouver un membre.</p>
                         @else
                             @forelse ($this->membresTrouves as $mt)
                                 <button type="button" wire:click="ecrireA({{ $mt['id'] }})" wire:key="mt-{{ $mt['id'] }}" data-test="destinataire" class="flex w-full items-center gap-3 rounded-[12px] px-2.5 py-2 text-left hover:bg-cloud">
@@ -342,7 +342,7 @@
                                     </span>
                                 </button>
                             @empty
-                                <p class="py-6 text-center text-[12.5px] text-[#9AA6B8]">Aucun membre trouvé.</p>
+                                <p class="py-6 text-center text-[12.5px] text-[#5B677A]">Aucun membre trouvé.</p>
                             @endforelse
                         @endif
                     </div>

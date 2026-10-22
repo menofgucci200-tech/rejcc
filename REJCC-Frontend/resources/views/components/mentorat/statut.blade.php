@@ -5,7 +5,7 @@
         'en_attente' => 'bg-[#F5A623]/15 text-[#8A5A00]',
         'accepte' => 'bg-[#22A85A]/10 text-[#1C8F4C]',
         'refuse' => 'bg-cloud text-[#5B677A]',
-        'annule' => 'bg-cloud text-[#9AA6B8]',
+        'annule' => 'bg-cloud text-[#5B677A]',
         'termine' => 'bg-brand/10 text-brand',
     ];
 @endphp

@@ -56,7 +56,7 @@
                     @endif
                         <p class="text-[11.5px] font-semibold text-[#5B677A]">{{ $l }}</p>
                         <p class="mt-1 text-[24px] font-extrabold leading-none {{ $c }}">{{ $n }}</p>
-                        <p class="mt-1 text-[10.5px] text-[#9AA6B8]">{{ $sous }}</p>
+                        <p class="mt-1 text-[10.5px] text-[#5B677A]">{{ $sous }}</p>
                     @if ($cle) </button> @else </div> @endif
                 @endforeach
             </div>
@@ -82,7 +82,7 @@
                         <p class="text-[24px] font-extrabold leading-none text-brand" data-test="tarif-actuel">{{ $f($tarif) }}</p>
                         <button wire:click="modifierTarif({{ $tarif }})" data-test="modifier-tarif" class="text-[11.5px] font-bold text-azure hover:underline">Modifier</button>
                     </div>
-                    <p class="mt-1 text-[10.5px] text-[#9AA6B8]">{{ $f($stats['recettes_mois'] ?? 0) }} encaissés ce mois · {{ $stats['en_attente'] ?? 0 }} paiement(s) en attente</p>
+                    <p class="mt-1 text-[10.5px] text-[#5B677A]">{{ $f($stats['recettes_mois'] ?? 0) }} encaissés ce mois · {{ $stats['en_attente'] ?? 0 }} paiement(s) en attente</p>
                 @endif
             </div>
         </div>
@@ -91,7 +91,7 @@
             <button wire:click="setOnglet('membres')" class="btn-tap rounded-full px-4 py-1.5 text-xs font-bold {{ $onglet === 'membres' ? 'bg-brand text-white' : 'border border-brand/15 bg-white text-brand hover:bg-cloud' }}">Membres</button>
             <button wire:click="setOnglet('paiements')" data-test="onglet-paiements" class="btn-tap rounded-full px-4 py-1.5 text-xs font-bold {{ $onglet === 'paiements' ? 'bg-brand text-white' : 'border border-brand/15 bg-white text-brand hover:bg-cloud' }}">Paiements</button>
             <div class="relative ml-auto w-full sm:w-72">
-                <x-ui.icon name="search" class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#9AA6B8]" />
+                <x-ui.icon name="search" class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#5B677A]" />
                 <input wire:model.live.debounce.400ms="recherche" type="search" placeholder="{{ $onglet === 'membres' ? 'Nom, email, téléphone…' : 'Référence, reçu, membre…' }}" class="rj-search-input w-full rounded-full border border-brand/15 bg-white py-2 pl-9 pr-4 text-[12.5px]" />
             </div>
         </div>
@@ -107,7 +107,7 @@
                 <div class="overflow-x-auto">
                     <table class="w-full min-w-[760px] text-left text-[12.5px]">
                         <thead>
-                            <tr class="border-b border-cloud-200 bg-cloud/50 text-[10.5px] font-bold uppercase tracking-[0.05em] text-[#9AA6B8]">
+                            <tr class="border-b border-cloud-200 bg-cloud/50 text-[10.5px] font-bold uppercase tracking-[0.05em] text-[#5B677A]">
                                 <th class="px-4 py-2.5">Membre</th>
                                 <th class="px-4 py-2.5">Statut</th>
                                 <th class="px-4 py-2.5">Échéance</th>
@@ -121,19 +121,19 @@
                                 <tr wire:key="m-{{ $m['id'] }}" data-test="ligne-membre" data-statut="{{ $m['statut'] }}" class="border-b border-cloud-200 last:border-0">
                                     <td class="px-4 py-3">
                                         <p class="font-semibold text-ink">{{ $m['nom'] }}</p>
-                                        <p class="text-[11px] text-[#9AA6B8]">{{ $m['numero'] }} · {{ $m['email'] }}</p>
+                                        <p class="text-[11px] text-[#5B677A]">{{ $m['numero'] }} · {{ $m['email'] }}</p>
                                     </td>
                                     <td class="px-4 py-3">
                                         <span class="rounded-full px-2.5 py-0.5 text-[11px] font-bold" style="background: {{ $ebg }}; color: {{ $ec }}">{{ $el }}</span>
                                         @if (! empty($m['relance_le']) && isset($rappels[$m['relance_le']]))
-                                            <p class="mt-1 text-[10.5px] text-[#9AA6B8]">{{ $rappels[$m['relance_le']] }}</p>
+                                            <p class="mt-1 text-[10.5px] text-[#5B677A]">{{ $rappels[$m['relance_le']] }}</p>
                                         @endif
                                     </td>
                                     <td class="px-4 py-3 text-[#5B677A]">{{ $date($m['expire_le']) }}</td>
                                     <td class="px-4 py-3 text-[#5B677A]">
                                         @if ($m['dernier_paiement'])
                                             {{ $date($m['dernier_paiement']['le']) }}
-                                            <span class="text-[11px] text-[#9AA6B8]">{{ $m['dernier_paiement']['moyen'] ? '· '.$m['dernier_paiement']['moyen'] : '' }}{{ $m['dernier_paiement']['offert'] ? ' · offert' : '' }}</span>
+                                            <span class="text-[11px] text-[#5B677A]">{{ $m['dernier_paiement']['moyen'] ? '· '.$m['dernier_paiement']['moyen'] : '' }}{{ $m['dernier_paiement']['offert'] ? ' · offert' : '' }}</span>
                                         @else
                                             —
                                         @endif
@@ -162,7 +162,7 @@
                 <div class="overflow-x-auto">
                     <table class="w-full min-w-[820px] text-left text-[12.5px]">
                         <thead>
-                            <tr class="border-b border-cloud-200 bg-cloud/50 text-[10.5px] font-bold uppercase tracking-[0.05em] text-[#9AA6B8]">
+                            <tr class="border-b border-cloud-200 bg-cloud/50 text-[10.5px] font-bold uppercase tracking-[0.05em] text-[#5B677A]">
                                 <th class="px-4 py-2.5">Date</th>
                                 <th class="px-4 py-2.5">Payé par</th>
                                 <th class="px-4 py-2.5">Moyen</th>
@@ -175,7 +175,7 @@
                             @forelse ($paiements as $p)
                                 @php [$pl, $pc, $pbg] = $statutsPaiement[$p['statut']] ?? $statutsPaiement['pending']; @endphp
                                 <tr wire:key="p-{{ $p['reference'] }}" data-test="ligne-paiement" class="border-b border-cloud-200 last:border-0">
-                                    <td class="px-4 py-3 text-[#5B677A]">{{ $date($p['paye_at'] ?? $p['created_at']) }}<p class="text-[10.5px] text-[#9AA6B8]">{{ $p['reference'] }}</p></td>
+                                    <td class="px-4 py-3 text-[#5B677A]">{{ $date($p['paye_at'] ?? $p['created_at']) }}<p class="text-[10.5px] text-[#5B677A]">{{ $p['reference'] }}</p></td>
                                     <td class="px-4 py-3">
                                         <p class="font-semibold text-ink">{{ $p['payeur'] }}</p>
                                         @if ($p['beneficiaire'])
@@ -189,7 +189,7 @@
                                         @if ($p['recu'])
                                             <a href="{{ route('admin.abonnements.recu', $p['reference']) }}" target="_blank" data-test="recu-admin" class="inline-flex items-center gap-1 text-[11.5px] font-bold text-azure hover:underline"><x-ui.icon name="receipt" class="size-3.5" /> {{ $p['recu'] }}</a>
                                         @else
-                                            <span class="text-[#9AA6B8]">—</span>
+                                            <span class="text-[#5B677A]">—</span>
                                         @endif
                                     </td>
                                 </tr>

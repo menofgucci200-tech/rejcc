@@ -5,7 +5,7 @@
         <div class="mb-5">
             <h2 class="mb-1 text-[17px] font-bold text-brand">Pages légales</h2>
             <div class="h-[3px] w-9 rounded bg-accent"></div>
-            <p class="mt-2 max-w-3xl text-xs text-[#9AA6B8]">Ces pages sont liées dans les pieds de page du site, de l'espace membre et de l'administration. Tant qu'une page n'est pas publiée, le site affiche « Page en cours de rédaction ». Chaque publication crée une nouvelle version datée.</p>
+            <p class="mt-2 max-w-3xl text-xs text-[#5B677A]">Ces pages sont liées dans les pieds de page du site, de l'espace membre et de l'administration. Tant qu'une page n'est pas publiée, le site affiche « Page en cours de rédaction ». Chaque publication crée une nouvelle version datée.</p>
         </div>
 
         <div class="grid items-start gap-5 lg:grid-cols-[260px_1fr]">
@@ -37,7 +37,7 @@
                             <input id="legal-titre" wire:model="titre" type="text" maxlength="150" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
                         </div>
                         <div>
-                            <label for="legal-resume" class="mb-1 block text-xs font-semibold text-[#5B677A]">Résumé <span class="font-normal text-[#9AA6B8]">(sous le titre et pour les moteurs de recherche)</span></label>
+                            <label for="legal-resume" class="mb-1 block text-xs font-semibold text-[#5B677A]">Résumé <span class="font-normal text-[#5B677A]">(sous le titre et pour les moteurs de recherche)</span></label>
                             <input id="legal-resume" wire:model="resume" type="text" maxlength="300" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
                         </div>
                         <div>
@@ -49,10 +49,10 @@
                                 </div>
                             </div>
                             @if ($apercu)
-                                <div class="lecon min-h-[320px] rounded-[9px] border border-brand/15 px-5 py-4">{!! $rendu['html'] ?? '<p class="text-[#9AA6B8]">Aucun contenu.</p>' !!}</div>
+                                <div class="lecon min-h-[320px] rounded-[9px] border border-brand/15 px-5 py-4">{!! $rendu['html'] ?? '<p class="text-[#5B677A]">Aucun contenu.</p>' !!}</div>
                             @else
                                 <textarea id="legal-contenu" wire:model="contenu" rows="18" placeholder="## Article 1 — Objet&#10;Texte de l'article…&#10;&#10;## Article 2 — …" class="w-full rounded-[9px] border border-brand/15 px-3 py-2.5 font-mono text-[13px] leading-relaxed outline-none focus:border-azure"></textarea>
-                                <p class="mt-1 text-[11px] text-[#9AA6B8]">Mise en forme : <code>## Titre de section</code> (crée le sommaire), <code>**gras**</code>, <code>- liste</code>, <code>[lien](https://…)</code>.</p>
+                                <p class="mt-1 text-[11px] text-[#5B677A]">Mise en forme : <code>## Titre de section</code> (crée le sommaire), <code>**gras**</code>, <code>- liste</code>, <code>[lien](https://…)</code>.</p>
                             @endif
                         </div>
                     </div>

@@ -66,7 +66,7 @@
                     <label class="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-[12px] border border-dashed border-brand/25 bg-cloud/30 px-4 py-5 text-center hover:bg-cloud/60">
                         <x-ui.icon name="download" class="size-5 rotate-180 text-azure" />
                         <span class="text-[13px] font-bold text-brand">{{ $fichierActuel ? 'Choisir un nouveau fichier' : 'Choisir un fichier ou prendre une photo' }}</span>
-                        <span class="text-[11px] text-[#9AA6B8]">PDF, photo (JPG, PNG, WEBP) ou Word — 10 Mo max</span>
+                        <span class="text-[11px] text-[#5B677A]">PDF, photo (JPG, PNG, WEBP) ou Word — 10 Mo max</span>
                         <input type="file" wire:model="fichier" data-test="fichier-perso" accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,image/*" class="hidden" />
                     </label>
                 @endif
@@ -81,7 +81,7 @@
             <div>
                 <label class="{{ $lab }}">Expire le (facultatif)</label>
                 <input wire:model="expireLe" type="date" data-test="expire-perso" class="{{ $input }}" />
-                <span class="mt-1 block text-[11px] text-[#9AA6B8]">Vous serez prévenu 30 jours avant.</span>
+                <span class="mt-1 block text-[11px] text-[#5B677A]">Vous serez prévenu 30 jours avant.</span>
                 @error('expireLe') <span class="mt-1 block text-xs font-semibold text-accent">{{ $message }}</span> @enderror
             </div>
             <label class="flex items-start gap-2.5 rounded-[9px] border border-azure/20 bg-azure/[.05] px-3 py-2.5 text-sm text-ink/80 sm:col-span-2">
@@ -96,7 +96,7 @@
     {{-- ══════════ Liste ══════════ --}}
     @if ($docs->isEmpty() && ! $showForm)
         <div class="rounded-[16px] border border-dashed border-brand/20 bg-white px-6 py-10 text-center">
-            <x-ui.icon name="folder-open" class="mx-auto mb-3 size-9 text-[#9AA6B8]" />
+            <x-ui.icon name="folder-open" class="mx-auto mb-3 size-9 text-[#5B677A]" />
             <p class="text-sm font-bold text-brand">Rangez vos papiers importants au même endroit</p>
             <p class="mx-auto mt-1 max-w-md text-xs text-[#5B677A]">Pièce d'identité, passeport, extrait de naissance, diplômes… toujours à portée de main, même depuis votre téléphone.</p>
         </div>
@@ -109,7 +109,7 @@
                         <div class="min-w-0 flex-1">
                             <p class="text-[13.5px] font-semibold text-brand">{{ $d['libelle'] }}</p>
                             @if ($d['titre'] && $d['type'] !== 'autre')<p class="text-[11.5px] text-[#5B677A]">{{ $d['type_label'] }}</p>@endif
-                            <p class="mt-1 truncate text-[11px] text-[#9AA6B8]">{{ collect([$d['fichier_nom'], $d['taille']])->filter()->join(' · ') }}</p>
+                            <p class="mt-1 truncate text-[11px] text-[#5B677A]">{{ collect([$d['fichier_nom'], $d['taille']])->filter()->join(' · ') }}</p>
                             <div class="mt-2 flex flex-wrap gap-1.5">
                                 @if ($d['etat'])
                                     @php [$el, $ec] = $etats[$d['etat']]; @endphp
@@ -125,12 +125,12 @@
                         <button wire:click="voir({{ $d['id'] }})" class="text-brand hover:text-azure">Voir</button>
                         <a href="{{ route('espace-membre.mes-documents.fichier', ['id' => $d['id'], 'telecharger' => 1]) }}" class="text-brand hover:text-azure">Télécharger</a>
                         <button wire:click="modifier({{ $d['id'] }})" class="text-brand hover:text-azure">Modifier</button>
-                        <button wire:click="supprimer({{ $d['id'] }})" wire:confirm="Supprimer définitivement « {{ $d['libelle'] }} » ?" data-test="supprimer-perso" class="ml-auto text-[#9AA6B8] hover:text-accent">Supprimer</button>
+                        <button wire:click="supprimer({{ $d['id'] }})" wire:confirm="Supprimer définitivement « {{ $d['libelle'] }} » ?" data-test="supprimer-perso" class="ml-auto text-[#5B677A] hover:text-accent">Supprimer</button>
                     </div>
                 </div>
             @endforeach
         </div>
-        <p class="mt-3 text-[11px] text-[#9AA6B8]">{{ $docs->count() }} / {{ $max }} documents</p>
+        <p class="mt-3 text-[11px] text-[#5B677A]">{{ $docs->count() }} / {{ $max }} documents</p>
     @endif
 
     @if ($manquants->isNotEmpty())

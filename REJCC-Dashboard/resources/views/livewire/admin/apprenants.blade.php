@@ -2,10 +2,10 @@
     <x-admin-light.topbar title="Apprenants" />
 
     <div class="mx-auto max-w-[1180px] px-4 py-8 sm:px-8">
-        <section class="mb-6 flex flex-wrap items-center gap-4 rounded-[22px] border border-[#E8E1F7] bg-gradient-to-br from-[#F7F4FD] via-white to-[#FFF8F1] p-5">
+        <section class="mb-6 flex flex-wrap items-center gap-4 rounded-[22px] border border-[#E7E1D6] bg-gradient-to-br from-[#FAF6EF] via-white to-[#FFF8F1] p-5">
             <x-ui.illustration name="livre" size="size-12" />
             <div class="min-w-[220px] flex-1">
-                <p class="text-[11px] font-bold uppercase tracking-[0.12em] text-[#7A6BB8]">Suivi des apprenants</p>
+                <p class="text-[11px] font-bold uppercase tracking-[0.12em] text-azure">Suivi des apprenants</p>
                 <h1 class="text-[20px] font-bold text-brand">{{ $formation['title'] }}</h1>
             </div>
             <a href="{{ route('admin.formations') }}" wire:navigate class="text-[12.5px] font-semibold text-[#5B677A] hover:text-brand">← Formations</a>
@@ -16,7 +16,7 @@
         @endif
 
         @php
-            $statuts = ['tous' => ['Tous', 'bg-cloud text-brand'], 'en_cours' => ['En cours', 'bg-[#EEF6FD] text-[#2D5C8F]'], 'inactif' => ['Inactifs (14 j)', 'bg-[#FDF2E3] text-[#8A5A12]'], 'bloque' => ["Bloqués à l'examen", 'bg-[#FDEEEE] text-[#A23B3B]'], 'termine' => ['Terminé', 'bg-[#EFFAF4] text-[#1C6B47]']];
+            $statuts = ['tous' => ['Tous', 'bg-cloud text-brand'], 'en_cours' => ['En cours', 'bg-[#EEF6FD] text-[#2D5C8F]'], 'inactif' => ['Inactifs (14 j)', 'bg-[#FDF2E3] text-[#8A5A12]'], 'bloque' => ["Bloqués à l'examen", 'bg-[#FDEEEE] text-[#8F0100]'], 'termine' => ['Terminé', 'bg-[#EFFAF4] text-[#1C6B47]']];
         @endphp
         <div class="mb-4 flex flex-wrap gap-2">
             @foreach ($statuts as $cle => [$libelle, $classes])
@@ -25,16 +25,16 @@
         </div>
 
         @if ($choisis)
-            <div class="panel-enter mb-4 rounded-[16px] border border-[#E4E1EC] bg-white p-4" data-test="relance">
-                <p class="mb-2 text-[13px] font-bold text-[#3B3F5C]">Relancer {{ count($choisis) }} apprenant(s)</p>
-                <textarea wire:model="messageRelance" rows="2" maxlength="500" placeholder="Ex. On vous attend pour le module 2 ! Une session live a lieu jeudi à 18 h pour vos questions." class="w-full rounded-[10px] border border-[#E4E1EC] px-3 py-2 text-[13px] outline-none focus:border-azure"></textarea>
+            <div class="panel-enter mb-4 rounded-[16px] border border-[#E7E1D6] bg-white p-4" data-test="relance">
+                <p class="mb-2 text-[13px] font-bold text-ink">Relancer {{ count($choisis) }} apprenant(s)</p>
+                <textarea wire:model="messageRelance" rows="2" maxlength="500" placeholder="Ex. On vous attend pour le module 2 ! Une session live a lieu jeudi à 18 h pour vos questions." class="w-full rounded-[10px] border border-[#E7E1D6] px-3 py-2 text-[13px] outline-none focus:border-azure"></textarea>
                 <button type="button" wire:click="relancer" class="btn-tap mt-2 rounded-full bg-accent px-4 py-2 text-[12.5px] font-bold text-white hover:bg-accent-600">Envoyer la notification</button>
             </div>
         @endif
 
-        <div class="overflow-x-auto rounded-[18px] border border-[#EDE9F3] bg-white">
+        <div class="overflow-x-auto rounded-[18px] border border-[#EFEAE1] bg-white">
             <table class="w-full min-w-[760px] text-[13px]">
-                <thead class="border-b border-[#EDE9F3] text-left text-[11px] uppercase tracking-wide text-[#5B677A]">
+                <thead class="border-b border-[#EFEAE1] text-left text-[11px] uppercase tracking-wide text-[#5B677A]">
                     <tr>
                         <th class="px-4 py-3"><input type="checkbox" wire:click="choisirTous(@js($apprenants->pluck('user_id')->all()))" @checked($apprenants->isNotEmpty() && count($choisis) === $apprenants->count()) class="size-4 rounded" aria-label="Tout choisir"></th>
                         <th class="px-2 py-3">Apprenant</th>
@@ -47,7 +47,7 @@
                 </thead>
                 <tbody>
                     @forelse ($apprenants as $a)
-                        <tr class="border-t border-[#F1EEF6]" wire:key="app-{{ $a['user_id'] }}">
+                        <tr class="border-t border-[#EFEAE1]" wire:key="app-{{ $a['user_id'] }}">
                             <td class="px-4 py-2.5"><input type="checkbox" wire:model.live="choisis" value="{{ $a['user_id'] }}" class="size-4 rounded"></td>
                             <td class="px-2 py-2.5"><span class="font-semibold text-brand">{{ $a['nom'] }}</span><span class="block text-[11.5px] text-[#5B677A]">{{ $a['email'] }}</span></td>
                             <td class="px-2 py-2.5">

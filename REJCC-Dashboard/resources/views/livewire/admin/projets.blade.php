@@ -5,7 +5,7 @@
         <div class="mb-4">
             <h2 class="mb-1 text-[17px] font-bold text-brand">Projets du réseau</h2>
             <div class="h-[3px] w-9 rounded bg-accent"></div>
-            <p class="mt-2 max-w-2xl text-xs text-[#9AA6B8]">Examinez les projets proposés par les membres : validez-les pour les rendre visibles du réseau, demandez des précisions ou refusez-les avec un motif. Le porteur est notifié à chaque décision.</p>
+            <p class="mt-2 max-w-2xl text-xs text-[#5B677A]">Examinez les projets proposés par les membres : validez-les pour les rendre visibles du réseau, demandez des précisions ou refusez-les avec un motif. Le porteur est notifié à chaque décision.</p>
         </div>
 
         @if ($erreur && ! $decision && ! $corrigerId)
@@ -19,7 +19,7 @@
             <div class="flex flex-wrap gap-1.5">
                 @foreach (\App\Livewire\Admin\Projets::FILTRES as $cle => $libelle)
                     <button wire:click="setFiltre('{{ $cle }}')" class="btn-tap rounded-full px-3.5 py-1.5 text-xs font-bold {{ $filtre === $cle ? 'bg-brand text-white' : 'border border-brand/15 bg-white text-brand hover:bg-cloud' }}">
-                        {{ $libelle }} <span class="{{ $filtre === $cle ? 'text-white/70' : 'text-[#9AA6B8]' }}">{{ $compteurs[$cle] ?? 0 }}</span>
+                        {{ $libelle }} <span class="{{ $filtre === $cle ? 'text-white/70' : 'text-[#5B677A]' }}">{{ $compteurs[$cle] ?? 0 }}</span>
                     </button>
                 @endforeach
             </div>
@@ -45,12 +45,12 @@
                                 <span class="rounded-full px-2 py-0.5 text-[10px] font-bold" style="background: {{ $sc }}1A; color: {{ $sc }}">{{ $p['statut_label'] }}</span>
                                 @if ($p['a_la_une']) <span class="rounded-full bg-[#F5A623]/15 px-2 py-0.5 text-[10px] font-bold text-[#B27007]">★ À la une</span> @endif
                                 @if ($p['public_ok']) <span class="rounded-full bg-azure/10 px-2 py-0.5 text-[10px] font-bold text-azure">Site public accepté</span> @endif
-                                <span class="text-[11px] font-semibold text-[#9AA6B8]">{{ $p['stade_label'] }}{{ $p['groupe'] ? ' · '.$p['groupe']['nom'] : '' }}{{ $p['ville'] ? ' · '.$p['ville'] : '' }}</span>
+                                <span class="text-[11px] font-semibold text-[#5B677A]">{{ $p['stade_label'] }}{{ $p['groupe'] ? ' · '.$p['groupe']['nom'] : '' }}{{ $p['ville'] ? ' · '.$p['ville'] : '' }}</span>
                             </div>
                             <p class="text-[14px] font-bold text-brand">{{ $p['title'] }}</p>
                             <p class="text-[11.5px] text-[#5B677A]">Par {{ $p['porteur'] ? $p['porteur']['prenom'].' '.$p['porteur']['nom'] : '—' }} · soumis {{ $p['soumis_at'] ? \Illuminate\Support\Carbon::parse($p['soumis_at'])->locale('fr')->diffForHumans() : '—' }}</p>
                         </div>
-                        <x-ui.icon :name="$ouv ? 'chevron-down' : 'chevron-right'" class="size-4 shrink-0 text-[#9AA6B8]" />
+                        <x-ui.icon :name="$ouv ? 'chevron-down' : 'chevron-right'" class="size-4 shrink-0 text-[#5B677A]" />
                     </button>
 
                     @if ($ouv)
@@ -61,7 +61,7 @@
                                     <p class="whitespace-pre-line leading-relaxed">{{ $p['description'] }}</p>
                                     @foreach (['probleme' => 'Le problème', 'solution' => 'La solution', 'cible' => 'Pour qui ?', 'impact' => 'Impact attendu'] as $k => $t)
                                         @if ($p[$k] ?? null)
-                                            <div><p class="text-[11px] font-bold uppercase tracking-[0.08em] text-[#9AA6B8]">{{ $t }}</p><p class="whitespace-pre-line">{{ $p[$k] }}</p></div>
+                                            <div><p class="text-[11px] font-bold uppercase tracking-[0.08em] text-[#5B677A]">{{ $t }}</p><p class="whitespace-pre-line">{{ $p[$k] }}</p></div>
                                         @endif
                                     @endforeach
                                     @if (! empty($p['besoins']))
@@ -75,7 +75,7 @@
                                     @endif
                                 </div>
                                 <aside class="h-fit rounded-[12px] border border-brand/10 bg-white p-4 text-[12.5px]">
-                                    <p class="mb-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#9AA6B8]">Porteur</p>
+                                    <p class="mb-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#5B677A]">Porteur</p>
                                     @if ($p['porteur'])
                                         <div class="flex items-center gap-2.5">
                                             <x-messagerie.avatar :personne="$p['porteur']" taille="size-9" texte="text-[11px]" />
@@ -85,15 +85,15 @@
                                         <p class="text-[#5B677A]">{{ $p['porteur_telephone'] }}</p>
                                         <a href="{{ route('admin.members', ['q' => $p['porteur_email']]) }}" class="mt-2 inline-block text-[12px] font-semibold text-azure hover:underline">Voir le compte</a>
                                     @else
-                                        <p class="text-[#9AA6B8]">Compte supprimé</p>
+                                        <p class="text-[#5B677A]">Compte supprimé</p>
                                     @endif
                                     @if (! empty($p['equipe']))
-                                        <p class="mb-1.5 mt-3 text-[11px] font-bold uppercase tracking-[0.1em] text-[#9AA6B8]">Équipe sur la plateforme</p>
+                                        <p class="mb-1.5 mt-3 text-[11px] font-bold uppercase tracking-[0.1em] text-[#5B677A]">Équipe sur la plateforme</p>
                                         @foreach ($p['equipe'] as $x)
                                             <p class="text-[12px] text-[#5B677A]"><span class="font-semibold text-brand">{{ $x['membre']['prenom'] }} {{ $x['membre']['nom'] }}</span>{{ $x['role'] ? ' · '.$x['role'] : '' }}</p>
                                         @endforeach
                                     @endif
-                                    <p class="mt-3 text-[11.5px] text-[#9AA6B8]">{{ $p['equipe_taille'] }} sur la plateforme · {{ $p['members_count'] }} déclarée{{ $p['members_count'] > 1 ? 's' : '' }} par le porteur · {{ $p['vues'] }} vue{{ $p['vues'] > 1 ? 's' : '' }} · {{ $p['nb_suivis'] ?? 0 }} suivi{{ ($p['nb_suivis'] ?? 0) > 1 ? 's' : '' }}</p>
+                                    <p class="mt-3 text-[11.5px] text-[#5B677A]">{{ $p['equipe_taille'] }} sur la plateforme · {{ $p['members_count'] }} déclarée{{ $p['members_count'] > 1 ? 's' : '' }} par le porteur · {{ $p['vues'] }} vue{{ $p['vues'] > 1 ? 's' : '' }} · {{ $p['nb_suivis'] ?? 0 }} suivi{{ ($p['nb_suivis'] ?? 0) > 1 ? 's' : '' }}</p>
                                 </aside>
                             </div>
 
@@ -163,7 +163,7 @@
                                         <button wire:click="basculerUne({{ $p['id'] }})" data-test="une-projet" class="btn-tap rounded-full border border-[#F5A623]/50 bg-white px-4 py-2 text-xs font-bold text-[#B27007] hover:bg-[#F5A623]/10">{{ $p['a_la_une'] ? 'Retirer de la une' : '★ Mettre à la une' }}</button>
                                     @endif
                                     <button wire:click="ouvrirCorrection({{ $p['id'] }})" class="btn-tap rounded-full border border-brand/15 bg-white px-4 py-2 text-xs font-bold text-brand hover:bg-cloud">Corriger la fiche</button>
-                                    <button wire:click="delete({{ $p['id'] }})" wire:confirm="Supprimer définitivement « {{ $p['title'] }} » ? Le porteur ne sera pas prévenu." class="ml-auto icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-accent/10 hover:text-accent" title="Supprimer"><x-ui.icon name="trash-2" class="size-3.5" /></button>
+                                    <button wire:click="delete({{ $p['id'] }})" wire:confirm="Supprimer définitivement « {{ $p['title'] }} » ? Le porteur ne sera pas prévenu." class="ml-auto icon-btn rounded-lg p-1.5 text-[#5B677A] hover:bg-accent/10 hover:text-accent" title="Supprimer"><x-ui.icon name="trash-2" class="size-3.5" /></button>
                                 </div>
                             @endif
                         </div>
@@ -172,7 +172,7 @@
             @empty
                 <div class="rounded-[16px] border border-dashed border-brand/20 bg-white py-12 text-center">
                     <p class="text-sm font-bold text-brand">{{ $filtre === 'evaluation' ? 'Aucun projet à évaluer' : 'Aucun projet dans cette liste' }}</p>
-                    <p class="mt-1 text-xs text-[#9AA6B8]">Les projets proposés par les membres apparaissent ici.</p>
+                    <p class="mt-1 text-xs text-[#5B677A]">Les projets proposés par les membres apparaissent ici.</p>
                 </div>
             @endforelse
         </div>

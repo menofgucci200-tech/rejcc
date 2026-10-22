@@ -23,7 +23,7 @@
 
         @if ($certificats->isEmpty())
             <div class="rounded-[18px] border border-dashed border-brand/20 bg-white px-6 py-12 text-center">
-                <x-ui.icon name="award" class="mx-auto mb-3 size-10 text-[#9AA6B8]" />
+                <x-ui.icon name="award" class="mx-auto mb-3 size-10 text-[#5B677A]" />
                 <p class="text-sm font-bold text-brand">Vous n'avez pas encore de certificat</p>
                 <p class="mx-auto mt-1 max-w-md text-xs leading-relaxed text-[#5B677A]">Ils sont délivrés automatiquement quand vous réussissez l'examen d'une formation certifiante, terminez un parcours, ou participez à un événement qui délivre une attestation.</p>
                 <a href="{{ route('espace-membre.catalogue') }}" wire:navigate class="btn-tap mt-4 inline-flex rounded-full bg-brand px-5 py-2.5 text-xs font-bold text-white">Voir les formations certifiantes</a>
@@ -44,7 +44,7 @@
                                     <span class="rounded-full bg-accent/10 px-2 py-0.5 text-[10.5px] font-bold text-accent">Révoqué</span>
                                 @endif
                                 @if ($c['visible_bio'])<span class="rounded-full bg-azure/10 px-2 py-0.5 text-[10.5px] font-bold text-azure">Sur ma page publique</span>@endif
-                                @if ($c['verifications'])<span class="text-[10.5px] text-[#9AA6B8]">vérifié {{ $c['verifications'] }} fois</span>@endif
+                                @if ($c['verifications'])<span class="text-[10.5px] text-[#5B677A]">vérifié {{ $c['verifications'] }} fois</span>@endif
                             </div>
                         </div>
                     </button>
@@ -68,7 +68,7 @@
                 <aside class="flex w-full shrink-0 flex-col overflow-y-auto border-t border-[#EDF0F5] lg:w-[360px] lg:border-l lg:border-t-0">
                     <div class="flex items-start gap-3 border-b border-[#EDF0F5] px-5 py-4">
                         <div class="min-w-0 flex-1">
-                            <p class="text-[11px] font-bold uppercase tracking-[0.12em] text-[#9AA6B8]">{{ $cert['intitule'] }}</p>
+                            <p class="text-[11px] font-bold uppercase tracking-[0.12em] text-[#5B677A]">{{ $cert['intitule'] }}</p>
                             <p class="mt-0.5 text-[15px] font-bold leading-snug text-brand">{{ $cert['titre'] }}</p>
                             <p class="mt-1 text-[11.5px] text-[#5B677A]">{{ $date($cert['delivre_le']) }} · {{ $cert['reference'] }}</p>
                         </div>
@@ -96,7 +96,7 @@
                                     <input type="text" readonly value="{{ $cert['url_verification'] }}" data-test="lien-verification" class="min-w-0 flex-1 rounded-[9px] border border-brand/15 bg-cloud/50 px-2.5 py-1.5 text-[11.5px] text-brand" x-on:focus="$el.select()" />
                                     <button type="button" x-on:click="navigator.clipboard.writeText(@js($cert['url_verification'])); copie = true; rjToast('Lien copié.'); setTimeout(() => copie = false, 1800)" class="btn-tap shrink-0 rounded-[9px] bg-brand/[.07] px-3 py-1.5 text-[11.5px] font-bold text-brand" x-text="copie ? 'Copié' : 'Copier'">Copier</button>
                                 </div>
-                                <p class="mt-2 text-[11px] text-[#9AA6B8]">Code : <span class="font-semibold tracking-wider text-brand">{{ $cert['code'] }}</span>{{ $cert['verifications'] ? ' · vérifié '.$cert['verifications'].' fois' : '' }}</p>
+                                <p class="mt-2 text-[11px] text-[#5B677A]">Code : <span class="font-semibold tracking-wider text-brand">{{ $cert['code'] }}</span>{{ $cert['verifications'] ? ' · vérifié '.$cert['verifications'].' fois' : '' }}</p>
                             </div>
 
                             <label class="flex items-start gap-3 rounded-[14px] border border-brand/10 p-3.5" x-data="{ v: @js($cert['visible_bio']) }">

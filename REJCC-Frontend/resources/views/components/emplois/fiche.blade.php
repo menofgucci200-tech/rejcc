@@ -34,7 +34,7 @@
                         <span class="rounded-full px-2.5 py-0.5 text-[10.5px] font-bold" style="background: {{ $sc }}1A; color: {{ $sc }}">{{ $o['statut_label'] }}</span>
                     @endif
                     <span class="rounded-full px-2.5 py-0.5 text-[10.5px] font-bold" style="background: {{ $tc }}14; color: {{ $tc }}">{{ $o['type_label'] }}{{ $o['contrat_label'] ? ' · '.$o['contrat_label'] : '' }}</span>
-                    @if ($o['publie_at']) <span class="text-[11.5px] text-[#9AA6B8]">Publiée {{ \App\Support\Texte::depuis($o['publie_at']) }}</span> @endif
+                    @if ($o['publie_at']) <span class="text-[11.5px] text-[#5B677A]">Publiée {{ \App\Support\Texte::depuis($o['publie_at']) }}</span> @endif
                 </div>
 
                 {{-- Retour de l'équipe (auteur) --}}
@@ -63,7 +63,7 @@
                 @foreach (['missions' => 'Missions', 'profil' => 'Profil recherché'] as $k => $t)
                     @if ($o[$k] ?? null)
                         <section class="mt-5">
-                            <p class="mb-1 text-[11px] font-bold uppercase tracking-[0.1em] text-[#9AA6B8]">{{ $t }}</p>
+                            <p class="mb-1 text-[11px] font-bold uppercase tracking-[0.1em] text-[#5B677A]">{{ $t }}</p>
                             <p class="whitespace-pre-line text-[13px] leading-relaxed text-ink">{{ $o[$k] }}</p>
                         </section>
                     @endif
@@ -82,7 +82,7 @@
                     <section class="mt-5 flex items-center gap-3 rounded-[14px] border border-brand/10 p-4">
                         <x-messagerie.avatar :personne="$o['auteur']" taille="size-10" texte="text-[12px]" />
                         <div class="min-w-0 flex-1">
-                            <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#9AA6B8]">Offre partagée par</p>
+                            <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#5B677A]">Offre partagée par</p>
                             <p class="text-[13.5px] font-bold text-brand">{{ $o['auteur']['prenom'] }} {{ $o['auteur']['nom'] }}</p>
                         </div>
                     </section>
@@ -98,7 +98,7 @@
                             <a href="{{ route('espace-membre.messaging', ['to' => $o['auteur']['id'], 'offre' => $o['id']]) }}" wire:navigate class="text-[12px] font-bold text-brand hover:underline">Écrire au recruteur</a>
                         @endif
                         @if (in_array($mc['statut'], ['recue', 'preselection'], true))
-                            <button type="button" wire:click="retirerCandidature" wire:confirm="Retirer votre candidature ?" class="text-[12px] font-semibold text-[#9AA6B8] hover:text-accent">Retirer</button>
+                            <button type="button" wire:click="retirerCandidature" wire:confirm="Retirer votre candidature ?" class="text-[12px] font-semibold text-[#5B677A] hover:text-accent">Retirer</button>
                         @endif
                     </div>
                 @elseif (! $o['mine'] && $o['statut'] === 'publiee')
@@ -111,7 +111,7 @@
                             <div class="mt-2 flex flex-wrap items-center gap-2">
                                 @if ($cvName)
                                     <span class="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[12px] font-semibold text-brand"><x-ui.icon name="file-text" class="size-3.5 text-azure" /> {{ $cvName }}
-                                        <button type="button" wire:click="retirerCv" class="text-[#9AA6B8] hover:text-accent" aria-label="Retirer le CV"><x-ui.icon name="x" class="size-3" /></button></span>
+                                        <button type="button" wire:click="retirerCv" class="text-[#5B677A] hover:text-accent" aria-label="Retirer le CV"><x-ui.icon name="x" class="size-3" /></button></span>
                                 @else
                                     <label class="btn-tap inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-brand/15 bg-white px-3.5 py-1.5 text-[12px] font-bold text-brand hover:bg-cloud">
                                         <x-ui.icon name="download" class="size-3.5 rotate-180" /> Joindre mon CV (PDF, Word)
@@ -129,7 +129,7 @@
                 {{-- Candidatures reçues (auteur) --}}
                 @if ($o['mine'] && $voirCandidatures)
                     <section wire:key="candidatures" data-test="liste-candidatures" class="panel-enter mt-5">
-                        <p class="mb-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#9AA6B8]">Candidatures reçues</p>
+                        <p class="mb-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#5B677A]">Candidatures reçues</p>
                         @if (empty($candidatures))
                             <p class="rounded-[12px] bg-cloud/60 px-4 py-4 text-center text-[12.5px] text-[#5B677A]">Aucune candidature pour le moment.</p>
                         @else
@@ -195,23 +195,23 @@
                         @if ($o['statut'] === 'publiee')
                             <button type="button" wire:click="changerStatut({{ $o['id'] }}, 'pourvue')" data-test="offre-pourvue" class="btn-tap rounded-full border border-[#7C3AED]/30 px-4 py-2.5 text-[13px] font-bold text-[#7C3AED] hover:bg-[#7C3AED]/5">Poste pourvu</button>
                             <button type="button" wire:click="prolonger({{ $o['id'] }})" class="btn-tap rounded-full border border-brand/15 px-4 py-2.5 text-[13px] font-bold text-brand hover:bg-cloud">Prolonger de 30 jours</button>
-                            <button type="button" wire:click="changerStatut({{ $o['id'] }}, 'cloturee')" wire:confirm="Clôturer cette offre ? Elle ne sera plus visible." class="text-[12px] font-semibold text-[#9AA6B8] hover:text-accent">Clôturer</button>
+                            <button type="button" wire:click="changerStatut({{ $o['id'] }}, 'cloturee')" wire:confirm="Clôturer cette offre ? Elle ne sera plus visible." class="text-[12px] font-semibold text-[#5B677A] hover:text-accent">Clôturer</button>
                         @elseif ($o['statut'] === 'expiree')
                             <button type="button" wire:click="prolonger({{ $o['id'] }})" data-test="prolonger-offre" class="btn-tap rounded-full bg-[#1C8F4C] px-4 py-2.5 text-[13px] font-bold text-white">Remettre en ligne 30 jours</button>
                         @elseif (in_array($o['statut'], ['pourvue', 'cloturee'], true))
                             <button type="button" wire:click="changerStatut({{ $o['id'] }}, 'publiee')" class="btn-tap rounded-full border border-brand/15 px-4 py-2.5 text-[13px] font-bold text-brand hover:bg-cloud">Rouvrir l'offre</button>
                         @endif
-                        <button type="button" wire:click="supprimer({{ $o['id'] }})" wire:confirm="Supprimer définitivement cette offre ?" class="ml-auto text-[12px] font-semibold text-[#9AA6B8] hover:text-accent">Supprimer</button>
+                        <button type="button" wire:click="supprimer({{ $o['id'] }})" wire:confirm="Supprimer définitivement cette offre ?" class="ml-auto text-[12px] font-semibold text-[#5B677A] hover:text-accent">Supprimer</button>
                     @endif
                     @if (! $o['mine'] && $o['statut'] === 'publiee')
                         <button type="button" wire:click="basculerFavori({{ $o['id'] }})" data-test="favori-offre" class="btn-tap inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-[13px] font-bold {{ ($o['favori'] ?? false) ? 'border-accent/30 bg-accent/5 text-accent' : 'border-brand/15 text-brand hover:bg-cloud' }}">{{ ($o['favori'] ?? false) ? '♥ Sauvegardée' : '♡ Sauvegarder' }}</button>
                     @endif
                     @if (! $o['mine'] && $o['statut'] === 'publiee')
                         @if ($o['deja_signalee'] ?? false)
-                            <span class="order-last ml-auto text-[11.5px] text-[#9AA6B8]">Offre signalée</span>
+                            <span class="order-last ml-auto text-[11.5px] text-[#5B677A]">Offre signalée</span>
                         @else
                             <button type="button" data-test="signaler-offre" x-on:click="const m = await rjPrompt('Signaler cette offre ? L\'équipe REJCC examinera votre signalement.', { placeholder: 'Ex. : frais demandés aux candidats, fausse entreprise, contenu inapproprié…', ok: 'Signaler', requis: true }); if (m !== null) $wire.signaler(m)"
-                                class="order-last ml-auto text-[11.5px] font-semibold text-[#9AA6B8] hover:text-accent">Signaler</button>
+                                class="order-last ml-auto text-[11.5px] font-semibold text-[#5B677A] hover:text-accent">Signaler</button>
                         @endif
                     @endif
                     @if ($o['statut'] === 'publiee')

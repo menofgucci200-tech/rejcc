@@ -2,7 +2,7 @@
     <x-admin-light.topbar title="Pointage" />
 
     <div class="mx-auto max-w-[1280px] px-4 py-8 sm:px-8">
-        <a href="{{ route('admin.evenements') }}" wire:navigate class="mb-2 inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#9AA6B8] hover:text-brand"><x-ui.icon name="arrow-left" class="size-3.5" /> Événements</a>
+        <a href="{{ route('admin.evenements') }}" wire:navigate class="mb-2 inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#5B677A] hover:text-brand"><x-ui.icon name="arrow-left" class="size-3.5" /> Événements</a>
         @if (! $ok || ! $evenement)
             <p class="rounded-[16px] border border-brand/10 bg-white py-10 text-center text-sm text-[#5B677A]">Événement introuvable.</p>
         @else
@@ -10,10 +10,10 @@
                 <div>
                     <h2 class="mb-1 text-[17px] font-bold text-brand">Pointage · {{ $evenement['title'] }}</h2>
                     <div class="h-[3px] w-9 rounded bg-accent"></div>
-                    <p class="mt-2 text-xs text-[#9AA6B8]">{{ ucfirst(\Illuminate\Support\Carbon::parse($evenement['starts_at'])->setTimezone(config('app.timezone'))->locale('fr')->isoFormat('dddd D MMMM YYYY, HH[h]mm')) }}</p>
+                    <p class="mt-2 text-xs text-[#5B677A]">{{ ucfirst(\Illuminate\Support\Carbon::parse($evenement['starts_at'])->setTimezone(config('app.timezone'))->locale('fr')->isoFormat('dddd D MMMM YYYY, HH[h]mm')) }}</p>
                 </div>
                 <div data-test="compteur-presence" class="rounded-[14px] border border-brand/10 bg-white px-5 py-3 text-center shadow-[0_2px_8px_rgba(3,29,89,.05)]">
-                    <p class="text-[22px] font-extrabold leading-none text-brand">{{ $presents }} <span class="text-[14px] font-bold text-[#9AA6B8]">/ {{ $nbInscrits }}</span></p>
+                    <p class="text-[22px] font-extrabold leading-none text-brand">{{ $presents }} <span class="text-[14px] font-bold text-[#5B677A]">/ {{ $nbInscrits }}</span></p>
                     <p class="mt-1 text-[11px] font-semibold text-[#5B677A]">présents / inscrits</p>
                 </div>
             </div>
@@ -75,7 +75,7 @@
                                 <x-messagerie.avatar :personne="['prenom' => $i['nom'], 'nom' => '', 'photo' => $i['photo'], 'role' => $i['role']]" taille="size-8" texte="text-[10px]" />
                                 <div class="min-w-0 flex-1">
                                     <p class="truncate text-[13px] font-bold text-brand">{{ $i['nom'] }}</p>
-                                    <p class="truncate text-[11px] text-[#9AA6B8]"><span class="font-mono">{{ $i['billet'] }}</span>{{ $i['type'] === 'invite' ? ' · Invité' : '' }}</p>
+                                    <p class="truncate text-[11px] text-[#5B677A]"><span class="font-mono">{{ $i['billet'] }}</span>{{ $i['type'] === 'invite' ? ' · Invité' : '' }}</p>
                                 </div>
                                 @if ($i['present_at'])
                                     <span class="shrink-0 rounded-full bg-[#22A85A]/10 px-2.5 py-1 text-[11px] font-bold text-[#1C8F4C]">Présent · {{ \Illuminate\Support\Carbon::parse($i['present_at'])->setTimezone(config('app.timezone'))->format('H\hi') }}</span>

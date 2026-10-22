@@ -5,7 +5,7 @@
         <div class="mb-6">
             <h2 class="mb-1 text-[17px] font-bold text-brand">Réglages du site vitrine</h2>
             <div class="h-[3px] w-9 rounded bg-accent"></div>
-            <p class="mt-2 text-xs text-[#9AA6B8]">Identité, coordonnées, réseaux sociaux et bandeau d'annonce — publiés immédiatement sur le site public.</p>
+            <p class="mt-2 text-xs text-[#5B677A]">Identité, coordonnées, réseaux sociaux et bandeau d'annonce — publiés immédiatement sur le site public.</p>
         </div>
 
         <div class="grid items-start gap-6 lg:grid-cols-2">
@@ -80,7 +80,7 @@
                             <span class="panel-enter inline-flex items-center gap-1 text-[11.5px] font-bold text-[#22A85A]"><x-ui.icon name="check-circle" class="size-3.5" /> Publié</span>
                         @endif
                     </div>
-                    <p class="mb-4 text-[11.5px] text-[#9AA6B8]">Collez l'adresse complète de chaque page. Seuls les réseaux renseignés apparaissent dans le pied de page du site.</p>
+                    <p class="mb-4 text-[11.5px] text-[#5B677A]">Collez l'adresse complète de chaque page. Seuls les réseaux renseignés apparaissent dans le pied de page du site.</p>
                     <div class="grid gap-3 sm:grid-cols-2">
                         @foreach ([
                             'facebook' => 'Facebook', 'instagram' => 'Instagram', 'linkedin' => 'LinkedIn',
@@ -103,7 +103,7 @@
                             <span class="panel-enter inline-flex items-center gap-1 text-[11.5px] font-bold text-[#22A85A]"><x-ui.icon name="check-circle" class="size-3.5" /> Publié</span>
                         @endif
                     </div>
-                    <p class="mb-4 text-[11.5px] text-[#9AA6B8]">Un message affiché tout en haut du site public — idéal pour annoncer un événement ou une échéance.</p>
+                    <p class="mb-4 text-[11.5px] text-[#5B677A]">Un message affiché tout en haut du site public — idéal pour annoncer un événement ou une échéance.</p>
                     <label class="mb-3 inline-flex cursor-pointer items-center gap-2.5 text-[13px] font-semibold text-ink">
                         <button
                             type="button"
@@ -140,7 +140,7 @@
                             <span class="panel-enter inline-flex items-center gap-1 text-[11.5px] font-bold text-[#22A85A]"><x-ui.icon name="check-circle" class="size-3.5" /> Enregistré</span>
                         @endif
                     </div>
-                    <p class="mb-4 text-[11.5px] text-[#9AA6B8]">
+                    <p class="mb-4 text-[11.5px] text-[#5B677A]">
                         Identifiants de votre compte marchand <span class="font-semibold">CinetPay</span> (Wave, Orange Money, MTN, Moov, carte bancaire), nécessaires pour encaisser l'abonnement annuel des membres ({{ \App\Support\Tarif::libelle() }}, réglable dans « Abonnements »). Créez un compte sur cinetpay.com puis collez ci-dessous la clé API et l'ID de site indiqués dans votre tableau de bord CinetPay.
                     </p>
                     <div class="flex flex-col gap-3" x-data="{ show: false }">
@@ -153,7 +153,7 @@
                                     placeholder="Clé API CinetPay"
                                     class="w-full rounded-[9px] border border-brand/15 px-3 py-2 pr-10 text-sm font-normal outline-none focus:border-azure"
                                 />
-                                <button type="button" @click="show = !show" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9AA6B8] hover:text-brand" :aria-label="show ? 'Masquer' : 'Afficher'">
+                                <button type="button" @click="show = !show" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#5B677A] hover:text-brand" :aria-label="show ? 'Masquer' : 'Afficher'">
                                     <x-ui.icon name="eye" class="size-4" />
                                 </button>
                             </div>
@@ -185,13 +185,13 @@
                         <span class="panel-enter inline-flex items-center gap-1 text-[11.5px] font-bold text-[#22A85A]"><x-ui.icon name="check-circle" class="size-3.5" /> Publié</span>
                     @endif
                 </div>
-                <p class="mb-4 text-[11.5px] text-[#9AA6B8]">Affichée sur le tableau de bord des membres. Un verset différent chaque jour, dans l'ordre de la liste, puis on recommence. Le verset marqué « Aujourd'hui » est celui que voient les membres en ce moment.</p>
+                <p class="mb-4 text-[11.5px] text-[#5B677A]">Affichée sur le tableau de bord des membres. Un verset différent chaque jour, dans l'ordre de la liste, puis on recommence. Le verset marqué « Aujourd'hui » est celui que voient les membres en ce moment.</p>
                 @error('paroles') <p class="mb-3 text-xs font-medium text-accent">{{ $message }}</p> @enderror
                 <div class="flex flex-col gap-3">
                     @foreach ($paroles as $i => $p)
                         <div wire:key="parole-{{ $i }}" class="rounded-[12px] border p-3.5 {{ $i === $paroleDuJour ? 'border-azure/50 bg-azure/[.04]' : 'border-brand/10' }}">
                             <div class="mb-2 flex items-center justify-between gap-2">
-                                <span class="text-[11px] font-bold text-[#9AA6B8]">N° {{ $i + 1 }}
+                                <span class="text-[11px] font-bold text-[#5B677A]">N° {{ $i + 1 }}
                                     @if ($i === $paroleDuJour)
                                         <span class="ml-1.5 rounded-full bg-azure px-2 py-0.5 text-[10px] text-white">Aujourd'hui</span>
                                     @endif

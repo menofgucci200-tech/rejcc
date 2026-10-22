@@ -20,7 +20,7 @@
             placeholder="Rechercher…" aria-label="Rechercher dans l'administration" data-test="recherche-admin"
             class="rj-search-input w-full min-w-0 appearance-none border-none bg-transparent text-[13px] text-ink outline-none placeholder:text-[#9AA6B8] focus:outline-none" />
         <span wire:loading wire:target="q" class="size-3.5 shrink-0 animate-spin rounded-full border-2 border-azure/30 border-t-azure"></span>
-        <kbd wire:loading.remove wire:target="q" class="hidden shrink-0 rounded-[6px] border border-brand/15 bg-white px-1.5 py-0.5 font-sans text-[10.5px] font-semibold text-[#9AA6B8] lg:inline">Ctrl K</kbd>
+        <kbd wire:loading.remove wire:target="q" class="hidden shrink-0 rounded-[6px] border border-brand/15 bg-white px-1.5 py-0.5 font-sans text-[10.5px] font-semibold text-[#5B677A] lg:inline">Ctrl K</kbd>
     </div>
 
     <div x-show="open && $wire.q.trim().length >= 2" x-cloak x-transition.origin.top x-ref="results" data-test="resultats-admin"
@@ -28,13 +28,13 @@
         class="z-[95] max-h-[70vh] overflow-y-auto rounded-[16px] border border-brand/10 bg-white py-2 shadow-[0_24px_60px_-20px_rgba(3,29,89,.35)]" data-lenis-prevent>
         @if ($actif)
             @forelse ($groupes as $titre => $items)
-                <p class="px-4 pb-1 pt-2.5 text-[10.5px] font-bold uppercase tracking-[0.12em] text-[#9AA6B8]">{{ $titre }}</p>
+                <p class="px-4 pb-1 pt-2.5 text-[10.5px] font-bold uppercase tracking-[0.12em] text-[#5B677A]">{{ $titre }}</p>
                 @foreach ($items as $r)
                     <a href="{{ $r['url'] }}" wire:navigate @click="open = false; mobile = false" class="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-cloud/70 focus:bg-cloud/70 focus:outline-none">
                         <span class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand/[.06] text-brand"><x-ui.icon :name="$r['icon']" class="size-4" /></span>
                         <span class="min-w-0">
                             <span class="block truncate text-[13px] font-semibold text-brand">{{ $r['titre'] }}</span>
-                            <span class="block truncate text-[11.5px] text-[#9AA6B8]">{{ $r['detail'] }}</span>
+                            <span class="block truncate text-[11.5px] text-[#5B677A]">{{ $r['detail'] }}</span>
                         </span>
                     </a>
                 @endforeach

@@ -3,7 +3,7 @@
 
     <div class="mx-auto max-w-[900px] px-4 py-6 sm:px-8 sm:py-8">
         <div class="mb-2">
-            <a href="{{ route('espace-membre.formations') }}" wire:navigate class="inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#9AA6B8] hover:text-brand">
+            <a href="{{ route('espace-membre.formations') }}" wire:navigate class="inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#5B677A] hover:text-brand">
                 <x-ui.icon name="arrow-left" class="size-3.5" /> Mes formations
             </a>
         </div>
@@ -25,43 +25,60 @@
                 <p class="panel-enter mb-5 inline-flex items-center gap-1.5 rounded-full bg-[#22A85A]/10 px-3.5 py-1.5 text-xs font-semibold text-[#22A85A]"><x-ui.icon name="check-circle" class="size-3.5" /> {{ $message }}</p>
             @endif
 
-            <div class="mb-6 rounded-[16px] border border-brand/10 bg-white p-5 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
-                <div class="mb-1.5 flex items-center justify-between">
-                    <p class="text-[12px] font-bold uppercase tracking-[0.06em] text-[#9AA6B8]">Progression</p>
-                    <p class="text-[12px] font-bold text-brand">{{ $progress }}%</p>
+            @php
+                $nbValides = collect($modules)->where('termine', true)->count();
+                $prochain = collect($modules)->first(fn ($m) => ! $m['termine'] && ! $m['verrouille']);
+                $rang = $prochain ? collect($modules)->search(fn ($m) => $m['id'] === $prochain['id']) + 1 : null;
+                $circonference = 2 * M_PI * 26;
+            @endphp
+            <div id="progression" data-test="progression" class="mb-6 flex flex-wrap items-center gap-5 rounded-[18px] border border-brand/10 bg-white p-5 shadow-[0_2px_8px_rgba(3,29,89,.05)]">
+                {{-- Anneau de progression --}}
+                <div class="relative size-[68px] shrink-0">
+                    <svg viewBox="0 0 64 64" class="size-full -rotate-90" aria-hidden="true">
+                        <circle cx="32" cy="32" r="26" fill="none" stroke="#F6EEE3" stroke-width="7" />
+                        <circle cx="32" cy="32" r="26" fill="none" stroke="{{ $completed ? '#1F8A5B' : '#4F6FBF' }}" stroke-width="7" stroke-linecap="round"
+                            stroke-dasharray="{{ $circonference }}" stroke-dashoffset="{{ $circonference * (1 - $progress / 100) }}" class="transition-[stroke-dashoffset] duration-700" />
+                    </svg>
+                    <span class="absolute inset-0 flex items-center justify-center font-display text-[19px] text-brand">{{ $progress }}<span class="text-[11px]">%</span></span>
                 </div>
-                <div class="h-2 w-full rounded-full bg-cloud">
-                    <div class="h-2 rounded-full {{ $completed ? 'bg-[#22A85A]' : 'bg-azure' }}" style="width: {{ $progress }}%"></div>
+                <div class="min-w-[180px] flex-1">
+                    <p class="text-[13px] font-bold uppercase tracking-[0.06em] text-[#5B677A]">Progression</p>
+                    <p class="mt-0.5 text-[14px] font-semibold text-ink">{{ $nbValides }} module{{ $nbValides > 1 ? 's' : '' }} validé{{ $nbValides > 1 ? 's' : '' }} sur {{ count($modules) }}</p>
+                    @if ($completed)
+                        <p class="mt-1 inline-flex items-center gap-1.5 text-[13px] font-bold text-vert"><x-ui.icon name="award" class="size-4" /> Formation terminée !
+                            @if ($formation['is_certifying'])
+                                <a href="{{ route('espace-membre.certificats') }}" wire:navigate data-test="lien-certificat" class="ml-1 underline">Voir mon certificat</a>
+                            @endif
+                        </p>
+                    @endif
                 </div>
-                @if ($completed)
-                    <p class="mt-3 inline-flex items-center gap-1.5 text-[12.5px] font-bold text-[#22A85A]"><x-ui.icon name="award" class="size-4" /> Formation terminée !
-                        @if ($formation['is_certifying'])
-                            <a href="{{ route('espace-membre.certificats') }}" wire:navigate data-test="lien-certificat" class="ml-1 underline">Voir mon certificat</a>
-                        @endif
-                    </p>
+                @if ($prochain && $moduleOuvert !== $prochain['id'])
+                    <button type="button" wire:click="continuer" data-test="continuer" class="btn-tap inline-flex min-h-10 items-center gap-1.5 rounded-full bg-accent px-5 py-2 text-[13px] font-bold text-white hover:bg-accent-600">
+                        {{ $nbValides ? 'Continuer : module '.$rang : 'Commencer le module 1' }} <x-ui.icon name="chevron-right" class="size-4" />
+                    </button>
                 @endif
             </div>
 
             <div class="flex flex-col gap-3">
                 @foreach ($modules as $m)
-                    <div class="overflow-hidden rounded-[16px] border bg-white shadow-[0_2px_8px_rgba(3,29,89,.05)] {{ $m['verrouille'] ? 'border-brand/10 opacity-60' : 'border-brand/10' }}">
+                    <div id="module-{{ $m['id'] }}" class="scroll-mt-20 overflow-hidden rounded-[16px] border bg-white shadow-[0_2px_8px_rgba(3,29,89,.05)] {{ $m['verrouille'] ? 'border-brand/10 opacity-60' : ($moduleOuvert === $m['id'] ? 'border-azure/40' : 'border-brand/10') }}">
                         <button
                             type="button"
                             wire:click="{{ $m['verrouille'] ? '' : "toggleModule({$m['id']})" }}"
                             {{ $m['verrouille'] ? 'disabled' : '' }}
                             class="flex w-full items-center gap-3 p-4 text-left {{ $m['verrouille'] ? 'cursor-not-allowed' : 'cursor-pointer hover:bg-cloud/40' }}"
                         >
-                            <span class="flex size-9 shrink-0 items-center justify-center rounded-xl {{ $m['termine'] ? 'bg-[#22A85A]/10 text-[#22A85A]' : ($m['verrouille'] ? 'bg-cloud text-[#9AA6B8]' : 'bg-azure/10 text-azure') }}">
-                                <x-ui.icon :name="$m['termine'] ? 'check' : ($m['verrouille'] ? 'shield' : 'play')" class="size-4" />
+                            <span class="flex size-9 shrink-0 items-center justify-center rounded-full text-[13px] font-bold {{ $m['termine'] ? 'bg-vert text-white' : ($m['verrouille'] ? 'bg-cloud text-[#5B677A]' : 'bg-brand text-white') }}">
+                                @if ($m['termine'])<x-ui.icon name="check" class="size-4" />@elseif ($m['verrouille'])<x-ui.icon name="lock" class="size-4" />@else{{ $loop->iteration }}@endif
                             </span>
                             <div class="min-w-0 flex-1">
                                 <p class="truncate text-[13.5px] font-bold text-brand">{{ $m['titre'] }}</p>
                                 @if ($m['duree'])
-                                    <p class="mt-0.5 text-[11.5px] text-[#9AA6B8]">{{ $m['duree'] }}</p>
+                                    <p class="mt-0.5 text-[13px] text-[#5B677A]">{{ $m['duree'] }}</p>
                                 @endif
                             </div>
                             @if (! $m['verrouille'])
-                                <x-ui.icon name="chevron-right" class="size-4 shrink-0 text-[#9AA6B8]" />
+                                <x-ui.icon name="chevron-right" class="size-4 shrink-0 text-[#5B677A]" />
                             @endif
                         </button>
 
@@ -114,12 +131,12 @@
                                 {{-- Ressources à télécharger --}}
                                 @if (count($m['ressources']))
                                     <div class="mb-4" data-test="ressources">
-                                        <p class="mb-2 text-[12px] font-bold uppercase tracking-[0.06em] text-[#9AA6B8]">Ressources</p>
+                                        <p class="mb-2 text-[12px] font-bold uppercase tracking-[0.06em] text-[#5B677A]">Ressources</p>
                                         <ul class="flex flex-col gap-2">
                                             @foreach ($m['ressources'] as $r)
                                                 <li class="flex items-center gap-3 rounded-xl border border-brand/10 px-3.5 py-2.5">
                                                     <x-ui.icon name="folder-open" class="size-4 shrink-0 text-accent" />
-                                                    <span class="min-w-0 flex-1 truncate text-[12.5px] font-semibold text-brand">{{ $r['nom'] }}@if ($r['taille']) <span class="font-normal text-[#9AA6B8]">· {{ $r['taille'] }}</span>@endif</span>
+                                                    <span class="min-w-0 flex-1 truncate text-[12.5px] font-semibold text-brand">{{ $r['nom'] }}@if ($r['taille']) <span class="font-normal text-[#5B677A]">· {{ $r['taille'] }}</span>@endif</span>
                                                     @if ($r['url'])
                                                         <a href="{{ $r['url'] }}" download class="inline-flex shrink-0 items-center gap-1 text-[12px] font-bold text-azure hover:underline"><x-ui.icon name="download" class="size-3.5" /> Télécharger</a>
                                                     @else
@@ -154,13 +171,13 @@
                                         @if ($erreur)
                                             <p class="mt-3 rounded-lg bg-[#F9E9E9] px-3 py-2 text-[12.5px] font-semibold text-accent" data-test="quiz-echec">{{ $erreur }}</p>
                                         @endif
-                                        <button type="submit" wire:loading.attr="disabled" data-test="valider-quiz" class="btn-tap mt-3 rounded-full bg-brand px-4 py-2 text-[12.5px] font-bold text-white hover:bg-brand/90 disabled:opacity-60">Valider mes réponses</button>
+                                        <button type="submit" wire:loading.attr="disabled" data-test="valider-quiz" class="btn-tap mt-3 rounded-full bg-accent px-4 py-2 min-h-10 text-[13px] font-bold text-white hover:bg-accent-600 disabled:opacity-60">Valider mes réponses</button>
                                     </form>
                                 @elseif (! $m['termine'])
                                     @if ($erreur)
                                         <p class="mb-2 text-[12.5px] font-semibold text-accent">{{ $erreur }}</p>
                                     @endif
-                                    <button wire:click="validerModule({{ $m['id'] }})" wire:loading.attr="disabled" class="btn-tap rounded-full bg-brand px-4 py-2 text-[12.5px] font-bold text-white hover:bg-brand/90 disabled:opacity-60">Marquer ce module comme terminé</button>
+                                    <button wire:click="validerModule({{ $m['id'] }})" wire:loading.attr="disabled" class="btn-tap rounded-full bg-accent px-4 py-2 min-h-10 text-[13px] font-bold text-white hover:bg-accent-600 disabled:opacity-60">Marquer ce module comme terminé</button>
                                 @elseif ($m['quiz_requis'])
                                     <p class="inline-flex items-center gap-1.5 text-[12.5px] font-bold text-[#22A85A]"><x-ui.icon name="check-circle" class="size-4" /> Quiz réussi — module validé</p>
                                 @endif

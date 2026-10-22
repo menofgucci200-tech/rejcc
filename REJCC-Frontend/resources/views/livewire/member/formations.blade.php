@@ -62,7 +62,7 @@
                     </span>
                     <div class="min-w-[180px] flex-1">
                         <p class="text-[13px] font-bold text-brand">{{ $c['titre'] }}</p>
-                        <p class="mt-0.5 text-xs text-[#9AA6B8]">{{ collect([$c['categorie'], $c['infos']])->filter()->join(' · ') }}</p>
+                        <p class="mt-0.5 text-xs text-[#5B677A]">{{ collect([$c['categorie'], $c['infos']])->filter()->join(' · ') }}</p>
                     </div>
                     <div class="w-full max-w-[220px] flex-1">
                         <div class="h-1.5 w-full rounded-full bg-cloud">
@@ -87,7 +87,7 @@
                         </span>
                     @endif
                     @if ($c['etat'] !== 'termine')
-                        <button wire:click="seDesinscrire({{ $c['id'] }})" wire:confirm="Vous désinscrire de « {{ $c['titre'] }} » ? Votre progression sur cette formation sera perdue." data-test="desinscrire" title="Se désinscrire" class="shrink-0 rounded-lg p-1.5 text-[#9AA6B8] hover:bg-accent/10 hover:text-accent">
+                        <button wire:click="seDesinscrire({{ $c['id'] }})" wire:confirm="Vous désinscrire de « {{ $c['titre'] }} » ? Votre progression sur cette formation sera perdue." data-test="desinscrire" title="Se désinscrire" class="shrink-0 rounded-lg p-1.5 text-[#5B677A] hover:bg-accent/10 hover:text-accent">
                             <x-ui.icon name="x" class="size-4" />
                         </button>
                     @endif

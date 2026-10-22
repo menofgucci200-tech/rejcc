@@ -6,7 +6,7 @@
             <div>
                 <h2 class="mb-1 text-[17px] font-bold text-brand">Programme de mentorat</h2>
                 <div class="h-[3px] w-9 rounded bg-accent"></div>
-                <p class="mt-2 text-xs text-[#9AA6B8]">Mentors, mises en relation, candidatures « Devenir mentor ».</p>
+                <p class="mt-2 text-xs text-[#5B677A]">Mentors, mises en relation, candidatures « Devenir mentor ».</p>
             </div>
             <div class="flex flex-wrap gap-2">
                 <button wire:click="ouvrirAttribution" data-test="ouvrir-attribution" class="btn-tap rounded-full border border-accent/30 bg-white px-4 py-1.5 text-xs font-bold text-accent hover:bg-accent/5">Attribuer un mentor</button>
@@ -86,7 +86,7 @@
                         <div data-test="ligne-mentor" class="row-hover -mx-5 flex flex-wrap items-center gap-4 border-t border-[#EDF0F5] px-5 py-3.5 first:border-t-0 {{ $m['actif'] ? '' : 'opacity-55' }}">
                             <span class="flex size-10 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white" style="background: linear-gradient(135deg, #AC0100, #D95B5A)">{{ mb_strtoupper(mb_substr($m['nom'], 0, 1)) }}</span>
                             <div class="min-w-[220px] flex-1">
-                                <p class="text-[13.5px] font-bold text-brand">{{ $m['nom'] }} @unless ($m['accepte'])<span class="ml-1 rounded-full bg-cloud px-2 py-0.5 text-[10px] font-bold text-[#9AA6B8]">Complet / pause</span>@endunless</p>
+                                <p class="text-[13.5px] font-bold text-brand">{{ $m['nom'] }} @unless ($m['accepte'])<span class="ml-1 rounded-full bg-cloud px-2 py-0.5 text-[10px] font-bold text-[#5B677A]">Complet / pause</span>@endunless</p>
                                 <p class="text-xs text-[#5B677A]">{{ $m['email'] }}{{ $m['telephone'] ? ' · '.$m['telephone'] : '' }}{{ $m['ville'] ? ' · '.$m['ville'] : '' }}</p>
                                 @if ($m['expertises'])
                                     <p class="mt-0.5 text-[11px] font-semibold text-accent">{{ implode(' · ', $m['expertises']) }}</p>
@@ -115,7 +115,7 @@
                 </div>
                 <div class="overflow-x-auto rounded-[18px] border border-brand/10 bg-white shadow-[0_2px_8px_rgba(3,29,89,.05)]">
                     <table class="w-full min-w-[760px] text-left text-[12.5px]">
-                        <thead class="border-b border-[#EDF0F5] text-[10.5px] font-bold uppercase tracking-[0.08em] text-[#9AA6B8]">
+                        <thead class="border-b border-[#EDF0F5] text-[10.5px] font-bold uppercase tracking-[0.08em] text-[#5B677A]">
                             <tr><th class="px-4 py-3">Mentor</th><th class="px-4 py-3">Mentoré·e</th><th class="px-4 py-3">Objectif</th><th class="px-4 py-3">Statut</th><th class="px-4 py-3">Séances</th><th class="px-4 py-3">Avis</th><th class="px-4 py-3">Depuis</th></tr>
                         </thead>
                         <tbody>
@@ -127,7 +127,7 @@
                                     <td class="px-4 py-3"><x-mentorat.statut :statut="$r['statut']" :label="$r['statut_label']" />@if ($r['en_souffrance'])<span class="mt-1 block text-[10.5px] font-bold text-accent">Sans réponse depuis plus de 7 jours</span>@endif</td>
                                     <td class="px-4 py-3 text-center">{{ $r['seances'] }}</td>
                                     <td class="px-4 py-3 text-[#B27007]">{{ $r['note'] ? str_repeat('★', $r['note']) : '—' }}</td>
-                                    <td class="px-4 py-3 text-[#9AA6B8]">{{ \Carbon\Carbon::parse($r['cree_le'])->translatedFormat('j M Y') }}</td>
+                                    <td class="px-4 py-3 text-[#5B677A]">{{ \Carbon\Carbon::parse($r['cree_le'])->translatedFormat('j M Y') }}</td>
                                 </tr>
                             @empty
                                 <tr><td colspan="7" class="px-4 py-10 text-center text-[#5B677A]">Aucune mise en relation.</td></tr>

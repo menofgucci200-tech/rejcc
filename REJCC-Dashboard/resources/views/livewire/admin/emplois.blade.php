@@ -10,7 +10,7 @@
             <div>
                 <h2 class="mb-1 text-[17px] font-bold text-brand">Emploi &amp; Stage</h2>
                 <div class="h-[3px] w-9 rounded bg-accent"></div>
-                <p class="mt-2 max-w-2xl text-xs text-[#9AA6B8]">Vérifiez les offres proposées par les membres avant publication : publiez-les, demandez une correction ou refusez-les avec un motif. L'auteur est notifié à chaque décision.</p>
+                <p class="mt-2 max-w-2xl text-xs text-[#5B677A]">Vérifiez les offres proposées par les membres avant publication : publiez-les, demandez une correction ou refusez-les avec un motif. L'auteur est notifié à chaque décision.</p>
             </div>
             <button wire:click="openCreate" class="btn-tap rounded-[10px] bg-accent px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-accent-600">+ Publier une offre</button>
         </div>
@@ -70,7 +70,7 @@
             <div class="flex flex-wrap gap-1.5">
                 @foreach (\App\Livewire\Admin\Emplois::FILTRES as $cle => $libelle)
                     <button wire:click="setFiltre('{{ $cle }}')" class="btn-tap rounded-full px-3.5 py-1.5 text-xs font-bold {{ $filtre === $cle ? 'bg-brand text-white' : 'border border-brand/15 bg-white text-brand hover:bg-cloud' }}">
-                        {{ $libelle }} <span class="{{ $filtre === $cle ? 'text-white/70' : ($cle === 'signalee' && ($compteurs['signalee'] ?? 0) ? 'font-extrabold text-accent' : 'text-[#9AA6B8]') }}">{{ $compteurs[$cle] ?? 0 }}</span>
+                        {{ $libelle }} <span class="{{ $filtre === $cle ? 'text-white/70' : ($cle === 'signalee' && ($compteurs['signalee'] ?? 0) ? 'font-extrabold text-accent' : 'text-[#5B677A]') }}">{{ $compteurs[$cle] ?? 0 }}</span>
                     </button>
                 @endforeach
             </div>
@@ -88,12 +88,12 @@
                             <div class="mb-0.5 flex flex-wrap items-center gap-1.5">
                                 <span class="rounded-full px-2 py-0.5 text-[10px] font-bold" style="background: {{ $sc }}1A; color: {{ $sc }}">{{ $o['statut_label'] }}</span>
                                 @if (! empty($o['signalements']))<span class="rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold text-white">{{ count($o['signalements']) }} signalement{{ count($o['signalements']) > 1 ? 's' : '' }}</span>@endif
-                                <span class="text-[11px] font-semibold text-[#9AA6B8]">{{ $o['type_label'] }}{{ $o['contrat_label'] ? ' '.$o['contrat_label'] : '' }} · {{ $o['entreprise'] }} · {{ $o['lieu'] }}</span>
+                                <span class="text-[11px] font-semibold text-[#5B677A]">{{ $o['type_label'] }}{{ $o['contrat_label'] ? ' '.$o['contrat_label'] : '' }} · {{ $o['entreprise'] }} · {{ $o['lieu'] }}</span>
                             </div>
                             <p class="text-[14px] font-bold text-brand">{{ $o['title'] }}</p>
                             <p class="text-[11.5px] text-[#5B677A]">Par {{ $o['auteur'] ? $o['auteur']['prenom'].' '.$o['auteur']['nom'] : 'REJCC' }} · proposée {{ \Illuminate\Support\Carbon::parse($o['created_at'])->locale('fr')->diffForHumans() }}{{ $o['statut'] === 'publiee' ? ' · '.$o['vues'].' vue'.($o['vues'] > 1 ? 's' : '') : '' }}{{ ($o['nb_candidatures'] ?? 0) ? ' · '.$o['nb_candidatures'].' candidature'.($o['nb_candidatures'] > 1 ? 's' : '') : '' }}</p>
                         </div>
-                        <x-ui.icon :name="$ouv ? 'chevron-down' : 'chevron-right'" class="size-4 shrink-0 text-[#9AA6B8]" />
+                        <x-ui.icon :name="$ouv ? 'chevron-down' : 'chevron-right'" class="size-4 shrink-0 text-[#5B677A]" />
                     </button>
 
                     @if ($ouv)
@@ -102,7 +102,7 @@
                                 <div class="min-w-0 space-y-2.5 text-[13px] text-ink">
                                     <p class="whitespace-pre-line leading-relaxed">{{ $o['description'] }}</p>
                                     @foreach (['missions' => 'Missions', 'profil' => 'Profil'] as $k => $t)
-                                        @if ($o[$k]) <div><p class="text-[11px] font-bold uppercase tracking-[0.08em] text-[#9AA6B8]">{{ $t }}</p><p class="whitespace-pre-line">{{ $o[$k] }}</p></div> @endif
+                                        @if ($o[$k]) <div><p class="text-[11px] font-bold uppercase tracking-[0.08em] text-[#5B677A]">{{ $t }}</p><p class="whitespace-pre-line">{{ $o[$k] }}</p></div> @endif
                                     @endforeach
                                     <p class="text-[12px] text-[#5B677A]">{{ collect([$o['teletravail_label'], $o['remuneration'], $o['duree'], $o['deadline'] ? 'Limite : '.\Illuminate\Support\Carbon::parse($o['deadline'])->format('d/m/Y') : null, $o['expire_le'] ? 'En ligne jusqu\'au '.\Illuminate\Support\Carbon::parse($o['expire_le'])->format('d/m/Y') : null])->filter()->join(' · ') }}</p>
                                     @if (! empty($o['competences']))<p class="text-[12px] text-brand">{{ implode(' · ', $o['competences']) }}</p>@endif
@@ -110,7 +110,7 @@
                                     @if ($o['motif'] ?? null)<p class="rounded-lg px-3 py-2 text-[12px] font-semibold" style="background: {{ $sc }}12; color: {{ $sc }}">Dernier message à l'auteur : {{ $o['motif'] }}</p>@endif
                                 </div>
                                 <aside class="h-fit rounded-[12px] border border-brand/10 bg-white p-4 text-[12.5px]">
-                                    <p class="mb-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#9AA6B8]">Auteur</p>
+                                    <p class="mb-2 text-[11px] font-bold uppercase tracking-[0.1em] text-[#5B677A]">Auteur</p>
                                     @if ($o['auteur'])
                                         <div class="flex items-center gap-2.5">
                                             <x-messagerie.avatar :personne="$o['auteur']" taille="size-9" texte="text-[11px]" />
@@ -121,7 +121,7 @@
                                     @endif
                                     @if ($o['contact'] ?? null)<p class="mt-2 text-[#5B677A]"><span class="font-semibold text-brand">Contact de l'offre :</span> {{ $o['contact'] }}</p>@endif
                                     @if (! empty($o['candidatures_par_statut']))
-                                        <p class="mb-1 mt-3 text-[11px] font-bold uppercase tracking-[0.1em] text-[#9AA6B8]">Candidatures</p>
+                                        <p class="mb-1 mt-3 text-[11px] font-bold uppercase tracking-[0.1em] text-[#5B677A]">Candidatures</p>
                                         @foreach ($o['candidatures_par_statut'] as $st => $n)
                                             <p class="text-[12px] text-[#5B677A]">{{ ['recue' => 'Reçues', 'preselection' => 'Présélectionnées', 'retenue' => 'Retenues', 'non_retenue' => 'Non retenues', 'retiree' => 'Retirées'][$st] ?? $st }} : <span class="font-bold text-brand">{{ $n }}</span></p>
                                         @endforeach
@@ -133,7 +133,7 @@
                                 <div class="mt-4 rounded-[12px] border border-accent/25 bg-accent/[.04] p-4">
                                     <p class="text-[12.5px] font-bold text-accent">Signalée par des membres</p>
                                     @foreach ($o['signalements'] as $sg)
-                                        <p class="mt-1 text-[12.5px] text-ink">« {{ $sg['motif'] }} » <span class="text-[#9AA6B8]">— {{ $sg['par'] }}, {{ \Illuminate\Support\Carbon::parse($sg['date'])->locale('fr')->diffForHumans() }}</span></p>
+                                        <p class="mt-1 text-[12.5px] text-ink">« {{ $sg['motif'] }} » <span class="text-[#5B677A]">— {{ $sg['par'] }}, {{ \Illuminate\Support\Carbon::parse($sg['date'])->locale('fr')->diffForHumans() }}</span></p>
                                     @endforeach
                                     <button wire:click="classerSignalements({{ $o['id'] }})" class="mt-2 text-[12px] font-semibold text-[#5B677A] hover:text-brand hover:underline">Classer sans suite</button>
                                 </div>
@@ -171,7 +171,7 @@
                                         <button wire:click="preparer({{ $o['id'] }}, 'retirer')" class="btn-tap rounded-full border border-accent/30 bg-white px-4 py-2 text-xs font-bold text-accent">Retirer</button>
                                     @endif
                                     <button wire:click="openEdit({{ $o['id'] }})" class="btn-tap rounded-full border border-brand/15 bg-white px-4 py-2 text-xs font-bold text-brand hover:bg-cloud">Corriger l'offre</button>
-                                    <button wire:click="delete({{ $o['id'] }})" wire:confirm="Supprimer définitivement « {{ $o['title'] }} » ?" class="icon-btn ml-auto rounded-lg p-1.5 text-[#9AA6B8] hover:bg-accent/10 hover:text-accent" title="Supprimer"><x-ui.icon name="trash-2" class="size-3.5" /></button>
+                                    <button wire:click="delete({{ $o['id'] }})" wire:confirm="Supprimer définitivement « {{ $o['title'] }} » ?" class="icon-btn ml-auto rounded-lg p-1.5 text-[#5B677A] hover:bg-accent/10 hover:text-accent" title="Supprimer"><x-ui.icon name="trash-2" class="size-3.5" /></button>
                                 </div>
                             @endif
                         </div>

@@ -31,7 +31,7 @@
             class="rj-search-input w-full min-w-0 appearance-none border-none bg-transparent text-[13px] text-ink outline-none placeholder:text-[#9AA6B8] focus:outline-none focus-visible:outline-none [&::-webkit-search-cancel-button]:cursor-pointer"
         />
         <span wire:loading wire:target="q" class="size-3.5 shrink-0 animate-spin rounded-full border-2 border-azure/30 border-t-azure"></span>
-        <kbd wire:loading.remove wire:target="q" class="hidden shrink-0 rounded-[6px] border border-brand/15 bg-white px-1.5 py-0.5 font-sans text-[10.5px] font-semibold text-[#9AA6B8] lg:inline">Ctrl K</kbd>
+        <kbd wire:loading.remove wire:target="q" class="hidden shrink-0 rounded-[6px] border border-brand/15 bg-white px-1.5 py-0.5 font-sans text-[10.5px] font-semibold text-[#5B677A] lg:inline">Ctrl K</kbd>
     </div>
 
     <div
@@ -46,7 +46,7 @@
     >
         @if ($actif)
             @forelse ($groupes as $titre => $items)
-                <p class="px-4 pb-1 pt-2.5 text-[10.5px] font-bold uppercase tracking-[0.12em] text-[#9AA6B8]">{{ $titre }}</p>
+                <p class="px-4 pb-1 pt-2.5 text-[10.5px] font-bold uppercase tracking-[0.12em] text-[#5B677A]">{{ $titre }}</p>
                 @foreach ($items as $r)
                     <a href="{{ $r['url'] }}" wire:navigate @click="open = false; mobile = false"
                         class="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-cloud/70 focus:bg-cloud/70 focus:outline-none">
@@ -55,7 +55,7 @@
                         </span>
                         <span class="min-w-0">
                             <span class="block truncate text-[13px] font-semibold text-brand">{{ $r['titre'] }}</span>
-                            <span class="block truncate text-[11.5px] text-[#9AA6B8]">{{ $r['detail'] }}</span>
+                            <span class="block truncate text-[11.5px] text-[#5B677A]">{{ $r['detail'] }}</span>
                         </span>
                     </a>
                 @endforeach

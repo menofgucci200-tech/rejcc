@@ -7,7 +7,7 @@
             <p class="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.08em] text-accent">
                 <x-ui.icon name="nav-mentor" class="size-3.5" /> Mentor du réseau
             </p>
-            <span class="rounded-full px-2.5 py-0.5 text-[10.5px] font-bold {{ ($mentor['accepte'] ?? true) ? 'bg-[#22A85A]/10 text-[#1C8F4C]' : 'bg-cloud text-[#9AA6B8]' }}">
+            <span class="rounded-full px-2.5 py-0.5 text-[10.5px] font-bold {{ ($mentor['accepte'] ?? true) ? 'bg-[#22A85A]/10 text-[#1C8F4C]' : 'bg-cloud text-[#5B677A]' }}">
                 {{ ($mentor['accepte'] ?? true) ? 'Accepte de nouveaux mentorés' : 'Complet pour le moment' }}
             </span>
         </div>
@@ -16,7 +16,7 @@
             <p data-test="stats-mentor" class="mt-2 text-[12px] font-semibold text-brand">
                 {{ $stats['accompagnes'] }} membre{{ $stats['accompagnes'] > 1 ? 's' : '' }} accompagné{{ $stats['accompagnes'] > 1 ? 's' : '' }} au sein du REJCC
                 @if ($stats['note_moyenne'])
-                    · <span class="text-[#B27007]">★ {{ number_format($stats['note_moyenne'], 1, ',', '') }}/5</span> <span class="font-normal text-[#9AA6B8]">({{ $stats['nb_avis'] }} avis)</span>
+                    · <span class="text-[#B27007]">★ {{ number_format($stats['note_moyenne'], 1, ',', '') }}/5</span> <span class="font-normal text-[#5B677A]">({{ $stats['nb_avis'] }} avis)</span>
                 @endif
             </p>
         @endif

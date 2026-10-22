@@ -42,7 +42,7 @@
                 <div class="flex items-center justify-between sm:col-span-2">
                     <div>
                         <p class="text-sm font-bold text-brand">{{ $editingId ? 'Modifier mon annonce' : 'Proposer un service ou un produit' }}</p>
-                        <p class="mt-0.5 text-[11.5px] text-[#9AA6B8]">{{ $editingId ? 'Prix et téléphone : modifiés immédiatement. Titre, description, visuel, type ou catégorie : l\'annonce repasse en validation.' : 'Votre annonce sera examinée par l\'administration avant d\'apparaître sur la Marketplace.' }}</p>
+                        <p class="mt-0.5 text-[11.5px] text-[#5B677A]">{{ $editingId ? 'Prix et téléphone : modifiés immédiatement. Titre, description, visuel, type ou catégorie : l\'annonce repasse en validation.' : 'Votre annonce sera examinée par l\'administration avant d\'apparaître sur la Marketplace.' }}</p>
                     </div>
                     <button wire:click="closeForm" class="icon-btn rounded-lg p-1 hover:bg-cloud hover:text-brand"><x-ui.icon name="x" class="size-4 text-[#5B677A]" /></button>
                 </div>
@@ -79,7 +79,7 @@
                     <input wire:model="price" type="text" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
                 </div>
                 <div>
-                    <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Téléphone <span class="font-normal text-[#9AA6B8]">(facultatif — affiché aux membres abonnés ; ils vous écriront d'abord par la messagerie)</span></label>
+                    <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Téléphone <span class="font-normal text-[#5B677A]">(facultatif — affiché aux membres abonnés ; ils vous écriront d'abord par la messagerie)</span></label>
                     <input wire:model="contact" type="text" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure" />
                 </div>
                 <div class="sm:col-span-2">
@@ -99,7 +99,7 @@
             {{-- Recherche & filtres --}}
             <div class="mb-3 flex flex-wrap items-center gap-2">
                 <div class="relative min-w-[220px] flex-1 sm:max-w-[380px]">
-                    <x-ui.icon name="search" class="pointer-events-none absolute left-3.5 top-1/2 size-[15px] -translate-y-1/2 text-[#9AA6B8]" />
+                    <x-ui.icon name="search" class="pointer-events-none absolute left-3.5 top-1/2 size-[15px] -translate-y-1/2 text-[#5B677A]" />
                     <input wire:model.live.debounce.300ms="recherche" type="search" data-test="recherche-marketplace" aria-label="Rechercher une annonce" placeholder="Ex : traiteur Cocody, couture, attiéké…" class="w-full rounded-xl border border-brand/10 bg-white py-2.5 pl-10 pr-4 text-[13px] text-ink outline-none focus:border-azure" />
                 </div>
                 @foreach (['tous' => 'Tout', 'service' => 'Services', 'produit' => 'Produits'] as $value => $label)
@@ -166,7 +166,7 @@
                                     @if ($l['groupe'] ?? null)
                                         <span class="inline-flex min-w-0 items-center gap-1 truncate text-[10.5px] font-semibold" style="color: {{ $l['groupe']['couleur'] }}"><x-ui.icon :name="$l['groupe']['icone']" class="size-3 shrink-0" /> {{ $l['groupe']['nom'] }}</span>
                                     @else
-                                        <span class="truncate text-[10.5px] font-semibold text-[#9AA6B8]">{{ $l['category'] }}</span>
+                                        <span class="truncate text-[10.5px] font-semibold text-[#5B677A]">{{ $l['category'] }}</span>
                                     @endif
                                 </div>
                                 <h3 class="mb-1.5 text-[14px] font-bold leading-snug text-brand">{{ $l['title'] }}</h3>
@@ -193,7 +193,7 @@
                                             </a>
                                         @endif
                                     @else
-                                        <p class="rounded-[9px] bg-cloud px-3 py-2 text-center text-[11px] font-semibold text-[#9AA6B8]">Votre annonce</p>
+                                        <p class="rounded-[9px] bg-cloud px-3 py-2 text-center text-[11px] font-semibold text-[#5B677A]">Votre annonce</p>
                                     @endif
                                 </div>
                             </div>
@@ -230,7 +230,7 @@
                                 <p class="text-[13.5px] font-bold text-brand">{{ $l['title'] }}</p>
                                 <p class="mt-0.5 text-xs text-[#5B677A]">{{ ucfirst($l['type']) }} · {{ $l['category'] }}@if ($l['price']) · {{ $prix($l['price']) }}@endif</p>
                                 @if (in_array($l['statut'], ['approuve', 'indisponible', 'expiree'], true))
-                                    <p data-test="mon-annonce-stats" class="mt-1 flex flex-wrap gap-x-3 text-[11.5px] text-[#9AA6B8]">
+                                    <p data-test="mon-annonce-stats" class="mt-1 flex flex-wrap gap-x-3 text-[11.5px] text-[#5B677A]">
                                         <span class="inline-flex items-center gap-1"><x-ui.icon name="eye" class="size-3.5" /> {{ $l['vues'] }} vue{{ $l['vues'] > 1 ? 's' : '' }}</span>
                                         <span class="inline-flex items-center gap-1"><x-ui.icon name="message-circle" class="size-3.5" /> {{ $l['contacts'] }} contact{{ $l['contacts'] > 1 ? 's' : '' }}</span>
                                         @if ($l['statut'] === 'expiree')
@@ -255,12 +255,12 @@
                                     <button wire:click="basculerDisponibilite({{ $l['id'] }}, true)" data-test="remettre-en-ligne" class="btn-tap rounded-full border border-[#22A85A]/30 bg-[#22A85A]/10 px-3 py-1.5 text-[11.5px] font-bold text-[#1C8F4C] hover:bg-[#22A85A]/20">Remettre en ligne</button>
                                 @endif
                                 @if ($l['statut'] === 'approuve' && ! ($l['suspendue'] ?? false))
-                                    <button wire:click="voir({{ $l['id'] }})" title="Voir l'annonce" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-brand/10 hover:text-brand"><x-ui.icon name="eye" class="size-4" /></button>
+                                    <button wire:click="voir({{ $l['id'] }})" title="Voir l'annonce" class="icon-btn rounded-lg p-1.5 text-[#5B677A] hover:bg-brand/10 hover:text-brand"><x-ui.icon name="eye" class="size-4" /></button>
                                 @endif
                                 @if ($l['statut'] !== 'expiree' && $abonnementActif)
-                                    <button wire:click="modifier({{ $l['id'] }})" data-test="modifier-annonce" title="{{ in_array($l['statut'], ['refuse', 'retiree'], true) ? 'Corriger et resoumettre' : 'Modifier' }}" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-brand/10 hover:text-brand"><x-ui.icon name="pencil" class="size-4" /></button>
+                                    <button wire:click="modifier({{ $l['id'] }})" data-test="modifier-annonce" title="{{ in_array($l['statut'], ['refuse', 'retiree'], true) ? 'Corriger et resoumettre' : 'Modifier' }}" class="icon-btn rounded-lg p-1.5 text-[#5B677A] hover:bg-brand/10 hover:text-brand"><x-ui.icon name="pencil" class="size-4" /></button>
                                 @endif
-                                <button wire:click="retirer({{ $l['id'] }})" wire:confirm="Retirer définitivement « {{ $l['title'] }} » de la Marketplace ?" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-accent/10 hover:text-accent" title="Retirer l'annonce">
+                                <button wire:click="retirer({{ $l['id'] }})" wire:confirm="Retirer définitivement « {{ $l['title'] }} » de la Marketplace ?" class="icon-btn rounded-lg p-1.5 text-[#5B677A] hover:bg-accent/10 hover:text-accent" title="Retirer l'annonce">
                                     <x-ui.icon name="trash-2" class="size-4" />
                                 </button>
                             </div>

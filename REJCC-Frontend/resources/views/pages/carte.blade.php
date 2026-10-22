@@ -152,7 +152,7 @@
                                     <li class="relative pb-5 pl-6 last:pb-0">
                                         <span class="absolute -left-[7px] top-1.5 size-3 rounded-full border-2 border-white" style="background: {{ $accent }}"></span>
                                         @if ($etape['periode'] ?? null)
-                                            <p class="text-[11px] font-bold uppercase tracking-[0.12em] text-[#9AA6B8]">{{ $etape['periode'] }}</p>
+                                            <p class="text-[11px] font-bold uppercase tracking-[0.12em] text-[#5B677A]">{{ $etape['periode'] }}</p>
                                         @endif
                                         <p class="text-[14px] font-bold text-brand">{{ $etape['titre'] }}</p>
                                         @if ($etape['structure'] ?? null)
@@ -197,7 +197,7 @@
                                             @endif
                                         </div>
                                         <p class="mt-2 text-[13.5px] font-bold text-brand">{{ $l['title'] }}</p>
-                                        <p class="text-[11.5px] font-semibold text-[#9AA6B8]">{{ $l['category'] }}</p>
+                                        <p class="text-[11.5px] font-semibold text-[#5B677A]">{{ $l['category'] }}</p>
                                         @if ($l['description'] ?? null)
                                             <p class="mt-1.5 line-clamp-2 text-[12.5px] text-[#5B677A]">{{ $l['description'] }}</p>
                                         @endif
@@ -214,7 +214,7 @@
                             <dl class="grid gap-x-8 gap-y-4 sm:grid-cols-2">
                                 @foreach ($activite as $label => $value)
                                     <div class="border-b border-cloud-200 pb-3">
-                                        <dt class="text-[11px] font-bold uppercase tracking-[0.12em] text-[#9AA6B8]">{{ $label }}</dt>
+                                        <dt class="text-[11px] font-bold uppercase tracking-[0.12em] text-[#5B677A]">{{ $label }}</dt>
                                         <dd class="mt-1 text-[14px] font-semibold text-ink">{{ $value }}</dd>
                                     </div>
                                 @endforeach
@@ -259,7 +259,7 @@
                                         <span class="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-[#F5A623]/15 text-[#B27007]"><x-ui.icon name="award" class="size-4" /></span>
                                         <span class="min-w-0">
                                             <span class="block text-[13px] font-bold text-brand">{{ $ce['titre'] }}</span>
-                                            <span class="block text-[11.5px] text-[#9AA6B8]">{{ $ce['categorie'] ?? 'Certificat' }} · {{ \Carbon\Carbon::parse($ce['obtenu_le'])->translatedFormat('F Y') }} · {{ $ce['reference'] }}</span>
+                                            <span class="block text-[11.5px] text-[#5B677A]">{{ $ce['categorie'] ?? 'Certificat' }} · {{ \Carbon\Carbon::parse($ce['obtenu_le'])->translatedFormat('F Y') }} · {{ $ce['reference'] }}</span>
                                             @if (! empty($ce['url_verification']))
                                                 <a href="{{ $ce['url_verification'] }}" target="_blank" rel="noopener" data-test="bio-verifier" class="mt-0.5 inline-flex items-center gap-1 text-[11.5px] font-bold text-[#1C8F4C] hover:underline"><x-ui.icon name="shield-check" class="size-3.5" /> Vérifier l'authenticité</a>
                                             @endif
@@ -280,7 +280,7 @@
                                         <span class="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full" style="background: {{ ($b['couleur'] ?? null) ?: '#4F6FBF' }}1A; color: {{ ($b['couleur'] ?? null) ?: '#4F6FBF' }}"><x-ui.icon :name="($b['icon'] ?? null) ?: 'rocket'" class="size-4" /></span>
                                         <span class="min-w-0">
                                             <span class="block text-[13px] font-bold text-brand">{{ $b['titre'] }}</span>
-                                            <span class="block text-[11.5px] text-[#9AA6B8]">Badge obtenu en {{ \Carbon\Carbon::parse($b['obtenu_le'])->translatedFormat('F Y') }}</span>
+                                            <span class="block text-[11.5px] text-[#5B677A]">Badge obtenu en {{ \Carbon\Carbon::parse($b['obtenu_le'])->translatedFormat('F Y') }}</span>
                                         </span>
                                     </li>
                                 @endforeach
@@ -312,7 +312,7 @@
                             <dl class="flex flex-col gap-3">
                                 @foreach ($foi as $label => $value)
                                     <div>
-                                        <dt class="text-[11px] font-bold uppercase tracking-[0.12em] text-[#9AA6B8]">{{ $label }}</dt>
+                                        <dt class="text-[11px] font-bold uppercase tracking-[0.12em] text-[#5B677A]">{{ $label }}</dt>
                                         <dd class="mt-0.5 text-[13.5px] font-semibold text-ink">{{ $value }}</dd>
                                     </div>
                                 @endforeach
@@ -325,7 +325,7 @@
             {{-- ═════ Références réseau ═════ --}}
             <div class="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-3xl border border-brand/10 bg-white px-6 py-5 shadow-[0_2px_8px_rgba(3,29,89,.05)] sm:px-8">
                 <div>
-                    <p class="text-[11px] font-bold uppercase tracking-[0.12em] text-[#9AA6B8]">N° membre</p>
+                    <p class="text-[11px] font-bold uppercase tracking-[0.12em] text-[#5B677A]">N° membre</p>
                     <p class="mt-0.5 text-[14px] font-bold tracking-[0.06em] text-brand">{{ $card->numero ?? '—' }}</p>
                 </div>
                 <span class="inline-flex items-center gap-1.5 rounded-full bg-[#22A85A]/10 px-3.5 py-1.5 text-[11.5px] font-bold text-[#1C8F4C]">
@@ -333,7 +333,7 @@
                 </span>
             </div>
 
-            <p class="mt-6 text-center text-[12px] text-[#9AA6B8]">Informations publiées par le membre et vérifiées par le REJCC — consultées le {{ now()->translatedFormat('j F Y') }}</p>
+            <p class="mt-6 text-center text-[12px] text-[#5B677A]">Informations publiées par le membre et vérifiées par le REJCC — consultées le {{ now()->translatedFormat('j F Y') }}</p>
         </div>
     </section>
     @endif

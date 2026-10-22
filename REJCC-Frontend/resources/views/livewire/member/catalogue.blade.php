@@ -24,7 +24,7 @@
         {{-- Recherche, catégorie et tri --}}
         <div class="mb-5 flex flex-wrap items-center gap-2.5" data-test="outils-catalogue">
             <label class="flex min-w-[220px] flex-1 items-center gap-2 rounded-[10px] border border-brand/10 bg-white px-3 py-2 focus-within:border-azure/50">
-                <x-ui.icon name="search" class="size-4 shrink-0 text-[#9AA6B8]" />
+                <x-ui.icon name="search" class="size-4 shrink-0 text-[#5B677A]" />
                 <input wire:model.live.debounce.300ms="q" type="search" data-test="recherche-catalogue" placeholder="Rechercher une formation (titre, thème, mot-clé)…" class="rj-search-input w-full min-w-0 border-none bg-transparent text-[13px] outline-none placeholder:text-[#9AA6B8]" />
             </label>
             <select wire:model.live="categorie" data-test="categorie" class="rounded-[10px] border border-brand/10 bg-white py-2 pl-3 pr-9 text-[13px] text-ink outline-none focus:border-azure">
@@ -48,7 +48,7 @@
             <p class="rounded-[16px] border border-brand/10 bg-white py-12 text-center text-sm text-[#5B677A]" data-test="catalogue-vide">Aucune formation n'est encore publiée. Revenez bientôt : le REJCC prépare son catalogue.</p>
         @elseif ($cours->isEmpty())
             <div class="flex flex-col items-center gap-2 rounded-[16px] border border-brand/10 bg-white py-12 text-center" data-test="aucun-resultat">
-                <x-ui.icon name="search" class="size-7 text-[#9AA6B8]" />
+                <x-ui.icon name="search" class="size-7 text-[#5B677A]" />
                 <p class="text-[14px] font-bold text-brand">Aucune formation ne correspond{{ trim($q) !== '' ? ' à « '.$q.' »' : '' }}</p>
                 <p class="text-[12.5px] text-[#5B677A]">Essayez un autre mot-clé ou une autre catégorie.</p>
                 <button type="button" wire:click="reinitialiser" class="mt-1 rounded-full border border-brand/15 px-4 py-1.5 text-[12.5px] font-bold text-brand hover:bg-cloud">Voir toutes les formations</button>
@@ -84,7 +84,7 @@
                         @unless ($c['has_modules'])
                             <p class="mb-2 inline-flex items-center gap-1 rounded-full bg-cloud px-2 py-0.5 text-[10.5px] font-semibold text-[#5B677A]"><x-ui.icon name="clock" class="size-3" /> Contenu en préparation</p>
                         @endunless
-                        <div class="mb-3 flex items-center gap-3 text-xs text-[#9AA6B8]">
+                        <div class="mb-3 flex items-center gap-3 text-xs text-[#5B677A]">
                             <span class="inline-flex items-center gap-1"><x-ui.icon name="clock" class="size-3" /> {{ $c['duree'] }}</span>
                             <span class="inline-flex items-center gap-1"><x-ui.icon name="target" class="size-3" /> {{ $c['niveau'] }}</span>
                         </div>

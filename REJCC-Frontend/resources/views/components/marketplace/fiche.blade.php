@@ -34,9 +34,9 @@
                     @if ($l['groupe'] ?? null)
                         <a href="{{ route('espace-membre.groupes.membres', $l['groupe']['id']) }}" wire:navigate class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold hover:underline" style="color: {{ $l['groupe']['couleur'] }}; background: {{ $l['groupe']['couleur'] }}14"><x-ui.icon :name="$l['groupe']['icone']" class="size-3" /> {{ $l['groupe']['nom'] }}</a>
                     @else
-                        <span class="text-[11px] font-semibold text-[#9AA6B8]">{{ $l['category'] }}</span>
+                        <span class="text-[11px] font-semibold text-[#5B677A]">{{ $l['category'] }}</span>
                     @endif
-                    <span class="text-[11px] font-semibold text-[#9AA6B8]">publiée {{ \Illuminate\Support\Carbon::parse($l['publie_le'] ?? $l['created_at'])->locale('fr')->diffForHumans() }}</span>
+                    <span class="text-[11px] font-semibold text-[#5B677A]">publiée {{ \Illuminate\Support\Carbon::parse($l['publie_le'] ?? $l['created_at'])->locale('fr')->diffForHumans() }}</span>
                 </div>
                 <h2 data-test="fiche-titre" class="text-[19px] font-extrabold leading-snug text-brand">{{ $l['title'] }}</h2>
                 @if ($prix)<p data-test="fiche-prix" class="mt-1 text-[16px] font-extrabold text-accent">{{ $prix }}</p>@endif
@@ -51,7 +51,7 @@
 
                 {{-- Vendeur --}}
                 <section class="mt-5 rounded-[14px] border border-brand/10 p-4">
-                    <p class="mb-2.5 text-[11px] font-bold uppercase tracking-[0.1em] text-[#9AA6B8]">{{ $l['type'] === 'service' ? 'Proposé par' : 'Vendu par' }}</p>
+                    <p class="mb-2.5 text-[11px] font-bold uppercase tracking-[0.1em] text-[#5B677A]">{{ $l['type'] === 'service' ? 'Proposé par' : 'Vendu par' }}</p>
                     <div class="flex items-center gap-3">
                         <x-messagerie.avatar :personne="$v" taille="size-12" texte="text-sm" />
                         <div class="min-w-0">
@@ -59,7 +59,7 @@
                                 @if (($v['role'] ?? '') === 'mentor')<span class="rounded-full bg-accent px-1.5 text-[9px] font-bold uppercase leading-4 text-white">Mentor</span>@endif
                             </p>
                             <p class="text-[12px] text-[#5B677A]">{{ collect([$v['titre'] ?? null, $v['ville'] ?? null])->filter()->join(' · ') }}</p>
-                            <p class="mt-0.5 text-[11.5px] text-[#9AA6B8]">
+                            <p class="mt-0.5 text-[11.5px] text-[#5B677A]">
                                 @if (($v['avis']['nombre'] ?? 0) > 0)<span data-test="fiche-vendeur-note" class="font-bold text-[#B7790F]">★ {{ number_format($v['avis']['moyenne'], 1, ',', ' ') }}</span> ({{ $v['avis']['nombre'] }} avis) · @endif
                                 {{ $v['annonces'] ?? 0 }} annonce{{ ($v['annonces'] ?? 0) > 1 ? 's' : '' }} en ligne
                             </p>
@@ -98,11 +98,11 @@
                     </button>
                     @unless ($l['est_vendeur'] ?? false)
                         @if ($l['deja_signalee'] ?? false)
-                            <span class="ml-auto text-[11.5px] text-[#9AA6B8]">Annonce signalée</span>
+                            <span class="ml-auto text-[11.5px] text-[#5B677A]">Annonce signalée</span>
                         @else
                             <button type="button" data-test="fiche-signaler"
                                 x-on:click="const motif = await rjPrompt('Signaler cette annonce ? L\'équipe REJCC examinera votre signalement.', { placeholder: 'Ex. : arnaque, contenu inapproprié, hors sujet…', ok: 'Signaler', requis: true }); if (motif !== null) $wire.signaler(motif)"
-                                class="ml-auto text-[11.5px] font-semibold text-[#9AA6B8] hover:text-accent">Signaler</button>
+                                class="ml-auto text-[11.5px] font-semibold text-[#5B677A] hover:text-accent">Signaler</button>
                         @endif
                     @endunless
                 </div>

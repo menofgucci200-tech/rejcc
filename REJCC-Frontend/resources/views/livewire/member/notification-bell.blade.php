@@ -41,14 +41,14 @@
                         @if ($n->body)
                             <span class="mt-0.5 line-clamp-2 block text-[11.5px] leading-snug text-[#5B677A]">{{ $n->body }}</span>
                         @endif
-                        <span class="mt-1 block text-[10.5px] font-semibold text-[#9AA6B8]">{{ $n->created_at->diffForHumans() }}</span>
+                        <span class="mt-1 block text-[10.5px] font-semibold text-[#5B677A]">{{ $n->created_at->diffForHumans() }}</span>
                     </span>
                     @unless ($n->read_at)
                         <span class="ml-auto mt-1.5 size-2 shrink-0 rounded-full bg-accent"></span>
                     @endunless
                 </a>
             @empty
-                <p class="px-4 py-8 text-center text-[12.5px] text-[#9AA6B8]">Aucune notification pour le moment.</p>
+                <p class="px-4 py-8 text-center text-[12.5px] text-[#5B677A]">Aucune notification pour le moment.</p>
             @endforelse
         </div>
 

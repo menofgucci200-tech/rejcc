@@ -13,7 +13,7 @@
                         </p>
                         @if (count($rendu['sommaire']) > 2)
                             <nav aria-label="Sommaire" class="mb-10 rounded-2xl border border-brand/10 bg-cloud/50 p-5 lg:hidden">
-                                <p class="text-xs font-bold uppercase tracking-[0.14em] text-[#9AA6B8]">Sommaire</p>
+                                <p class="text-xs font-bold uppercase tracking-[0.14em] text-[#5B677A]">Sommaire</p>
                                 <ol class="mt-3 list-decimal space-y-1.5 pl-5 text-[14px]">
                                     @foreach ($rendu['sommaire'] as $s)
                                         <li><a href="#{{ $s['id'] }}" class="text-brand hover:text-accent">{{ $s['titre'] }}</a></li>
@@ -36,7 +36,7 @@
                 <aside class="flex flex-col gap-6 lg:sticky lg:top-28 lg:self-start">
                     @if ($rendu && count($rendu['sommaire']) > 2)
                         <nav aria-label="Sommaire" class="hidden rounded-2xl border border-brand/10 p-5 lg:block">
-                            <p class="text-xs font-bold uppercase tracking-[0.14em] text-[#9AA6B8]">Sommaire</p>
+                            <p class="text-xs font-bold uppercase tracking-[0.14em] text-[#5B677A]">Sommaire</p>
                             <ol class="mt-3 list-decimal space-y-1.5 pl-5 text-[13.5px]">
                                 @foreach ($rendu['sommaire'] as $s)
                                     <li><a href="#{{ $s['id'] }}" class="text-brand hover:text-accent">{{ $s['titre'] }}</a></li>

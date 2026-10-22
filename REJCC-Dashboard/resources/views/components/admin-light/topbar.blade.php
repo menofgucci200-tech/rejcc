@@ -19,7 +19,7 @@
 
     <nav aria-label="Fil d'Ariane" data-test="fil-ariane-admin" class="flex min-w-0 items-center gap-1.5 text-[13px]">
         @if ($rubrique)
-            <span class="hidden shrink-0 font-semibold text-[#9AA6B8] md:inline">{{ $rubrique }}</span>
+            <span class="hidden shrink-0 font-semibold text-[#5B677A] md:inline">{{ $rubrique }}</span>
             <x-ui.icon name="chevron-right" class="hidden size-3.5 shrink-0 text-[#C9D3E6] md:block" />
         @endif
         @if ($parent)
@@ -66,12 +66,12 @@
                 <span class="block whitespace-nowrap text-[11px] font-semibold leading-tight {{ $restreint ? 'text-[#B27007]' : 'text-[#5B677A]' }}">{{ $restreint ? 'Accès limité' : 'Administration' }}</span>
             </span>
             <span class="flex size-8 items-center justify-center rounded-[9px] text-[11px] font-bold text-white" style="background: linear-gradient(135deg, #AC0100, #D95B5A)">{{ $initiales }}</span>
-            <x-ui.icon name="chevron-down" class="hidden size-3.5 text-[#9AA6B8] transition-transform sm:block" x-bind:class="ouvert ? 'rotate-180' : ''" />
+            <x-ui.icon name="chevron-down" class="hidden size-3.5 text-[#5B677A] transition-transform sm:block" x-bind:class="ouvert ? 'rotate-180' : ''" />
         </button>
         <div x-show="ouvert" x-transition.origin.top.right style="display: none" class="absolute right-0 top-[calc(100%+8px)] z-[95] w-[230px] overflow-hidden rounded-[14px] border border-brand/10 bg-white py-1.5 text-[13px] shadow-[0_24px_60px_-20px_rgba(3,29,89,.35)]">
             <div class="border-b border-cloud-200 px-4 pb-2.5 pt-1.5">
                 <p class="truncate font-bold text-brand">{{ $user->prenom }} {{ $user->nom }}</p>
-                <p class="truncate text-[11.5px] text-[#9AA6B8]">{{ $user->email ?? '' }}</p>
+                <p class="truncate text-[11.5px] text-[#5B677A]">{{ $user->email ?? '' }}</p>
             </div>
             <div class="py-1">
                 <a href="{{ \App\Support\Site::url('/espace-membre') }}" target="_blank" rel="noopener" class="flex items-center gap-2.5 px-4 py-2 font-semibold text-brand hover:bg-cloud"><x-ui.icon name="nav-home" class="size-4 text-[#5B677A]" /> Espace membre</a>

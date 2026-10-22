@@ -6,7 +6,7 @@
             <div>
                 <h2 class="mb-1 text-[17px] font-bold text-brand">Groupes sectoriels</h2>
                 <div class="h-[3px] w-9 rounded bg-accent"></div>
-                <p class="mt-2 max-w-2xl text-xs text-[#9AA6B8]">Les groupes permettent aux membres de trouver un professionnel par domaine. Gérez leur identité, le référent, l'annonce épinglée, les membres et les avis. Chaque groupe dispose de sa discussion sur la plateforme, réservée à ses membres abonnés.</p>
+                <p class="mt-2 max-w-2xl text-xs text-[#5B677A]">Les groupes permettent aux membres de trouver un professionnel par domaine. Gérez leur identité, le référent, l'annonce épinglée, les membres et les avis. Chaque groupe dispose de sa discussion sur la plateforme, réservée à ses membres abonnés.</p>
             </div>
             <div class="flex flex-wrap gap-2">
                 <a href="{{ route('admin.export', 'groupes') }}" class="btn-tap inline-flex items-center gap-1.5 rounded-full border border-brand/15 bg-white px-4 py-1.5 text-xs font-bold text-brand hover:bg-cloud"><x-ui.icon name="download" class="size-3.5" /> Exporter tous les membres</a>
@@ -22,7 +22,7 @@
         <div class="mb-5 flex gap-1 border-b border-brand/10" role="tablist">
             @foreach (['groupes' => 'Groupes ('.$groups->count().')', 'avis' => 'Avis des membres'] as $cle => $libelle)
                 <button type="button" role="tab" wire:click="$set('onglet', '{{ $cle }}')" :aria-selected="@js($onglet === $cle)" data-test="onglet-{{ $cle }}"
-                    class="-mb-px inline-flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-[13px] font-bold transition-colors {{ $onglet === $cle ? 'border-accent text-brand' : 'border-transparent text-[#9AA6B8] hover:text-brand' }}">
+                    class="-mb-px inline-flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-[13px] font-bold transition-colors {{ $onglet === $cle ? 'border-accent text-brand' : 'border-transparent text-[#5B677A] hover:text-brand' }}">
                     {{ $libelle }}
                     @if ($cle === 'avis' && $avisSignales)
                         <span class="rounded-full bg-accent px-1.5 text-[10.5px] font-bold leading-4 text-white">{{ $avisSignales }}</span>
@@ -36,8 +36,8 @@
                 @foreach ($groups as $g)
                     <div data-test="ligne-groupe" wire:key="admin-groupe-{{ $g['id'] }}" class="row-hover flex flex-wrap items-center gap-3 border-t border-[#EDF0F5] px-4 py-3 first:border-t-0 sm:px-5">
                         <div class="flex shrink-0 flex-col">
-                            <button wire:click="move({{ $g['id'] }}, 'up')" @disabled($loop->first) aria-label="Monter" class="rounded p-0.5 text-[#9AA6B8] hover:bg-cloud hover:text-brand disabled:opacity-25"><x-ui.icon name="chevron-down" class="size-3.5 rotate-180" /></button>
-                            <button wire:click="move({{ $g['id'] }}, 'down')" @disabled($loop->last) aria-label="Descendre" class="rounded p-0.5 text-[#9AA6B8] hover:bg-cloud hover:text-brand disabled:opacity-25"><x-ui.icon name="chevron-down" class="size-3.5" /></button>
+                            <button wire:click="move({{ $g['id'] }}, 'up')" @disabled($loop->first) aria-label="Monter" class="rounded p-0.5 text-[#5B677A] hover:bg-cloud hover:text-brand disabled:opacity-25"><x-ui.icon name="chevron-down" class="size-3.5 rotate-180" /></button>
+                            <button wire:click="move({{ $g['id'] }}, 'down')" @disabled($loop->last) aria-label="Descendre" class="rounded p-0.5 text-[#5B677A] hover:bg-cloud hover:text-brand disabled:opacity-25"><x-ui.icon name="chevron-down" class="size-3.5" /></button>
                         </div>
                         <span class="flex size-10 shrink-0 items-center justify-center rounded-[11px]" style="background: {{ $g['couleur'] }}1A; color: {{ $g['couleur'] }}"><x-ui.icon :name="$g['icone']" class="size-5" /></span>
                         <div class="min-w-[200px] flex-1">
@@ -45,16 +45,16 @@
                             <div class="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11.5px] text-[#5B677A]">
                                 <span class="inline-flex items-center gap-1"><x-ui.icon name="users" class="size-3.5" /> {{ $g['membres'] }} membre{{ $g['membres'] > 1 ? 's' : '' }}</span>
                                 <span class="inline-flex items-center gap-1"><x-ui.icon name="star" class="size-3.5" /> {{ $g['avis'] }} avis</span>
-                                <span class="inline-flex items-center gap-1 {{ $g['referent'] ? '' : 'text-[#9AA6B8]' }}"><x-ui.icon name="award" class="size-3.5" /> {{ $g['referent']['nom'] ?? 'Pas de référent' }}</span>
+                                <span class="inline-flex items-center gap-1 {{ $g['referent'] ? '' : 'text-[#5B677A]' }}"><x-ui.icon name="award" class="size-3.5" /> {{ $g['referent']['nom'] ?? 'Pas de référent' }}</span>
                                 <span class="inline-flex items-center gap-1"><x-ui.icon name="message-circle" class="size-3.5" /> {{ $g['messages'] }} message{{ $g['messages'] > 1 ? 's' : '' }} dans la discussion</span>
                                 @if ($g['annonce'])<span class="inline-flex items-center gap-1 text-[#8A5A08]"><x-ui.icon name="pin" class="size-3.5" /> Annonce épinglée</span>@endif
                             </div>
                         </div>
                         <div class="flex shrink-0 items-center gap-1">
                             <button wire:click="voirMembres({{ $g['id'] }})" data-test="voir-membres-admin" class="btn-tap rounded-full border border-brand/15 px-3 py-1.5 text-[11.5px] font-bold text-brand hover:bg-cloud">Membres</button>
-                            <a href="{{ route('admin.export', ['dataset' => 'groupes', 'group' => $g['id']]) }}" title="Exporter les membres (CSV)" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-brand/10 hover:text-brand"><x-ui.icon name="download" class="size-3.5" /></a>
-                            <button wire:click="openEdit({{ $g['id'] }})" data-test="modifier-groupe" title="Modifier" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-brand/10 hover:text-brand"><x-ui.icon name="pencil" class="size-3.5" /></button>
-                            <button wire:click="delete({{ $g['id'] }})" wire:confirm="Supprimer le groupe « {{ $g['name'] }} » ?{{ $g['membres'] ? ' Les fiches de ses '.$g['membres'].' membres seront supprimées.' : '' }}" title="Supprimer" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-accent/10 hover:text-accent"><x-ui.icon name="trash-2" class="size-3.5" /></button>
+                            <a href="{{ route('admin.export', ['dataset' => 'groupes', 'group' => $g['id']]) }}" title="Exporter les membres (CSV)" class="icon-btn rounded-lg p-1.5 text-[#5B677A] hover:bg-brand/10 hover:text-brand"><x-ui.icon name="download" class="size-3.5" /></a>
+                            <button wire:click="openEdit({{ $g['id'] }})" data-test="modifier-groupe" title="Modifier" class="icon-btn rounded-lg p-1.5 text-[#5B677A] hover:bg-brand/10 hover:text-brand"><x-ui.icon name="pencil" class="size-3.5" /></button>
+                            <button wire:click="delete({{ $g['id'] }})" wire:confirm="Supprimer le groupe « {{ $g['name'] }} » ?{{ $g['membres'] ? ' Les fiches de ses '.$g['membres'].' membres seront supprimées.' : '' }}" title="Supprimer" class="icon-btn rounded-lg p-1.5 text-[#5B677A] hover:bg-accent/10 hover:text-accent"><x-ui.icon name="trash-2" class="size-3.5" /></button>
                         </div>
                     </div>
                 @endforeach
@@ -75,7 +75,7 @@
                             <p class="mt-0.5 text-[14px] tracking-wide text-[#F5A623]">{{ str_repeat('★', $a['note']) }}<span class="text-[#D5DCE8]">{{ str_repeat('★', 5 - $a['note']) }}</span></p>
                             @if ($a['commentaire'])<p class="mt-0.5 text-[13px] text-ink">« {{ $a['commentaire'] }} »</p>@endif
                             <div class="mt-1 flex flex-wrap gap-1.5 text-[11px]">
-                                <span class="text-[#9AA6B8]">{{ \Illuminate\Support\Carbon::parse($a['date'])->locale('fr')->diffForHumans() }}</span>
+                                <span class="text-[#5B677A]">{{ \Illuminate\Support\Carbon::parse($a['date'])->locale('fr')->diffForHumans() }}</span>
                                 @if ($a['signale'])<span class="rounded-full bg-accent/10 px-2 font-bold text-accent">Signalé{{ $a['motif'] ? ' : '.$a['motif'] : '' }}</span>@endif
                                 @if ($a['masque'])<span class="rounded-full bg-[#5B677A]/10 px-2 font-bold text-[#5B677A]">Masqué</span>@endif
                             </div>
@@ -89,7 +89,7 @@
                                 @endif
                                 <button wire:click="moderer({{ $a['id'] }}, true)" data-test="masquer-avis" class="btn-tap rounded-full bg-brand px-3 py-1.5 text-[11.5px] font-bold text-white hover:bg-brand/90">Masquer</button>
                             @endif
-                            <button wire:click="supprimerAvis({{ $a['id'] }})" wire:confirm="Supprimer définitivement cet avis ?" title="Supprimer" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-accent/10 hover:text-accent"><x-ui.icon name="trash-2" class="size-3.5" /></button>
+                            <button wire:click="supprimerAvis({{ $a['id'] }})" wire:confirm="Supprimer définitivement cet avis ?" title="Supprimer" class="icon-btn rounded-lg p-1.5 text-[#5B677A] hover:bg-accent/10 hover:text-accent"><x-ui.icon name="trash-2" class="size-3.5" /></button>
                         </div>
                     </div>
                 @empty
@@ -144,17 +144,17 @@
                     </div>
                     @if ($editingId)
                         <div class="sm:col-span-2">
-                            <label for="g-referent" class="mb-1 block text-xs font-semibold text-[#5B677A]">Référent du groupe <span class="font-normal text-[#9AA6B8]">(choisi parmi ses membres)</span></label>
+                            <label for="g-referent" class="mb-1 block text-xs font-semibold text-[#5B677A]">Référent du groupe <span class="font-normal text-[#5B677A]">(choisi parmi ses membres)</span></label>
                             <select id="g-referent" wire:model="referentId" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure">
                                 <option value="">— Aucun référent —</option>
                                 @foreach ($membresForm as $m)
                                     <option value="{{ $m['id'] }}">{{ $m['nom'] }}</option>
                                 @endforeach
                             </select>
-                            @if (empty($membresForm))<p class="mt-1 text-[11.5px] text-[#9AA6B8]">Le groupe n'a pas encore de membre.</p>@endif
+                            @if (empty($membresForm))<p class="mt-1 text-[11.5px] text-[#5B677A]">Le groupe n'a pas encore de membre.</p>@endif
                         </div>
                         <div class="sm:col-span-2">
-                            <label for="g-annonce" class="mb-1 block text-xs font-semibold text-[#5B677A]">Annonce épinglée <span class="font-normal text-[#9AA6B8]">(laisser vide pour la retirer)</span></label>
+                            <label for="g-annonce" class="mb-1 block text-xs font-semibold text-[#5B677A]">Annonce épinglée <span class="font-normal text-[#5B677A]">(laisser vide pour la retirer)</span></label>
                             <textarea id="g-annonce" wire:model="annonce" rows="3" maxlength="1000" placeholder="Ex : Rencontre des membres samedi à 10h…" class="w-full rounded-[9px] border border-brand/15 px-3 py-2 text-sm outline-none focus:border-azure"></textarea>
                             <label class="mt-1.5 flex items-center gap-2 text-[12px] text-ink">
                                 <input type="checkbox" wire:model="notifier" class="size-4 rounded border-brand/30 text-brand"> Prévenir les membres du groupe d'une nouvelle annonce (notification)
@@ -179,8 +179,8 @@
             <div data-test="membres-groupe-admin" role="dialog" aria-modal="true" class="panel-enter flex max-h-[90vh] w-full max-w-[760px] flex-col overflow-hidden rounded-[20px] bg-white shadow-2xl">
                 <div class="flex items-center justify-between gap-3 border-b border-cloud-200 px-6 py-4">
                     <div>
-                        <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#9AA6B8]">Membres du groupe</p>
-                        <p class="text-[15px] font-bold text-brand">{{ $groupeMembres['name'] ?? '' }} <span class="font-semibold text-[#9AA6B8]">· {{ $membres->count() }}</span></p>
+                        <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#5B677A]">Membres du groupe</p>
+                        <p class="text-[15px] font-bold text-brand">{{ $groupeMembres['name'] ?? '' }} <span class="font-semibold text-[#5B677A]">· {{ $membres->count() }}</span></p>
                     </div>
                     <div class="flex items-center gap-2">
                         <a href="{{ route('admin.export', ['dataset' => 'groupes', 'group' => $membresGroupId]) }}" class="btn-tap inline-flex items-center gap-1.5 rounded-full border border-brand/15 px-3 py-1.5 text-[11.5px] font-bold text-brand hover:bg-cloud"><x-ui.icon name="download" class="size-3.5" /> CSV</a>
@@ -198,9 +198,9 @@
                                     @unless ($m['actif'])<span class="ml-1 rounded-full bg-accent/10 px-2 text-[10.5px] font-bold text-accent">Suspendu</span>@endunless
                                     @unless ($m['dans_annuaire'])<span class="ml-1 rounded-full bg-[#5B677A]/10 px-2 text-[10.5px] font-bold text-[#5B677A]">Masqué de l'annuaire</span>@endunless
                                 </p>
-                                <p class="text-[11.5px] text-[#9AA6B8]">{{ collect([$m['email'], $m['telephone'], $m['ville']])->filter()->join(' · ') }}</p>
+                                <p class="text-[11.5px] text-[#5B677A]">{{ collect([$m['email'], $m['telephone'], $m['ville']])->filter()->join(' · ') }}</p>
                                 <p class="mt-1 line-clamp-2 text-[12.5px] italic text-ink">« {{ $m['specialite'] }} »</p>
-                                <p class="mt-0.5 text-[11px] text-[#9AA6B8]">
+                                <p class="mt-0.5 text-[11px] text-[#5B677A]">
                                     @if ($m['avis']['nombre'])<span class="font-semibold text-[#B7790F]">★ {{ number_format($m['avis']['moyenne'], 1, ',', ' ') }} ({{ $m['avis']['nombre'] }})</span> · @endif
                                     Rejoint {{ $m['rejoint_le'] ? \Illuminate\Support\Carbon::parse($m['rejoint_le'])->locale('fr')->diffForHumans() : '' }}
                                 </p>

@@ -52,7 +52,7 @@
         </div>
     @endif
 
-    <div class="mt-3 flex flex-1 flex-col gap-1 text-xs text-[#9AA6B8]">
+    <div class="mt-3 flex flex-1 flex-col gap-1 text-xs text-[#5B677A]">
         @if ($m['zone'] ?? null)
             <p class="flex items-start gap-1.5"><x-ui.icon name="map-pin" class="mt-px size-3 shrink-0" /> <span class="line-clamp-1">Intervient : {{ $m['zone'] }}</span></p>
         @elseif ($m['ville'] || $m['organisation'])
@@ -64,7 +64,7 @@
     </div>
 
     @if ($m['id'] === (\App\Support\Api::user()->id ?? 0))
-        <span class="mt-3.5 flex items-center justify-center rounded-[9px] bg-cloud py-2 text-[12px] font-semibold text-[#9AA6B8]">C'est votre fiche</span>
+        <span class="mt-3.5 flex items-center justify-center rounded-[9px] bg-cloud py-2 text-[12px] font-semibold text-[#5B677A]">C'est votre fiche</span>
     @else
         <a href="{{ route('espace-membre.messaging', ['to' => $m['id']]) }}" wire:navigate onclick="event.stopPropagation()"
             class="btn-tap mt-3.5 flex items-center justify-center gap-1.5 rounded-[9px] border border-azure/25 bg-azure/10 py-2 text-[12.5px] font-semibold text-azure hover:bg-azure/20">

@@ -27,11 +27,11 @@
         },
     }">
     <div class="flex items-center justify-between gap-3">
-        <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#9AA6B8]">Avis des membres</p>
+        <p class="text-[11px] font-bold uppercase tracking-[0.1em] text-[#5B677A]">Avis des membres</p>
         @if ($nombre)
             <p data-test="avis-moyenne" class="flex items-center gap-1.5 text-[13px] font-extrabold text-brand">
                 <x-ui.icon name="star" class="size-4 fill-[#F5A623] text-[#F5A623]" />
-                {{ number_format($moyenne, 1, ',', ' ') }}<span class="font-semibold text-[#9AA6B8]">/5 · {{ $nombre }} avis</span>
+                {{ number_format($moyenne, 1, ',', ' ') }}<span class="font-semibold text-[#5B677A]">/5 · {{ $nombre }} avis</span>
             </p>
         @endif
     </div>
@@ -110,17 +110,17 @@
                         <p class="flex flex-wrap items-baseline gap-x-2 text-[12.5px]">
                             <span class="font-bold text-brand">{{ $a['auteur'] }}</span>
                             <span class="tracking-wide text-[#F5A623]">{{ str_repeat('★', $a['note']) }}<span class="text-[#D5DCE8]">{{ str_repeat('★', 5 - $a['note']) }}</span></span>
-                            <span class="text-[11px] text-[#9AA6B8]">{{ $a['date'] ? (\Illuminate\Support\Carbon::parse($a['date'])->gt(now()->subMinute()) ? "à l'instant" : \Illuminate\Support\Carbon::parse($a['date'])->locale('fr')->diffForHumans()) : '' }}{{ $a['groupe'] ? ' · '.$a['groupe'] : '' }}</span>
+                            <span class="text-[11px] text-[#5B677A]">{{ $a['date'] ? (\Illuminate\Support\Carbon::parse($a['date'])->gt(now()->subMinute()) ? "à l'instant" : \Illuminate\Support\Carbon::parse($a['date'])->locale('fr')->diffForHumans()) : '' }}{{ $a['groupe'] ? ' · '.$a['groupe'] : '' }}</span>
                         </p>
                         @if ($a['commentaire'])<p class="mt-0.5 text-[12.5px] leading-relaxed text-ink">{{ $a['commentaire'] }}</p>@endif
                     </div>
                     @if (($a['auteur_id'] ?? 0) !== (\App\Support\Api::user()->id ?? -1))
                         @if ($a['signale'] ?? false)
-                            <span data-test="avis-signale" class="shrink-0 self-start text-[11px] font-semibold text-[#9AA6B8]">Signalé</span>
+                            <span data-test="avis-signale" class="shrink-0 self-start text-[11px] font-semibold text-[#5B677A]">Signalé</span>
                         @else
                             <button type="button" data-test="signaler-avis" title="Signaler cet avis à l'administration"
                                 x-on:click="const motif = await rjPrompt('Signaler cet avis ? L\'équipe REJCC examinera votre signalement.', { placeholder: 'Ex. : injurieux, faux, hors sujet…', ok: 'Signaler', requis: true }); if (motif !== null) $wire.signalerAvis({{ $a['id'] }}, motif)"
-                                class="shrink-0 self-start rounded-full px-2 py-0.5 text-[11px] font-semibold text-[#9AA6B8] hover:bg-accent/5 hover:text-accent">Signaler</button>
+                                class="shrink-0 self-start rounded-full px-2 py-0.5 text-[11px] font-semibold text-[#5B677A] hover:bg-accent/5 hover:text-accent">Signaler</button>
                         @endif
                     @endif
                 </li>

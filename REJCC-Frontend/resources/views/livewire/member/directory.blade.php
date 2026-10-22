@@ -117,7 +117,7 @@
         <div x-data="{ filtres: false }" class="mb-5 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.6fr)_repeat(4,minmax(0,1fr))]">
             <div class="flex gap-2 sm:col-span-2 lg:col-span-1">
             <div class="relative min-w-0 flex-1">
-                <x-ui.icon name="search" class="pointer-events-none absolute left-3.5 top-1/2 size-[15px] -translate-y-1/2 text-[#9AA6B8]" />
+                <x-ui.icon name="search" class="pointer-events-none absolute left-3.5 top-1/2 size-[15px] -translate-y-1/2 text-[#5B677A]" />
                 <input
                     wire:model.live.debounce.300ms="query"
                     type="text"
@@ -203,7 +203,7 @@
                             </div>
                         @endif
 
-                        <p class="mt-3 flex flex-1 items-start gap-1.5 text-xs text-[#9AA6B8]">
+                        <p class="mt-3 flex flex-1 items-start gap-1.5 text-xs text-[#5B677A]">
                             @if ($m->ville || $m->organisation)
                                 <x-ui.icon name="map-pin" class="mt-px size-3 shrink-0" />
                                 <span class="truncate">{{ collect([$m->ville, $m->organisation])->filter()->join(' · ') }}</span>

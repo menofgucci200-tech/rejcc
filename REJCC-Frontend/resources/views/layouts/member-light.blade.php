@@ -10,7 +10,7 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @livewireStyles
     </head>
-    <body class="bg-cloud font-sans text-ink antialiased">
+    <body class="bg-ivoire font-sans text-ink antialiased">
         <x-mode-test />
         @include('partials.splash')
         <div x-data="{ mobileOpen: false }" class="flex h-screen overflow-hidden">

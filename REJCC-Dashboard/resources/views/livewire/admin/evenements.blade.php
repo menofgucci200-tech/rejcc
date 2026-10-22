@@ -12,7 +12,7 @@
             <div>
                 <h2 class="mb-1 text-[17px] font-bold text-brand">Événements</h2>
                 <div class="h-[3px] w-9 rounded bg-accent"></div>
-                <p class="mt-2 max-w-2xl text-xs text-[#9AA6B8]">Préparez vos événements en brouillon, publiez-les en les annonçant aux membres, ouvrez si besoin l'inscription publique par QR code pour les non-membres, et suivez tous les inscrits dans une seule liste.</p>
+                <p class="mt-2 max-w-2xl text-xs text-[#5B677A]">Préparez vos événements en brouillon, publiez-les en les annonçant aux membres, ouvrez si besoin l'inscription publique par QR code pour les non-membres, et suivez tous les inscrits dans une seule liste.</p>
             </div>
             <button wire:click="openCreate" class="btn-tap rounded-[10px] bg-accent px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-accent-600 hover:shadow-md">+ Nouvel événement</button>
         </div>
@@ -38,7 +38,7 @@
                 </div>
 
                 <div class="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
-                    <p class="text-[11px] font-bold uppercase tracking-[0.08em] text-[#9AA6B8] sm:col-span-2">L'événement</p>
+                    <p class="text-[11px] font-bold uppercase tracking-[0.08em] text-[#5B677A] sm:col-span-2">L'événement</p>
                     <div>
                         <label class="{{ $lab }}">Titre</label>
                         <input wire:model="title" type="text" class="{{ $input }}" />
@@ -76,7 +76,7 @@
                         <div wire:key="champ-visio" class="sm:col-span-2">
                             <label class="{{ $lab }}">Lien de connexion (Zoom, Google Meet…)</label>
                             <input wire:model="lienVisio" type="url" placeholder="https://…" class="{{ $input }}" />
-                            <p class="mt-1 text-[11px] text-[#9AA6B8]">Visible uniquement par les inscrits, sur la fiche de l'événement et dans le rappel.</p>
+                            <p class="mt-1 text-[11px] text-[#5B677A]">Visible uniquement par les inscrits, sur la fiche de l'événement et dans le rappel.</p>
                             @error('lienVisio') <span class="text-xs text-accent">{{ $message }}</span> @enderror
                         </div>
                     @else
@@ -98,7 +98,7 @@
                         @error('mediaFile') <span class="text-xs text-accent">{{ $message }}</span> @enderror
                     </div>
 
-                    <p class="mt-2 text-[11px] font-bold uppercase tracking-[0.08em] text-[#9AA6B8] sm:col-span-2">Inscriptions</p>
+                    <p class="mt-2 text-[11px] font-bold uppercase tracking-[0.08em] text-[#5B677A] sm:col-span-2">Inscriptions</p>
                     <div>
                         <label class="{{ $lab }}">Nombre de places (vide = illimité)</label>
                         <input wire:model="capacity" type="number" min="1" class="{{ $input }}" />
@@ -112,19 +112,19 @@
                     <div class="flex flex-col gap-2 sm:col-span-2">
                         <label class="flex items-start gap-2.5 rounded-[9px] border border-brand/10 bg-cloud/50 px-3 py-2.5 text-sm text-ink/80">
                             <input wire:model="inscriptionsOuvertes" type="checkbox" class="mt-0.5 size-4 rounded border-brand/25 text-brand" />
-                            <span><span class="font-semibold text-brand">Inscriptions ouvertes</span><span class="block text-[11.5px] text-[#9AA6B8]">Décochez pour fermer les inscriptions sans dépublier l'événement.</span></span>
+                            <span><span class="font-semibold text-brand">Inscriptions ouvertes</span><span class="block text-[11.5px] text-[#5B677A]">Décochez pour fermer les inscriptions sans dépublier l'événement.</span></span>
                         </label>
                         <label class="flex items-start gap-2.5 rounded-[9px] border border-brand/10 bg-cloud/50 px-3 py-2.5 text-sm text-ink/80">
                             <input wire:model.live="reserveAbonnes" type="checkbox" class="mt-0.5 size-4 rounded border-brand/25 text-brand" />
-                            <span><span class="font-semibold text-brand">Réservé aux abonnés</span><span class="block text-[11.5px] text-[#9AA6B8]">Seuls les membres à jour de leur abonnement annuel peuvent s'inscrire (les autres voient l'événement).</span></span>
+                            <span><span class="font-semibold text-brand">Réservé aux abonnés</span><span class="block text-[11.5px] text-[#5B677A]">Seuls les membres à jour de leur abonnement annuel peuvent s'inscrire (les autres voient l'événement).</span></span>
                         </label>
                         <label class="flex items-start gap-2.5 rounded-[9px] border border-brand/10 bg-cloud/50 px-3 py-2.5 text-sm text-ink/80">
                             <input wire:model.live="inscriptionPublique" type="checkbox" class="mt-0.5 size-4 rounded border-brand/25 text-brand" />
-                            <span><span class="font-semibold text-brand">Inscription publique par QR code</span><span class="block text-[11.5px] text-[#9AA6B8]">Les non-membres s'inscrivent via un lien et un QR code à imprimer. Ils rejoignent la même liste et comptent dans les places.</span></span>
+                            <span><span class="font-semibold text-brand">Inscription publique par QR code</span><span class="block text-[11.5px] text-[#5B677A]">Les non-membres s'inscrivent via un lien et un QR code à imprimer. Ils rejoignent la même liste et comptent dans les places.</span></span>
                         </label>
                         <label class="flex items-start gap-2.5 rounded-[9px] border border-brand/10 bg-cloud/50 px-3 py-2.5 text-sm text-ink/80">
                             <input wire:model="attestation" type="checkbox" data-test="attestation-evenement" class="mt-0.5 size-4 rounded border-brand/25 text-brand" />
-                            <span><span class="font-semibold text-brand">Délivrer une attestation de participation</span><span class="block text-[11.5px] text-[#9AA6B8]">Après l'événement, chaque présent pointé (membre ou invité) reçoit une attestation officielle vérifiable.</span></span>
+                            <span><span class="font-semibold text-brand">Délivrer une attestation de participation</span><span class="block text-[11.5px] text-[#5B677A]">Après l'événement, chaque présent pointé (membre ou invité) reçoit une attestation officielle vérifiable.</span></span>
                         </label>
                     </div>
 
@@ -136,7 +136,7 @@
                                     <x-ui.icon name="plus" class="size-3.5" /> Ajouter une question
                                 </button>
                             </div>
-                            <p class="mb-3 text-[11px] text-[#9AA6B8]">Le formulaire demande toujours prénom, nom, téléphone et e-mail (facultatif). Ajoutez ce qui vous est utile : domaine d'activité, statut, document…</p>
+                            <p class="mb-3 text-[11px] text-[#5B677A]">Le formulaire demande toujours prénom, nom, téléphone et e-mail (facultatif). Ajoutez ce qui vous est utile : domaine d'activité, statut, document…</p>
                             @forelse ($champs as $i => $f)
                                 <div class="mb-2.5 rounded-[12px] border border-brand/10 bg-cloud/40 p-3" wire:key="champ-{{ $i }}">
                                     <div class="grid grid-cols-1 gap-2.5 sm:grid-cols-[1fr_170px_auto]">
@@ -152,7 +152,7 @@
                                             <label class="inline-flex items-center gap-1.5 text-[11.5px] font-semibold text-[#5B677A]">
                                                 <input wire:model="champs.{{ $i }}.required" type="checkbox" class="size-3.5 rounded border-brand/25 text-brand" /> Obligatoire
                                             </label>
-                                            <button type="button" wire:click="removeChamp({{ $i }})" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-accent/10 hover:text-accent" title="Supprimer cette question"><x-ui.icon name="trash-2" class="size-3.5" /></button>
+                                            <button type="button" wire:click="removeChamp({{ $i }})" class="icon-btn rounded-lg p-1.5 text-[#5B677A] hover:bg-accent/10 hover:text-accent" title="Supprimer cette question"><x-ui.icon name="trash-2" class="size-3.5" /></button>
                                         </div>
                                     </div>
                                     @if (($f['type'] ?? '') === 'select')
@@ -160,7 +160,7 @@
                                     @endif
                                 </div>
                             @empty
-                                <p class="rounded-[10px] border border-dashed border-brand/15 py-4 text-center text-[12px] text-[#9AA6B8]">Aucune question supplémentaire.</p>
+                                <p class="rounded-[10px] border border-dashed border-brand/15 py-4 text-center text-[12px] text-[#5B677A]">Aucune question supplémentaire.</p>
                             @endforelse
                         </div>
                     @endif
@@ -168,7 +168,7 @@
                     @if (! $dejaAnnonce && $statut !== 'annule')
                         <label wire:key="annonce" class="flex items-start gap-2.5 rounded-[9px] border border-azure/20 bg-azure/[.05] px-3 py-2.5 text-sm text-ink/80 sm:col-span-2">
                             <input wire:model="annoncer" type="checkbox" class="mt-0.5 size-4 rounded border-brand/25 text-brand" />
-                            <span><span class="font-semibold text-brand">Annoncer aux membres à la publication</span><span class="block text-[11.5px] text-[#9AA6B8]">Chaque membre reçoit une notification sur la plateforme avec le lien vers l'événement (une seule fois).</span></span>
+                            <span><span class="font-semibold text-brand">Annoncer aux membres à la publication</span><span class="block text-[11.5px] text-[#5B677A]">Chaque membre reçoit une notification sur la plateforme avec le lien vers l'événement (une seule fois).</span></span>
                         </label>
                     @endif
                     @if ($editingId && $statut === 'publie' && $nbInscritsForm > 0)
@@ -202,7 +202,7 @@
             <div class="flex flex-wrap gap-1.5">
                 @foreach (\App\Livewire\Admin\Evenements::FILTRES as $cle => $libelle)
                     <button wire:click="setFiltre('{{ $cle }}')" class="btn-tap rounded-full px-3.5 py-1.5 text-xs font-bold {{ $filtre === $cle ? 'bg-brand text-white' : 'border border-brand/15 bg-white text-brand hover:bg-cloud' }}">
-                        {{ $libelle }} <span class="{{ $filtre === $cle ? 'text-white/70' : 'text-[#9AA6B8]' }}">{{ $compteurs[$cle] }}</span>
+                        {{ $libelle }} <span class="{{ $filtre === $cle ? 'text-white/70' : 'text-[#5B677A]' }}">{{ $compteurs[$cle] }}</span>
                     </button>
                 @endforeach
             </div>
@@ -225,7 +225,7 @@
                         <div class="flex size-14 shrink-0 flex-col items-center justify-center rounded-[12px] bg-cloud text-brand">
                             <span class="text-base font-extrabold leading-none">{{ $ev['jour'] }}</span>
                             <span class="text-[9.5px] font-bold tracking-wide">{{ $ev['mois'] }}</span>
-                            <span class="text-[8.5px] font-semibold text-[#9AA6B8]">{{ $ev['annee'] }}</span>
+                            <span class="text-[8.5px] font-semibold text-[#5B677A]">{{ $ev['annee'] }}</span>
                         </div>
                         <div class="min-w-[200px] flex-1">
                             <div class="mb-1 flex flex-wrap items-center gap-1.5">
@@ -246,14 +246,14 @@
                         <div class="w-full sm:w-48">
                             <div class="mb-1 flex items-baseline justify-between">
                                 <span class="text-[18px] font-extrabold text-brand">{{ $n }}</span>
-                                <span class="text-[11px] font-semibold text-[#9AA6B8]">{{ $ev['capacity'] ? 'sur '.$ev['capacity'].' places' : 'inscrit'.($n > 1 ? 's' : '') }}</span>
+                                <span class="text-[11px] font-semibold text-[#5B677A]">{{ $ev['capacity'] ? 'sur '.$ev['capacity'].' places' : 'inscrit'.($n > 1 ? 's' : '') }}</span>
                             </div>
                             @if ($pct !== null)
                                 <div class="h-1.5 overflow-hidden rounded-full bg-cloud">
                                     <div class="h-full rounded-full" style="width: {{ $pct }}%; background: {{ $pct >= 100 ? '#AC0100' : 'linear-gradient(90deg,#4F6FBF,#22A85A)' }}"></div>
                                 </div>
                             @endif
-                            <p class="mt-1 text-[11px] text-[#9AA6B8]">
+                            <p class="mt-1 text-[11px] text-[#5B677A]">
                                 @if ((int) $ev['invites_count']) dont {{ $ev['invites_count'] }} invité{{ $ev['invites_count'] > 1 ? 's' : '' }} @endif
                                 @if ($ev['passe'] && $n) · {{ $pres }} présent{{ $pres > 1 ? 's' : '' }} ({{ (int) round($pres / $n * 100) }} %) @endif
                             </p>
@@ -285,8 +285,8 @@
                             @elseif ($ev['statut'] === 'annule' && ! $ev['passe'])
                                 <button wire:click="retablir({{ $ev['id'] }})" wire:confirm="Rétablir « {{ $ev['title'] }} » ? Les inscrits seront prévenus." class="btn-tap rounded-lg px-2.5 py-1.5 text-xs font-semibold text-[#5B677A] hover:bg-cloud hover:text-brand">Rétablir</button>
                             @endif
-                            <button wire:click="openEdit({{ $ev['id'] }})" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-brand/10 hover:text-brand" title="Modifier"><x-ui.icon name="pencil" class="size-3.5" /></button>
-                            <button wire:click="delete({{ $ev['id'] }})" wire:confirm="Supprimer définitivement « {{ $ev['title'] }} » et ses {{ $n }} inscription(s) ? Pour prévenir les inscrits, utilisez plutôt « Annuler l'événement »." class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-accent/10 hover:text-accent" title="Supprimer"><x-ui.icon name="trash-2" class="size-3.5" /></button>
+                            <button wire:click="openEdit({{ $ev['id'] }})" class="icon-btn rounded-lg p-1.5 text-[#5B677A] hover:bg-brand/10 hover:text-brand" title="Modifier"><x-ui.icon name="pencil" class="size-3.5" /></button>
+                            <button wire:click="delete({{ $ev['id'] }})" wire:confirm="Supprimer définitivement « {{ $ev['title'] }} » et ses {{ $n }} inscription(s) ? Pour prévenir les inscrits, utilisez plutôt « Annuler l'événement »." class="icon-btn rounded-lg p-1.5 text-[#5B677A] hover:bg-accent/10 hover:text-accent" title="Supprimer"><x-ui.icon name="trash-2" class="size-3.5" /></button>
                         </div>
                     </div>
 
@@ -332,7 +332,7 @@
                                     <div class="overflow-x-auto rounded-[12px] border border-brand/10 bg-white">
                                         <table class="w-full min-w-[640px] text-left">
                                             <thead>
-                                                <tr class="border-b border-[#EDF0F5] text-[10.5px] font-bold uppercase tracking-[0.06em] text-[#9AA6B8]">
+                                                <tr class="border-b border-[#EDF0F5] text-[10.5px] font-bold uppercase tracking-[0.06em] text-[#5B677A]">
                                                     <th class="px-4 py-2.5">Participant</th>
                                                     <th class="px-3 py-2.5">Contact</th>
                                                     <th class="px-3 py-2.5">Billet</th>
@@ -364,19 +364,19 @@
                                                         </td>
                                                         <td class="px-3 py-2.5 text-[12px] text-[#5B677A]">
                                                             <span class="block">{{ $p['telephone'] ?: '—' }}</span>
-                                                            <span class="block text-[11.5px] text-[#9AA6B8]">{{ $p['email'] ?: '' }}</span>
+                                                            <span class="block text-[11.5px] text-[#5B677A]">{{ $p['email'] ?: '' }}</span>
                                                         </td>
                                                         <td class="px-3 py-2.5 font-mono text-[11.5px] text-[#5B677A]">{{ $p['billet'] }}</td>
-                                                        <td class="px-3 py-2.5 text-[12px] text-[#9AA6B8]">{{ \Carbon\Carbon::parse($p['inscrit_le'])->format('d/m/Y H:i') }}</td>
+                                                        <td class="px-3 py-2.5 text-[12px] text-[#5B677A]">{{ \Carbon\Carbon::parse($p['inscrit_le'])->format('d/m/Y H:i') }}</td>
                                                         <td class="px-3 py-2.5">
                                                             @if ($p['present_at'])
                                                                 <span class="rounded-full bg-[#22A85A]/10 px-2 py-0.5 text-[10.5px] font-bold text-[#1C8F4C]">Présent · {{ \Carbon\Carbon::parse($p['present_at'])->format('H\hi') }}</span>
                                                             @else
-                                                                <span class="text-[11.5px] text-[#9AA6B8]">—</span>
+                                                                <span class="text-[11.5px] text-[#5B677A]">—</span>
                                                             @endif
                                                         </td>
                                                         <td class="px-3 py-2.5 text-right">
-                                                            <button wire:click="retirerInscrit({{ $p['id'] }})" wire:confirm="Retirer {{ $p['nom'] }} de la liste des inscrits ?" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-accent/10 hover:text-accent" title="Retirer"><x-ui.icon name="x" class="size-3.5" /></button>
+                                                            <button wire:click="retirerInscrit({{ $p['id'] }})" wire:confirm="Retirer {{ $p['nom'] }} de la liste des inscrits ?" class="icon-btn rounded-lg p-1.5 text-[#5B677A] hover:bg-accent/10 hover:text-accent" title="Retirer"><x-ui.icon name="x" class="size-3.5" /></button>
                                                         </td>
                                                     </tr>
                                                     @if ($ouvert === $p['id'])
@@ -437,7 +437,7 @@
                                                 <x-ui.icon name="eye" class="size-3.5" /> Aperçu
                                             </a>
                                         </div>
-                                        <p class="mt-3 text-[11px] text-[#9AA6B8]">Imprimez ce QR sur vos affiches et flyers. Chaque personne inscrite reçoit un billet avec son propre QR code, scanné à l'entrée lors du pointage.</p>
+                                        <p class="mt-3 text-[11px] text-[#5B677A]">Imprimez ce QR sur vos affiches et flyers. Chaque personne inscrite reçoit un billet avec son propre QR code, scanné à l'entrée lors du pointage.</p>
                                         @if ($ev['statut'] !== 'publie')
                                             <p class="mt-2 text-[11.5px] font-semibold text-[#9A6B00]">L'événement n'est pas publié : le formulaire affiche « inscriptions pas encore ouvertes ».</p>
                                         @endif
@@ -459,7 +459,7 @@
                 <div class="rounded-[18px] border border-dashed border-brand/20 bg-white py-14 text-center">
                     <span class="mx-auto flex size-12 items-center justify-center rounded-full bg-brand/[.06] text-brand"><x-ui.icon name="calendar-days" class="size-6" /></span>
                     <p class="mt-3 text-sm font-bold text-brand">{{ trim($recherche) !== '' ? 'Aucun événement ne correspond à cette recherche.' : 'Aucun événement dans cette liste.' }}</p>
-                    <p class="mt-1 text-xs text-[#9AA6B8]">Cliquez sur « + Nouvel événement » pour en préparer un.</p>
+                    <p class="mt-1 text-xs text-[#5B677A]">Cliquez sur « + Nouvel événement » pour en préparer un.</p>
                 </div>
             @endforelse
         </div>
