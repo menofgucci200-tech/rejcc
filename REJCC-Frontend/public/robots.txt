@@ -1,5 +1,4 @@
 User-agent: *
-Disallow: /admin
 Disallow: /espace-membre
 Disallow: /mon-espace
 Disallow: /connexion

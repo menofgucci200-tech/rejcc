@@ -107,9 +107,4 @@ Route::middleware('api.auth')->prefix('espace-membre')->name('espace-membre.')->
     Route::get('/abonnement/recus/{ref}', [\App\Http\Controllers\RecuController::class, 'membre'])->where('ref', '[A-Za-z0-9\-]+')->name('abonnement.recu');
 });
 
-// L'administration a déménagé sur le dashboard (dashboard.rejcc.site) :
-// les anciens liens /admin/… y mènent.
-Route::get('/admin/{chemin?}', fn (?string $chemin = null) => redirect()->away(rtrim((string) config('services.dashboard.url'), '/').'/admin'.($chemin ? '/'.$chemin : ''), 301))
-    ->where('chemin', '.*')->name('admin.redirection');
-
 require __DIR__.'/auth.php';

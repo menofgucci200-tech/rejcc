@@ -5,6 +5,11 @@
 
     RewriteEngine On
 
+    # Le dashboard ne s'ouvre que sur dashboard.rejcc.site, jamais par
+    # rejcc.site/dashboard (son dossier est rangé dans celui du site).
+    RewriteCond %{HTTP_HOST} ^(www\.)?rejcc\.site$ [NC]
+    RewriteRule ^ - [R=404,L]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
