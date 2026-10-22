@@ -87,7 +87,7 @@ fi
 : "${BRANCHE:=main}"
 : "${DOSSIER_BACKEND:=$HOME/domains/api.rejcc.site/repo-backend/REJCC-Backend}"
 : "${DOSSIER_FRONTEND:=$HOME/domains/rejcc.site/repo-frontend/REJCC-Frontend}"
-: "${DOSSIER_DASHBOARD:=$HOME/domains/dashboard.rejcc.site/repo-dashboard/REJCC-Dashboard}"
+: "${DOSSIER_DASHBOARD:=$(dirname "$DOSSIER_FRONTEND")/REJCC-Dashboard}"
 : "${URL_SITE:=https://rejcc.site}"
 : "${URL_DASHBOARD:=https://dashboard.rejcc.site}"
 : "${URL_API:=https://api.rejcc.site/api}"

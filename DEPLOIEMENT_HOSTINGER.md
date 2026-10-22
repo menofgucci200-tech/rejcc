@@ -296,34 +296,40 @@ connexion, réservée aux comptes d'administration. Il passe par l'API comme le
 site et **partage les fichiers du site** (documents, médias, coffre-fort des
 membres). À faire une seule fois :
 
+Les chemins ci-dessous suivent l'installation en un seul dossier
+(`~/apps/rejcc`, comme `api.rejcc.site`) ; le dashboard est le dossier
+`REJCC-Dashboard` du même dépôt, rien à cloner.
+
 1. **Sous-domaine** : hPanel → Sites web → `rejcc.site` → Gérer → Domaines →
-   Sous-domaines, taper `dashboard`, **Créer** (comme `api` à l'étape 1).
-2. **Code** (SSH) :
+   Sous-domaines. Sous-domaine `dashboard`, cocher « Dossier personnalisé »,
+   nom du dossier `dashboard`, **Créer**.
+2. **Racine du sous-domaine** (SSH) : faire pointer `/public_html/dashboard`
+   vers le dossier public du dashboard, comme `api` :
 
    ```bash
-   cd ~/domains/dashboard.rejcc.site
-   git clone https://github.com/menofgucci200-tech/rejcc.git repo-dashboard
-   rm -rf public_html
-   ln -s repo-dashboard/REJCC-Dashboard/public public_html
+   cd ~/apps/rejcc/REJCC-Frontend/public
+   rm -rf dashboard
+   ln -s ~/apps/rejcc/REJCC-Dashboard/public dashboard
    ```
 
 3. **Réglages** (`.env`) :
 
    ```bash
-   cd ~/domains/dashboard.rejcc.site/repo-dashboard/REJCC-Dashboard
+   cd ~/apps/rejcc/REJCC-Dashboard
    cp .env.example .env
    nano .env
    ```
 
    - `APP_KEY` : **copier exactement celle de** `REJCC-Frontend/.env`
      (les documents personnels des membres sont chiffrés avec elle).
-   - Remplacer `UTILISATEUR` par votre identifiant Hostinger dans
-     `SHARED_PRIVATE_ROOT` et `SHARED_UPLOADS_ROOT` (commande `echo $HOME`
-     pour voir le chemin complet).
+   - `SHARED_PRIVATE_ROOT=/home/<identifiant>/apps/rejcc/REJCC-Frontend/storage/app/private`
+     et `SHARED_UPLOADS_ROOT=/home/<identifiant>/apps/rejcc/REJCC-Frontend/public/uploads`
+     (`echo $HOME` affiche le début du chemin).
    - Dans `REJCC-Frontend/.env`, ajouter `DASHBOARD_URL=https://dashboard.rejcc.site`.
 
 4. **SSL** : activer le certificat gratuit pour `dashboard.rejcc.site` (étape 7).
-5. Lancer `./deploy.sh` : il détecte le dashboard, l'installe et le vérifie.
+5. Lancer `./deploy.sh` : il détecte le dashboard (dossier voisin de
+   `REJCC-Frontend`, ou `DOSSIER_DASHBOARD` dans deploy.config), l'installe et le vérifie.
    Tant que le dashboard n'est pas installé, le script l'ignore (simple
    avertissement) et met à jour le site et l'API comme avant.
 
