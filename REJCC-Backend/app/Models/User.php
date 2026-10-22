@@ -46,6 +46,7 @@ class User extends Authenticatable
         'role',
         'permissions',
         'departement',
+        'bureau_departement',
         'reference',
         'is_active',
         'subscription_expires_at',
@@ -121,6 +122,17 @@ class User extends Authenticatable
     public function estTesteur(): bool
     {
         return $this->departement !== null;
+    }
+
+    /**
+     * Administrateur général : accès à toutes les rubriques, hors compte de
+     * test et hors compte de département. Seul lui donne ou retire des droits
+     * d'administration.
+     */
+    public function estAdminComplet(): bool
+    {
+        return $this->role === 'admin' && $this->permissions === null
+            && ! $this->estTesteur() && $this->bureau_departement === null;
     }
 
     public function isExemptFromSubscription(): bool

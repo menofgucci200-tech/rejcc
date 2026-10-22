@@ -13,6 +13,7 @@ use App\Models\MembershipApplication;
 use App\Models\NewsletterSubscriber;
 use App\Models\PartnershipRequest;
 use App\Models\User;
+use App\Support\Departements;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -119,7 +120,7 @@ class AdminController extends Controller
 
         $page = $query->paginate(30, [
             'id', 'prenom', 'nom', 'email', 'telephone',
-            'ville', 'profil', 'secteur', 'role', 'permissions', 'is_active', 'created_at',
+            'ville', 'profil', 'secteur', 'role', 'permissions', 'bureau_departement', 'is_active', 'created_at',
             'subscription_expires_at',
         ]);
 
@@ -133,8 +134,9 @@ class AdminController extends Controller
             return [
                 ...$u->only([
                     'id', 'prenom', 'nom', 'email', 'telephone',
-                    'ville', 'profil', 'secteur', 'role', 'permissions', 'is_active',
+                    'ville', 'profil', 'secteur', 'role', 'permissions', 'bureau_departement', 'is_active',
                 ]),
+                'bureau_departement_label' => Departements::label($u->bureau_departement),
                 'numero' => $u->memberNumber(),
                 'code' => $u->cardCode(),
                 'domaines_formation' => $domaines[$u->email] ?? null,
@@ -167,6 +169,7 @@ class AdminController extends Controller
             'role' => 'required|in:member,mentor,admin',
             'permissions' => 'nullable|array', // null = accès complet (admins uniquement)
             'permissions.*' => 'string|max:40',
+            'bureau_departement' => 'nullable|in:'.implode(',', Departements::slugs()),
         ]);
 
         if ($validator->fails()) {
@@ -174,6 +177,12 @@ class AdminController extends Controller
         }
 
         $d = $validator->validated();
+
+        // Seul l'administrateur général crée un compte d'administration.
+        if ($d['role'] === 'admin' && ! $request->user()->estAdminComplet()) {
+            return response()->json(['ok' => false, 'message' => 'Seul un administrateur général peut créer un compte d\'administration.'], 403);
+        }
+        $departement = $d['role'] === 'admin' ? ($d['bureau_departement'] ?? null) : null;
 
         $user = User::create([
             'name' => $d['prenom'].' '.$d['nom'],
@@ -183,10 +192,14 @@ class AdminController extends Controller
             'telephone' => $d['telephone'],
             'password' => $d['password'],
             'role' => $d['role'],
-            'permissions' => $d['role'] === 'admin' ? ($d['permissions'] ?? null) : null,
+            // Compte de département : ses rubriques par défaut, sauf choix explicite.
+            'permissions' => $d['role'] === 'admin'
+                ? ($d['permissions'] ?? ($departement ? Departements::sections($departement) : null))
+                : null,
+            'bureau_departement' => $departement,
         ]);
 
-        return response()->json(['ok' => true, 'member' => $user->only(['id', 'prenom', 'nom', 'email', 'role', 'permissions'])]);
+        return response()->json(['ok' => true, 'member' => $user->only(['id', 'prenom', 'nom', 'email', 'role', 'permissions', 'bureau_departement'])]);
     }
 
     /** Dossier complet d'un membre : profil, candidature d'origine, formations. */
@@ -220,8 +233,9 @@ class AdminController extends Controller
                 ...$user->only([
                     'id', 'prenom', 'nom', 'email', 'telephone', 'genre', 'ville',
                     'paroisse', 'secteur', 'profil', 'organisation', 'bio', 'photo',
-                    'role', 'permissions', 'is_active',
+                    'role', 'permissions', 'bureau_departement', 'is_active',
                 ]),
+                'bureau_departement_label' => Departements::label($user->bureau_departement),
                 'reference' => $user->memberNumber(),
                 'numero' => $user->memberNumber(),
                 'code' => $user->cardCode(),
@@ -251,6 +265,7 @@ class AdminController extends Controller
             'role' => 'sometimes|in:member,mentor,admin',
             'permissions' => 'sometimes|nullable|array',
             'permissions.*' => 'string|max:40',
+            'bureau_departement' => 'sometimes|nullable|in:'.implode(',', Departements::slugs()),
             'is_active' => 'sometimes|boolean',
         ]);
 
@@ -259,11 +274,25 @@ class AdminController extends Controller
         }
 
         $data = $validator->validated();
+
+        // Rôle, rubriques et département, ou tout compte d'administration :
+        // réservés à l'administrateur général (un admin limité ne peut ni
+        // s'élever lui-même ni créer un administrateur complet).
+        $toucheAuxDroits = array_intersect(array_keys($data), ['role', 'permissions', 'bureau_departement']) !== [];
+        if (($toucheAuxDroits || $user->role === 'admin') && ! $request->user()->estAdminComplet()) {
+            return response()->json(['ok' => false, 'message' => 'Seul un administrateur général peut modifier un compte d\'administration ou des droits.'], 403);
+        }
+
+        $departementAvant = $user->bureau_departement;
         $user->fill($data);
 
-        // Les permissions n'ont de sens que pour un administrateur.
+        // Les permissions et le département n'ont de sens que pour un administrateur.
         if ($user->role !== 'admin') {
             $user->permissions = null;
+            $user->bureau_departement = null;
+        } elseif ($user->bureau_departement !== null && $user->bureau_departement !== $departementAvant && ! array_key_exists('permissions', $data)) {
+            // Nouveau département sans rubriques choisies : celles du département.
+            $user->permissions = Departements::sections($user->bureau_departement);
         }
 
         if (array_key_exists('prenom', $data) || array_key_exists('nom', $data)) {
@@ -273,8 +302,32 @@ class AdminController extends Controller
         $user->save();
 
         return response()->json(['ok' => true, 'member' => $user->only([
-            'id', 'prenom', 'nom', 'email', 'role', 'permissions', 'is_active',
+            'id', 'prenom', 'nom', 'email', 'role', 'permissions', 'bureau_departement', 'is_active',
         ])]);
+    }
+
+    /**
+     * Les départements du Bureau et leurs comptes. L'administrateur général
+     * les voit tous ; un compte de département ne voit que le sien.
+     */
+    public function departements(Request $request)
+    {
+        $moi = $request->user();
+        $slugs = $moi->estAdminComplet() ? Departements::slugs() : array_values(array_filter([$moi->bureau_departement]));
+
+        $comptes = User::where('role', 'admin')->whereIn('bureau_departement', $slugs)
+            ->orderBy('nom')->orderBy('prenom')
+            ->get(['id', 'prenom', 'nom', 'email', 'telephone', 'photo', 'bureau_departement', 'permissions', 'is_active'])
+            ->groupBy('bureau_departement');
+
+        return response()->json([
+            'ok' => true,
+            'departements' => array_map(fn (string $slug) => [
+                'slug' => $slug,
+                ...Departements::LISTE[$slug],
+                'membres' => ($comptes[$slug] ?? collect())->map(fn (User $u) => $u->only(['id', 'prenom', 'nom', 'email', 'telephone', 'photo', 'permissions', 'is_active']))->values(),
+            ], $slugs),
+        ]);
     }
 
     public function deleteMember($id)

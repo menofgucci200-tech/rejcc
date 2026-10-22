@@ -9,6 +9,7 @@ use App\Models\Group;
 use App\Models\MemberNotification;
 use App\Models\NewsletterSubscriber;
 use App\Models\User;
+use App\Support\Departements;
 use App\Support\Abonnement;
 use App\Support\Client;
 use App\Support\Journal;
@@ -45,8 +46,10 @@ class AuthController extends Controller
                 'id', 'prenom', 'nom', 'email', 'telephone', 'genre',
                 'ville', 'paroisse', 'secteur', 'profil',
                 'organisation', 'titre', 'diocese', 'bio', 'competences', 'parcours', 'liens',
-                'photo', 'piece_identite', 'role', 'permissions', 'departement',
+                'photo', 'piece_identite', 'role', 'permissions', 'departement', 'bureau_departement',
             ]),
+            'bureau_departement_label' => Departements::label($u->bureau_departement),
+            'admin_complet' => $u->estAdminComplet(),
             'reference' => $u->memberNumber(),
             'numero' => $u->memberNumber(),
             'code' => $u->cardCode(),
