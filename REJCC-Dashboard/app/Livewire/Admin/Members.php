@@ -157,7 +157,8 @@ class Members extends Component
             'ville' => $this->ville ?: null,
         ];
         // Rôle, rubriques et département : seul l'administrateur général les change.
-        if (Espace::adminGeneral(session('api_user'))) {
+        // Compte de département : ses droits se gèrent sur la page du département.
+        if (Espace::adminGeneral(session('api_user')) && $this->bureauDepartement === '') {
             $departement = $this->role === 'admin' && $this->bureauDepartement !== '' ? $this->bureauDepartement : null;
             $data += [
                 'role' => $this->role,

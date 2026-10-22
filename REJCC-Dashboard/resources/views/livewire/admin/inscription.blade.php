@@ -51,22 +51,12 @@
 
             @if ($type === 'admin')
                 <div class="sm:col-span-2 rounded-[12px] border border-brand/10 bg-cloud/60 p-4">
-                    <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Département du Bureau</label>
-                    <select wire:model.live="bureauDepartement" data-test="choix-departement" class="mb-3 w-full rounded-[9px] border border-brand/15 bg-white px-3 py-2 text-sm outline-none focus:border-azure sm:w-80">
-                        <option value="">Administration générale (aucun département)</option>
-                        @foreach ($departements as $d)
-                            <option value="{{ $d['slug'] }}">{{ $d['label'] }}</option>
-                        @endforeach
-                    </select>
-                    @if ($bureauDepartement === '')
+                    <p class="mb-3 rounded-[10px] bg-white px-3 py-2 text-[12.5px] text-[#5B677A]">Pour un compte de département (Formation, Trésorerie…), passez par <a href="{{ route('departements.index') }}" wire:navigate class="font-semibold text-azure hover:underline">Départements</a> : chaque département a sa page d'accès.</p>
                     <label class="inline-flex items-center gap-2 text-[13px] font-bold text-brand">
                         <input wire:model.live="accesComplet" type="checkbox" class="size-4 rounded border-brand/20 text-brand" />
                         Accès complet à toute l'administration
                     </label>
-                    @else
-                    <p class="text-xs text-[#5B677A]">Le compte se connecte sur le dashboard et arrive dans l'espace de son département. Rubriques du département cochées par défaut.</p>
-                    @endif
-                    @if (! $accesComplet || $bureauDepartement !== '')
+                    @if (! $accesComplet)
                         <p class="mb-2 mt-3 text-xs font-semibold text-[#5B677A]">Sections autorisées pour cet administrateur :</p>
                         <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
                             @foreach ($sectionsDisponibles as $slug => $label)

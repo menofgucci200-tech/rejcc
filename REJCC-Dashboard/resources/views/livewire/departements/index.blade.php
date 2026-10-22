@@ -2,7 +2,7 @@
     <x-admin-light.topbar title="Départements du Bureau" />
 
     <div class="mx-auto max-w-[1280px] px-4 py-8 sm:px-8">
-        <p class="mb-6 max-w-2xl text-[13.5px] text-[#5B677A]">Chaque département a son espace dans le dashboard, avec les rubriques liées à ses missions. Les comptes se créent depuis <a href="{{ route('admin.members') }}" wire:navigate class="font-semibold text-azure hover:underline">Comptes membres</a> : rôle « Administrateur », puis le département.</p>
+        <p class="mb-6 max-w-2xl text-[13.5px] text-[#5B677A]">Chaque département a son espace dans le dashboard, avec les rubriques liées à ses missions. Ouvrez un département pour gérer ses accès : donner l'accès à un membre existant ou créer un compte.</p>
 
         <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             @foreach ($departements as $d)

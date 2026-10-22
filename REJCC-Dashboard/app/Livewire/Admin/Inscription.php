@@ -110,7 +110,7 @@ class Inscription extends Component
             'departements' => $this->departements(),
             // Seul l'administrateur général crée des comptes d'administration.
             'types' => Espace::adminGeneral(session('api_user'))
-                ? ['member' => 'Membre', 'mentor' => 'Mentor', 'admin' => 'Administrateur']
+                ? ['member' => 'Membre', 'mentor' => 'Mentor', 'admin' => 'Administrateur général']
                 : ['member' => 'Membre', 'mentor' => 'Mentor'],
         ]);
     }

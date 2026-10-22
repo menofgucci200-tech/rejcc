@@ -218,21 +218,14 @@
                                             </div>
                                             @if ($role === 'admin')
                                                 <div class="rounded-[10px] border border-brand/10 bg-white p-3 sm:col-span-2">
-                                                    <label class="mb-1 block text-xs font-semibold text-[#5B677A]">Département du Bureau</label>
-                                                    <select wire:model.live="bureauDepartement" data-test="choix-departement" class="mb-3 w-full rounded-[9px] border border-brand/15 bg-white px-3 py-2 text-sm outline-none focus:border-azure sm:w-80">
-                                                        <option value="">Administration générale (aucun département)</option>
-                                                        @foreach ($departements as $d)
-                                                            <option value="{{ $d['slug'] }}">{{ $d['label'] }}</option>
-                                                        @endforeach
-                                                    </select>
-                                                    @if ($bureauDepartement === '')
+                                                    @if ($bureauDepartement !== '')
+                                                        <p class="text-[12.5px] text-[#5B677A]">Compte du département <span class="font-semibold">{{ collect($departements)->firstWhere('slug', $bureauDepartement)['label'] ?? $bureauDepartement }}</span> : ses accès se gèrent sur <a href="{{ route('departements.show', $bureauDepartement) }}" wire:navigate class="font-semibold text-azure hover:underline">la page du département</a>.</p>
+                                                    @else
                                                     <label class="inline-flex items-center gap-2 text-xs font-bold text-brand">
                                                         <input wire:model.live="accesComplet" type="checkbox" class="size-4 rounded border-brand/20 text-brand" /> Accès complet à toute l'administration
                                                     </label>
-                                                    @else
-                                                    <p class="text-xs text-[#5B677A]">Rubriques du département cochées par défaut ; vous pouvez les ajuster.</p>
                                                     @endif
-                                                    @if (! $accesComplet || $bureauDepartement !== '')
+                                                    @if (! $accesComplet && $bureauDepartement === '')
                                                         <div class="mt-2.5 grid grid-cols-2 gap-1.5 sm:grid-cols-3">
                                                             @foreach ($sectionsDisponibles as $slug => $label)
                                                                 <label class="inline-flex items-center gap-2 text-xs text-[#5B677A]">
