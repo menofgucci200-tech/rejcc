@@ -4,12 +4,15 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Mail\SessionFormateur;
+use App\Models\Certificate;
 use App\Models\Event;
 use App\Models\EventRegistration;
 use App\Models\Formateur;
 use App\Models\Formation;
+use App\Models\FormationEnrollment;
 use App\Models\Group;
 use App\Models\MemberNotification;
+use App\Support\Certificats;
 use App\Support\GoogleMeet;
 use App\Support\Mailer;
 use Illuminate\Http\Request;
@@ -51,6 +54,13 @@ class FormationLiveController extends Controller
             'cible_groupes' => array_map('intval', $e->cible_groupes ?? []),
             'cible_profils' => $e->cible_profils ?? [],
             'public' => $this->libellePublic($e),
+            'hote_meet' => $e->hote_meet,
+            'attestation' => (bool) $e->attestation,
+            'replay_url' => $e->replay_url,
+            'support_url' => $e->support_url,
+            'presents' => $e->registrations()->whereNotNull('present_at')->count(),
+            'rejoints' => $e->registrations()->whereNotNull('rejoint_at')->count(),
+            'chevauchements' => $e->statut === 'publie' && ! $e->estPasse() ? self::chevauchements($e) : [],
             'capacity' => $e->capacity,
             'statut' => $e->statut,
             'motif_annulation' => $e->motif_annulation,
@@ -64,6 +74,23 @@ class FormationLiveController extends Controller
     public static function lienAnimateur(string $jeton): string
     {
         return rtrim((string) config('app.frontend_url'), '/').'/animer/'.$jeton;
+    }
+
+    /**
+     * Autres sessions publiées sur le même créneau : avec un seul compte Google,
+     * l'hôte ne peut pas admettre les participants de deux réunions à la fois.
+     *
+     * @return list<string>
+     */
+    public static function chevauchements(Event $e): array
+    {
+        $fin = $e->ends_at ?? $e->starts_at->copy()->addHour();
+
+        return Event::lives()->where('statut', 'publie')->where('id', '!=', $e->id)
+            ->where('starts_at', '<', $fin)
+            ->where(fn ($q) => $q->where('ends_at', '>', $e->starts_at)->orWhere(fn ($q) => $q->whereNull('ends_at')->where('starts_at', '>', $e->starts_at->copy()->subHour())))
+            ->orderBy('starts_at')->get()
+            ->map(fn (Event $o) => $o->title.' ('.$o->starts_at->format('H\hi').')')->all();
     }
 
     private function libellePublic(Event $e): string
@@ -163,6 +190,141 @@ class FormationLiveController extends Controller
             ])->all();
     }
 
+    /** GET /admin/formations-live/{id}/presences : émargement (clic « Rejoindre » et présence validée). */
+    public function presences(int $id)
+    {
+        $e = $this->session($id);
+
+        return response()->json(['ok' => true, 'session' => $this->payload($e->loadCount('registrations')), 'inscrits' => EventRegistration::where('event_id', $e->id)
+            ->with('user:id,prenom,nom,email,telephone')->get()
+            ->map(fn (EventRegistration $r) => [
+                'id' => $r->id,
+                'nom' => $r->user ? trim($r->user->prenom.' '.$r->user->nom) : (trim($r->prenom.' '.$r->nom) ?: 'Invité'),
+                'email' => $r->user?->email ?? $r->email,
+                'telephone' => $r->user?->telephone ?? $r->telephone,
+                'inscrit_le' => $r->created_at?->toIso8601String(),
+                'rejoint_at' => $r->rejoint_at?->toIso8601String(),
+                'present' => $r->present_at !== null,
+            ])->sortBy('nom', SORT_NATURAL | SORT_FLAG_CASE)->values()]);
+    }
+
+    /**
+     * POST /admin/formations-live/{id}/presences : coche ou décoche des présents
+     * (ou tous ceux qui ont cliqué « Rejoindre »). Si la session délivre une
+     * attestation, elle part aussitôt aux présents.
+     */
+    public function marquerPresences(Request $request, int $id)
+    {
+        $e = $this->session($id);
+        if ($e->starts_at->isFuture()) {
+            return response()->json(['ok' => false, 'message' => 'La présence se note à partir du début de la session.'], 422);
+        }
+        $q = EventRegistration::where('event_id', $e->id);
+        if ($request->boolean('tous_les_rejoints')) {
+            $q->whereNotNull('rejoint_at')->whereNull('present_at')->update(['present_at' => now()]);
+        } else {
+            $ids = array_map('intval', (array) $request->input('inscriptions', []));
+            (clone $q)->whereIn('id', $ids)->update(['present_at' => $request->boolean('present', true) ? now() : null]);
+        }
+        $attestations = 0;
+        if ($e->attestation) {
+            foreach (EventRegistration::where('event_id', $e->id)->whereNotNull('present_at')->get() as $r) {
+                $avant = Certificate::where('type', 'evenement')->where('source_id', $r->id)->exists();
+                if (Certificats::pourEvenement($r) && ! $avant) {
+                    $attestations++;
+                }
+            }
+        }
+
+        return response()->json(['ok' => true, 'presents' => $e->registrations()->whereNotNull('present_at')->count(), 'attestations' => $attestations]);
+    }
+
+    /** PUT /admin/formations-live/{id}/apres : replay et support, puis les inscrits sont prévenus. */
+    public function apres(Request $request, int $id)
+    {
+        $e = $this->session($id);
+        $v = Validator::make($request->all(), [
+            'replay_url' => 'nullable|url:https|max:500',
+            'support_url' => 'nullable|url:https|max:500',
+            'prevenir' => 'nullable|boolean',
+        ], ['url' => 'Collez une adresse complète (https://…).'], ['replay_url' => 'replay', 'support_url' => 'support']);
+        if ($v->fails()) {
+            return response()->json(['ok' => false, 'message' => $v->errors()->first()], 422);
+        }
+        $d = $v->validated();
+        $e->forceFill(['replay_url' => $d['replay_url'] ?? null, 'support_url' => $d['support_url'] ?? null])->save();
+        $prevenus = null;
+        if (($d['prevenir'] ?? false) && ($e->replay_url || $e->support_url)) {
+            $quoi = $e->replay_url && $e->support_url ? 'Le replay et le support' : ($e->replay_url ? 'Le replay' : 'Le support');
+            $prevenus = $e->prevenirInscrits("{$quoi} : {$e->title}",
+                "{$quoi} de la session « {$e->title} » ".($e->replay_url && $e->support_url ? 'sont disponibles' : 'est disponible').' sur sa fiche. Vous l\'aviez manquée ? Rattrapez-la quand vous voulez.');
+        }
+
+        return response()->json(['ok' => true, 'prevenus' => $prevenus]);
+    }
+
+    /** GET /admin/formations-live/cockpit : chiffres et liste « À faire » du département Formation. */
+    public function cockpit()
+    {
+        $lives = Event::lives()->withCount([
+            'registrations',
+            'registrations as presents_count' => fn ($q) => $q->whereNotNull('present_at'),
+        ])->with('formateurs:id')->get();
+        $aVenir = $lives->filter(fn (Event $e) => $e->statut === 'publie' && ! $e->estPasse());
+        $passees30 = $lives->filter(fn (Event $e) => $e->statut === 'publie' && $e->estPasse() && $e->starts_at->isAfter(now()->subDays(30)));
+        $inscrits30 = $passees30->sum('registrations_count');
+
+        // Une ligne par session, avec ses points à régler (du plus urgent au moins urgent).
+        $aFaire = [];
+        $ajouter = function (Event $e, string $niveau, string $probleme) use (&$aFaire) {
+            $aFaire[$e->id] ??= ['session_id' => $e->id, 'titre' => $e->title, 'quand' => $e->starts_at->locale('fr')->isoFormat('ddd D MMM, HH[h]mm'), 'niveau' => $niveau, 'problemes' => []];
+            $aFaire[$e->id]['problemes'][] = $probleme;
+            $ordre = ['urgent' => 0, 'attention' => 1, 'info' => 2];
+            if ($ordre[$niveau] < $ordre[$aFaire[$e->id]['niveau']]) {
+                $aFaire[$e->id]['niveau'] = $niveau;
+            }
+        };
+        foreach ($aVenir->sortBy('starts_at') as $e) {
+            $lien = (string) $e->lien_visio;
+            if ($lien === '' || rtrim($lien, '/') === 'https://meet.google.com') {
+                $ajouter($e, 'urgent', 'lien Meet manquant');
+            }
+            if ($c = self::chevauchements($e)) {
+                $ajouter($e, 'urgent', "même créneau que « {$c[0]} »");
+            }
+            if ($e->formateurs->isEmpty()) {
+                $ajouter($e, 'attention', 'pas de formateur');
+            }
+            if (! $e->hote_meet) {
+                $ajouter($e, 'attention', 'hôte Meet à désigner');
+            }
+            if ($e->starts_at->isBefore(now()->addDays(2)) && $e->registrations_count < 3) {
+                $ajouter($e, 'attention', "peu d'inscrits ({$e->registrations_count})");
+            }
+        }
+        foreach ($passees30->sortByDesc('starts_at') as $e) {
+            if ($e->registrations_count > 0 && $e->presents_count === 0) {
+                $ajouter($e, 'info', 'présence à noter');
+            } elseif (! $e->replay_url && ! $e->support_url) {
+                $ajouter($e, 'info', 'replay ou support à ajouter');
+            }
+        }
+        $aFaire = collect($aFaire)->sortBy(fn ($t) => ['urgent' => 0, 'attention' => 1, 'info' => 2][$t['niveau']])->values()->all();
+        $brouillons = Formation::where('is_published', false)->count();
+        if ($brouillons) {
+            $aFaire[] = ['session_id' => null, 'titre' => "{$brouillons} formation(s) en brouillon", 'quand' => null, 'niveau' => 'info', 'problemes' => ['à publier quand elles sont prêtes']];
+        }
+
+        return response()->json(['ok' => true, 'chiffres' => [
+            'sessions_a_venir' => $aVenir->count(),
+            'inscrits_a_venir' => (int) $aVenir->sum('registrations_count'),
+            'presence_30j' => $inscrits30 > 0 ? (int) round($passees30->sum('presents_count') / $inscrits30 * 100) : null,
+            'apprenants' => FormationEnrollment::whereNull('completed_at')->count(),
+            'certificats_30j' => Certificate::where('type', 'formation')->where('created_at', '>=', now()->subDays(30))->count(),
+            'formations_publiees' => Formation::where('is_published', true)->count(),
+        ], 'a_faire' => array_slice($aFaire, 0, 20)]);
+    }
+
     private function session(int $id): Event
     {
         return Event::lives()->with('formateurs')->findOrFail($id);
@@ -192,6 +354,8 @@ class FormationLiveController extends Controller
             'cible_groupes.*' => 'integer|exists:groups,id',
             'cible_profils' => 'nullable|array',
             'cible_profils.*' => 'in:'.implode(',', array_keys(Event::PROFILS)),
+            'hote_meet' => 'nullable|string|max:120',
+            'attestation' => 'nullable|boolean',
             'formateurs' => 'nullable|array|max:10',
             'formateurs.*' => 'integer|exists:formateurs,id',
         ], [
@@ -228,6 +392,8 @@ class FormationLiveController extends Controller
             'starts_at' => $debut,
             'ends_at' => $debut->copy()->addMinutes((int) $d['duree']),
             'capacity' => $d['capacity'] ?? null,
+            'hote_meet' => $d['hote_meet'] ?? null,
+            'attestation' => (bool) ($d['attestation'] ?? false),
             'inscriptions_ouvertes' => true,
             'cible_formation' => (bool) ($d['cible_formation'] ?? false),
             'cible_groupes' => array_values($d['cible_groupes'] ?? []) ?: null,

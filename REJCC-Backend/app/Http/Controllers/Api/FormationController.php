@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Event;
 use App\Models\Formation;
 use App\Models\FormationEnrollment;
 use App\Models\FormationModule;
 use App\Models\FormationModuleCompletion;
+use App\Models\MemberNotification;
+use App\Models\User;
 use App\Support\Quiz;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -260,13 +263,13 @@ class FormationController extends Controller
      */
     private function sessionsLive(int $formationId, int $userId): array
     {
-        $moi = \App\Models\User::find($userId);
-        $sessions = \App\Models\Event::lives()->where('formation_id', $formationId)->where('statut', 'publie')
+        $moi = User::find($userId);
+        $sessions = Event::lives()->where('formation_id', $formationId)->where('statut', 'publie')
             ->where(fn ($q) => $q->where('ends_at', '>', now())->orWhere(fn ($q) => $q->whereNull('ends_at')->where('starts_at', '>', now())))
             ->orderBy('starts_at')->limit(10)->get();
 
-        return \App\Models\Event::filtrerPourLeMembre($sessions, $moi)
-            ->map(fn (\App\Models\Event $ev) => [
+        return Event::filtrerPourLeMembre($sessions, $moi)
+            ->map(fn (Event $ev) => [
                 'id' => $ev->id,
                 'title' => $ev->title,
                 'animateur' => $ev->animateur,
@@ -276,6 +279,64 @@ class FormationController extends Controller
                 'visio_ouverte' => $ev->visioOuverte(),
                 'inscrit' => $ev->registrations()->where('user_id', $userId)->exists(),
             ])->values()->all();
+    }
+
+    /**
+     * GET /admin/formations/{id}/apprenants : suivi des inscrits d'une formation
+     * (progression, dernière activité, examen) pour le département Formation.
+     */
+    public function apprenants(int $id)
+    {
+        $f = Formation::findOrFail($id);
+        $apprenants = FormationEnrollment::where('formation_id', $f->id)->with('user:id,prenom,nom,email,telephone,ville')->get()
+            ->filter(fn ($e) => $e->user)
+            ->map(function (FormationEnrollment $e) use ($f) {
+                $statut = match (true) {
+                    $e->completed_at !== null => 'termine',
+                    $e->examen_bloque_jusqu?->isFuture() || (int) $e->examen_echecs > 0 && ! $e->examen_reussi_at => 'bloque',
+                    $e->updated_at->isBefore(now()->subDays(14)) => 'inactif',
+                    default => 'en_cours',
+                };
+
+                return [
+                    'user_id' => $e->user_id,
+                    'nom' => trim($e->user->prenom.' '.$e->user->nom),
+                    'email' => $e->user->email,
+                    'telephone' => $e->user->telephone,
+                    'ville' => $e->user->ville,
+                    'progress' => (int) $e->progress,
+                    'inscrit_le' => $e->created_at?->toIso8601String(),
+                    'activite_le' => $e->updated_at?->toIso8601String(),
+                    'termine_le' => $e->completed_at?->toIso8601String(),
+                    'examen' => empty($f->examen) ? null : ['reussi' => $e->examen_reussi_at !== null, 'score' => $e->examen_score, 'echecs' => (int) $e->examen_echecs],
+                    'statut' => $statut,
+                ];
+            })->sortBy('nom', SORT_NATURAL | SORT_FLAG_CASE)->values();
+
+        return response()->json(['ok' => true, 'formation' => $f->only(['id', 'title', 'is_published']), 'apprenants' => $apprenants]);
+    }
+
+    /** POST /admin/formations/{id}/relance : message aux apprenants choisis (notification). */
+    public function relancer(Request $request, int $id)
+    {
+        $f = Formation::findOrFail($id);
+        $v = Validator::make($request->all(), [
+            'user_ids' => 'required|array|min:1|max:500',
+            'user_ids.*' => 'integer',
+            'message' => 'required|string|min:5|max:500',
+        ], ['user_ids.required' => 'Choisissez au moins un apprenant.'], ['message' => 'message']);
+        if ($v->fails()) {
+            return response()->json(['ok' => false, 'message' => $v->errors()->first()], 422);
+        }
+        $ids = FormationEnrollment::where('formation_id', $f->id)->whereIn('user_id', $request->input('user_ids'))->pluck('user_id');
+        foreach ($ids as $uid) {
+            MemberNotification::create([
+                'user_id' => $uid, 'type' => 'info', 'title' => "Formation : {$f->title}",
+                'body' => trim((string) $request->input('message')), 'link' => "/espace-membre/formations/{$f->id}",
+            ]);
+        }
+
+        return response()->json(['ok' => true, 'envoyes' => $ids->count()]);
     }
 
     /** État de l'examen final pour une inscription (null si la formation n'en a pas). */
@@ -473,7 +534,7 @@ class FormationController extends Controller
 
     public function store(Request $request)
     {
-        return $this->persist($request, new Formation());
+        return $this->persist($request, new Formation);
     }
 
     public function update(Request $request, int $id)

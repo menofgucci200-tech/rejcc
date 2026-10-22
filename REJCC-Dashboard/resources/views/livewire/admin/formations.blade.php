@@ -105,6 +105,7 @@
                         <span class="w-[110px] shrink-0 text-xs text-[#5B677A]">{{ $f['inscrits'] }} {{ $f['inscrits'] > 1 ? 'inscrits' : 'inscrit' }}</span>
                         <span class="w-20 shrink-0 rounded-full px-2.5 py-1 text-center text-[11px] font-bold" style="color: {{ $f['publiee'] ? '#22A85A' : '#9AA6B8' }}; background: {{ $f['publiee'] ? '#EAF6EE' : '#EEF1F5' }}">{{ $f['publiee'] ? 'Publiée' : 'Brouillon' }}</span>
                         <button wire:click="togglePublication({{ $f['id'] }})" class="shrink-0 rounded-[9px] border border-[#C9D3E6] px-3 py-1.5 text-xs font-bold text-brand hover:bg-cloud">{{ $f['publiee'] ? 'Dépublier' : 'Publier' }}</button>
+                        <a href="{{ route('admin.apprenants', $f['id']) }}" wire:navigate data-test="voir-apprenants" class="shrink-0 rounded-[9px] border border-[#C9D3E6] px-3 py-1.5 text-xs font-bold text-brand hover:bg-cloud">Apprenants</a>
                         <button wire:click="toggleModules({{ $f['id'] }})" class="shrink-0 rounded-[9px] border border-[#C9D3E6] px-3 py-1.5 text-xs font-bold text-brand hover:bg-cloud">{{ $modulesFormationId === $f['id'] ? 'Fermer' : 'Modules' }}</button>
                         <div class="flex shrink-0 items-center gap-1.5">
                             <button wire:click="openEdit({{ $f['id'] }})" class="icon-btn rounded-lg p-1.5 text-[#9AA6B8] hover:bg-brand/10 hover:text-brand">

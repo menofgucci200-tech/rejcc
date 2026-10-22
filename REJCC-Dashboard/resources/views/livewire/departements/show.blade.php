@@ -15,6 +15,45 @@
             </div>
         </section>
 
+        @if ($cockpit)
+            @php
+                $c = $cockpit['chiffres'];
+                $tuiles = [
+                    ['Sessions à venir', $c['sessions_a_venir'], 'agenda', '#FFF3E8'],
+                    ['Inscrits aux sessions', $c['inscrits_a_venir'], 'equipe', '#EFFAF4'],
+                    ['Présence (30 jours)', $c['presence_30j'] === null ? '—' : $c['presence_30j'].' %', 'visio', '#EEF6FD'],
+                    ['Apprenants en cours', $c['apprenants'], 'livre', '#F3EFFC'],
+                    ['Certificats (30 jours)', $c['certificats_30j'], 'diplome', '#FFF8E1'],
+                ];
+                $teintes = ['urgent' => 'bg-[#FDEEEE] text-[#A23B3B]', 'attention' => 'bg-[#FDF2E3] text-[#8A5A12]', 'info' => 'bg-[#EEF6FD] text-[#2D5C8F]'];
+            @endphp
+            <section class="mb-8" data-test="cockpit-formation">
+                <div class="grid grid-cols-2 gap-3 md:grid-cols-5">
+                    @foreach ($tuiles as [$libelle, $valeur, $icone, $fond])
+                        <div class="flex items-center gap-3 rounded-[16px] border border-[#EDE9F3] bg-white p-3.5">
+                            <span class="flex size-11 shrink-0 items-center justify-center rounded-[12px]" style="background: {{ $fond }}"><x-ui.illustration :name="$icone" size="size-7" /></span>
+                            <span class="min-w-0"><span class="block font-display text-[24px] leading-none text-brand">{{ $valeur }}</span><span class="mt-1 block text-[11.5px] font-semibold leading-tight text-[#5B677A]">{{ $libelle }}</span></span>
+                        </div>
+                    @endforeach
+                </div>
+                <div class="mt-4 rounded-[18px] border border-[#EDE9F3] bg-white p-4">
+                    <p class="mb-2.5 flex items-center gap-2 text-[14px] font-bold text-[#3B3F5C]"><x-ui.illustration name="cahier" size="size-6" /> À faire</p>
+                    @forelse ($cockpit['a_faire'] as $t)
+                        <a href="{{ $t['session_id'] ? route('admin.lives') : route('admin.formations') }}" wire:navigate class="mb-1.5 flex flex-wrap items-center gap-2 rounded-[12px] px-3 py-2 text-[12.5px] hover:brightness-95 {{ $teintes[$t['niveau']] ?? $teintes['info'] }}">
+                            <span class="size-1.5 shrink-0 rounded-full bg-current"></span>
+                            <span class="font-bold">{{ $t['titre'] }}</span>
+                            @if ($t['quand'])<span class="opacity-80">· {{ $t['quand'] }}</span>@endif
+                            <span class="flex flex-wrap gap-1">
+                                @foreach ($t['problemes'] as $p)<span class="rounded-full bg-white/70 px-2 py-0.5 text-[11.5px] font-semibold">{{ $p }}</span>@endforeach
+                            </span>
+                        </a>
+                    @empty
+                        <p class="text-[12.5px] text-[#5B677A]">Rien à signaler : tout est en ordre.</p>
+                    @endforelse
+                </div>
+            </section>
+        @endif
+
         <section class="mb-8">
             <h2 class="mb-4 text-[17px] font-bold text-[#3B3F5C]">Vos rubriques</h2>
             @if ($rubriques->isEmpty())

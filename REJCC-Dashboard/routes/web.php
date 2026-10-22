@@ -55,6 +55,8 @@ Route::middleware(['api.auth', 'admin.web'])->prefix('admin')->name('admin.')->g
     Route::get('/parcours', AdminParcours::class)->name('parcours');
     Route::get('/formations-live', \App\Livewire\Admin\FormationsLive::class)->name('lives');
     Route::get('/formateurs', \App\Livewire\Admin\Formateurs::class)->name('formateurs');
+    Route::get('/formations-live/{id}/emargement.csv', \App\Http\Controllers\EmargementController::class)->whereNumber('id')->name('lives.emargement');
+    Route::get('/formations/{formationId}/apprenants', \App\Livewire\Admin\Apprenants::class)->whereNumber('formationId')->name('apprenants');
     Route::get('/evenements', AdminEvenements::class)->name('evenements');
     Route::get('/evenements/{id}/pointage', \App\Livewire\Admin\EvenementPointage::class)->whereNumber('id')->name('evenements.pointage');
     // Ancien module « Inscriptions (QR) », fusionné dans les événements.

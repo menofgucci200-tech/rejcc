@@ -50,6 +50,7 @@ class AdminNav
 
     /** Pages hors menu, rattachées à une rubrique pour le fil d'Ariane. */
     private const RATTACHEMENTS = [
+        'admin.apprenants' => ['Activité réseau', 'Formations', 'admin.formations'],
         'admin.inscription' => ['Membres', 'Comptes membres', 'admin.members'],
         'admin.evenements.pointage' => ['Activité réseau', 'Événements', 'admin.evenements'],
     ];

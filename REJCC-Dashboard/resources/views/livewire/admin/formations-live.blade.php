@@ -155,6 +155,13 @@
                         <textarea wire:model="description" rows="3" placeholder="Programme, prérequis, ce qu'il faut préparer…" class="w-full rounded-[11px] border border-[#E4E1EC] bg-[#FCFBFE] px-3.5 py-2.5 text-sm outline-none focus:border-[#C3B5F0] focus:bg-white"></textarea>
                     </div>
                     <div>
+                        <label class="mb-1 block text-xs font-semibold text-[#6B6F86]">Hôte Meet (personne connectée au compte du REJCC)</label>
+                        <input wire:model="hoteMeet" type="text" placeholder="Qui ouvre la réunion et admet les participants ?" class="w-full rounded-[11px] border border-[#E4E1EC] bg-[#FCFBFE] px-3.5 py-2.5 text-sm outline-none focus:border-[#C3B5F0]">
+                    </div>
+                    <label class="flex items-center gap-2.5 self-end pb-2 text-[13px] font-semibold text-[#3B3F5C]">
+                        <input wire:model="attestation" type="checkbox" class="size-4 rounded"> Délivrer une attestation de présence aux présents
+                    </label>
+                    <div>
                         <label class="mb-1 block text-xs font-semibold text-[#6B6F86]">Nombre de places (vide = sans limite)</label>
                         <input wire:model="places" type="number" min="1" class="w-full rounded-[11px] border border-[#E4E1EC] bg-[#FCFBFE] px-3.5 py-2.5 text-sm outline-none focus:border-[#C3B5F0]">
                     </div>
@@ -224,6 +231,14 @@
                                         <span class="inline-flex items-center gap-1.5 rounded-full bg-[#F4FBF7] px-2.5 py-1 text-[11.5px] font-semibold text-[#2E7D5B]"><x-ui.icon name="users" class="size-3.5" /> {{ $s['inscrits'] }} inscrit{{ $s['inscrits'] > 1 ? 's' : '' }}{{ $s['capacity'] ? ' / '.$s['capacity'] : '' }}</span>
                                         <span class="inline-flex items-center rounded-full bg-[#FFF6E9] px-2.5 py-1 text-[11.5px] font-semibold text-[#B7791F]">{{ $s['public'] }}</span>
                                     </p>
+                                    @if ($s['chevauchements'] ?? [])
+                                        <p class="mt-2 rounded-[10px] bg-[#FDF2E3] px-3 py-1.5 text-[12px] font-semibold text-[#8A5A12]">⚠ Même créneau que {{ implode(', ', $s['chevauchements']) }} : un seul compte Google ne peut pas admettre deux réunions à la fois.</p>
+                                    @endif
+                                    @if ($s['statut'] === 'publie' && ! $s['hote_meet'] && ! $s['passe'])
+                                        <p class="mt-1.5 text-[12px] font-semibold text-[#8A5A12]">Hôte Meet à désigner.</p>
+                                    @elseif ($s['hote_meet'])
+                                        <p class="mt-1.5 text-[12px] text-[#5B677A]">Hôte Meet : {{ $s['hote_meet'] }}</p>
+                                    @endif
                                     @if ($s['formateurs'])
                                         <div class="mt-2 flex flex-wrap gap-1.5">
                                             @foreach ($s['formateurs'] as $fo)
@@ -237,6 +252,10 @@
                                 </div>
                                 @if ($s['statut'] === 'publie')
                                     <div class="flex flex-wrap items-center gap-1.5">
+                                        <button type="button" wire:click="ouvrir('whatsapp', {{ $s['id'] }})" class="btn-tap rounded-full border border-[#CDEBDD] px-3 py-1.5 text-[12px] font-bold text-[#1C6B47] hover:bg-[#EFFAF4]">WhatsApp</button>
+                                        @if ($s['en_cours'] || $s['passe'])
+                                            <button type="button" wire:click="ouvrir('emargement', {{ $s['id'] }})" class="btn-tap rounded-full border border-[#E4E1EC] px-3 py-1.5 text-[12px] font-bold text-[#5B677A] hover:bg-[#F7F5FB]">Émargement ({{ $s['presents'] }})</button>
+                                        @endif
                                         <a href="{{ $s['lien_visio'] }}" target="_blank" rel="noopener" title="Ouvrir la salle de visio" class="btn-tap rounded-full border border-[#CDEBDD] bg-[#EFFAF4] px-3 py-1.5 text-[12px] font-bold text-[#2E7D5B] hover:bg-[#E2F5EB]">Salle de visio</a>
                                         <button type="button" wire:click="voirInscrits({{ $s['id'] }})" class="btn-tap rounded-full border border-[#E4E1EC] px-3 py-1.5 text-[12px] font-bold text-[#6B6F86] hover:bg-[#F7F5FB]">Inscrits</button>
                                         <button type="button" wire:click="modifier({{ $s['id'] }})" class="btn-tap rounded-full border border-[#E4E1EC] px-3 py-1.5 text-[12px] font-bold text-[#6B6F86] hover:bg-[#F7F5FB]">Modifier</button>
@@ -244,6 +263,7 @@
                                     </div>
                                 @endif
                             </div>
+                            @include('livewire.admin.partials.suivi-session', ['s' => $s])
                             @if ($annulationDe === $s['id'])
                                 <div class="panel-enter mt-3 flex flex-wrap items-center gap-2 rounded-[14px] bg-[#FDF4F4] p-3" data-test="annulation">
                                     <input wire:model="motifAnnulation" type="text" maxlength="300" placeholder="Motif (envoyé aux inscrits) : ex. formateur indisponible, reportée à jeudi…" class="min-w-[220px] flex-1 rounded-[10px] border border-[#F0D6D6] bg-white px-3 py-2 text-[13px] outline-none focus:border-[#C24E4E]">
@@ -275,7 +295,16 @@
                     <details class="mt-6 rounded-[18px] border border-[#EDE9F3] bg-white p-4">
                         <summary class="flex cursor-pointer items-center gap-2.5 text-[14px] font-bold text-[#3B3F5C]"><x-ui.illustration name="horloge" size="size-7" /> Sessions passées</summary>
                         @foreach ($passees as $s)
-                            <p class="flex flex-wrap justify-between gap-2 border-t border-[#F1EEF6] py-2 text-[12.5px] first:mt-3"><span class="font-semibold text-[#3B3F5C]">{{ $s['title'] }}</span><span class="text-[#6B6F86]">{{ $s['debut']->isoFormat('D MMM YYYY') }} · {{ $s['inscrits'] }} inscrit{{ $s['inscrits'] > 1 ? 's' : '' }}</span></p>
+                            <div class="border-t border-[#F1EEF6] py-2.5 first:mt-3" wire:key="passee-{{ $s['id'] }}">
+                                <div class="flex flex-wrap items-center gap-2 text-[12.5px]">
+                                    <span class="min-w-0 flex-1 font-semibold text-[#3B3F5C]">{{ $s['title'] }} <span class="font-normal text-[#5B677A]">· {{ $s['debut']->isoFormat('D MMM YYYY') }} · {{ $s['inscrits'] }} inscrit{{ $s['inscrits'] > 1 ? 's' : '' }}, {{ $s['presents'] }} présent{{ $s['presents'] > 1 ? 's' : '' }}</span></span>
+                                    @if ($s['statut'] === 'publie')
+                                        <button type="button" wire:click="ouvrir('emargement', {{ $s['id'] }})" class="btn-tap rounded-full border border-[#E4E1EC] px-3 py-1 text-[11.5px] font-bold text-[#5B677A] hover:bg-[#F7F5FB]">Émargement</button>
+                                        <button type="button" wire:click="ouvrir('apres', {{ $s['id'] }})" class="btn-tap rounded-full border border-[#E4E1EC] px-3 py-1 text-[11.5px] font-bold text-[#5B677A] hover:bg-[#F7F5FB]">{{ ($s['replay_url'] || $s['support_url']) ? 'Replay ✓' : 'Ajouter le replay' }}</button>
+                                    @endif
+                                </div>
+                                @include('livewire.admin.partials.suivi-session', ['s' => $s])
+                            </div>
                         @endforeach
                     </details>
                 @endif

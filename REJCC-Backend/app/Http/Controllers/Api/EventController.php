@@ -168,6 +168,14 @@ class EventController extends Controller
             'billet' => $inscription?->billet,
             'present' => (bool) $inscription?->present_at,
             'lien_visio' => $inscription && $e->en_ligne ? $e->lien_visio : null,
+            // Session live passée : replay, support et prochaine session de la formation.
+            'apres' => $e->estLive() && $e->estPasse() ? [
+                'replay_url' => $e->replay_url,
+                'support_url' => $e->support_url,
+                'prochaine' => $e->formation_id ? Event::filtrerPourLeMembre(Event::lives()->where('formation_id', $e->formation_id)
+                    ->where('statut', 'publie')->where('starts_at', '>', now())->orderBy('starts_at')->limit(5)->get(), $moi)
+                    ->map(fn (Event $p) => ['id' => $p->id, 'title' => $p->title, 'starts_at' => $p->starts_at->toIso8601String()])->first() : null,
+            ] : null,
         ]]);
     }
 
@@ -350,7 +358,7 @@ class EventController extends Controller
         if (preg_match('/B-[A-Z0-9]{8}/', $code, $m)) {
             $inscription = EventRegistration::with('user')->where('event_id', $e->id)->where('billet', $m[0])->first();
             if (! $inscription) {
-                return response()->json(['ok' => false, 'message' => "Ce billet ne correspond pas à cet événement."], 404);
+                return response()->json(['ok' => false, 'message' => 'Ce billet ne correspond pas à cet événement.'], 404);
             }
             $membre = $inscription->user;
         } elseif (preg_match('#(?:/CARTE/)?0*(\d{1,9})$#', $code, $m)) {
@@ -449,7 +457,7 @@ class EventController extends Controller
 
     public function store(Request $request)
     {
-        return $this->persist($request, new Event());
+        return $this->persist($request, new Event);
     }
 
     public function update(Request $request, int $id)

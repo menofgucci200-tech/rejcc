@@ -5,11 +5,12 @@ namespace App\Models;
 use App\Mail\InfoEvenement;
 use App\Support\Mailer;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class Event extends Model
 {
     protected $fillable = [
-        'title', 'slug', 'description', 'excerpt', 'body', 'location', 'en_ligne', 'lien_visio', 'category', 'formation_id', 'animateur', 'cible_formation', 'cible_groupes', 'cible_profils', 'google_event_id', 'statut', 'motif_annulation',
+        'title', 'slug', 'description', 'excerpt', 'body', 'location', 'en_ligne', 'lien_visio', 'category', 'formation_id', 'animateur', 'hote_meet', 'replay_url', 'support_url', 'cible_formation', 'cible_groupes', 'cible_profils', 'google_event_id', 'statut', 'motif_annulation',
         'starts_at', 'ends_at', 'time_label', 'image', 'capacity', 'reserve_abonnes', 'inscriptions_ouvertes', 'date_limite',
         'inscription_publique', 'champs', 'ancien_slug', 'attestation',
     ];
@@ -76,7 +77,7 @@ class Event extends Model
             $q->whereIn('id', FormationEnrollment::where('formation_id', $this->formation_id)->select('user_id'));
         }
         if (! empty($this->cible_groupes)) {
-            $q->whereIn('id', \Illuminate\Support\Facades\DB::table('group_user')->whereIn('group_id', $this->cible_groupes)->select('user_id'));
+            $q->whereIn('id', DB::table('group_user')->whereIn('group_id', $this->cible_groupes)->select('user_id'));
         }
         if (! empty($this->cible_profils)) {
             $q->whereIn('profil', $this->cible_profils);
@@ -106,7 +107,7 @@ class Event extends Model
             return $events;
         }
         $formations = FormationEnrollment::where('user_id', $user->id)->pluck('formation_id')->map(fn ($f) => (int) $f)->all();
-        $groupes = \Illuminate\Support\Facades\DB::table('group_user')->where('user_id', $user->id)->pluck('group_id')->map(fn ($g) => (int) $g)->all();
+        $groupes = DB::table('group_user')->where('user_id', $user->id)->pluck('group_id')->map(fn ($g) => (int) $g)->all();
 
         return $events->filter(fn (self $e) => (! $e->cible_formation || in_array((int) $e->formation_id, $formations, true))
             && (empty($e->cible_groupes) || array_intersect(array_map('intval', $e->cible_groupes), $groupes) !== [])
@@ -187,7 +188,7 @@ class Event extends Model
     {
         return match (true) {
             $this->statut === 'annule' => 'Cet événement est annulé.',
-            $this->statut !== 'publie' => "Les inscriptions à cet événement ne sont pas encore ouvertes.",
+            $this->statut !== 'publie' => 'Les inscriptions à cet événement ne sont pas encore ouvertes.',
             // Une session en ligne reste ouverte jusqu'à sa fin : on peut la rejoindre en cours.
             ($this->en_ligne ? $this->estPasse() : $this->starts_at->isPast()) => 'Cet événement a déjà eu lieu.',
             ! $this->inscriptions_ouvertes => 'Les inscriptions sont fermées.',

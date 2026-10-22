@@ -88,6 +88,23 @@
                     </section>
                 @endif
 
+                @if ($apres = $e['apres'] ?? null)
+                    <section data-test="apres-session" class="mt-5 rounded-[14px] border border-[#E8E1F7] bg-[#F7F4FD] p-4">
+                        <p class="mb-1 text-[13px] font-bold text-[#4A3F86]">{{ $e['registered'] ? 'Revoir la session' : 'Vous avez manqué cette session ?' }}</p>
+                        @if ($apres['replay_url'] || $apres['support_url'])
+                            <div class="mt-2 flex flex-wrap gap-2">
+                                @if ($apres['replay_url'])<a href="{{ $apres['replay_url'] }}" target="_blank" rel="noopener" class="btn-tap inline-flex items-center gap-2 rounded-full bg-brand px-4 py-2 text-[12.5px] font-bold text-white hover:bg-brand/90"><x-ui.icon name="video" class="size-4" /> Voir le replay</a>@endif
+                                @if ($apres['support_url'])<a href="{{ $apres['support_url'] }}" target="_blank" rel="noopener" class="btn-tap inline-flex items-center gap-2 rounded-full border border-brand/15 bg-white px-4 py-2 text-[12.5px] font-bold text-brand hover:bg-cloud"><x-ui.icon name="file-text" class="size-4" /> Le support</a>@endif
+                            </div>
+                        @else
+                            <p class="text-[12.5px] text-[#4F4A6B]">Le replay ou le support sera ajouté ici par le département Formation s'il est disponible.</p>
+                        @endif
+                        @if ($apres['prochaine'])
+                            <p class="mt-3 text-[12.5px] text-[#4F4A6B]">Prochaine session : <button type="button" wire:click="voir({{ $apres['prochaine']['id'] }})" class="font-semibold text-azure underline">{{ $apres['prochaine']['title'] }}</button>, {{ \App\Support\Quand::delai($apres['prochaine']['starts_at']) }}.</p>
+                        @endif
+                    </section>
+                @endif
+
                 {{-- Ils participent : membres inscrits visibles dans l'annuaire --}}
                 @php $p = $e['participants'] ?? ['total' => 0, 'visible' => false, 'membres' => []]; @endphp
                 @if ($p['total'] > 0)

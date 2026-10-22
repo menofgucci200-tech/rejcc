@@ -6,6 +6,7 @@ use App\Support\AdminNav;
 use App\Support\AdminSections;
 use App\Support\Api;
 use App\Support\Espace;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
@@ -64,7 +65,7 @@ class Show extends Component
         $this->ajout = $this->ajout === $type ? '' : $type;
         $this->reset(['recherche', 'prenom', 'nom', 'email', 'telephone', 'erreur', 'message']);
         // Mot de passe proposé, que l'administrateur transmet à la personne.
-        $this->motDePasse = $type === 'nouveau' ? 'Rejcc-'.strtoupper(\Illuminate\Support\Str::random(4)).'-'.random_int(1000, 9999) : '';
+        $this->motDePasse = $type === 'nouveau' ? 'Rejcc-'.strtoupper(Str::random(4)).'-'.random_int(1000, 9999) : '';
     }
 
     /** Donne l'accès au département à un membre existant (son compte reste le même). */
@@ -155,7 +156,13 @@ class Show extends Component
                 ->reject(fn ($m) => ($m['bureau_departement'] ?? null) === $this->slug)->take(8)->values()->all()
             : [];
 
+        // Cockpit du département Formation : chiffres et « À faire ».
+        $cockpit = $this->slug === 'formation' && AdminSections::allowed(session('api_user'), 'formations')
+            ? Api::get('/admin/formations-live/cockpit', [], Api::token())
+            : null;
+
         return view('livewire.departements.show', [
+            'cockpit' => ($cockpit['ok'] ?? false) ? $cockpit : null,
             'resultats' => $resultats,
             'sectionsDisponibles' => AdminSections::SECTIONS,
             'departement' => $departement,

@@ -61,6 +61,25 @@ class FormationsLive extends Component
 
     public bool $annoncer = true;
 
+    /** Personne connectée au compte Google du REJCC qui admet les participants. */
+    public string $hoteMeet = '';
+
+    public bool $attestation = false;
+
+    // ── Suivi d'une session : émargement, après-session, WhatsApp ──────────
+    /** '' | emargement | apres | whatsapp */
+    public string $panneau = '';
+
+    public ?int $panneauDe = null;
+
+    public array $emargement = [];
+
+    public string $replayUrl = '';
+
+    public string $supportUrl = '';
+
+    public bool $prevenirApres = true;
+
     public ?string $erreur = null;
 
     // Annulation avec motif (transmis aux inscrits et aux formateurs)
@@ -149,7 +168,7 @@ class FormationsLive extends Component
 
     public function nouvelle(?string $date = null): void
     {
-        $this->reset(['editionId', 'titre', 'formationId', 'formateurs', 'description', 'lienVisio', 'places', 'erreur', 'message', 'cibleFormation', 'cibleGroupes', 'cibleProfils']);
+        $this->reset(['editionId', 'titre', 'formationId', 'formateurs', 'description', 'lienVisio', 'places', 'erreur', 'message', 'cibleFormation', 'cibleGroupes', 'cibleProfils', 'hoteMeet', 'attestation']);
         $this->date = $date ?? now()->addDay()->toDateString();
         $this->heure = '18:00';
         $this->duree = 60;
@@ -173,6 +192,8 @@ class FormationsLive extends Component
         $this->cibleFormation = (bool) ($s['cible_formation'] ?? false);
         $this->cibleGroupes = $s['cible_groupes'] ?? [];
         $this->cibleProfils = $s['cible_profils'] ?? [];
+        $this->hoteMeet = (string) ($s['hote_meet'] ?? '');
+        $this->attestation = (bool) ($s['attestation'] ?? false);
         $this->description = (string) ($s['description'] ?? '');
         $this->date = $debut->toDateString();
         $this->heure = $debut->format('H:i');
@@ -211,6 +232,8 @@ class FormationsLive extends Component
             'title' => $this->titre,
             'formation_id' => $this->formationId !== '' ? (int) $this->formationId : null,
             'formateurs' => array_map('intval', $this->formateurs),
+            'hote_meet' => trim($this->hoteMeet) ?: null,
+            'attestation' => $this->attestation,
             'cible_formation' => $this->cibleFormation,
             'cible_groupes' => array_map('intval', $this->cibleGroupes),
             'cible_profils' => array_values($this->cibleProfils),
@@ -253,6 +276,69 @@ class FormationsLive extends Component
         $this->message = ($r['ok'] ?? false)
             ? 'Session annulée. Les inscrits et les formateurs ont été prévenus.'
             : ($r['message'] ?? 'Annulation impossible.');
+    }
+
+    /** Ouvre (ou ferme) un panneau de suivi sous la carte d'une session. */
+    public function ouvrir(string $panneau, int $id): void
+    {
+        if ($this->panneau === $panneau && $this->panneauDe === $id) {
+            $this->panneau = '';
+            $this->panneauDe = null;
+
+            return;
+        }
+        $this->panneau = $panneau;
+        $this->panneauDe = $id;
+        $this->inscritsDe = null;
+        if ($panneau === 'emargement') {
+            $this->emargement = Api::get("/admin/formations-live/{$id}/presences", [], Api::token())['inscrits'] ?? [];
+        }
+        if ($panneau === 'apres') {
+            $s = collect($this->donnees()['sessions'] ?? [])->firstWhere('id', $id);
+            $this->replayUrl = (string) ($s['replay_url'] ?? '');
+            $this->supportUrl = (string) ($s['support_url'] ?? '');
+            $this->prevenirApres = true;
+        }
+    }
+
+    public function basculerPresence(int $inscription, bool $present): void
+    {
+        $r = Api::post("/admin/formations-live/{$this->panneauDe}/presences", ['inscriptions' => [$inscription], 'present' => $present], Api::token());
+        $this->apresPresence($r);
+    }
+
+    public function presentsDepuisRejoindre(): void
+    {
+        $r = Api::post("/admin/formations-live/{$this->panneauDe}/presences", ['tous_les_rejoints' => true], Api::token());
+        $this->apresPresence($r);
+    }
+
+    private function apresPresence(array $r): void
+    {
+        if (! ($r['ok'] ?? false)) {
+            $this->message = $r['message'] ?? 'Présence non enregistrée.';
+
+            return;
+        }
+        $this->emargement = Api::get("/admin/formations-live/{$this->panneauDe}/presences", [], Api::token())['inscrits'] ?? [];
+        $this->message = ($r['presents'] ?? 0).' présent(s).'.(($r['attestations'] ?? 0) > 0 ? " {$r['attestations']} attestation(s) de présence délivrée(s)." : '');
+    }
+
+    public function enregistrerApres(): void
+    {
+        $r = Api::put("/admin/formations-live/{$this->panneauDe}/apres", [
+            'replay_url' => trim($this->replayUrl) ?: null,
+            'support_url' => trim($this->supportUrl) ?: null,
+            'prevenir' => $this->prevenirApres,
+        ], Api::token());
+        if (! ($r['ok'] ?? false)) {
+            $this->message = $r['message'] ?? 'Enregistrement impossible.';
+
+            return;
+        }
+        $n = $r['prevenus']['membres'] ?? 0;
+        $this->message = 'Replay et support enregistrés : ils apparaissent sur la fiche de la session.'.($n ? " {$n} inscrit(s) prévenu(s)." : '');
+        $this->panneau = '';
     }
 
     public function voirInscrits(int $id): void

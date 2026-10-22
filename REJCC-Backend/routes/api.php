@@ -310,6 +310,12 @@ Route::middleware(['auth.token', 'audit.log'])->prefix('admin')->group(function 
         Route::post('/formations-live/{id}/annuler', [\App\Http\Controllers\Api\FormationLiveController::class, 'annuler'])->whereNumber('id');
         Route::get('/formations-live/{id}/inscrits', [\App\Http\Controllers\Api\FormationLiveController::class, 'inscrits'])->whereNumber('id');
         Route::post('/formations-live/public', [\App\Http\Controllers\Api\FormationLiveController::class, 'compterPublic']);
+        Route::get('/formations-live/cockpit', [\App\Http\Controllers\Api\FormationLiveController::class, 'cockpit']);
+        Route::get('/formations-live/{id}/presences', [\App\Http\Controllers\Api\FormationLiveController::class, 'presences'])->whereNumber('id');
+        Route::post('/formations-live/{id}/presences', [\App\Http\Controllers\Api\FormationLiveController::class, 'marquerPresences'])->whereNumber('id');
+        Route::put('/formations-live/{id}/apres', [\App\Http\Controllers\Api\FormationLiveController::class, 'apres'])->whereNumber('id');
+        Route::get('/formations/{id}/apprenants', [FormationController::class, 'apprenants'])->whereNumber('id');
+        Route::post('/formations/{id}/relance', [FormationController::class, 'relancer'])->whereNumber('id');
         Route::get('/formateurs', [\App\Http\Controllers\Api\FormateurController::class, 'index']);
         Route::get('/formateurs/membres', [\App\Http\Controllers\Api\FormateurController::class, 'chercherMembres']);
         Route::post('/formateurs', [\App\Http\Controllers\Api\FormateurController::class, 'store']);
