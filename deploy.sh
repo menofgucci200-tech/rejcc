@@ -577,6 +577,11 @@ if crontab -l 2>/dev/null | grep -q 'schedule:run'; then
 elif command -v crontab >/dev/null 2>&1 && { crontab -l 2>/dev/null; echo "$LIGNE_CRON"; } | crontab - 2>/dev/null \
         && crontab -l 2>/dev/null | grep -qF "$LIGNE_CRON"; then
     ok "Ajoutée (chaque minute) : $LIGNE_CRON"
+elif ! command -v crontab >/dev/null 2>&1; then
+    # Hostinger : pas de commande crontab en SSH, les tâches se gèrent dans hPanel
+    # et ne sont pas visibles d'ici. On ne peut ni la voir ni l'ajouter.
+    info "Non vérifiable en SSH (tâches gérées dans hPanel → Avancé → Tâches Cron)."
+    info "Elle doit exister, « chaque minute » : cd $DOSSIER_BACKEND && $(command -v "$PHP") artisan schedule:run"
 else
     avert "Tâche planifiée à créer dans hPanel → Avancé → Tâches Cron, « chaque minute », commande : cd $DOSSIER_BACKEND && $(command -v "$PHP") artisan schedule:run"
 fi
