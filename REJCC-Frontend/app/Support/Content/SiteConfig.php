@@ -44,6 +44,26 @@ class SiteConfig
         ];
     }
 
+    /**
+     * Liens de la barre de navigation : l'essentiel seulement. Les autres pages
+     * (domaines, projets, emplois, galerie, partenaires) restent dans le pied de
+     * page et dans le menu mobile.
+     */
+    public static function navPrincipale(): array
+    {
+        $garder = ['/', '/a-propos', '/activites', '/evenements', '/actualites', '/contact'];
+
+        return array_values(array_filter(self::nav(), fn ($i) => in_array($i['href'], $garder, true)));
+    }
+
+    /** Pages hors de la barre de navigation (menu mobile, rubrique « Aussi sur le site »). */
+    public static function navSecondaire(): array
+    {
+        $principales = array_column(self::navPrincipale(), 'href');
+
+        return array_values(array_filter(self::nav(), fn ($i) => ! in_array($i['href'], $principales, true)));
+    }
+
     public static function ctaPrimary(): array
     {
         return ['label' => 'Adhérer', 'href' => '/adhesion'];

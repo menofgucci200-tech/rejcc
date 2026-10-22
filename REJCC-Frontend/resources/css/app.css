@@ -509,3 +509,8 @@ select.rj-invalide {
 html.rj-texte-grand main {
     zoom: 1.12;
 }
+
+/* Menu mobile du site ouvert : le bouton flottant du film ne recouvre pas les boutons du menu. */
+.menu-site-ouvert .rj-tour-fab {
+  display: none;
+}

@@ -1,11 +1,13 @@
 @php
-    $nav = \App\Support\Content\SiteConfig::nav();
+    $nav = \App\Support\Content\SiteConfig::navPrincipale();
+    $autres = \App\Support\Content\SiteConfig::navSecondaire();
     $cta = \App\Support\Content\SiteConfig::ctaPrimary();
     $isHome = request()->is('/');
 @endphp
 
 <div x-data="{ open: false, scrolled: window.scrollY > 24 }"
      x-init="window.addEventListener('scroll', () => scrolled = window.scrollY > 24, { passive: true })"
+     x-effect="document.body.classList.toggle('menu-site-ouvert', open)"
      @keydown.escape.window="open = false">
 
     <header
@@ -41,17 +43,17 @@
             </ul>
 
             <div class="flex items-center gap-2">
-                <a href="{{ route('mon-espace') }}" wire:navigate
-                    :class="(scrolled || {{ $isHome ? 'false' : 'true' }} || open) ? 'border-brand/25 text-brand hover:bg-brand hover:text-white' : 'border-white/40 text-white hover:bg-white hover:text-brand'"
-                    aria-label="Mon espace"
-                    title="Mon espace" class="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border px-4 py-2 text-sm font-semibold transition-colors xl:px-3">
+                {{-- « Mon espace membre » toujours visible, en bouton plein (téléphone compris). --}}
+                <a href="{{ route('mon-espace') }}" wire:navigate data-test="bouton-mon-espace"
+                    :class="(scrolled || {{ $isHome ? 'false' : 'true' }} || open) ? 'bg-brand text-white hover:bg-brand-700' : 'bg-white text-brand hover:bg-cloud'"
+                    class="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-2.5 text-sm font-bold shadow-sm transition-colors">
                     <x-ui.icon name="user" class="size-4" />
-                    <span class="xl:hidden">Mon espace</span>
+                    <span class="sm:hidden">Mon espace</span>
+                    <span class="hidden sm:inline">Mon espace membre</span>
                 </a>
 
                 <x-ui.button :href="url($cta['href'])" wire:navigate size="sm" :with-arrow="true"
-                    x-bind:class="(scrolled || {{ $isHome ? 'false' : 'true' }} || open) ? '' : '!bg-white !text-brand hover:!bg-cloud'"
-                    class="!hidden xl:!inline-flex">
+                    class="!hidden sm:!inline-flex">
                     {{ $cta['label'] }}
                 </x-ui.button>
 
@@ -80,17 +82,25 @@
         class="fixed inset-0 z-[70] flex flex-col bg-brand xl:hidden"
         style="display: none;"
     >
-        <div class="mt-24 flex flex-1 flex-col gap-1 container-px">
+        <div class="mt-24 flex flex-1 flex-col gap-1 overflow-y-auto container-px">
             @foreach ($nav as $item)
                 <a href="{{ url($item['href']) }}" wire:navigate @click="open = false" class="block border-b border-white/10 py-4 font-display text-3xl uppercase tracking-tight text-white">
                     {{ $item['label'] }}
                 </a>
             @endforeach
-            <div class="mt-8 flex flex-col gap-3">
-                <x-ui.button :href="route('mon-espace')" wire:navigate variant="outline" size="lg" class="w-full !border-white/40 !text-white hover:!bg-white hover:!text-brand">
-                    <x-ui.icon name="user" class="size-4" /> Mon espace
+            @if ($autres)
+                <p class="mt-6 text-[11px] font-bold uppercase tracking-[0.14em] text-white/50">Aussi sur le site</p>
+                <div class="mt-2 flex flex-wrap gap-2">
+                    @foreach ($autres as $item)
+                        <a href="{{ url($item['href']) }}" wire:navigate @click="open = false" class="rounded-full border border-white/20 px-4 py-2 text-sm font-semibold text-white/85 hover:bg-white/10">{{ $item['label'] }}</a>
+                    @endforeach
+                </div>
+            @endif
+            <div class="mt-8 flex flex-col gap-3 pb-8">
+                <x-ui.button :href="route('mon-espace')" wire:navigate variant="white" size="lg" class="w-full">
+                    <span class="inline-flex items-center gap-2"><x-ui.icon name="user" class="size-4" /> Mon espace membre</span>
                 </x-ui.button>
-                <x-ui.button :href="url($cta['href'])" wire:navigate variant="white" size="lg" :with-arrow="true" class="w-full">
+                <x-ui.button :href="url($cta['href'])" wire:navigate size="lg" :with-arrow="true" class="w-full">
                     {{ $cta['label'] }}
                 </x-ui.button>
             </div>
