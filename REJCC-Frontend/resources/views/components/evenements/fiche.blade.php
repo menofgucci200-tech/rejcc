@@ -32,6 +32,9 @@
                     @if ($e['en_ligne'])<span class="rounded-full bg-azure/10 px-2.5 py-0.5 text-[10.5px] font-bold text-azure">En ligne</span>@endif
                 </div>
                 <h2 data-test="fiche-evenement-titre" class="text-[20px] font-extrabold leading-snug text-brand">{{ $e['title'] }}</h2>
+                @if (($e['live'] ?? false) && (($e['formation'] ?? null) || ($e['animateur'] ?? null)))
+                    <p class="mt-1 text-[13px] text-[#3D4A60]">@if ($e['formation'])Formation : <span class="font-semibold">{{ $e['formation'] }}</span>@endif @if ($e['animateur'])· avec <span class="font-semibold">{{ $e['animateur'] }}</span>@endif</p>
+                @endif
                 @if ($e['statut'] === 'annule' && $e['motif_annulation'])
                     <p class="mt-2 rounded-[10px] bg-accent/5 px-3 py-2 text-[12.5px] font-semibold text-accent">Annulé : {{ $e['motif_annulation'] }}</p>
                 @endif
@@ -49,7 +52,7 @@
                         <div class="min-w-0 text-[13px]">
                             <p class="font-bold text-brand">{{ $e['en_ligne'] ? 'En ligne' : ($e['location'] ?: 'Lieu à préciser') }}</p>
                             @if ($plan)<a href="{{ $plan }}" target="_blank" rel="noopener" class="text-[12px] font-semibold text-azure hover:underline">Voir sur la carte</a>@endif
-                            @if ($e['en_ligne'])<p class="text-[12px] text-[#5B677A]">{{ ($e['lien_visio'] ?? null) ? 'Lien de connexion ci-dessous.' : 'Le lien de connexion est donné aux inscrits.' }}</p>@endif
+                            @if ($e['en_ligne'])<p class="text-[12px] text-[#5B677A]">Visio Google Meet : le bouton « Rejoindre » s'active 15 min avant.</p>@endif
                         </div>
                     </div>
                 </div>
@@ -65,8 +68,25 @@
                     @endif
                 </p>
 
-                @if ($e['excerpt'])<p class="mt-4 text-[14px] font-semibold leading-relaxed text-ink">{{ $e['excerpt'] }}</p>@endif
+                @php
+                    // Le résumé n'est affiché que s'il apporte autre chose que le début de la description.
+                    $resume = trim((string) $e['excerpt']);
+                    $resumeUtile = $resume !== '' && ! str_starts_with(trim((string) $e['description']), rtrim($resume, '.… '));
+                @endphp
+                @if ($resumeUtile)<p class="mt-4 text-[14px] font-semibold leading-relaxed text-ink">{{ $e['excerpt'] }}</p>@endif
                 @if ($e['description'])<p class="mt-3 whitespace-pre-line text-[13.5px] leading-relaxed text-[#3D4A60]">{!! \App\Support\Texte::liens($e['description'], 'font-semibold text-azure underline underline-offset-2') !!}</p>@endif
+
+                @if ($e['en_ligne'] && ! $e['passe'] && $e['statut'] === 'publie')
+                    @php $tel = preg_replace('/\D+/', '', (string) \App\Support\Content\SiteConfig::get()['contact']['phone']); @endphp
+                    <section data-test="comment-ca-se-passe" class="mt-5 rounded-[14px] border border-[#CDEBDD] bg-[#F4FBF7] p-4">
+                        <p class="mb-2 text-[13px] font-bold text-[#1C6B47]">Comment ça se passe ?</p>
+                        <ul class="space-y-1.5 text-[13px] leading-relaxed text-[#2F4A3C]">
+                            <li>1. Cliquez sur « Rejoindre la visio » quelques minutes avant : vous arrivez sur Google Meet, une personne du REJCC vous fait entrer.</li>
+                            <li>2. Coupez votre caméra pour économiser vos données ; gardez le micro coupé quand vous ne parlez pas.</li>
+                            <li>3. Un souci pour entrer ?@if ($tel) <a href="https://wa.me/{{ $tel }}" target="_blank" rel="noopener" class="font-semibold text-[#1C6B47] underline">Écrivez-nous sur WhatsApp</a>.@else Contactez l'équipe du REJCC.@endif</li>
+                        </ul>
+                    </section>
+                @endif
 
                 {{-- Ils participent : membres inscrits visibles dans l'annuaire --}}
                 @php $p = $e['participants'] ?? ['total' => 0, 'visible' => false, 'membres' => []]; @endphp
@@ -105,7 +125,7 @@
                         <span class="rounded-full bg-cloud px-4 py-2.5 text-[13px] font-semibold text-[#5B677A]">Événement terminé{{ $e['registered'] ? ' — vous étiez inscrit(e)' : '' }}</span>
                     @elseif ($e['registered'])
                         <span data-test="fiche-inscrit" class="inline-flex items-center gap-1.5 rounded-full bg-[#22A85A]/10 px-4 py-2.5 text-[13px] font-bold text-[#1C8F4C]"><x-ui.icon name="check-circle" class="size-4" /> Vous êtes inscrit(e)</span>
-                        @if ($e['billet'] ?? null)
+                        @if (($e['billet'] ?? null) && ! $e['en_ligne'])
                             <div x-data="{ billet: false }" class="contents">
                                 <button type="button" x-on:click="billet = true" data-test="mon-billet" class="btn-tap inline-flex items-center gap-2 rounded-full bg-brand px-4 py-2.5 text-[13px] font-bold text-white hover:bg-brand/90"><x-ui.icon name="qr-code" class="size-4" /> Mon billet</button>
                                 <template x-teleport="body">
@@ -132,9 +152,7 @@
                                 </template>
                             </div>
                         @endif
-                        @if ($e['lien_visio'] ?? null)
-                            <a href="{{ $e['lien_visio'] }}" target="_blank" rel="noopener" data-test="lien-visio" class="btn-tap inline-flex items-center gap-2 rounded-full bg-azure px-4 py-2.5 text-[13px] font-bold text-white hover:bg-azure/90"><x-ui.icon name="video" class="size-4" /> Rejoindre en ligne</a>
-                        @endif
+                        <x-evenements.rejoindre :e="$e" />
                         <a href="{{ route('espace-membre.evenements.agenda', $e['id']) }}" data-test="ajouter-agenda" class="btn-tap inline-flex items-center gap-2 rounded-full border border-brand/15 px-4 py-2.5 text-[13px] font-bold text-brand hover:bg-cloud"><x-ui.icon name="calendar" class="size-4" /> Ajouter à mon agenda</a>
                         <button type="button" wire:click="desinscrire({{ $e['id'] }})" wire:confirm="Annuler votre inscription à « {{ $e['title'] }} » ?" data-test="desinscrire" class="text-[12.5px] font-semibold text-[#9AA6B8] hover:text-accent">Annuler mon inscription</button>
                     @elseif ($e['refus'])
@@ -142,6 +160,8 @@
                         @if ($e['reserve_abonnes'] && str_contains($e['refus'], 'abonnement'))
                             <a href="{{ route('espace-membre.abonnement') }}" wire:navigate class="btn-tap rounded-full bg-accent px-4 py-2.5 text-[13px] font-bold text-white hover:bg-accent-600">M'abonner</a>
                         @endif
+                    @elseif ($e['visio_ouverte'] ?? false)
+                        <x-evenements.rejoindre :e="$e" taille="grand" />
                     @else
                         <button type="button" wire:click="inscrire({{ $e['id'] }})" wire:loading.attr="disabled" data-test="fiche-inscrire" class="btn-tap inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-[13px] font-bold text-white hover:bg-accent-600 disabled:opacity-60"><x-ui.icon name="check" class="size-4" /> Je m'inscris</button>
                     @endif

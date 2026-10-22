@@ -191,6 +191,7 @@ Route::middleware('auth.token')->group(function () {
     Route::post('/events/{id}/register', [EventController::class, 'register']);
     Route::get('/events/{id}', [EventController::class, 'show'])->whereNumber('id');
     Route::post('/events/{id}/inscription', [EventController::class, 'inscrire'])->whereNumber('id');
+    Route::post('/events/{id}/rejoindre', [EventController::class, 'rejoindre'])->whereNumber('id');
     Route::delete('/events/{id}/inscription', [EventController::class, 'desinscrire'])->whereNumber('id');
 
     // Formations

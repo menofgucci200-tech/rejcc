@@ -30,36 +30,51 @@ Artisan::command('documents:expirations', function () {
 
 Schedule::command('documents:expirations')->dailyAt('07:20');
 
-// Événements : rappel aux inscrits la veille (vérifié toutes les heures).
+// Événements : rappel aux inscrits la veille, puis une heure avant pour les
+// événements en ligne (avec e-mail immédiat), vérifié toutes les 10 minutes.
 Artisan::command('evenements:rappels', function () {
     $n = 0;
     $evenements = \App\Models\Event::where('statut', 'publie')->whereBetween('starts_at', [now(), now()->addDay()])->get();
     foreach ($evenements as $e) {
-        $quand = $e->starts_at->isToday() ? "aujourd'hui" : 'demain';
-        foreach ($e->registrations()->whereNull('rappel_at')->get() as $r) {
-            $titre = "Rappel : {$e->title} {$quand}";
-            $heure = 'Rendez-vous '.$quand.' à '.$e->starts_at->format('H\hi');
+        $heure = $e->starts_at->format('H\hi');
+        $bientot = $e->en_ligne && $e->starts_at->isBefore(now()->addMinutes(75));
+        $lien = "/espace-membre/evenements?evenement={$e->id}";
+        $inscriptions = $e->registrations()->with('user')->get()
+            ->filter(fn ($r) => $bientot ? $r->rappel_h1_at === null : $r->rappel_at === null);
+        foreach ($inscriptions as $r) {
+            if ($bientot) {
+                // Une heure avant : lien direct, e-mail tout de suite.
+                $titre = "Dans 1 h : {$e->title}";
+                $texte = "Votre session en visio commence à {$heure}. Ouvrez-la sur la plateforme et cliquez sur « Rejoindre la visio » (actif 15 min avant). Une personne du REJCC vous fera entrer.";
+            } else {
+                $quand = $e->starts_at->isToday() ? "aujourd'hui" : 'demain';
+                $titre = "Rappel : {$e->title} {$quand}";
+                $texte = "Rendez-vous {$quand} à {$heure}".($e->en_ligne
+                    ? ' en visio. Le moment venu, ouvrez la fiche de la session et cliquez sur « Rejoindre la visio ».'
+                    : ($e->location ? " — {$e->location}." : '.').' Votre billet est dans la fiche de l\'événement.');
+            }
             if ($r->user_id) {
-                \App\Models\MemberNotification::create([
-                    'user_id' => $r->user_id,
-                    'type' => 'info',
-                    'title' => $titre,
-                    'body' => $heure.($e->en_ligne ? ' en ligne : le lien de connexion est sur la fiche.' : ($e->location ? " — {$e->location}." : '.')).' Votre billet est dans la fiche de l\'événement.',
-                    'link' => "/espace-membre/evenements?evenement={$e->id}",
-                ]);
+                \App\Models\MemberNotification::create(['user_id' => $r->user_id, 'type' => 'info', 'title' => $titre, 'body' => $texte, 'link' => $lien]);
+                $u = $r->user;
+                if ($bientot && $u && $u->email && ! \App\Support\Notifications::enPause($u)
+                    && (\App\Support\Notifications::reglages($u)['email']['evenements'] ?? 'quotidien') !== 'jamais') {
+                    \App\Support\Mailer::send($u->email, new \App\Mail\RappelSessionLive($u->prenom, $e, $titre, $texte,
+                        rtrim((string) config('app.frontend_url'), '/').$lien));
+                }
             } elseif ($r->email) {
                 // Invité du formulaire public : rappel par e-mail (lien visio inclus pour un événement en ligne).
                 \App\Support\Mailer::send($r->email, new \App\Mail\InfoEvenement($r, $e, $titre,
-                    $heure.($e->en_ligne ? ($e->lien_visio ? " en ligne : {$e->lien_visio}" : ' en ligne.') : ($e->location ? " — {$e->location}." : '.')).' Présentez le QR code de votre billet à l\'entrée.'));
+                    "Rendez-vous à {$heure}".($e->en_ligne ? ($e->lien_visio ? " en ligne : {$e->lien_visio}" : ' en ligne.') : ($e->location ? " — {$e->location}." : '.').' Présentez le QR code de votre billet à l\'entrée.')));
             }
-            $r->update(['rappel_at' => now()]);
+            // Le rappel d'une heure avant tient lieu de rappel de la veille s'il arrive seul.
+            $r->update($bientot ? ['rappel_h1_at' => now(), 'rappel_at' => $r->rappel_at ?? now()] : ['rappel_at' => now()]);
             $n++;
         }
     }
     $this->info("{$n} rappel(s) envoyé(s).");
-})->purpose('Rappel aux inscrits la veille des événements');
+})->purpose('Rappels aux inscrits : la veille, puis une heure avant les événements en ligne');
 
-Schedule::command('evenements:rappels')->hourly();
+Schedule::command('evenements:rappels')->everyTenMinutes();
 
 // Certificats : rattrapage des certificats et attestations non encore délivrés
 // (attestations d'événement une fois l'événement terminé).

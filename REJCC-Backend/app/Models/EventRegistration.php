@@ -10,12 +10,14 @@ class EventRegistration extends Model
 {
     protected $fillable = [
         'event_id', 'user_id', 'prenom', 'nom', 'telephone', 'email', 'se_dit_membre', 'reponses',
-        'billet', 'present_at', 'rappel_at',
+        'billet', 'present_at', 'rappel_at', 'rappel_h1_at', 'rejoint_at',
     ];
 
     protected $casts = [
         'present_at' => 'datetime',
         'rappel_at' => 'datetime',
+        'rappel_h1_at' => 'datetime',
+        'rejoint_at' => 'datetime',
         'se_dit_membre' => 'boolean',
         'reponses' => 'array',
     ];

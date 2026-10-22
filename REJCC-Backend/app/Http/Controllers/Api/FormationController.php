@@ -273,6 +273,7 @@ class FormationController extends Controller
                 'starts_at' => $ev->starts_at->toIso8601String(),
                 'ends_at' => $ev->ends_at?->toIso8601String(),
                 'en_cours' => $ev->starts_at->isPast(),
+                'visio_ouverte' => $ev->visioOuverte(),
                 'inscrit' => $ev->registrations()->where('user_id', $userId)->exists(),
             ])->values()->all();
     }

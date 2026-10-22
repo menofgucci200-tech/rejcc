@@ -59,7 +59,9 @@
                                 @endif
                             </div>
                             @if ($e['passe'])
-                                <span class="shrink-0 rounded-full bg-cloud px-3.5 py-1.5 text-xs font-semibold text-[#9AA6B8]">{{ $e['registered'] ? 'Terminé · vous étiez inscrit' : 'Terminé' }}</span>
+                                <span class="shrink-0 rounded-full bg-cloud px-3.5 py-1.5 text-xs font-semibold text-[#5B677A]">{{ $e['registered'] ? 'Terminé · vous étiez inscrit' : 'Terminé' }}</span>
+                            @elseif ($e['visio_ouverte'] ?? false)
+                                <a href="{{ route('espace-membre.evenements.rejoindre', $e['id']) }}" target="_blank" rel="noopener" x-on:click.stop data-test="rejoindre-carte" class="btn-tap inline-flex shrink-0 items-center gap-1.5 rounded-full bg-accent px-3.5 py-1.5 text-xs font-bold text-white hover:bg-accent-600"><x-ui.icon name="video" class="size-3.5" /> Rejoindre</a>
                             @elseif ($e['registered'])
                                 <span class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-[#22A85A]/10 px-3.5 py-1.5 text-xs font-semibold text-[#1C8F4C]"><x-ui.icon name="check" class="size-3.5" /> Inscrit</span>
                             @elseif ($e['refus'])

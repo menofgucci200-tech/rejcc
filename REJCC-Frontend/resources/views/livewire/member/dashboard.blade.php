@@ -7,6 +7,20 @@
     <x-member-light.topbar title="Tableau de bord" />
 
     <div class="mx-auto max-w-[1280px] px-4 py-6 sm:px-8 sm:py-8">
+        @if ($visioDuJour)
+            <section data-test="bandeau-visio" class="mb-5 flex flex-wrap items-center gap-4 rounded-[18px] bg-brand p-4 text-white shadow-[0_14px_34px_-18px_rgba(3,29,89,0.8)] sm:p-5">
+                <span class="flex size-11 shrink-0 items-center justify-center rounded-full bg-white/10"><x-ui.icon name="video" class="size-5" /></span>
+                <div class="min-w-[180px] flex-1">
+                    <p class="text-[11px] font-bold uppercase tracking-[0.12em] text-white/70">{{ $visioDuJour['en_cours'] ?? false ? '● En ce moment' : 'Votre session commence '.\App\Support\Quand::delai($visioDuJour['starts_at']) }}</p>
+                    <p class="truncate text-[15.5px] font-bold">{{ $visioDuJour['title'] }}</p>
+                </div>
+                @if ($visioDuJour['visio_ouverte'] ?? false)
+                    <x-evenements.rejoindre :e="$visioDuJour" taille="grand" />
+                @else
+                    <a href="{{ route('espace-membre.evenements', ['evenement' => $visioDuJour['id']]) }}" wire:navigate class="btn-tap rounded-full bg-white px-4 py-2.5 text-[13px] font-bold text-brand hover:bg-cloud">Voir la session</a>
+                @endif
+            </section>
+        @endif
         @if (! $abonnementActif)
             <section data-test="abonnement-inactif" class="mb-6 flex flex-wrap items-center gap-4 rounded-[18px] border border-[#F5A623]/40 bg-[#FFF8EC] px-6 py-5">
                 <span class="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#F5A623]/15 text-[#B97400]">

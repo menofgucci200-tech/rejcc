@@ -44,7 +44,7 @@ class EventController extends Controller
             // Un visiteur peut-il s'inscrire par le formulaire public ?
             'inscription_visiteur' => $e->inscription_publique && $e->raisonRefus(null) === null,
             // Les membres peuvent-ils encore s'inscrire (sans tenir compte de l'abonnement) ?
-            'inscriptions_membres' => $e->statut === 'publie' && ! $e->starts_at->isPast() && $e->inscriptions_ouvertes
+            'inscriptions_membres' => $e->statut === 'publie' && ! ($e->en_ligne ? $e->estPasse() : $e->starts_at->isPast()) && $e->inscriptions_ouvertes
                 && ($e->date_limite === null || $e->date_limite->isFuture()) && $restantes !== 0,
         ];
     }
@@ -101,6 +101,11 @@ class EventController extends Controller
             'date_limite' => $e->date_limite?->toIso8601String(),
             'passe' => $e->estPasse(),
             'registered' => $inscrit,
+            'live' => $e->estLive(),
+            'formation' => $e->estLive() ? $e->formation?->title : null,
+            'animateur' => $e->animateur,
+            'visio_ouverte' => $e->visioOuverte(),
+            'en_cours' => $e->statut === 'publie' && $e->starts_at->isPast() && ! $e->estPasse(),
             // Raison pour laquelle l'inscription est impossible (null : possible).
             'refus' => $inscrit ? null : $e->raisonRefus($moi),
         ];
@@ -193,6 +198,34 @@ class EventController extends Controller
         ]);
 
         return response()->json(['ok' => true, 'registered' => true, 'attendees_count' => $e->nbInscrits()]);
+    }
+
+    /**
+     * POST /events/{id}/rejoindre — « Rejoindre la visio » : inscrit le membre
+     * s'il ne l'est pas encore (session en cours comprise), note son arrivée
+     * (présence probable) et renvoie le lien de la visio.
+     */
+    public function rejoindre(Request $request, int $id)
+    {
+        $moi = $request->user();
+        $e = Event::visibles()->find($id);
+        if (! $e || ! $e->en_ligne || ! $e->viseLeMembre($moi)) {
+            return response()->json(['ok' => false, 'message' => 'Événement introuvable.'], 404);
+        }
+        if (! $e->visioOuverte()) {
+            return response()->json(['ok' => false, 'message' => $e->estPasse() ? 'La session est terminée.' : 'La visio s\'ouvre 15 minutes avant le début.'], 422);
+        }
+        $inscription = EventRegistration::where('event_id', $e->id)->where('user_id', $moi->id)->first();
+        if (! $inscription) {
+            if ($raison = $e->raisonRefus($moi)) {
+                return response()->json(['ok' => false, 'message' => $raison], 422);
+            }
+            $inscription = EventRegistration::create(['event_id' => $e->id, 'user_id' => $moi->id]);
+        }
+        $inscription->rejoint_at ??= now();
+        $inscription->save();
+
+        return response()->json(['ok' => true, 'lien_visio' => $e->lien_visio]);
     }
 
     /** DELETE /events/{id}/inscription — se désinscrire (avant le début de l'événement). */
@@ -518,6 +551,9 @@ class EventController extends Controller
         $nouveauLieu = $event->en_ligne ? 'en ligne' : $event->location;
         if ($etaitPublie && $event->statut === 'publie' && ($ancienneDate && ! $ancienneDate->equalTo($event->starts_at) || $ancienLieu !== $nouveauLieu)) {
             $changeDate = ! $ancienneDate->equalTo($event->starts_at);
+            if ($changeDate) {
+                $event->relancerRappels();
+            }
             $prevenus = $event->prevenirInscrits(
                 ($changeDate ? 'Date modifiée' : 'Lieu modifié')." : {$event->title}",
                 "« {$event->title} » aura lieu {$this->quand($event)}".($event->en_ligne ? ' en ligne' : ($event->location ? " — {$event->location}" : '')).'. Votre inscription reste valable ; si vous ne pouvez plus venir, annulez-la pour libérer votre place.'

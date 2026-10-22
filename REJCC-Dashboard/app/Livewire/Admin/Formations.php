@@ -281,6 +281,10 @@ class Formations extends Component
             'image_url' => $this->imageUrl ?: null,
             'examen' => $this->examen,
         ];
+        // Une nouvelle formation naît en brouillon : on la publie quand ses modules sont prêts.
+        if (! $this->editingId) {
+            $data['is_published'] = false;
+        }
         $token = Api::token();
 
         $result = $this->editingId

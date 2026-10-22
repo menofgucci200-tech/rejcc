@@ -81,6 +81,10 @@ class Dashboard extends Component
             ->take(4)->map(fn ($m) => (object) $m);
 
         $events = Collection::make(Api::get('/events', [], $token)['events'] ?? []);
+        // Session en ligne à laquelle je suis inscrit, en cours ou dans les 3 heures : bandeau en tête.
+        $visioDuJour = $events->filter(fn ($e) => ($e['registered'] ?? false) && ($e['en_ligne'] ?? false) && $e['statut'] === 'publie'
+            && ! $e['passe'] && Carbon::parse($e['starts_at'])->isBefore(now()->addHours(3)))
+            ->sortBy('starts_at')->first();
         $upcomingEvents = $events
             ->map(function ($e) {
                 $e['starts_at'] = Carbon::parse($e['starts_at']);
@@ -180,6 +184,7 @@ class Dashboard extends Component
         }
 
         return view('livewire.member.dashboard', [
+            'visioDuJour' => $visioDuJour,
             'completion' => $completion,
             'parole' => DailyWord::today(),
             'champsManquants' => $champsManquants,

@@ -56,7 +56,7 @@
                     </div>
                     <div>
                         <label class="mb-1 block text-xs font-semibold text-[#6B6F86]">Formation liée</label>
-                        <select wire:model="formationId" class="w-full rounded-[11px] border border-[#E4E1EC] bg-[#FCFBFE] px-3.5 py-2.5 text-sm outline-none focus:border-[#C3B5F0]">
+                        <select wire:model.live="formationId" class="w-full rounded-[11px] border border-[#E4E1EC] bg-[#FCFBFE] px-3.5 py-2.5 text-sm outline-none focus:border-[#C3B5F0]">
                             <option value="">Aucune (session indépendante)</option>
                             @foreach ($formations as $f)
                                 <option value="{{ $f['id'] }}">{{ $f['title'] }}</option>
@@ -159,7 +159,7 @@
                         <input wire:model="places" type="number" min="1" class="w-full rounded-[11px] border border-[#E4E1EC] bg-[#FCFBFE] px-3.5 py-2.5 text-sm outline-none focus:border-[#C3B5F0]">
                     </div>
                     <label class="flex items-center gap-2.5 self-end pb-2 text-[13px] font-semibold text-[#3B3F5C]">
-                        <input wire:model="annoncer" type="checkbox" class="size-4 rounded"> Prévenir tous les membres par notification
+                        <input wire:model="annoncer" type="checkbox" class="size-4 rounded"> Prévenir le public visé par notification{{ $publicTotal !== null ? ' ('.number_format($publicTotal, 0, ',', ' ').' membre'.($publicTotal > 1 ? 's' : '').')' : '' }}
                     </label>
                 </div>
                 @if ($erreur)
@@ -174,11 +174,11 @@
 
         {{-- En direct / aujourd'hui --}}
         @if ($enDirect->isNotEmpty())
-            <section class="mb-6 grid gap-4 md:grid-cols-2">
+            <section class="mb-6 grid min-w-0 gap-4 md:grid-cols-2">
                 @foreach ($enDirect as $s)
-                    <div class="flex flex-wrap items-center gap-4 rounded-[20px] border border-[#CDEBDD] bg-[#EFFAF4] p-5" wire:key="direct-{{ $s['id'] }}">
+                    <div class="flex min-w-0 flex-wrap items-center gap-4 rounded-[20px] border border-[#CDEBDD] bg-[#EFFAF4] p-5" wire:key="direct-{{ $s['id'] }}">
                         <x-ui.illustration name="visio" size="size-12" />
-                        <div class="min-w-0 flex-1">
+                        <div class="min-w-[160px] flex-1">
                             <p class="text-[11px] font-bold uppercase tracking-[0.1em] {{ $s['en_cours'] ? 'text-[#2E7D5B]' : 'text-[#B7791F]' }}">{{ $s['en_cours'] ? '● En ce moment' : "Aujourd'hui à ".$s['debut']->format('H\hi') }}</p>
                             <p class="truncate text-[15px] font-bold text-[#3B3F5C]">{{ $s['title'] }}</p>
                             <p class="text-[12px] text-[#6B6F86]">{{ $s['inscrits'] }} inscrit{{ $s['inscrits'] > 1 ? 's' : '' }}@if ($s['animateur']) · {{ $s['animateur'] }}@endif</p>
@@ -240,10 +240,17 @@
                                         <a href="{{ $s['lien_visio'] }}" target="_blank" rel="noopener" title="Ouvrir la salle de visio" class="btn-tap rounded-full border border-[#CDEBDD] bg-[#EFFAF4] px-3 py-1.5 text-[12px] font-bold text-[#2E7D5B] hover:bg-[#E2F5EB]">Salle de visio</a>
                                         <button type="button" wire:click="voirInscrits({{ $s['id'] }})" class="btn-tap rounded-full border border-[#E4E1EC] px-3 py-1.5 text-[12px] font-bold text-[#6B6F86] hover:bg-[#F7F5FB]">Inscrits</button>
                                         <button type="button" wire:click="modifier({{ $s['id'] }})" class="btn-tap rounded-full border border-[#E4E1EC] px-3 py-1.5 text-[12px] font-bold text-[#6B6F86] hover:bg-[#F7F5FB]">Modifier</button>
-                                        <button type="button" wire:click="annuler({{ $s['id'] }})" wire:confirm="Annuler « {{ $s['title'] }} » ? Les inscrits seront prévenus." class="btn-tap rounded-full px-3 py-1.5 text-[12px] font-bold text-[#C24E4E] hover:bg-[#FDEEEE]">Annuler</button>
+                                        <button type="button" wire:click="demanderAnnulation({{ $s['id'] }})" class="btn-tap rounded-full px-3 py-1.5 text-[12px] font-bold text-[#C24E4E] hover:bg-[#FDEEEE]">Annuler</button>
                                     </div>
                                 @endif
                             </div>
+                            @if ($annulationDe === $s['id'])
+                                <div class="panel-enter mt-3 flex flex-wrap items-center gap-2 rounded-[14px] bg-[#FDF4F4] p-3" data-test="annulation">
+                                    <input wire:model="motifAnnulation" type="text" maxlength="300" placeholder="Motif (envoyé aux inscrits) : ex. formateur indisponible, reportée à jeudi…" class="min-w-[220px] flex-1 rounded-[10px] border border-[#F0D6D6] bg-white px-3 py-2 text-[13px] outline-none focus:border-[#C24E4E]">
+                                    <button type="button" wire:click="annuler({{ $s['id'] }})" class="btn-tap rounded-full bg-[#AC0100] px-4 py-2 text-[12.5px] font-bold text-white hover:bg-[#8F0100]">Confirmer l'annulation</button>
+                                    <button type="button" wire:click="demanderAnnulation({{ $s['id'] }})" class="btn-tap rounded-full px-3 py-2 text-[12.5px] font-bold text-[#6B6F86]">Garder la session</button>
+                                </div>
+                            @endif
                             @if ($inscritsDe === $s['id'])
                                 <div class="panel-enter mt-3 rounded-[14px] bg-[#FBFAFD] p-3">
                                     @forelse ($inscrits as $i)

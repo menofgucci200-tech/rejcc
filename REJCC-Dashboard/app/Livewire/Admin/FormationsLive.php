@@ -63,6 +63,11 @@ class FormationsLive extends Component
 
     public ?string $erreur = null;
 
+    // Annulation avec motif (transmis aux inscrits et aux formateurs)
+    public ?int $annulationDe = null;
+
+    public string $motifAnnulation = '';
+
     public ?string $message = null;
 
     // ── Inscrits ─────────────────────────────────────────────────────────
@@ -106,6 +111,9 @@ class FormationsLive extends Component
     /** Nombre de membres visés, recalculé à chaque changement des critères. */
     public function updated(string $propriete): void
     {
+        if ($propriete === 'formationId' && $this->formationId === '') {
+            $this->cibleFormation = false;
+        }
         if (in_array($propriete, ['cibleFormation', 'cibleGroupes', 'cibleProfils', 'formationId'], true) || str_starts_with($propriete, 'cible')) {
             $this->compterPublic();
         }
@@ -231,11 +239,19 @@ class FormationsLive extends Component
             .(($n = (int) ($r['annonces'] ?? 0)) > 0 ? ' '.$n.($n > 1 ? ' membres prévenus.' : ' membre prévenu.') : '');
     }
 
+    public function demanderAnnulation(int $id): void
+    {
+        $this->annulationDe = $this->annulationDe === $id ? null : $id;
+        $this->motifAnnulation = '';
+    }
+
     public function annuler(int $id): void
     {
-        $r = Api::post("/admin/formations-live/{$id}/annuler", [], Api::token());
+        $r = Api::post("/admin/formations-live/{$id}/annuler", ['motif' => trim($this->motifAnnulation) ?: null], Api::token());
+        $this->annulationDe = null;
+        $this->motifAnnulation = '';
         $this->message = ($r['ok'] ?? false)
-            ? 'Session annulée. Les inscrits ont été prévenus.'
+            ? 'Session annulée. Les inscrits et les formateurs ont été prévenus.'
             : ($r['message'] ?? 'Annulation impossible.');
     }
 

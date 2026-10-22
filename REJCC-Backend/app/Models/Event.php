@@ -167,6 +167,18 @@ class Event extends Model
         return ($this->ends_at ?? $this->starts_at)->isPast();
     }
 
+    /** Le bouton « Rejoindre la visio » est actif : 15 minutes avant le début, jusqu'à la fin. */
+    public function visioOuverte(): bool
+    {
+        return $this->en_ligne && $this->statut === 'publie' && $this->starts_at->copy()->subMinutes(15)->isPast() && ! $this->estPasse();
+    }
+
+    /** Session reportée : les rappels repartent pour la nouvelle date. */
+    public function relancerRappels(): void
+    {
+        $this->registrations()->update(['rappel_at' => null, 'rappel_h1_at' => null]);
+    }
+
     /**
      * Raison pour laquelle ce membre ne peut pas s'inscrire (null s'il le peut).
      * Sans membre : règles de l'inscription publique (formulaire QR).
@@ -176,7 +188,8 @@ class Event extends Model
         return match (true) {
             $this->statut === 'annule' => 'Cet événement est annulé.',
             $this->statut !== 'publie' => "Les inscriptions à cet événement ne sont pas encore ouvertes.",
-            $this->starts_at->isPast() => 'Cet événement a déjà eu lieu.',
+            // Une session en ligne reste ouverte jusqu'à sa fin : on peut la rejoindre en cours.
+            ($this->en_ligne ? $this->estPasse() : $this->starts_at->isPast()) => 'Cet événement a déjà eu lieu.',
             ! $this->inscriptions_ouvertes => 'Les inscriptions sont fermées.',
             $this->date_limite !== null && $this->date_limite->isPast() => "La date limite d'inscription est dépassée.",
             $user === null && ! $this->inscription_publique => 'Cet événement est réservé aux membres du réseau.',

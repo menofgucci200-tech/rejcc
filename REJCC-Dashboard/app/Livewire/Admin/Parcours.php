@@ -69,7 +69,8 @@ class Parcours extends Component
         $this->badgeIcon = 'rocket';
         $this->badgeCouleur = '#4F6FBF';
         $this->ordre = 0;
-        $this->isPublished = true;
+        // Brouillon par défaut : publié quand il contient ses formations.
+        $this->isPublished = false;
         $this->resetValidation();
         $this->showForm = true;
     }

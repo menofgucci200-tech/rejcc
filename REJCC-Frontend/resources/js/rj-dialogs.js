@@ -306,6 +306,11 @@ document.addEventListener('livewire:init', () => {
                 }).then((ok) => ok && window.location.reload());
                 return;
             }
+            if (! navigator.onLine || ! status) {
+                preventDefault();
+                rjToast("Pas de connexion : votre action n'a pas été envoyée. Réessayez quand le réseau revient.", { type: 'erreur', duree: 8000 });
+                return;
+            }
             if (document.documentElement.hasAttribute('data-debug') && status >= 500) return; // détail visible en développement
             preventDefault();
             const messages = {
@@ -331,3 +336,24 @@ window.addEventListener('rj-toast', (e) => {
 window.rjConfirm = rjConfirm;
 window.rjPrompt = rjPrompt;
 window.rjToast = rjToast;
+
+// Coupure de réseau : bandeau permanent tant que le téléphone est hors ligne
+// (sinon un clic semble marcher alors que rien n'est envoyé).
+function bandeauHorsLigne(horsLigne) {
+    let b = document.getElementById('rj-hors-ligne');
+    if (horsLigne && ! b) {
+        b = document.createElement('div');
+        b.id = 'rj-hors-ligne';
+        b.setAttribute('role', 'status');
+        b.dataset.test = 'hors-ligne';
+        b.style.cssText = 'position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:200;max-width:calc(100% - 32px);padding:10px 16px;border-radius:999px;background:#031D59;color:#fff;font:600 13px/1.3 system-ui,sans-serif;box-shadow:0 10px 30px -10px rgba(3,29,89,.6)';
+        b.textContent = 'Pas de connexion : vos actions ne sont pas envoyées pour le moment.';
+        document.body.appendChild(b);
+    } else if (! horsLigne && b) {
+        b.remove();
+        rjToast('Connexion rétablie.', { type: 'succes', duree: 3000 });
+    }
+}
+window.addEventListener('offline', () => bandeauHorsLigne(true));
+window.addEventListener('online', () => bandeauHorsLigne(false));
+document.addEventListener('DOMContentLoaded', () => { if (! navigator.onLine) bandeauHorsLigne(true); });

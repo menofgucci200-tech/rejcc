@@ -174,7 +174,14 @@ class FormationLiveController extends Controller
             'title' => 'required|string|min:3|max:160',
             'formation_id' => 'nullable|integer|exists:formations,id',
             'description' => 'nullable|string|max:3000',
-            'starts_at' => 'required|date|after:now',
+            // Une session déjà commencée reste modifiable (lien Meet à corriger le jour J)
+            // tant que sa date ne change pas ; une nouvelle date doit être à venir.
+            'starts_at' => ['required', 'date', function ($attr, $valeur, $echec) use ($event) {
+                $inchangee = $event->exists && $event->starts_at && Carbon::parse($valeur)->format('Y-m-d H:i') === $event->starts_at->format('Y-m-d H:i');
+                if (! $inchangee && Carbon::parse($valeur)->isPast()) {
+                    $echec('Choisissez une date et une heure à venir.');
+                }
+            }],
             'duree' => 'required|integer|min:15|max:600',
             'visio' => 'required|in:meet,lien,auto',
             'lien_visio' => 'nullable|required_if:visio,lien|url:https|max:500',
@@ -213,7 +220,8 @@ class FormationLiveController extends Controller
             'formation_id' => $d['formation_id'] ?? null,
             'animateur' => $formateurs->map->nomComplet()->implode(', ') ?: null,
             'description' => $d['description'] ?? null,
-            'excerpt' => Str::limit((string) ($d['description'] ?? ''), 280),
+            // Pas de résumé : la fiche montrerait la description deux fois.
+            'excerpt' => null,
             'category' => Event::CATEGORIE_LIVE,
             'en_ligne' => true,
             'location' => null,
@@ -276,6 +284,7 @@ class FormationLiveController extends Controller
 
         // Session reportée : inscrits et formateurs prévenus.
         if ($ancienneDate && ! $ancienneDate->equalTo($event->starts_at)) {
+            $event->relancerRappels();
             $texte = "La session live « {$event->title} » aura lieu {$event->quand()}. Votre inscription reste valable.";
             $event->prevenirInscrits("Date modifiée : {$event->title}", $texte);
             foreach ($event->formateurs as $f) {
