@@ -47,7 +47,7 @@ class DepartementsBureauTest extends TestCase
 
         $r = $this->withToken($admin)->postJson('/api/admin/members', $this->nouveauCompte(['bureau_departement' => 'communication']))->assertOk();
         $this->assertSame('communication', $r->json('member.bureau_departement'));
-        $this->assertSame(['actualites', 'evenements', 'contenu'], $r->json('member.permissions'));
+        $this->assertSame(['actualites', 'evenements', 'contenu', 'salons'], $r->json('member.permissions'));
 
         $compte = User::find($r->json('member.id'));
         $this->assertFalse($compte->estAdminComplet());

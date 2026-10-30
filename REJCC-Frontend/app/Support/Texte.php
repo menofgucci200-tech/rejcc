@@ -24,6 +24,22 @@ class Texte
         );
     }
 
+    /**
+     * Message de la Communauté : liens cliquables, mentions @Prénom Nom et
+     * @tous mises en évidence, retours à la ligne conservés.
+     */
+    public static function message(?string $texte, string $classeLien = 'underline underline-offset-2', string $classeMention = 'font-bold text-azure'): string
+    {
+        $html = self::liens($texte, $classeLien);
+        $html = preg_replace(
+            '/(?<![\p{L}\p{N}@])@(tous\b|[\p{Lu}][\p{L}\-]+(?: [\p{Lu}][\p{L}\-]+)?)/u',
+            '<span class="'.$classeMention.'">@$1</span>',
+            $html
+        );
+
+        return nl2br($html, false);
+    }
+
     /** « il y a 5 minutes », et « à l'instant » pour moins d'une minute. */
     public static function depuis(?string $date): string
     {

@@ -17,6 +17,7 @@ class AdminNav
             ['label' => 'Mentorat', 'icon' => 'hand-heart', 'route' => 'admin.mentors'],
         ]],
         ['label' => 'Activité réseau', 'icon' => 'network', 'items' => [
+            ['label' => 'Communauté', 'icon' => 'heart-handshake', 'route' => 'admin.communaute'],
             ['label' => 'Groupes sectoriels', 'icon' => 'network', 'route' => 'admin.groupes'],
             ['label' => 'Formations', 'icon' => 'graduation-cap', 'route' => 'admin.formations'],
             ['label' => 'Formations live', 'icon' => 'calendar-days', 'route' => 'admin.lives'],

@@ -10,7 +10,7 @@
     // Rubrique de la page courante, et page parente pour les pages de détail.
     $rubriques = [
         'carte' => 'Mon parcours', 'formations' => 'Mon parcours', 'catalogue' => 'Mon parcours', 'parcours' => 'Mon parcours', 'certificats' => 'Mon parcours',
-        'mentorat' => 'Réseau', 'directory' => 'Réseau', 'groupes' => 'Réseau', 'messaging' => 'Réseau', 'evenements' => 'Réseau',
+        'communaute' => 'Réseau', 'mentorat' => 'Réseau', 'directory' => 'Réseau', 'groupes' => 'Réseau', 'messaging' => 'Réseau', 'evenements' => 'Réseau',
         'marketplace' => 'Opportunités', 'projets' => 'Opportunités', 'emplois' => 'Opportunités',
         'documents' => 'Ressources',
         'profile' => 'Mon compte', 'abonnement' => 'Mon compte', 'notifications' => 'Mon compte',

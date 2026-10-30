@@ -89,7 +89,7 @@ class ParametresCompteTest extends TestCase
         $r = $this->withToken($t)->getJson('/api/auth/notifications')->assertOk();
         $this->assertSame('immediat', $r->json('reglages.email.messagerie'));
         $this->assertSame('quotidien', $r->json('reglages.email.evenements'));
-        $this->assertCount(6, $r->json('categories'));
+        $this->assertCount(7, $r->json('categories'));
 
         $this->withToken($t)->putJson('/api/auth/notifications', ['email' => ['messagerie' => 'jamais', 'inconnue' => 'immediat'], 'push' => ['reseau' => true]])
             ->assertOk()->assertJsonPath('reglages.email.messagerie', 'jamais')->assertJsonPath('reglages.push.reseau', true);

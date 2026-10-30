@@ -279,6 +279,23 @@ Route::middleware('auth.token')->group(function () {
         Route::post('/avis/{id}/signaler', [\App\Http\Controllers\Api\MemberReviewController::class, 'signaler'])->whereNumber('id');
     });
 
+    // Communauté REJCC : salons de discussion de tous les membres (remplace les communautés WhatsApp)
+    Route::prefix('communaute')->group(function () {
+        $c = \App\Http\Controllers\Api\CommunauteController::class;
+        Route::get('/', [$c, 'index']);
+        Route::get('/membres', [$c, 'membres'])->middleware('throttle:60,1');
+        Route::get('/salons/{slug}', [$c, 'salon'])->where('slug', '[a-z0-9-]+');
+        Route::post('/salons/{slug}/regles', [$c, 'accepterRegles'])->where('slug', '[a-z0-9-]+');
+        Route::put('/salons/{slug}/notifications', [$c, 'notifications'])->where('slug', '[a-z0-9-]+');
+        Route::post('/salons/{slug}/messages', [$c, 'envoyer'])->where('slug', '[a-z0-9-]+')->middleware('throttle:40,1');
+        Route::put('/salons/{slug}/reglages', [$c, 'reglages'])->where('slug', '[a-z0-9-]+');
+        Route::post('/salons/{slug}/membres/{userId}/{action}', [$c, 'sanctionner'])->where('slug', '[a-z0-9-]+')->whereNumber('userId')->whereIn('action', ['silence', 'lever', 'exclure', 'reintegrer']);
+        Route::put('/messages/{id}', [$c, 'modifier'])->whereNumber('id');
+        Route::delete('/messages/{id}', [$c, 'supprimer'])->whereNumber('id');
+        Route::post('/messages/{id}/reactions', [$c, 'reagir'])->whereNumber('id')->middleware('throttle:60,1');
+        Route::post('/messages/{id}/signaler', [$c, 'signaler'])->whereNumber('id')->middleware('throttle:20,1');
+        Route::get('/messages/{id}/fichier', [$c, 'fichier'])->whereNumber('id');
+    });
     // Marketplace : consultation libre pour tout membre connecté, publication réservée aux abonnés à jour
     Route::get('/marketplace', [\App\Http\Controllers\Api\MarketplaceController::class, 'index']);
     // Ses propres annonces : consultables et retirables même sans abonnement à jour.
@@ -507,6 +524,25 @@ Route::middleware(['auth.token', 'audit.log'])->prefix('admin')->group(function 
     Route::middleware('auth.admin:partenariats')->group(function () {
         Route::get('/partenariats', [AdminController::class, 'partnershipRequests']);
         Route::put('/partenariats/{id}', [AdminController::class, 'updatePartnershipRequest']);
+    });
+
+    // Communauté REJCC (salons de discussion) : rubrique « salons »
+    Route::middleware('auth.admin:salons')->prefix('communaute')->group(function () {
+        $c = \App\Http\Controllers\Api\CommunauteAdminController::class;
+        Route::get('/', [$c, 'index']);
+        Route::get('/membres', [$c, 'membres']);
+        Route::post('/salons', [$c, 'creer']);
+        Route::put('/ordre', [$c, 'ordre']);
+        Route::put('/salons/{id}', [$c, 'modifier'])->whereNumber('id');
+        Route::post('/salons/{id}/{action}', [$c, 'archiver'])->whereNumber('id')->whereIn('action', ['archiver', 'restaurer']);
+        Route::get('/salons/{id}/messages', [$c, 'messages'])->whereNumber('id');
+        Route::post('/salons/{id}/referents', [$c, 'nommerReferent'])->whereNumber('id');
+        Route::delete('/salons/{id}/referents/{userId}', [$c, 'retirerReferent'])->whereNumber(['id', 'userId']);
+        Route::post('/salons/{id}/membres/{userId}/{action}', [$c, 'sanctionner'])->whereNumber(['id', 'userId'])->whereIn('action', ['silence', 'lever', 'exclure', 'reintegrer']);
+        Route::delete('/messages/{id}', [$c, 'supprimerMessage'])->whereNumber('id');
+        Route::get('/messages/{id}/fichier', [\App\Http\Controllers\Api\CommunauteController::class, 'fichier'])->whereNumber('id');
+        Route::put('/signalements/{messageId}/classer', [$c, 'classer'])->whereNumber('messageId');
+        Route::put('/mots-interdits', [$c, 'motsInterdits']);
     });
 
     Route::middleware('auth.admin:communaute')->group(function () {

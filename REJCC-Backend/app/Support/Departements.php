@@ -35,7 +35,7 @@ class Departements
             'label' => 'Informatique',
             'mission' => 'Outils informatiques, applications du REJCC, sécurité et protection des données des membres.',
             'sections' => [
-                'membres', 'formations', 'evenements', 'projets', 'communaute', 'certificats',
+                'membres', 'formations', 'evenements', 'projets', 'communaute', 'salons', 'certificats',
                 'opportunites', 'mentors', 'groupes', 'actualites', 'contenu', 'documents',
                 'contacts', 'messagerie', 'partenariats', 'audit', 'suggestions',
             ],
@@ -48,7 +48,7 @@ class Departements
         'communication' => [
             'label' => 'Communication et Marketing',
             'mission' => 'Visibilité du REJCC dans les médias, les écoles et les entreprises, réseaux sociaux et supports visuels.',
-            'sections' => ['actualites', 'evenements', 'contenu'],
+            'sections' => ['actualites', 'evenements', 'contenu', 'salons'],
         ],
         'projets' => [
             'label' => 'Projets',

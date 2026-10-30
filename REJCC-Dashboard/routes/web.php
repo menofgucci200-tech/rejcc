@@ -63,7 +63,8 @@ Route::middleware(['api.auth', 'admin.web'])->prefix('admin')->name('admin.')->g
     Route::redirect('/inscriptions', '/admin/evenements')->name('inscriptions');
     Route::get('/projets', AdminProjets::class)->name('projets');
     Route::get('/marketplace', AdminMarketplace::class)->name('marketplace');
-    Route::redirect('/communaute', '/admin/marketplace');
+    Route::get('/communaute', \App\Livewire\Admin\Communaute::class)->name('communaute');
+    Route::get('/communaute/fichiers/{id}', \App\Http\Controllers\CommunauteFichierController::class)->whereNumber('id')->name('communaute.fichier');
     Route::get('/abonnements', \App\Livewire\Admin\Abonnements::class)->name('abonnements');
     Route::get('/abonnements/recus/{ref}', [\App\Http\Controllers\RecuController::class, 'admin'])->where('ref', '[A-Za-z0-9\-]+')->name('abonnements.recu');
     Route::get('/certificats', AdminCertificats::class)->name('certificats');

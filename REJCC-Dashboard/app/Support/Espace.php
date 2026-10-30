@@ -43,7 +43,7 @@ class Espace
         'admin.evenements' => 'agenda', 'admin.actualites' => 'megaphone', 'admin.pages' => 'globe', 'admin.contenu' => 'crayon',
         'admin.legal' => 'balance', 'admin.mediatheque' => 'dossier', 'admin.reglages' => 'horloge', 'admin.documents' => 'dossier',
         'admin.members' => 'equipe', 'admin.adhesions' => 'cahier', 'admin.abonnements' => 'argent', 'admin.mentors' => 'equipe',
-        'admin.groupes' => 'mains', 'admin.projets' => 'etoile', 'admin.marketplace' => 'argent', 'admin.emplois' => 'dossier',
+        'admin.groupes' => 'mains', 'admin.communaute' => 'mains', 'admin.projets' => 'etoile', 'admin.marketplace' => 'argent', 'admin.emplois' => 'dossier',
         'admin.contacts' => 'megaphone', 'admin.signalements' => 'horloge', 'admin.partenariats' => 'mains',
         'admin.notifications' => 'megaphone', 'admin.audit' => 'cahier', 'admin.suggestions' => 'crayon', 'admin.newsletter' => 'megaphone',
     ];

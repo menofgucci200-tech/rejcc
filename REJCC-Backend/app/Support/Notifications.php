@@ -21,6 +21,7 @@ class Notifications
     public const CATEGORIES = [
         'messagerie' => ['Messages privés', 'Messages des membres, mentors, vendeurs et recruteurs', 'immediat'],
         'mentorat' => ['Mentorat', 'Demandes, réponses, séances et suivi avec votre mentor ou vos mentorés', 'immediat'],
+        'communaute' => ['Communauté', 'Annonces du réseau, mentions et réponses dans les salons de discussion', 'quotidien'],
         'evenements' => ['Événements', 'Nouveaux événements, changements de programme, attestations', 'quotidien'],
         'formations' => ['Formations & certificats', 'Formations, parcours, badges et certificats délivrés', 'quotidien'],
         'reseau' => ['Projets, emploi & marketplace', 'Candidatures, contributions, annonces, avis et groupes sectoriels', 'quotidien'],
@@ -40,10 +41,14 @@ class Notifications
         if ($type === 'message') {
             return 'messagerie';
         }
+        if ($type === 'communaute') {
+            return 'communaute';
+        }
         $section = explode('/', trim((string) parse_url((string) $link, PHP_URL_PATH), '/'))[1] ?? '';
 
         return match ($section) {
             'messagerie' => 'messagerie',
+            'communaute' => 'communaute',
             'mentorat', 'mentors' => 'mentorat',
             'evenements' => 'evenements',
             'formations', 'catalogue', 'parcours', 'certificats' => 'formations',
@@ -61,7 +66,7 @@ class Notifications
         foreach (self::CATEGORIES as $cle => [, , $defaut]) {
             $f = $p['email'][$cle] ?? $defaut;
             $email[$cle] = isset(self::FREQUENCES[$f]) ? $f : $defaut;
-            $push[$cle] = (bool) ($p['push'][$cle] ?? in_array($cle, ['messagerie', 'mentorat', 'evenements'], true));
+            $push[$cle] = (bool) ($p['push'][$cle] ?? in_array($cle, ['messagerie', 'mentorat', 'communaute', 'evenements'], true));
         }
         $pause = $p['pause_emails'] ?? null;
 

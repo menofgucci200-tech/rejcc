@@ -385,6 +385,8 @@ class MentoratController extends Controller
                 ->whereColumn('group_messages.id', '>', 'group_user.discussion_lu_jusqua')
                 ->where('group_messages.user_id', '!=', $me->id)->count(),
             'mentorat' => $mentorat,
+            // Messages non lus dans les salons de la Communauté.
+            'communaute' => \App\Support\Communaute::nonLus($me),
         ]]);
     }
 }

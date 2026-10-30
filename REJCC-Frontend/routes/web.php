@@ -97,7 +97,9 @@ Route::middleware('api.auth')->prefix('espace-membre')->name('espace-membre.')->
     Route::get('/mentorat', MemberMentorat::class)->name('mentorat');
     Route::get('/mentorat/{mentorshipId}', \App\Livewire\Member\MentoratSuivi::class)->whereNumber('mentorshipId')->name('mentorat.suivi');
     Route::get('/marketplace', MemberMarketplace::class)->name('marketplace');
-    Route::redirect('/communaute', '/espace-membre/marketplace');
+    Route::get('/communaute', \App\Livewire\Member\Communaute::class)->name('communaute');
+    // Pièce jointe d'un message de la Communauté : servie après contrôle d'accès par l'API.
+    Route::get('/communaute/fichiers/{id}', \App\Http\Controllers\CommunauteFichierController::class)->whereNumber('id')->name('communaute.fichier');
     Route::get('/evenements', MemberEvenements::class)->name('evenements');
     Route::get('/evenements/{id}/agenda.ics', \App\Http\Controllers\EvenementAgendaController::class)->whereNumber('id')->name('evenements.agenda');
     Route::get('/evenements/{id}/rejoindre', \App\Http\Controllers\RejoindreVisioController::class)->whereNumber('id')->name('evenements.rejoindre');
