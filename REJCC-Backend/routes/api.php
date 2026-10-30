@@ -301,6 +301,10 @@ Route::middleware('auth.token')->group(function () {
         Route::get('/cartes', [$c, 'cartes'])->middleware('throttle:60,1');
         Route::post('/sondages/{id}/votes', [$c, 'voter'])->whereNumber('id')->middleware('throttle:60,1');
         Route::post('/sondages/{id}/clore', [$c, 'clore'])->whereNumber('id');
+        Route::post('/salons/{slug}/sujets', [$c, 'creerSujet'])->where('slug', '[a-z0-9-]+')->middleware('throttle:10,1');
+        Route::put('/sujets/{id}', [$c, 'modifierSujet'])->whereNumber('id');
+        Route::post('/salons/{slug}/vocal', [$c, 'lancerVocal'])->where('slug', '[a-z0-9-]+')->middleware('throttle:6,1');
+        Route::post('/vocaux/{id}/terminer', [$c, 'terminerVocal'])->whereNumber('id');
     });
     // Marketplace : consultation libre pour tout membre connecté, publication réservée aux abonnés à jour
     Route::get('/marketplace', [\App\Http\Controllers\Api\MarketplaceController::class, 'index']);
@@ -550,6 +554,9 @@ Route::middleware(['auth.token', 'audit.log'])->prefix('admin')->group(function 
         Route::get('/messages/{id}/fichier', [\App\Http\Controllers\Api\CommunauteController::class, 'fichier'])->whereNumber('id');
         Route::put('/signalements/{messageId}/classer', [$c, 'classer'])->whereNumber('messageId');
         Route::put('/mots-interdits', [$c, 'motsInterdits']);
+        Route::get('/programmations', [$c, 'programmations']);
+        Route::post('/programmations', [$c, 'programmer']);
+        Route::delete('/programmations/{id}', [$c, 'annulerProgrammation'])->whereNumber('id');
     });
 
     Route::middleware('auth.admin:communaute')->group(function () {

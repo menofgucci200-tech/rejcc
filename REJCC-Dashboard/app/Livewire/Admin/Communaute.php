@@ -48,10 +48,21 @@ class Communaute extends Component
     /** Texte d'une annonce à publier dans le canal Annonces. */
     public string $annonce = '';
 
+    /** Salon de l'annonce (par défaut le canal Annonces). */
+    public ?int $annonceSalonId = null;
+
+    /** Date et heure de publication (vide : tout de suite). */
+    public string $annonceQuand = '';
+
+    /** Annonces programmées : à venir et récemment publiées. */
+    public array $programmations = [];
+
 
     public function mount(): void
     {
         $this->charger();
+        $this->chargerProgrammations();
+        $this->annonceSalonId = collect($this->donnees['salons'] ?? [])->first(fn ($s) => $s['type'] === 'annonces' && ! $s['archive'])['id'] ?? null;
         if ($this->onglet === 'statistiques') {
             $this->chargerStats();
         }
@@ -96,14 +107,15 @@ class Communaute extends Component
     public function nouveauSalon(): void
     {
         $this->formulaire = ['id' => null, 'nom' => '', 'emoji' => '💬', 'description' => '', 'type' => 'discussion', 'acces' => 'tous',
-            'lecture_seule' => false, 'mode_lent_secondes' => 0, 'regles' => ''];
+            'lecture_seule' => false, 'mode_lent_secondes' => 0, 'regles' => '', 'sujets_actives' => false];
     }
 
     public function editerSalon(int $id): void
     {
         $s = collect($this->donnees['salons'] ?? [])->firstWhere('id', $id);
         if ($s) {
-            $this->formulaire = collect($s)->only(['id', 'nom', 'emoji', 'description', 'type', 'acces', 'lecture_seule', 'mode_lent_secondes', 'regles'])->all();
+            $this->formulaire = collect($s)->only(['id', 'nom', 'emoji', 'description', 'type', 'acces', 'lecture_seule', 'mode_lent_secondes', 'regles', 'sujets_actives'])->all();
+            $this->formulaire['sujets_actives'] = (bool) ($this->formulaire['sujets_actives'] ?? false);
             $this->formulaire['regles'] ??= '';
             $this->formulaire['description'] ??= '';
         }
@@ -230,7 +242,10 @@ class Communaute extends Component
         $this->resultat(Api::post("/admin/communaute/salons/{$salonId}/membres/{$userId}/{$action}", ['duree' => $duree], Api::token()), 'Action enregistrée.');
     }
 
-    /** Publie une annonce dans le canal Annonces (tous les membres sont prévenus). */
+    /**
+     * Publie une annonce tout de suite, ou la programme à la date choisie.
+     * Tous les membres sont prévenus (dans un salon de discussion : @tous).
+     */
     public function publierAnnonce(): void
     {
         $texte = trim($this->annonce);
@@ -239,12 +254,37 @@ class Communaute extends Component
 
             return;
         }
-        $slug = collect($this->donnees['salons'] ?? [])->first(fn ($s) => $s['type'] === 'annonces' && ! $s['archive'])['slug'] ?? 'annonces';
-        $r = Api::post('/communaute/salons/'.$slug.'/messages', ['type' => 'texte', 'body' => $texte], Api::token());
-        $this->resultat($r, 'Annonce publiée : tous les membres sont prévenus.');
+        $salon = collect($this->donnees['salons'] ?? [])->first(fn ($s) => $s['id'] === $this->annonceSalonId && ! $s['archive'])
+            ?? collect($this->donnees['salons'] ?? [])->first(fn ($s) => $s['type'] === 'annonces' && ! $s['archive']);
+        if (! $salon) {
+            $this->erreur = 'Choisissez le salon où publier l\'annonce.';
+
+            return;
+        }
+        if (trim($this->annonceQuand) !== '') {
+            $r = Api::post('/admin/communaute/programmations', ['salon_id' => $salon['id'], 'body' => $texte, 'publier_a' => $this->annonceQuand], Api::token());
+            $this->resultat($r, 'Annonce programmée.');
+            $this->chargerProgrammations();
+        } else {
+            $r = Api::post('/communaute/salons/'.$salon['slug'].'/messages', ['type' => 'texte', 'body' => $texte, 'mention_tous' => $salon['type'] !== 'annonces'], Api::token());
+            $this->resultat($r, 'Annonce publiée : tous les membres sont prévenus.');
+        }
         if ($r['ok'] ?? false) {
             $this->annonce = '';
+            $this->annonceQuand = '';
         }
+    }
+
+    public function chargerProgrammations(): void
+    {
+        $r = Api::get('/admin/communaute/programmations', [], Api::token());
+        $this->programmations = ($r['ok'] ?? false) ? ['a_venir' => $r['a_venir'] ?? [], 'publiees' => $r['publiees'] ?? []] : [];
+    }
+
+    public function annulerProgrammation(int $id): void
+    {
+        $this->resultat(Api::delete('/admin/communaute/programmations/'.$id, Api::token()), 'Annonce programmée annulée.');
+        $this->chargerProgrammations();
     }
 
     public function enregistrerMots(): void

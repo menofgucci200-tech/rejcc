@@ -15,10 +15,11 @@ class Salon extends Model
     /** Mode lent proposé aux modérateurs (secondes => libellé). */
     public const MODES_LENTS = [0 => 'Désactivé', 30 => '30 secondes', 60 => '1 minute', 300 => '5 minutes', 900 => '15 minutes', 3600 => '1 heure'];
 
-    protected $fillable = ['nom', 'slug', 'description', 'emoji', 'type', 'acces', 'lecture_seule', 'mode_lent_secondes', 'regles', 'ordre', 'archive_at'];
+    protected $fillable = ['nom', 'slug', 'description', 'emoji', 'type', 'acces', 'lecture_seule', 'mode_lent_secondes', 'regles', 'sujets_actives', 'ordre', 'archive_at'];
 
     protected $casts = [
         'lecture_seule' => 'boolean',
+        'sujets_actives' => 'boolean',
         'mode_lent_secondes' => 'integer',
         'ordre' => 'integer',
         'archive_at' => 'datetime',
@@ -27,6 +28,11 @@ class Salon extends Model
     public function messages(): HasMany
     {
         return $this->hasMany(SalonMessage::class);
+    }
+
+    public function sujets(): HasMany
+    {
+        return $this->hasMany(SalonSujet::class);
     }
 
     public function membres(): HasMany

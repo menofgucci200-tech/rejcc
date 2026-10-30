@@ -62,6 +62,7 @@
                                                     <span class="flex min-w-0 items-center gap-1.5">
                                                         <span class="truncate text-[13.5px] text-brand {{ $nonLus ? 'font-extrabold' : 'font-semibold' }}">{{ $s['nom'] }}</span>
                                                         @if ($s['notifications'] === 'rien')<span title="En sourdine" class="shrink-0 text-meta"><x-ui.icon name="bell" class="size-3 opacity-60" /></span>@endif
+                                                        @if ($s['direct'] ?? null)<span data-test="pastille-direct" title="Discussion vocale en cours : {{ $s['direct'] }}" class="inline-flex shrink-0 items-center gap-1 rounded-full bg-accent px-1.5 text-[9.5px] font-extrabold uppercase leading-4 tracking-[0.05em] text-white"><span class="size-1.5 animate-pulse rounded-full bg-white"></span>En direct</span>@endif
                                                     </span>
                                                     @if ($s['dernier'])
                                                         <span class="shrink-0 text-[11px] {{ $nonLus ? 'font-bold text-accent' : 'text-meta' }}">{{ $quand($s['dernier']['date']) }}</span>
@@ -157,6 +158,10 @@
                                     <div class="my-1 border-t border-cloud-200"></div>
                                     <button type="button" x-on:click="ouvert = false; $dispatch('voir-regles')" class="flex w-full items-center gap-2.5 px-4 py-2 text-left font-semibold text-brand hover:bg-cloud"><x-ui.icon name="list-checks" class="size-4 text-meta" /> Règles du salon</button>
                                 @endif
+                                @if (($moi['peut_lancer_vocal'] ?? false) && ! $direct)
+                                    <div class="my-1 border-t border-cloud-200"></div>
+                                    <button type="button" wire:click="ouvrirDirect" x-on:click="ouvert = false" data-test="lancer-direct" class="flex w-full items-center gap-2.5 px-4 py-2 text-left font-semibold text-brand hover:bg-cloud"><x-ui.icon name="mic" class="size-4 text-meta" /> Lancer une discussion vocale</button>
+                                @endif
                                 @if ($moderateur && ! $estAnnonces)
                                     <div class="my-1 border-t border-cloud-200"></div>
                                     <p class="px-4 pb-1 pt-1.5 text-[10.5px] font-extrabold uppercase tracking-[0.12em] text-meta">Modération</p>
@@ -174,6 +179,52 @@
                             </div>
                         </div>
                     </div>
+
+                    {{-- Discussion vocale en cours --}}
+                    @if ($direct)
+                        <div class="flex shrink-0 items-center gap-3 border-b border-accent/20 bg-accent/5 px-3 py-2 sm:px-[18px]" data-test="bandeau-direct">
+                            <span class="relative flex size-8 shrink-0 items-center justify-center rounded-full bg-accent text-white"><x-ui.icon name="mic" class="size-4" /><span class="absolute -right-0.5 -top-0.5 size-2.5 animate-pulse rounded-full border-2 border-white bg-accent"></span></span>
+                            <span class="min-w-0 flex-1">
+                                <span class="block text-[10.5px] font-extrabold uppercase tracking-[0.1em] text-accent">En direct</span>
+                                <span class="block truncate text-[13px] font-semibold text-brand">{{ $direct['titre'] }}</span>
+                            </span>
+                            @if ($direct['lien'] ?? null)
+                                <a href="{{ $direct['lien'] }}" target="_blank" rel="noopener" data-test="rejoindre-direct" class="btn-tap shrink-0 rounded-full bg-accent px-3.5 py-1.5 text-[12px] font-bold text-white hover:bg-accent-600">Rejoindre</a>
+                            @endif
+                            @if ($direct['peut_terminer'] ?? false)
+                                <button type="button" wire:click="terminerDirect({{ $direct['id'] }})" wire:confirm="Terminer la discussion vocale pour tout le monde ?" data-test="terminer-direct" class="shrink-0 rounded-full px-2.5 py-1.5 text-[12px] font-semibold text-meta hover:bg-white">Terminer</button>
+                            @endif
+                        </div>
+                    @endif
+
+                    {{-- Sujets du salon --}}
+                    @if ($salon['sujets_actives'] ?? false)
+                        @php $sujetCourant = ctype_digit($sujet) ? collect($sujets)->firstWhere('id', (int) $sujet) : null; @endphp
+                        <div class="shrink-0 border-b border-cloud-200 bg-white" data-test="barre-sujets">
+                            <div class="flex items-center gap-1.5 overflow-x-auto px-3 py-2 [scrollbar-width:none] sm:px-[18px]">
+                                @foreach (array_merge([['cle' => '', 'libelle' => 'Tout', 'ferme' => false, 'n' => null], ['cle' => 'general', 'libelle' => '💬 Général', 'ferme' => false, 'n' => null]],
+                                    array_map(fn ($t) => ['cle' => (string) $t['id'], 'libelle' => trim(($t['emoji'] ?? '').' '.$t['titre']), 'ferme' => $t['ferme'], 'n' => $t['messages']], $sujets)) as $chip)
+                                    <button type="button" wire:click="choisirSujet('{{ $chip['cle'] }}')" wire:key="sujet-{{ $chip['cle'] ?: 'tout' }}" data-test="sujet" data-sujet="{{ $chip['cle'] }}"
+                                        class="flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-3 py-1.5 text-[12px] font-bold transition-colors {{ $sujet === $chip['cle'] ? 'bg-brand text-white' : 'border border-brand/12 text-brand hover:bg-cloud' }} {{ $chip['ferme'] ? 'opacity-70' : '' }}">
+                                        @if ($chip['ferme'])<x-ui.icon name="lock" class="size-3" />@endif
+                                        {{ $chip['libelle'] }}
+                                        @if ($chip['n'])<span class="text-[10.5px] font-semibold {{ $sujet === $chip['cle'] ? 'text-white/70' : 'text-meta' }}">{{ $chip['n'] }}</span>@endif
+                                    </button>
+                                @endforeach
+                                @if ($moi['peut_creer_sujet'] ?? false)
+                                    <button type="button" wire:click="ouvrirNouveauSujet" data-test="nouveau-sujet" class="shrink-0 whitespace-nowrap rounded-full border border-dashed border-azure/50 px-3 py-1.5 text-[12px] font-bold text-azure hover:bg-azure/5">+ Nouveau sujet</button>
+                                @endif
+                            </div>
+                            @if ($sujetCourant && ($sujetCourant['ferme'] || $moderateur))
+                                <div class="flex items-center justify-between gap-2 border-t border-cloud-200 px-3 py-1.5 text-[11.5px] sm:px-[18px]">
+                                    <span class="text-meta">{{ $sujetCourant['ferme'] ? 'Sujet fermé : il reste consultable, mais n\'accepte plus de messages.' : 'Sujet ouvert à tous les membres du salon.' }}</span>
+                                    @if ($moderateur)
+                                        <button type="button" wire:click="basculerSujet({{ $sujetCourant['id'] }}, {{ $sujetCourant['ferme'] ? 'false' : 'true' }})" data-test="basculer-sujet" class="shrink-0 font-bold text-azure hover:underline">{{ $sujetCourant['ferme'] ? 'Rouvrir le sujet' : 'Fermer le sujet' }}</button>
+                                    @endif
+                                </div>
+                            @endif
+                        </div>
+                    @endif
 
                     {{-- Recherche dans le salon --}}
                     @if ($rechercheOuverte)
@@ -290,6 +341,9 @@
                                         </p>
                                     @endif
 
+                                    @if (($m['sujet'] ?? null) && $sujet === '' && $m['type'] !== 'supprime')
+                                        <button type="button" wire:click="choisirSujet('{{ $m['sujet']['id'] }}')" data-test="etiquette-sujet" class="mb-0.5 max-w-full truncate rounded-full bg-azure/10 px-2 py-px text-[10.5px] font-bold text-azure hover:bg-azure/20"># {{ trim(($m['sujet']['emoji'] ?? '').' '.$m['sujet']['titre']) }}</button>
+                                    @endif
                                     @if ($m['type'] === 'supprime')
                                         <div class="rounded-[14px] border border-dashed border-brand/15 px-3.5 py-2 text-[12.5px] italic text-meta">
                                             {{ $m['supprime_par_equipe'] ? 'Message retiré par la modération' : 'Message supprimé' }}
@@ -359,6 +413,26 @@
                                                         @if ($sd['peut_clore'])<button type="button" wire:click="clore({{ $m['id'] }}, {{ $sd['id'] }})" wire:confirm="Clore ce sondage ? Plus personne ne pourra voter." data-test="clore-sondage" class="font-bold underline">Clore</button>@endif
                                                     </p>
                                                 </div>
+                                            @elseif ($m['type'] === 'direct' && $m['direct'])
+                                                @php $dv = $m['direct']; $tz = config('app.timezone'); @endphp
+                                                <div class="w-[min(320px,100%)]" data-test="carte-direct">
+                                                    <p class="flex items-center gap-1.5 text-[10.5px] font-extrabold uppercase tracking-[0.1em] {{ $dv['en_cours'] ? ($sombre ? 'text-white' : 'text-accent') : ($sombre ? 'text-white/70' : 'text-meta') }}">
+                                                        @if ($dv['en_cours'])<span class="size-2 animate-pulse rounded-full {{ $sombre ? 'bg-white' : 'bg-accent' }}"></span> Discussion vocale en direct @else 🎙️ Discussion vocale terminée @endif
+                                                    </p>
+                                                    <p class="mt-0.5 text-[14px] font-bold leading-snug">{{ $dv['titre'] }}</p>
+                                                    <p class="mt-0.5 text-[11.5px] {{ $sombre ? 'text-white/70' : 'text-meta' }}">
+                                                        {{ $dv['en_cours'] ? 'Commencée à '.Carbon::parse($dv['debut'])->setTimezone($tz)->format('H\hi') : 'De '.Carbon::parse($dv['debut'])->setTimezone($tz)->format('H\hi').' à '.Carbon::parse($dv['fin'])->setTimezone($tz)->format('H\hi') }}
+                                                        @if ($dv['en_cours'] && $dv['fournisseur'] === 'meet') · Google Meet : l'équipe vous admet en quelques secondes @endif
+                                                    </p>
+                                                    @if ($dv['en_cours'])
+                                                        <div class="mt-2 flex flex-wrap items-center gap-2">
+                                                            <a href="{{ $dv['lien'] }}" target="_blank" rel="noopener" data-test="rejoindre-carte" class="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[12px] font-bold {{ $sombre ? 'bg-white text-brand' : 'bg-accent text-white hover:bg-accent-600' }}"><x-ui.icon name="mic" class="size-3.5" /> Rejoindre</a>
+                                                            @if ($dv['peut_terminer'])
+                                                                <button type="button" wire:click="terminerDirect({{ $dv['id'] }})" wire:confirm="Terminer la discussion vocale pour tout le monde ?" class="text-[12px] font-semibold underline {{ $sombre ? 'text-white/80' : 'text-meta' }}">Terminer</button>
+                                                            @endif
+                                                        </div>
+                                                    @endif
+                                                </div>
                                             @elseif ($m['type'] === 'carte' && $m['carte'])
                                                 @php $ca = $m['carte']; @endphp
                                                 @if ($ca['indisponible'] ?? false)
@@ -384,7 +458,7 @@
                                                         <button type="button" wire:click="enregistrerEdition" data-test="edition-enregistrer" class="rounded-full bg-accent px-3 py-1 text-[12px] font-bold text-white">Enregistrer</button>
                                                     </div>
                                                 </div>
-                                            @elseif ($m['body'])
+                                            @elseif ($m['body'] && $m['type'] !== 'direct')
                                                 <div data-test="message-texte" class="break-words [overflow-wrap:anywhere]">{!! Texte::message($m['body'], $sombre ? 'underline underline-offset-2 text-white' : 'underline underline-offset-2 text-azure', $sombre ? 'font-bold text-white' : 'font-bold text-azure') !!}</div>
                                             @endif
 
@@ -460,6 +534,10 @@
                                 <p class="mb-3 whitespace-pre-line text-[12.5px] leading-relaxed text-ink">{{ $salon['regles'] }}</p>
                                 <button type="button" wire:click="accepterRegles" data-test="accepter-regles" class="btn-tap rounded-full bg-accent px-4 py-2 text-[12.5px] font-bold text-white hover:bg-accent-600">J'accepte les règles</button>
                             </div>
+                        @elseif (($sujetCourant['ferme'] ?? false) && ! $moderateur)
+                            <p data-test="sujet-ferme" class="flex items-center justify-center gap-2 rounded-[12px] bg-cloud px-4 py-3 text-center text-[12.5px] font-semibold text-meta">
+                                <x-ui.icon name="lock" class="size-4 shrink-0" /> Ce sujet est fermé. Écrivez dans un autre sujet ou dans Général.
+                            </p>
                         @elseif ($moi['refus_ecriture'] ?? null)
                             <p data-test="refus-ecriture" class="flex items-center justify-center gap-2 rounded-[12px] bg-cloud px-4 py-3 text-center text-[12.5px] font-semibold text-meta">
                                 <x-ui.icon name="{{ $estAnnonces ? 'megaphone' : 'lock' }}" class="size-4 shrink-0" /> {{ $moi['refus_ecriture'] }}
@@ -621,7 +699,7 @@
                                 <textarea x-ref="saisie" x-show="! enreg" wire:model="texte" rows="1" data-test="saisie" maxlength="4000"
                                     x-on:input="saisie($event); $el.style.height = 'auto'; $el.style.height = Math.min($el.scrollHeight, 140) + 'px'"
                                     x-on:keydown="touche($event)"
-                                    placeholder="{{ $estAnnonces ? 'Publier une annonce…' : 'Écrire un message…' }}"
+                                    placeholder="{{ $estAnnonces ? 'Publier une annonce…' : (($sujetCourant ?? null) ? 'Écrire dans « '.$sujetCourant['titre'].' »…' : 'Écrire un message…') }}"
                                     class="max-h-[140px] min-h-[42px] flex-1 resize-none rounded-[20px] border border-brand/10 bg-cloud px-4 py-2.5 text-[13.5px] text-ink outline-none focus:border-azure"></textarea>
 
                                 <button type="button" x-show="! enreg && ! $wire.texte.trim().length" x-on:click="demarrer()" :disabled="envoiVocal" data-test="micro" title="Enregistrer une note vocale"
@@ -715,6 +793,53 @@
                     @endforelse
                 </ul>
                 <div class="flex justify-end border-t border-cloud-200 p-3"><button type="button" wire:click="fermerPartage" class="rounded-full px-4 py-2 text-[12.5px] font-semibold text-meta hover:bg-cloud">Fermer</button></div>
+            </div>
+        </div>
+    @endif
+
+    {{-- Nouveau sujet --}}
+    @if ($sujetOuvert)
+        <div class="fixed inset-0 z-[90] flex items-center justify-center bg-brand/40 p-4" wire:click.self="$set('sujetOuvert', false)" x-on:keydown.escape.window="$wire.set('sujetOuvert', false)">
+            <div class="panel-enter w-full max-w-md rounded-[18px] bg-white p-6 shadow-2xl" data-test="fenetre-sujet">
+                <h2 class="mb-1 text-[15px] font-bold text-brand">Nouveau sujet dans « {{ $salon['nom'] ?? '' }} »</h2>
+                <p class="mb-4 text-[12.5px] leading-relaxed text-meta">Un sujet regroupe les messages sur une même question, pour que chacun suive ce qui l'intéresse.</p>
+                <div class="flex items-end gap-2">
+                    <label class="grid w-[72px] gap-1 text-[13px]"><span class="font-semibold text-brand">Emoji</span>
+                        <input type="text" wire:model="sujetEmoji" maxlength="4" data-test="emoji-sujet" placeholder="🧾" class="rounded-[10px] border border-brand/15 px-3 py-2 text-center outline-none focus:border-azure">
+                    </label>
+                    <label class="grid min-w-0 flex-1 gap-1 text-[13px]"><span class="font-semibold text-brand">Titre</span>
+                        <input type="text" wire:model="sujetTitre" maxlength="80" data-test="titre-sujet" placeholder="Ex. : Fiscalité des PME" class="rounded-[10px] border border-brand/15 px-3 py-2 outline-none focus:border-azure" x-init="$nextTick(() => $el.focus())" x-on:keydown.enter="$wire.creerSujet()">
+                    </label>
+                </div>
+                @if ($info)<p class="mt-3 text-[12px] font-semibold text-accent">{{ $info }}</p>@endif
+                <div class="mt-5 flex justify-end gap-2">
+                    <button type="button" wire:click="$set('sujetOuvert', false)" class="rounded-full px-4 py-2 text-[12.5px] font-semibold text-meta hover:bg-cloud">Annuler</button>
+                    <button type="button" wire:click="creerSujet" data-test="creer-sujet" class="btn-tap rounded-full bg-accent px-4 py-2 text-[12.5px] font-bold text-white hover:bg-accent-600">Ouvrir le sujet</button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- Lancer une discussion vocale --}}
+    @if ($directOuvert)
+        <div class="fixed inset-0 z-[90] flex items-center justify-center bg-brand/40 p-4" wire:click.self="$set('directOuvert', false)" x-on:keydown.escape.window="$wire.set('directOuvert', false)">
+            <div class="panel-enter w-full max-w-md rounded-[18px] bg-white p-6 shadow-2xl" data-test="fenetre-direct">
+                <h2 class="mb-1 text-[15px] font-bold text-brand">🎙️ Discussion vocale en direct</h2>
+                <p class="mb-4 text-[12.5px] leading-relaxed text-meta">
+                    Tous les membres du salon sont prévenus et rejoignent la discussion d'un clic. Elle se termine d'elle-même au bout de 3 heures.
+                </p>
+                <label class="mb-3 grid gap-1 text-[13px]"><span class="font-semibold text-brand">Titre</span>
+                    <input type="text" wire:model="directTitre" maxlength="120" data-test="titre-direct" placeholder="Ex. : Café réseau du jeudi" class="rounded-[10px] border border-brand/15 px-3 py-2 outline-none focus:border-azure">
+                </label>
+                <label class="grid gap-1 text-[13px]"><span class="font-semibold text-brand">Lien de visio {{ ($moi['meet_disponible'] ?? false) ? '(facultatif)' : '' }}</span>
+                    <input type="url" wire:model="directLien" maxlength="500" data-test="lien-direct" placeholder="https://meet.google.com/… ou https://zoom.us/…" class="rounded-[10px] border border-brand/15 px-3 py-2 outline-none focus:border-azure">
+                    <span class="text-[11.5px] text-meta">{{ ($moi['meet_disponible'] ?? false) ? 'Laissez vide : une réunion Google Meet est créée avec le compte du REJCC, qui admet les participants.' : 'Collez le lien de la réunion (Google Meet, Zoom, Teams…).' }}</span>
+                </label>
+                @if ($info)<p class="mt-3 text-[12px] font-semibold text-accent">{{ $info }}</p>@endif
+                <div class="mt-5 flex justify-end gap-2">
+                    <button type="button" wire:click="$set('directOuvert', false)" class="rounded-full px-4 py-2 text-[12.5px] font-semibold text-meta hover:bg-cloud">Annuler</button>
+                    <button type="button" wire:click="lancerDirect" wire:loading.attr="disabled" wire:target="lancerDirect" data-test="confirmer-direct" class="btn-tap rounded-full bg-accent px-4 py-2 text-[12.5px] font-bold text-white hover:bg-accent-600 disabled:opacity-60">Lancer et prévenir les membres</button>
+                </div>
             </div>
         </div>
     @endif

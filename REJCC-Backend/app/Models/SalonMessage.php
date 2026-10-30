@@ -12,7 +12,7 @@ class SalonMessage extends Model
     /** Délai pendant lequel l'auteur peut modifier son message. */
     public const MINUTES_MODIFICATION = 15;
 
-    protected $fillable = ['salon_id', 'user_id', 'type', 'body', 'reponse_a_id', 'mentions', 'mention_tous', 'fichier', 'fichier_nom', 'fichier_mime', 'fichier_taille', 'duree', 'carte_type', 'carte_id', 'epingle_at', 'epingle_par', 'edite_at', 'supprime_at', 'supprime_par'];
+    protected $fillable = ['salon_id', 'sujet_id', 'user_id', 'type', 'body', 'reponse_a_id', 'mentions', 'mention_tous', 'fichier', 'fichier_nom', 'fichier_mime', 'fichier_taille', 'duree', 'carte_type', 'carte_id', 'epingle_at', 'epingle_par', 'edite_at', 'supprime_at', 'supprime_par'];
 
     /** Nombre maximal de messages épinglés dans un salon. */
     public const EPINGLES_MAX = 5;
@@ -46,6 +46,16 @@ class SalonMessage extends Model
     public function reactions(): HasMany
     {
         return $this->hasMany(SalonReaction::class);
+    }
+
+    public function sujet(): BelongsTo
+    {
+        return $this->belongsTo(SalonSujet::class, 'sujet_id');
+    }
+
+    public function vocal(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(SalonVocal::class, 'salon_message_id');
     }
 
     public function sondage(): \Illuminate\Database\Eloquent\Relations\HasOne

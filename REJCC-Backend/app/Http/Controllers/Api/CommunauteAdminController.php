@@ -7,6 +7,7 @@ use App\Models\Salon;
 use App\Models\SalonMembre;
 use App\Models\SalonMessage;
 use App\Models\SalonModeration;
+use App\Models\SalonProgrammation;
 use App\Models\SalonSignalement;
 use App\Models\User;
 use App\Support\Communaute;
@@ -38,6 +39,8 @@ class CommunauteAdminController extends Controller
                 'lecture_seule' => $s->lecture_seule,
                 'mode_lent_secondes' => $s->mode_lent_secondes,
                 'regles' => $s->regles,
+                'sujets_actives' => $s->sujets_actives,
+                'sujets' => $s->sujets()->whereNull('ferme_at')->count(),
                 'ordre' => $s->ordre,
                 'archive' => $s->archive_at !== null,
                 'messages_semaine' => SalonMessage::where('salon_id', $s->id)->where('created_at', '>=', $semaine)->whereNull('supprime_at')->count(),
@@ -254,12 +257,87 @@ class CommunauteAdminController extends Controller
         }
         if (! $m->estSupprime()) {
             $m->forceFill(['supprime_at' => now(), 'supprime_par' => $request->user()->id])->save();
+            if ($m->type === 'direct' && $m->vocal?->enCours()) {
+                Communaute::terminerVocal($m->vocal, $request->user());
+            }
             Communaute::journal($m->salon, $request->user(), 'message_supprime', Communaute::extrait($m), $m->user_id, $m->id);
         }
         SalonSignalement::where('salon_message_id', $m->id)->where('statut', 'nouveau')
             ->update(['statut' => 'traite', 'decision' => 'supprime', 'traite_par' => $request->user()->id, 'traite_at' => now()]);
 
         return response()->json(['ok' => true]);
+    }
+
+    /** GET /admin/communaute/programmations — annonces programmées (à venir et récemment publiées). */
+    public function programmations()
+    {
+        $presenter = fn (SalonProgrammation $p) => [
+            'id' => $p->id,
+            'salon' => $p->salon ? ['id' => $p->salon->id, 'nom' => $p->salon->nom, 'emoji' => $p->salon->emoji] : null,
+            'body' => $p->body,
+            'publier_a' => $p->publier_a->toIso8601String(),
+            'publie_at' => $p->publie_at?->toIso8601String(),
+            'auteur' => $p->user ? trim($p->user->prenom.' '.$p->user->nom) : null,
+        ];
+
+        return response()->json([
+            'ok' => true,
+            'a_venir' => SalonProgrammation::with(['salon:id,nom,emoji', 'user:id,prenom,nom'])->whereNull('publie_at')->whereNull('annule_at')
+                ->orderBy('publier_a')->limit(50)->get()->map($presenter)->values(),
+            'publiees' => SalonProgrammation::with(['salon:id,nom,emoji', 'user:id,prenom,nom'])->whereNotNull('publie_at')
+                ->latest('publie_at')->limit(10)->get()->map($presenter)->values(),
+        ]);
+    }
+
+    /** POST /admin/communaute/programmations — programmer une annonce dans un salon. */
+    public function programmer(Request $request)
+    {
+        $v = Validator::make($request->all(), [
+            'salon_id' => 'required|integer',
+            'body' => 'required|string|max:4000',
+            'publier_a' => 'required|date',
+        ], [
+            'body.required' => 'Écrivez l\'annonce avant de la programmer.',
+            'body.max' => 'L\'annonce est trop longue (4 000 caractères maximum).',
+            'publier_a.required' => 'Choisissez la date et l\'heure de publication.',
+            'publier_a.date' => 'Choisissez la date et l\'heure de publication.',
+        ]);
+        if ($v->fails()) {
+            return response()->json(['ok' => false, 'message' => $v->errors()->first()], 422);
+        }
+        $salon = Salon::whereNull('archive_at')->find((int) $request->input('salon_id'));
+        if (! $salon) {
+            return response()->json(['ok' => false, 'message' => 'Choisissez un salon actif.'], 422);
+        }
+        $quand = \Illuminate\Support\Carbon::parse((string) $request->input('publier_a'), config('app.timezone'));
+        if ($quand->lt(now()->addMinutes(2))) {
+            return response()->json(['ok' => false, 'message' => 'Choisissez une heure de publication dans le futur (au moins 2 minutes).'], 422);
+        }
+        if ($quand->gt(now()->addYear())) {
+            return response()->json(['ok' => false, 'message' => 'Une annonce se programme au plus un an à l\'avance.'], 422);
+        }
+        $p = SalonProgrammation::create([
+            'salon_id' => $salon->id,
+            'user_id' => $request->user()->id,
+            'body' => trim((string) $request->input('body')),
+            'publier_a' => $quand,
+        ]);
+        Communaute::journal($salon, $request->user(), 'annonce_programmee', $quand->locale('fr')->isoFormat('D MMMM YYYY [à] HH[h]mm').' · '.Str::limit($p->body, 120));
+
+        return response()->json(['ok' => true, 'id' => $p->id, 'message' => 'Annonce programmée pour le '.$quand->locale('fr')->isoFormat('D MMMM YYYY [à] HH[h]mm').'.']);
+    }
+
+    /** DELETE /admin/communaute/programmations/{id} — annuler une annonce programmée. */
+    public function annulerProgrammation(Request $request, int $id)
+    {
+        $p = SalonProgrammation::with('salon')->whereNull('publie_at')->whereNull('annule_at')->find($id);
+        if (! $p) {
+            return response()->json(['ok' => false, 'message' => 'Cette annonce a déjà été publiée ou annulée.'], 404);
+        }
+        $p->forceFill(['annule_at' => now()])->save();
+        Communaute::journal($p->salon, $request->user(), 'annonce_annulee', Str::limit($p->body, 120));
+
+        return response()->json(['ok' => true, 'message' => 'Annonce programmée annulée.']);
     }
 
     /** PUT /admin/communaute/signalements/{messageId}/classer — classer sans suite. */
@@ -397,6 +475,7 @@ class CommunauteAdminController extends Controller
             'lecture_seule' => 'nullable|boolean',
             'mode_lent_secondes' => 'nullable|integer|in:'.implode(',', array_keys(Salon::MODES_LENTS)),
             'regles' => 'nullable|string|max:2000',
+            'sujets_actives' => 'nullable|boolean',
         ], [
             'nom.required' => 'Donnez un nom au salon.',
             'nom.max' => 'Le nom du salon est trop long (80 caractères maximum).',
@@ -418,6 +497,8 @@ class CommunauteAdminController extends Controller
             'lecture_seule' => $request->boolean('lecture_seule'),
             'mode_lent_secondes' => (int) $request->input('mode_lent_secondes', 0),
             'regles' => $regles !== '' ? $regles : null,
+            // Les sujets organisent les grands salons de discussion (pas le canal Annonces).
+            'sujets_actives' => $request->input('type') === 'discussion' && $request->boolean('sujets_actives'),
         ];
     }
 

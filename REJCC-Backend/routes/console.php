@@ -127,3 +127,11 @@ Artisan::command('notifications:push', function () {
 })->purpose('Notifications push sur les appareils des membres');
 
 Schedule::command('notifications:push')->everyMinute()->withoutOverlapping();
+
+// Communauté : annonces programmées publiées à l'heure dite, discussions vocales closes après 3 heures.
+Artisan::command('communaute:programmes', function () {
+    $r = \App\Support\Communaute::traiterProgrammes();
+    $this->info("{$r['publiees']} annonce(s) publiée(s), {$r['vocaux']} discussion(s) vocale(s) terminée(s).");
+})->purpose('Annonces programmées et fin des discussions vocales de la Communauté');
+
+Schedule::command('communaute:programmes')->everyMinute()->withoutOverlapping();

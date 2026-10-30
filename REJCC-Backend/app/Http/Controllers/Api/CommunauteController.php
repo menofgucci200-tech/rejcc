@@ -8,6 +8,7 @@ use App\Models\SalonMembre;
 use App\Models\SalonMessage;
 use App\Models\SalonReaction;
 use App\Models\SalonSignalement;
+use App\Models\SalonVocal;
 use App\Models\User;
 use App\Support\Communaute;
 use Illuminate\Http\Request;
@@ -23,6 +24,8 @@ use Illuminate\Support\Facades\Validator;
 class CommunauteController extends Controller
 {
     private const PAR_PAGE = 50;
+
+    private const RELATIONS = ['user:id,prenom,nom,photo,role', 'reponseA.user:id,prenom,nom', 'sondage.options', 'sujet', 'vocal'];
 
     private const MIMES_IMAGES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
@@ -57,6 +60,8 @@ class CommunauteController extends Controller
                 'acces' => $s->acces,
                 'archive' => $s->archive_at !== null,
                 'lecture_seule' => $s->lecture_seule,
+                'sujets_actives' => $s->sujets_actives,
+                'direct' => $refus ? null : (Communaute::vocalEnCours($s)?->titre),
                 'verrou' => $refus,
                 'non_lus' => $nonLus,
                 'notifications' => $etat?->notifications ?? $s->notificationsParDefaut(),
@@ -97,8 +102,17 @@ class CommunauteController extends Controller
         $after = (int) $request->query('after', 0);
         $before = (int) $request->query('before', 0);
         $autour = (int) $request->query('autour', 0);
+        // Sujet affiché : absent = tout le salon, « general » = hors sujet, sinon l'identifiant du sujet.
+        $sujet = $salon->sujets_actives ? (string) $request->query('sujet', '') : '';
+        $filtreSujet = function ($q) use ($sujet) {
+            if ($sujet === 'general') {
+                $q->whereNull('sujet_id');
+            } elseif (ctype_digit($sujet)) {
+                $q->where('sujet_id', (int) $sujet);
+            }
+        };
 
-        $requete = SalonMessage::with(['user:id,prenom,nom,photo,role', 'reponseA.user:id,prenom,nom', 'sondage.options'])->where('salon_id', $salon->id);
+        $requete = SalonMessage::with(self::RELATIONS)->where('salon_id', $salon->id)->where($filtreSujet);
         if ($after > 0) {
             $messages = $requete->where('id', '>', $after)->orderBy('id')->limit(200)->get();
         } elseif ($autour > 0) {
@@ -116,7 +130,7 @@ class CommunauteController extends Controller
         $modifies = [];
         if ($after > 0 && $depuis) {
             try {
-                $modifies = SalonMessage::with(['user:id,prenom,nom,photo,role', 'reponseA.user:id,prenom,nom', 'sondage.options'])->where('salon_id', $salon->id)
+                $modifies = SalonMessage::with(self::RELATIONS)->where('salon_id', $salon->id)->where($filtreSujet)
                     ->where('id', '<=', $after)->where('updated_at', '>=', \Illuminate\Support\Carbon::parse($depuis))
                     ->limit(100)->get();
             } catch (\Throwable) {
@@ -152,7 +166,10 @@ class CommunauteController extends Controller
                 'lecture_seule' => $salon->lecture_seule,
                 'mode_lent_secondes' => $salon->mode_lent_secondes,
                 'archive' => $salon->archive_at !== null,
+                'sujets_actives' => $salon->sujets_actives,
             ],
+            'sujets' => $salon->sujets_actives ? Communaute::sujets($salon) : [],
+            'direct' => ($v = Communaute::vocalEnCours($salon)) ? ['id' => $v->id, 'titre' => $v->titre, 'lien' => $v->lien, 'fournisseur' => $v->fournisseur, 'message_id' => $v->salon_message_id, 'peut_terminer' => $moderateur || $v->lance_par === $moi->id] : null,
             'moi' => [
                 'moderateur' => $moderateur,
                 'admin' => Communaute::estAdmin($moi),
@@ -161,6 +178,9 @@ class CommunauteController extends Controller
                 'attente' => Communaute::attenteModeLent($moi, $salon, $etat),
                 'peut_fichiers' => Communaute::peutEnvoyerFichier($moi),
                 'peut_mention_tous' => $moderateur,
+                'peut_creer_sujet' => $salon->sujets_actives && ($moderateur || Communaute::peutEnvoyerFichier($moi)),
+                'peut_lancer_vocal' => $moderateur && ! $salon->archive_at,
+                'meet_disponible' => $moderateur && \App\Support\GoogleMeet::estConnecte(),
                 'notifications' => $etat->notifications ?? $salon->notificationsParDefaut(),
             ],
             'messages' => collect($messages)->map($presenter)->values(),
@@ -173,7 +193,7 @@ class CommunauteController extends Controller
                     'extrait' => Communaute::extrait($m),
                 ])->values(),
             'plus_anciens' => $after === 0 && collect($messages)->isNotEmpty()
-                && SalonMessage::where('salon_id', $salon->id)->where('id', '<', collect($messages)->first()->id)->exists(),
+                && SalonMessage::where('salon_id', $salon->id)->where($filtreSujet)->where('id', '<', collect($messages)->first()->id)->exists(),
             'horodatage' => $horodatage->toIso8601String(),
         ]);
     }
@@ -228,6 +248,7 @@ class CommunauteController extends Controller
             'carte_id' => 'nullable|integer',
             'body' => 'nullable|string|max:4000',
             'reponse_a_id' => 'nullable|integer',
+            'sujet_id' => 'nullable|integer',
             'mentions' => 'nullable|array|max:20',
             'mentions.*' => 'integer',
             'mention_tous' => 'nullable|boolean',
@@ -352,14 +373,30 @@ class CommunauteController extends Controller
             ? SalonMessage::where('salon_id', $salon->id)->whereNull('supprime_at')->find((int) $request->input('reponse_a_id'))
             : null;
 
+        // Sujet : celui choisi, ou à défaut celui du message cité.
+        $sujet = null;
+        if ($salon->sujets_actives) {
+            $sujetId = $request->filled('sujet_id') ? (int) $request->input('sujet_id') : $reponseA?->sujet_id;
+            if ($sujetId) {
+                $sujet = $salon->sujets()->find($sujetId);
+                if (! $sujet) {
+                    return response()->json(['ok' => false, 'message' => 'Ce sujet n\'existe plus dans le salon.'], 422);
+                }
+                if ($sujet->ferme_at && ! $moderateur) {
+                    return response()->json(['ok' => false, 'code' => 'sujet_ferme', 'message' => 'Ce sujet est fermé : il n\'accepte plus de messages.'], 403);
+                }
+            }
+        }
+
         // Mentions : membres actifs uniquement, et @tous réservé à l'équipe.
         $mentions = array_values(array_unique(array_map('intval', (array) $request->input('mentions', []))));
         $mentions = $mentions ? User::whereIn('id', $mentions)->where('is_active', true)->where('id', '!=', $moi->id)->pluck('id')->all() : [];
         $mentionTous = $request->boolean('mention_tous') && $moderateur;
 
-        $message = DB::transaction(function () use ($salon, $moi, $type, $body, $reponseA, $mentions, $mentionTous, $piece, $etat, $sondage) {
+        $message = DB::transaction(function () use ($salon, $moi, $type, $body, $reponseA, $mentions, $mentionTous, $piece, $etat, $sondage, $sujet) {
             $m = SalonMessage::create([
                 'salon_id' => $salon->id,
+                'sujet_id' => $sujet?->id,
                 'user_id' => $moi->id,
                 'type' => $type,
                 'body' => $body,
@@ -374,13 +411,14 @@ class CommunauteController extends Controller
                 }
             }
             $etat->forceFill(['dernier_message_at' => now(), 'lu_jusqua' => $m->id])->save();
+            $sujet?->forceFill(['dernier_message_at' => now()])->save();
 
             return $m;
         });
 
         dispatch(fn () => Communaute::notifier($message->fresh(['salon', 'user', 'reponseA'])))->afterResponse();
 
-        $message->load(['user:id,prenom,nom,photo,role', 'reponseA.user:id,prenom,nom', 'sondage.options']);
+        $message->load(self::RELATIONS);
         $referents = SalonMembre::where('salon_id', $salon->id)->where('role', 'moderateur')->pluck('user_id')->all();
 
         return response()->json(['ok' => true, 'message' => Communaute::presenter($message, $moi, $moderateur, [], $referents)]);
@@ -422,6 +460,9 @@ class CommunauteController extends Controller
             return response()->json(['ok' => false, 'message' => 'Vous ne pouvez supprimer que vos propres messages.'], 403);
         }
         $m->forceFill(['supprime_at' => now(), 'supprime_par' => $moi->id])->save();
+        if ($m->type === 'direct' && $m->vocal?->enCours()) {
+            Communaute::terminerVocal($m->vocal, $moi);
+        }
         if ($m->user_id !== $moi->id) {
             Communaute::journal($m->salon, $moi, 'message_supprime', Communaute::extrait($m), $m->user_id, $m->id);
             SalonSignalement::where('salon_message_id', $m->id)->where('statut', 'nouveau')
@@ -620,6 +661,172 @@ class CommunauteController extends Controller
         }
 
         return response()->json(['ok' => true, 'cartes' => \App\Support\CommunauteCartes::rechercher($type, (string) $request->query('q', ''))]);
+    }
+
+    // ── Sujets (grands salons) ───────────────────────────────────────────
+
+    /** POST /communaute/salons/{slug}/sujets — ouvrir un sujet (abonnés à jour et référents). */
+    public function creerSujet(Request $request, string $slug)
+    {
+        $moi = $request->user();
+        [$salon, $etat, $refus] = $this->ouvrir($moi, $slug);
+        if ($refus) {
+            return $refus;
+        }
+        if (! $salon->sujets_actives) {
+            return response()->json(['ok' => false, 'message' => 'Ce salon n\'est pas organisé en sujets.'], 422);
+        }
+        if ($raison = Communaute::refusEcriture($moi, $salon, $etat)) {
+            return response()->json(['ok' => false, 'code' => 'ecriture_refusee', 'message' => $raison], 403);
+        }
+        $moderateur = Communaute::estModerateur($moi, $salon, $etat);
+        if (! $moderateur && ! Communaute::peutEnvoyerFichier($moi)) {
+            return response()->json(['ok' => false, 'code' => 'subscription_required', 'message' => 'L\'ouverture de sujets est réservée aux membres à jour de leur abonnement annuel.'], 402);
+        }
+        $titre = trim(preg_replace('/\s+/', ' ', (string) $request->input('titre', '')));
+        $emoji = trim((string) $request->input('emoji', ''));
+        if (mb_strlen($titre) < 3 || mb_strlen($titre) > 80) {
+            return response()->json(['ok' => false, 'message' => 'Le titre du sujet compte entre 3 et 80 caractères.'], 422);
+        }
+        if (mb_strlen($emoji) > 16) {
+            $emoji = '';
+        }
+        if ($mot = Communaute::motInterdit($titre)) {
+            return response()->json(['ok' => false, 'code' => 'mot_interdit', 'message' => "Ce titre contient un terme non autorisé dans la Communauté (« {$mot} »)."], 422);
+        }
+        if ($salon->sujets()->whereRaw('lower(titre) = ?', [mb_strtolower($titre)])->exists()) {
+            return response()->json(['ok' => false, 'message' => 'Un sujet porte déjà ce titre dans le salon.'], 422);
+        }
+        if ($salon->sujets()->whereNull('ferme_at')->count() >= \App\Models\SalonSujet::MAX_PAR_SALON) {
+            return response()->json(['ok' => false, 'message' => 'Ce salon compte déjà '.\App\Models\SalonSujet::MAX_PAR_SALON.' sujets ouverts : les référents doivent en fermer avant d\'en ouvrir un nouveau.'], 422);
+        }
+        $sujet = $salon->sujets()->create(['titre' => $titre, 'emoji' => $emoji ?: null, 'cree_par' => $moi->id, 'dernier_message_at' => now()]);
+        Communaute::journal($salon, $moi, 'sujet_cree', $titre);
+
+        return response()->json(['ok' => true, 'sujet' => ['id' => $sujet->id, 'titre' => $sujet->titre, 'emoji' => $sujet->emoji], 'message' => 'Sujet « '.$titre.' » ouvert.']);
+    }
+
+    /** PUT /communaute/sujets/{id} — renommer, fermer ou rouvrir un sujet (référents). */
+    public function modifierSujet(Request $request, int $id)
+    {
+        $moi = $request->user();
+        $sujet = \App\Models\SalonSujet::with('salon')->find($id);
+        if (! $sujet || ! $sujet->salon || Communaute::refusAcces($moi, $sujet->salon)) {
+            return response()->json(['ok' => false, 'message' => 'Sujet introuvable.'], 404);
+        }
+        if (! Communaute::estModerateur($moi, $sujet->salon)) {
+            return response()->json(['ok' => false, 'message' => 'Réservé aux référents du salon.'], 403);
+        }
+        if ($request->filled('titre')) {
+            $titre = trim(preg_replace('/\s+/', ' ', (string) $request->input('titre')));
+            if (mb_strlen($titre) < 3 || mb_strlen($titre) > 80) {
+                return response()->json(['ok' => false, 'message' => 'Le titre du sujet compte entre 3 et 80 caractères.'], 422);
+            }
+            $sujet->titre = $titre;
+        }
+        if ($request->has('emoji')) {
+            $sujet->emoji = mb_substr(trim((string) $request->input('emoji')), 0, 16) ?: null;
+        }
+        if ($request->has('ferme')) {
+            $ferme = $request->boolean('ferme');
+            if ($ferme !== ($sujet->ferme_at !== null)) {
+                $sujet->ferme_at = $ferme ? now() : null;
+                Communaute::journal($sujet->salon, $moi, $ferme ? 'sujet_ferme' : 'sujet_rouvert', $sujet->titre);
+            }
+        }
+        $sujet->save();
+
+        return response()->json(['ok' => true, 'message' => $sujet->ferme_at ? 'Sujet fermé : il reste consultable.' : 'Sujet enregistré.']);
+    }
+
+    // ── Discussions vocales en direct ────────────────────────────────────
+
+    /**
+     * POST /communaute/salons/{slug}/vocal — lancer une discussion vocale
+     * (référents). Sans lien collé, une réunion Google Meet est créée avec le
+     * compte du REJCC ; les membres la rejoignent depuis la carte du fil.
+     */
+    public function lancerVocal(Request $request, string $slug)
+    {
+        $moi = $request->user();
+        [$salon, $etat, $refus] = $this->ouvrir($moi, $slug);
+        if ($refus) {
+            return $refus;
+        }
+        if (! Communaute::estModerateur($moi, $salon, $etat)) {
+            return response()->json(['ok' => false, 'message' => 'Seuls les référents du salon et l\'équipe lancent une discussion vocale.'], 403);
+        }
+        if ($salon->archive_at) {
+            return response()->json(['ok' => false, 'message' => 'Ce salon est archivé.'], 422);
+        }
+        if (Communaute::vocalEnCours($salon)) {
+            return response()->json(['ok' => false, 'message' => 'Une discussion vocale est déjà en cours dans ce salon : terminez-la avant d\'en lancer une autre.'], 422);
+        }
+        $titre = trim(preg_replace('/\s+/', ' ', (string) $request->input('titre', '')));
+        if (mb_strlen($titre) < 3 || mb_strlen($titre) > 120) {
+            return response()->json(['ok' => false, 'message' => 'Donnez un titre à la discussion (3 à 120 caractères).'], 422);
+        }
+        $lien = trim((string) $request->input('lien', ''));
+        $evenementGoogle = null;
+        if ($lien !== '') {
+            if (mb_strlen($lien) > 500 || ! filter_var($lien, FILTER_VALIDATE_URL) || ! str_starts_with(strtolower($lien), 'https://')) {
+                return response()->json(['ok' => false, 'message' => 'Collez un lien de visio valide, commençant par https://'], 422);
+            }
+            $fournisseur = 'lien';
+        } elseif (\App\Support\GoogleMeet::estConnecte()) {
+            try {
+                $reunion = \App\Support\GoogleMeet::reunionImmediate($titre, SalonVocal::DUREE_MAX_HEURES * 60);
+            } catch (\Throwable $e) {
+                return response()->json(['ok' => false, 'message' => $e instanceof \RuntimeException ? $e->getMessage() : 'Google n\'a pas pu créer la réunion Meet. Réessayez, ou collez un lien de visio.'], 502);
+            }
+            [$lien, $evenementGoogle, $fournisseur] = [$reunion['lien'], $reunion['id'], 'meet'];
+        } else {
+            return response()->json(['ok' => false, 'code' => 'meet_indisponible', 'message' => 'Le compte Google Meet du REJCC n\'est pas connecté : collez le lien de votre visio (Meet, Zoom, Teams…).'], 422);
+        }
+
+        $sujet = ($salon->sujets_actives && $request->filled('sujet_id')) ? $salon->sujets()->whereNull('ferme_at')->find((int) $request->input('sujet_id')) : null;
+        $message = DB::transaction(function () use ($salon, $moi, $titre, $lien, $fournisseur, $evenementGoogle, $sujet) {
+            $m = SalonMessage::create(['salon_id' => $salon->id, 'sujet_id' => $sujet?->id, 'user_id' => $moi->id, 'type' => 'direct', 'body' => $titre]);
+            SalonVocal::create([
+                'salon_id' => $salon->id,
+                'salon_message_id' => $m->id,
+                'lance_par' => $moi->id,
+                'titre' => $titre,
+                'lien' => $lien,
+                'fournisseur' => $fournisseur,
+                'google_event_id' => $evenementGoogle,
+                'debut_at' => now(),
+            ]);
+
+            return $m;
+        });
+        Communaute::journal($salon, $moi, 'vocal_lance', $titre, null, $message->id);
+        dispatch(fn () => Communaute::notifier($message->fresh(['salon', 'user', 'vocal'])))->afterResponse();
+
+        $message->load(self::RELATIONS);
+        $referents = SalonMembre::where('salon_id', $salon->id)->where('role', 'moderateur')->pluck('user_id')->all();
+
+        return response()->json(['ok' => true, 'message' => Communaute::presenter($message, $moi, true, [], $referents),
+            'texte' => $fournisseur === 'meet' ? 'Réunion Meet créée : les membres sont prévenus. Le compte du REJCC admet les participants.' : 'Discussion vocale lancée : les membres sont prévenus.']);
+    }
+
+    /** POST /communaute/vocaux/{id}/terminer — terminer une discussion vocale. */
+    public function terminerVocal(Request $request, int $id)
+    {
+        $moi = $request->user();
+        $v = SalonVocal::with('salon')->find($id);
+        if (! $v || ! $v->salon || Communaute::refusAcces($moi, $v->salon)) {
+            return response()->json(['ok' => false, 'message' => 'Discussion introuvable.'], 404);
+        }
+        if ($v->lance_par !== $moi->id && ! Communaute::estModerateur($moi, $v->salon)) {
+            return response()->json(['ok' => false, 'message' => 'Réservé aux référents du salon.'], 403);
+        }
+        if ($v->enCours()) {
+            Communaute::terminerVocal($v, $moi);
+            Communaute::journal($v->salon, $moi, 'vocal_termine', $v->titre, null, $v->salon_message_id);
+        }
+
+        return response()->json(['ok' => true, 'message' => 'Discussion vocale terminée.']);
     }
 
     // ── Outils des référents (et administrateurs) dans le salon ──────────

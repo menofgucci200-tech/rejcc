@@ -159,6 +159,42 @@ class GoogleMeet
         return (string) $r->json('hangoutLink');
     }
 
+    /**
+     * Réunion immédiate (discussion vocale de la Communauté) : renvoie le lien
+     * Meet et l'identifiant de l'évènement d'agenda.
+     *
+     * @return array{lien: string, id: string}
+     *
+     * @throws RuntimeException compte non connecté ou refus de Google
+     */
+    public static function reunionImmediate(string $titre, int $minutes = 120): array
+    {
+        $r = Http::withToken(self::jetonAcces())->acceptJson()
+            ->post('https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1', [
+                'summary' => 'REJCC · '.$titre,
+                'description' => 'Discussion vocale de la Communauté REJCC.',
+                'start' => ['dateTime' => now()->toRfc3339String(), 'timeZone' => config('app.timezone')],
+                'end' => ['dateTime' => now()->addMinutes($minutes)->toRfc3339String(), 'timeZone' => config('app.timezone')],
+                'conferenceData' => ['createRequest' => [
+                    'requestId' => (string) Str::uuid(),
+                    'conferenceSolutionKey' => ['type' => 'hangoutsMeet'],
+                ]],
+            ]);
+        if (! $r->successful() || ! $r->json('hangoutLink')) {
+            throw new RuntimeException('Google n\'a pas pu créer la réunion Meet. Réessayez, ou collez un lien de visio.');
+        }
+
+        return ['lien' => (string) $r->json('hangoutLink'), 'id' => (string) $r->json('id')];
+    }
+
+    /** Supprime un évènement d'agenda créé pour une discussion vocale. */
+    public static function supprimerEvenement(?string $id): void
+    {
+        if ($id) {
+            rescue(fn () => Http::withToken(self::jetonAcces())->delete('https://www.googleapis.com/calendar/v3/calendars/primary/events/'.rawurlencode($id)), report: false);
+        }
+    }
+
     /** Supprime la réunion de l'agenda Google (session annulée ou passée à un autre lien). */
     public static function supprimer(Event $e): void
     {

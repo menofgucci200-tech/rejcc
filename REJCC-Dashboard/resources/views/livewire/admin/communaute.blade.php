@@ -63,16 +63,44 @@
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <p class="text-[14px] font-bold text-brand">📣 Publier une annonce</p>
-                        <p class="text-[12px] text-[#5B677A]">Publiée dans le canal Annonces de la Communauté. Tous les membres reçoivent une notification.</p>
+                        <p class="text-[12px] text-[#5B677A]">Publiée tout de suite ou à l'heure choisie. Tous les membres reçoivent une notification.</p>
                     </div>
                     <button type="button" x-on:click="ouvert = ! ouvert" data-test="ouvrir-annonce" class="btn-tap rounded-full border border-brand/15 px-4 py-2 text-[12.5px] font-bold text-brand hover:bg-cloud" x-text="ouvert ? 'Fermer' : 'Rédiger'">Rédiger</button>
                 </div>
                 <div x-show="ouvert" x-transition style="display: none" class="mt-3">
                     <textarea wire:model="annonce" rows="4" maxlength="4000" data-test="texte-annonce" placeholder="Ex. : Assemblée générale le samedi 15 novembre à 9h00 à la paroisse Saint-Jacques des Deux-Plateaux." class="w-full rounded-[12px] border border-brand/15 p-3 text-[13px] outline-none focus:border-azure"></textarea>
-                    <div class="mt-2 flex justify-end">
-                        <button type="button" wire:click="publierAnnonce" wire:confirm="Publier cette annonce ? Tous les membres seront prévenus." data-test="publier-annonce" class="btn-tap rounded-full bg-accent px-4 py-2 text-[12.5px] font-bold text-white hover:bg-accent-600">Publier l'annonce</button>
+                    <div class="mt-2 flex flex-wrap items-end gap-3">
+                        <label class="grid gap-1 text-[12px]"><span class="font-semibold text-brand">Salon</span>
+                            <select wire:model="annonceSalonId" data-test="salon-annonce" class="rounded-[10px] border border-brand/15 px-3 py-2 text-[13px] outline-none focus:border-azure">
+                                @foreach (collect($salons)->where('archive', false) as $s)<option value="{{ $s['id'] }}">{{ $s['emoji'] }} {{ $s['nom'] }}</option>@endforeach
+                            </select>
+                        </label>
+                        <label class="grid gap-1 text-[12px]"><span class="font-semibold text-brand">Programmer pour <span class="font-normal text-[#5B677A]">(facultatif)</span></span>
+                            <input type="datetime-local" wire:model.live="annonceQuand" data-test="quand-annonce" min="{{ now()->addMinutes(5)->format('Y-m-d\TH:i') }}" class="rounded-[10px] border border-brand/15 px-3 py-2 text-[13px] outline-none focus:border-azure">
+                        </label>
+                        <button type="button" wire:click="publierAnnonce" wire:confirm="{{ $annonceQuand ? 'Programmer cette annonce ? Elle sera publiée automatiquement à l\'heure choisie.' : 'Publier cette annonce ? Tous les membres seront prévenus.' }}" data-test="publier-annonce" class="btn-tap ml-auto rounded-full bg-accent px-4 py-2 text-[12.5px] font-bold text-white hover:bg-accent-600">{{ $annonceQuand ? 'Programmer l\'annonce' : 'Publier maintenant' }}</button>
                     </div>
                 </div>
+
+                @if (! empty($programmations['a_venir']))
+                    <div class="mt-4 border-t border-cloud-200 pt-3" data-test="annonces-programmees">
+                        <p class="mb-2 text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#5B677A]">Programmées</p>
+                        <ul class="grid gap-2">
+                            @foreach ($programmations['a_venir'] as $p)
+                                <li wire:key="prog-{{ $p['id'] }}" data-test="annonce-programmee" class="flex items-start gap-3 rounded-[12px] bg-cloud/60 px-3.5 py-2.5">
+                                    <span class="shrink-0 rounded-[8px] bg-white px-2 py-1 text-center text-[11px] font-bold leading-tight text-brand tabular-nums">
+                                        {{ \Illuminate\Support\Carbon::parse($p['publier_a'])->setTimezone(config('app.timezone'))->locale('fr')->isoFormat('ddd D MMM') }}<br>{{ \Illuminate\Support\Carbon::parse($p['publier_a'])->setTimezone(config('app.timezone'))->format('H\hi') }}
+                                    </span>
+                                    <div class="min-w-0 flex-1">
+                                        <p class="text-[11.5px] font-semibold text-[#5B677A]">{{ $p['salon']['emoji'] ?? '' }} {{ $p['salon']['nom'] ?? 'Salon' }} · par {{ $p['auteur'] }}</p>
+                                        <p class="line-clamp-2 text-[12.5px] text-ink">{{ $p['body'] }}</p>
+                                    </div>
+                                    <button type="button" wire:click="annulerProgrammation({{ $p['id'] }})" wire:confirm="Annuler cette annonce programmée ?" data-test="annuler-programmation" class="shrink-0 text-[12px] font-bold text-accent hover:underline">Annuler</button>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
             </div>
 
             {{-- Salons --}}
@@ -91,6 +119,7 @@
                                         @if ($s['type'] === 'annonces')<span class="rounded-full bg-brand px-2 text-[10px] font-bold uppercase leading-5 text-white">Annonces</span>@endif
                                         @if ($s['acces'] === 'abonnes')<span class="rounded-full bg-azure/10 px-2 text-[10px] font-bold uppercase leading-5 text-azure">Abonnés</span>@endif
                                         @if ($s['lecture_seule'])<span class="rounded-full bg-[#FBF1DC] px-2 text-[10px] font-bold uppercase leading-5 text-[#8A5A00]">Lecture seule</span>@endif
+                                        @if ($s['sujets_actives'] ?? false)<span class="rounded-full bg-azure/10 px-2 text-[10px] font-bold uppercase leading-5 text-azure">Sujets · {{ $s['sujets'] ?? 0 }}</span>@endif
                                         @if ($s['mode_lent_secondes'])<span class="rounded-full bg-[#FBF1DC] px-2 text-[10px] font-bold uppercase leading-5 text-[#8A5A00]">Mode lent · {{ $modes[$s['mode_lent_secondes']] ?? $s['mode_lent_secondes'].' s' }}</span>@endif
                                         @if ($s['archive'])<span class="rounded-full bg-[#5B677A]/15 px-2 text-[10px] font-bold uppercase leading-5 text-[#5B677A]">Archivé</span>@endif
                                     </p>
@@ -308,7 +337,7 @@
                     <label class="grid gap-1"><span class="font-semibold text-brand">Description</span><input type="text" wire:model="formulaire.description" maxlength="300" class="rounded-[10px] border border-brand/15 px-3 py-2 outline-none focus:border-azure"></label>
                     <div class="grid gap-3 sm:grid-cols-2">
                         <label class="grid gap-1"><span class="font-semibold text-brand">Type</span>
-                            <select wire:model="formulaire.type" class="rounded-[10px] border border-brand/15 px-3 py-2 outline-none focus:border-azure">
+                            <select wire:model.live="formulaire.type" class="rounded-[10px] border border-brand/15 px-3 py-2 outline-none focus:border-azure">
                                 <option value="discussion">Salon de discussion</option>
                                 <option value="annonces">Annonces (équipe seulement)</option>
                             </select>
@@ -328,6 +357,12 @@
                         </label>
                         <label class="flex items-center gap-2 self-end pb-2"><input type="checkbox" wire:model="formulaire.lecture_seule" class="size-4 accent-[#031D59]"><span class="font-semibold text-brand">Lecture seule</span></label>
                     </div>
+                    @if (($formulaire['type'] ?? '') === 'discussion')
+                        <label class="flex items-start gap-2.5 rounded-[12px] bg-cloud/60 p-3">
+                            <input type="checkbox" wire:model="formulaire.sujets_actives" data-test="sujets-actives" class="mt-0.5 size-4 accent-[#031D59]">
+                            <span><span class="block font-semibold text-brand">Organiser le salon en sujets</span><span class="block text-[11.5px] text-[#5B677A]">Pour les grands salons : les membres à jour de leur abonnement ouvrent des sujets (fiscalité, recrutement…), les référents les ferment. Les messages hors sujet restent dans « Général ».</span></span>
+                        </label>
+                    @endif
                     <label class="grid gap-1"><span class="font-semibold text-brand">Règles du salon</span>
                         <textarea wire:model="formulaire.regles" rows="5" maxlength="2000" class="rounded-[10px] border border-brand/15 px-3 py-2 outline-none focus:border-azure"></textarea>
                         <span class="text-[11.5px] text-[#5B677A]">Affichées à l'entrée du salon : chaque membre les accepte avant d'écrire. Laissez vide pour ne pas en demander.</span>

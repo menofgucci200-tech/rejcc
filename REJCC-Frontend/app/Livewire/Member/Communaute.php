@@ -115,6 +115,27 @@ class Communaute extends Component
 
     public array $resultatsRecherche = [];
 
+    // Sujets des grands salons : '' = tout le salon, 'general' = hors sujet, sinon l'identifiant.
+    #[Url(as: 'sujet', history: true)]
+    public string $sujet = '';
+
+    public array $sujets = [];
+
+    public bool $sujetOuvert = false;
+
+    public string $sujetTitre = '';
+
+    public string $sujetEmoji = '';
+
+    // Discussion vocale en direct
+    public ?array $direct = null;
+
+    public bool $directOuvert = false;
+
+    public string $directTitre = '';
+
+    public string $directLien = '';
+
     public function mount(): void
     {
         $this->chargerListe();
@@ -151,13 +172,16 @@ class Communaute extends Component
     public function ouvrir(string $slug): void
     {
         $this->reinitialiserSaisie();
+        if ($slug !== $this->slug) {
+            $this->sujet = '';
+        }
         $this->slug = $slug;
         $this->salon = null;
         $this->messages = [];
         $this->erreur = null;
         $this->erreurCode = null;
 
-        $r = Api::get('/communaute/salons/'.rawurlencode($slug), [], Api::token());
+        $r = Api::get('/communaute/salons/'.rawurlencode($slug), $this->filtreSujet(), Api::token());
         if (! ($r['ok'] ?? false)) {
             $this->erreur = $r['message'] ?? 'Ce salon est indisponible.';
             $this->erreurCode = $r['code'] ?? null;
@@ -182,6 +206,7 @@ class Communaute extends Component
     {
         $this->reinitialiserSaisie();
         $this->slug = null;
+        $this->sujet = '';
         $this->salon = null;
         $this->messages = [];
         $this->erreur = null;
@@ -193,6 +218,11 @@ class Communaute extends Component
         $this->salon = $r['salon'];
         $this->moi = $r['moi'] ?? [];
         $this->epingles = $r['epingles'] ?? [];
+        $this->sujets = $r['sujets'] ?? [];
+        $this->direct = $r['direct'] ?? null;
+        if (! ($this->salon['sujets_actives'] ?? false)) {
+            $this->sujet = '';
+        }
         $this->horodatage = $r['horodatage'] ?? now()->toIso8601String();
     }
 
@@ -209,7 +239,7 @@ class Communaute extends Component
         $r = Api::get('/communaute/salons/'.rawurlencode($this->slug), [
             'after' => $this->dernierId,
             'depuis' => $this->horodatage,
-        ], Api::token());
+        ] + $this->filtreSujet(), Api::token());
         if (! ($r['ok'] ?? false)) {
             if (in_array((int) ($r['status'] ?? 0), [402, 403, 404], true) || isset($r['code'])) {
                 $this->erreur = $r['message'] ?? 'Ce salon n\'est plus accessible.';
@@ -240,7 +270,7 @@ class Communaute extends Component
         if (! $this->slug || ! $this->messages) {
             return;
         }
-        $r = Api::get('/communaute/salons/'.rawurlencode($this->slug), ['before' => $this->messages[0]['id']], Api::token());
+        $r = Api::get('/communaute/salons/'.rawurlencode($this->slug), ['before' => $this->messages[0]['id']] + $this->filtreSujet(), Api::token());
         if ($r['ok'] ?? false) {
             $this->messages = array_values(array_merge($r['messages'] ?? [], $this->messages));
             $this->plusAnciens = (bool) ($r['plus_anciens'] ?? false);
@@ -286,6 +316,8 @@ class Communaute extends Component
                     'image' => '📷 Photo',
                     'fichier' => '📄 '.($m['fichier']['nom'] ?? 'Document'),
                     'vocal' => '🎤 Note vocale',
+                    'sondage' => '📊 '.($m['sondage']['question'] ?? 'Sondage'),
+                    'direct' => '🎙️ '.($m['direct']['titre'] ?? 'Discussion vocale'),
                     default => Str::limit((string) $m['body'], 90),
                 },
             ];
@@ -404,6 +436,7 @@ class Communaute extends Component
         $this->info = null;
         $r = Api::post('/communaute/salons/'.rawurlencode($this->slug).'/messages', $donnees + [
             'reponse_a_id' => $this->reponseA['id'] ?? null,
+            'sujet_id' => ctype_digit($this->sujet) ? (int) $this->sujet : null,
         ], Api::token());
 
         if (! ($r['ok'] ?? false)) {
@@ -600,6 +633,7 @@ class Communaute extends Component
 
             return;
         }
+        $this->sujet = '';
         $r = Api::get('/communaute/salons/'.rawurlencode($this->slug), ['autour' => $id], Api::token());
         if ($r['ok'] ?? false) {
             $this->appliquerSalon($r);
@@ -700,6 +734,93 @@ class Communaute extends Component
         $this->fermerSignalement();
     }
 
+    // ── Sujets ───────────────────────────────────────────────────────────
+
+    /** @return array{sujet?: string} */
+    private function filtreSujet(): array
+    {
+        return $this->sujet !== '' ? ['sujet' => $this->sujet] : [];
+    }
+
+    /** Affiche tout le salon (''), les messages hors sujet ('general') ou un sujet. */
+    public function choisirSujet(string $sujet): void
+    {
+        if (! $this->slug) {
+            return;
+        }
+        $this->sujet = ($sujet === 'general' || ctype_digit($sujet)) ? $sujet : '';
+        $this->ouvrir($this->slug);
+    }
+
+    public function ouvrirNouveauSujet(): void
+    {
+        $this->sujetOuvert = true;
+        $this->sujetTitre = '';
+        $this->sujetEmoji = '';
+        $this->info = null;
+    }
+
+    public function creerSujet(): void
+    {
+        $r = Api::post('/communaute/salons/'.rawurlencode($this->slug).'/sujets', ['titre' => $this->sujetTitre, 'emoji' => $this->sujetEmoji], Api::token());
+        if (! ($r['ok'] ?? false)) {
+            $this->info = $r['message'] ?? 'Le sujet n\'a pas pu être créé.';
+
+            return;
+        }
+        $this->sujetOuvert = false;
+        $this->choisirSujet((string) $r['sujet']['id']);
+        $this->info = $r['message'] ?? null;
+    }
+
+    /** Ferme ou rouvre le sujet affiché (référents). */
+    public function basculerSujet(int $id, bool $fermer): void
+    {
+        $r = Api::put('/communaute/sujets/'.$id, ['ferme' => $fermer], Api::token());
+        $this->ouvrir($this->slug);
+        $this->info = $r['message'] ?? 'Action impossible.';
+    }
+
+    // ── Discussion vocale en direct ──────────────────────────────────────
+
+    public function ouvrirDirect(): void
+    {
+        $this->directOuvert = true;
+        $this->directTitre = '';
+        $this->directLien = '';
+        $this->info = null;
+    }
+
+    public function lancerDirect(): void
+    {
+        $r = Api::post('/communaute/salons/'.rawurlencode($this->slug).'/vocal', [
+            'titre' => $this->directTitre,
+            'lien' => trim($this->directLien) ?: null,
+            'sujet_id' => ctype_digit($this->sujet) ? (int) $this->sujet : null,
+        ], Api::token());
+        if (! ($r['ok'] ?? false)) {
+            $this->info = $r['message'] ?? 'La discussion vocale n\'a pas pu être lancée.';
+
+            return;
+        }
+        $this->directOuvert = false;
+        $this->messages[] = $r['message'];
+        $this->dernierId = max($this->dernierId, (int) $r['message']['id']);
+        $this->direct = $r['message']['direct'] + ['message_id' => $r['message']['id']];
+        $this->info = $r['texte'] ?? null;
+        $this->dispatch('fil-bas');
+    }
+
+    public function terminerDirect(int $vocalId): void
+    {
+        $r = Api::post('/communaute/vocaux/'.$vocalId.'/terminer', [], Api::token());
+        $this->info = $r['message'] ?? 'Action impossible.';
+        if ($r['ok'] ?? false) {
+            $this->direct = null;
+            $this->rafraichir();
+        }
+    }
+
     // ── Réglages du salon ────────────────────────────────────────────────
 
     public function accepterRegles(): void
@@ -767,6 +888,8 @@ class Communaute extends Component
         $this->rechercheOuverte = false;
         $this->recherche = '';
         $this->resultatsRecherche = [];
+        $this->sujetOuvert = false;
+        $this->directOuvert = false;
     }
 
     public function render()

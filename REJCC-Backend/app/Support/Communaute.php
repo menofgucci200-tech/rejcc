@@ -7,6 +7,8 @@ use App\Models\Salon;
 use App\Models\SalonMembre;
 use App\Models\SalonMessage;
 use App\Models\SalonModeration;
+use App\Models\SalonSujet;
+use App\Models\SalonVocal;
 use App\Models\SiteSetting;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
@@ -159,6 +161,82 @@ class Communaute
         return $total;
     }
 
+    // ── Sujets et discussions vocales ───────────────────────────────────
+
+    /** Sujets du salon : ouverts d'abord, du plus actif au moins actif. */
+    public static function sujets(Salon $salon): array
+    {
+        $comptes = SalonMessage::where('salon_id', $salon->id)->whereNotNull('sujet_id')->whereNull('supprime_at')
+            ->selectRaw('sujet_id, count(*) as n')->groupBy('sujet_id')->pluck('n', 'sujet_id');
+
+        return $salon->sujets()->get()
+            ->sortBy(fn (SalonSujet $s) => [$s->ferme_at ? 1 : 0, -($s->dernier_message_at ?? $s->created_at)->getTimestamp()])
+            ->map(fn (SalonSujet $s) => [
+                'id' => $s->id,
+                'titre' => $s->titre,
+                'emoji' => $s->emoji,
+                'messages' => (int) ($comptes[$s->id] ?? 0),
+                'dernier_message_at' => $s->dernier_message_at?->toIso8601String(),
+                'ferme' => $s->ferme_at !== null,
+            ])->values()->all();
+    }
+
+    /** Discussion vocale en cours dans le salon (la plus récente). */
+    public static function vocalEnCours(Salon $salon): ?SalonVocal
+    {
+        return SalonVocal::where('salon_id', $salon->id)->whereNull('fin_at')
+            ->where('debut_at', '>', now()->subHours(SalonVocal::DUREE_MAX_HEURES))->latest('id')->first();
+    }
+
+    /** Termine une discussion vocale : réunion Meet retirée de l'agenda, carte mise à jour dans le fil. */
+    public static function terminerVocal(SalonVocal $v, ?User $par): void
+    {
+        $v->forceFill(['fin_at' => $v->fin_at ?? now(), 'termine_par' => $par?->id])->save();
+        if ($v->fournisseur === 'meet' && $v->google_event_id) {
+            GoogleMeet::supprimerEvenement($v->google_event_id);
+        }
+        // Le fil des membres se met à jour via la date de modification du message.
+        SalonMessage::whereKey($v->salon_message_id)->update(['updated_at' => now()]);
+    }
+
+    /**
+     * Tâche planifiée (chaque minute) : publie les annonces programmées
+     * arrivées à échéance et termine les discussions vocales trop longues.
+     *
+     * @return array{publiees: int, vocaux: int}
+     */
+    public static function traiterProgrammes(): array
+    {
+        $publiees = 0;
+        $dues = \App\Models\SalonProgrammation::with(['salon', 'user'])->whereNull('publie_at')->whereNull('annule_at')
+            ->where('publier_a', '<=', now())->orderBy('publier_a')->limit(20)->get();
+        foreach ($dues as $p) {
+            // Réservation de la ligne : une autre exécution ne la publiera pas une seconde fois.
+            if (! \App\Models\SalonProgrammation::whereKey($p->id)->whereNull('publie_at')->update(['publie_at' => now()])) {
+                continue;
+            }
+            if (! $p->salon || $p->salon->archive_at || ! $p->user) {
+                $p->forceFill(['annule_at' => now()])->save();
+
+                continue;
+            }
+            $m = SalonMessage::create(['salon_id' => $p->salon_id, 'user_id' => $p->user_id, 'type' => 'texte', 'body' => $p->body,
+                'mention_tous' => ! $p->salon->estAnnonces()]);
+            $p->forceFill(['salon_message_id' => $m->id])->save();
+            self::notifier($m->fresh(['salon', 'user', 'reponseA']));
+            $publiees++;
+        }
+
+        $vocaux = 0;
+        SalonVocal::whereNull('fin_at')->where('debut_at', '<=', now()->subHours(SalonVocal::DUREE_MAX_HEURES))->get()
+            ->each(function (SalonVocal $v) use (&$vocaux) {
+                self::terminerVocal($v, null);
+                $vocaux++;
+            });
+
+        return ['publiees' => $publiees, 'vocaux' => $vocaux];
+    }
+
     // ── Mots interdits ───────────────────────────────────────────────────
 
     /** @return list<string> */
@@ -247,7 +325,8 @@ class Communaute
         $etats = SalonMembre::where('salon_id', $salon->id)->get()->keyBy('user_id');
         $niveau = fn (int $userId) => $etats->get($userId)?->notifications ?? $salon->notificationsParDefaut();
 
-        if ($salon->estAnnonces() || $m->mention_tous) {
+        $direct = $m->type === 'direct';
+        if ($salon->estAnnonces() || $m->mention_tous || $direct) {
             $destinataires = User::query()->where('is_active', true)->whereNull('anonymise_at')->where('id', '!=', $auteur->id)->pluck('id')->all();
         } else {
             $suivent = $etats->filter(fn (SalonMembre $e) => $e->notifications === 'tout')->keys()->all();
@@ -264,7 +343,7 @@ class Communaute
                 continue;
             }
             $personnel = in_array($userId, $mentionnes, true) || $userId === $citeA;
-            if (! $salon->estAnnonces() && ! $m->mention_tous && ! $personnel && $niveau($userId) !== 'tout') {
+            if (! $salon->estAnnonces() && ! $m->mention_tous && ! $direct && ! $personnel && $niveau($userId) !== 'tout') {
                 continue;
             }
             if ($salon->acces === 'abonnes') {
@@ -275,6 +354,7 @@ class Communaute
             }
 
             $titre = match (true) {
+                $direct => '🎙️ Discussion vocale en direct dans « '.$salon->nom.' »',
                 in_array($userId, $mentionnes, true) => $nomAuteur.' vous a mentionné dans « '.$salon->nom.' »',
                 $userId === $citeA => $nomAuteur.' vous a répondu dans « '.$salon->nom.' »',
                 $salon->estAnnonces() => 'Nouvelle annonce du REJCC',
@@ -311,6 +391,7 @@ class Communaute
             'fichier' => '📄 '.($m->fichier_nom ?: 'Document'),
             'vocal' => '🎤 Note vocale',
             'sondage' => '📊 Sondage : '.Str::limit((string) ($m->sondage?->question ?? ''), 90),
+            'direct' => '🎙️ Discussion vocale : '.Str::limit((string) ($m->vocal?->titre ?? $m->body), 90),
             'carte' => '🔗 '.(CommunauteCartes::TYPES[$m->carte_type] ?? 'Partage').($m->body ? ' · '.Str::limit(preg_replace('/\s+/', ' ', $m->body), 70) : ''),
             default => Str::limit(preg_replace('/\s+/', ' ', (string) $m->body), 100),
         };
@@ -349,6 +430,23 @@ class Communaute
     }
 
     // ── Présentation ─────────────────────────────────────────────────────
+
+    /** Carte d'une discussion vocale dans le fil. */
+    public static function vocal(SalonVocal $v, User $moi, bool $moderateur): array
+    {
+        $enCours = $v->enCours();
+
+        return [
+            'id' => $v->id,
+            'titre' => $v->titre,
+            'lien' => $enCours ? $v->lien : null,
+            'fournisseur' => $v->fournisseur,
+            'en_cours' => $enCours,
+            'debut' => $v->debut_at->toIso8601String(),
+            'fin' => $v->finEffective()?->toIso8601String(),
+            'peut_terminer' => $enCours && ($moderateur || $v->lance_par === $moi->id),
+        ];
+    }
 
     public static function auteur(?User $u): ?array
     {
@@ -391,6 +489,8 @@ class Communaute
             'sondage' => (! $supprime && $m->type === 'sondage' && $m->sondage) ? self::sondage($m->sondage, $moi, $moderateur, $m->user_id) : null,
             'carte' => (! $supprime && $m->type === 'carte') ? (CommunauteCartes::carte($m->carte_type, $m->carte_id) ?? ['indisponible' => true, 'type_libelle' => CommunauteCartes::TYPES[$m->carte_type] ?? 'Partage']) : null,
             'epingle' => ! $supprime && $m->epingle_at !== null,
+            'sujet' => $m->sujet ? ['id' => $m->sujet->id, 'titre' => $m->sujet->titre, 'emoji' => $m->sujet->emoji] : null,
+            'direct' => (! $supprime && $m->type === 'direct' && $m->vocal) ? self::vocal($m->vocal, $moi, $moderateur) : null,
             'reponse_a' => $cite ? [
                 'id' => $cite->id,
                 'auteur' => $cite->user ? trim($cite->user->prenom.' '.$cite->user->nom) : 'Membre',

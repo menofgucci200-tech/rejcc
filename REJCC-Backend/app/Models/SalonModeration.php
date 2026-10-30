@@ -11,6 +11,13 @@ class SalonModeration extends Model
     public const ACTIONS = [
         'message_supprime' => 'Message supprimé',
         'message_epingle' => 'Message épinglé',
+        'sujet_cree' => 'Sujet créé',
+        'sujet_ferme' => 'Sujet fermé',
+        'sujet_rouvert' => 'Sujet rouvert',
+        'vocal_lance' => 'Discussion vocale lancée',
+        'vocal_termine' => 'Discussion vocale terminée',
+        'annonce_programmee' => 'Annonce programmée',
+        'annonce_annulee' => 'Annonce programmée annulée',
         'silence' => 'Membre rendu muet',
         'silence_leve' => 'Silence levé',
         'exclusion' => 'Membre exclu du salon',
