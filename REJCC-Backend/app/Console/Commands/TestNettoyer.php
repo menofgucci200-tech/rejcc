@@ -11,6 +11,7 @@ use App\Models\MarketplaceListing;
 use App\Models\NewsArticle;
 use App\Models\Opportunity;
 use App\Models\Project;
+use App\Models\SalonMessage;
 use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -41,6 +42,8 @@ class TestNettoyer extends Command
             'Projets' => Project::where(fn ($q) => $q->whereIn('user_id', $testeurs)->orWhere(fn ($q) => $prefixe($q, 'title'))),
             "Offres d'emploi et de stage" => Opportunity::where(fn ($q) => $q->whereIn('author_id', $testeurs)->orWhere(fn ($q) => $prefixe($q, 'title'))),
             'Certificats délivrés aux testeurs' => Certificate::whereIn('user_id', $testeurs),
+            // Gardés sinon avec un auteur vide (« compte supprimé ») dans les salons.
+            'Messages dans la Communauté' => SalonMessage::whereIn('user_id', $testeurs),
             'Documents' => Document::where(fn ($q) => $q->whereIn('auteur_id', $testeurs)->orWhere(fn ($q) => $prefixe($q, 'title'))),
             'Annonces Marketplace « [TEST] »' => $prefixe(MarketplaceListing::query(), 'title'),
             'Événements « [TEST] »' => $prefixe(Event::query(), 'title'),
@@ -51,7 +54,7 @@ class TestNettoyer extends Command
 
         $lignes = collect($cibles)->map(fn ($q, $libelle) => [$libelle, (clone $q)->count()])->values()->all();
         $this->table(['À supprimer', 'Nombre'], $lignes);
-        $this->line('Supprimés aussi avec les comptes : leurs annonces, inscriptions aux événements, messages, avis, mentorats, favoris…');
+        $this->line('Supprimés aussi avec les comptes : leurs annonces, inscriptions aux événements, messages privés, réactions et votes, avis, mentorats, favoris…');
         $this->line('Conservés : les retours des testeurs (bugs, suggestions) et le journal d\'audit.');
 
         if (array_sum(array_column($lignes, 1)) === 0) {

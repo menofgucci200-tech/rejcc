@@ -8,6 +8,8 @@ use App\Models\Group;
 use App\Models\MarketplaceListing;
 use App\Models\Opportunity;
 use App\Models\Project;
+use App\Models\Salon;
+use App\Models\SalonMessage;
 use App\Models\Suggestion;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -91,6 +93,9 @@ class ComptesDeTestTest extends TestCase
         $this->withToken($token)->postJson('/api/admin/notifications/broadcast', ['title' => 'Bonjour à tous'])->assertForbidden();
         $this->withToken($token)->getJson('/api/admin/export/newsletter')->assertForbidden();
         $this->withToken($token)->getJson('/api/admin/export/candidatures')->assertForbidden();
+        // Communauté : la gestion des salons publie des annonces à tous les membres.
+        $this->withToken($token)->getJson('/api/admin/communaute')->assertForbidden();
+        $this->withToken($token)->postJson('/api/admin/communaute/salons', ['nom' => 'Salon de test'])->assertForbidden();
     }
 
     public function test_un_admin_restreint_n_exporte_que_les_donnees_de_ses_rubriques(): void
@@ -128,6 +133,7 @@ class ComptesDeTestTest extends TestCase
         $this->assertContains('formations', $direction);
         $this->assertNotContains('newsletter', $direction);
         $this->assertNotContains('adhesions', $direction);
+        $this->assertNotContains('salons', $direction);
 
         $membre = User::where('email', 'awa.membre@exemple.ci')->first();
         $this->assertSame('member', $membre->role);
@@ -155,7 +161,8 @@ class ComptesDeTestTest extends TestCase
     {
         $fichier = $this->csv("Communication;Awa;Koné;awa@exemple.ci;admin;actualites\n"
             ."Formation;Jean;Yao;pas-un-email;superadmin;inconnue\n"
-            ."Direction;Paul;Yao;paul@exemple.ci;admin;newsletter\n");
+            ."Direction;Paul;Yao;paul@exemple.ci;admin;newsletter\n"
+            ."Communication;Marie;Kra;marie@exemple.ci;admin;salons\n");
 
         $this->artisan('test:comptes', ['fichier' => $fichier])->assertFailed();
         $this->assertSame(0, User::count());
@@ -180,6 +187,9 @@ class ComptesDeTestTest extends TestCase
         $evenement('[TEST] Atelier fictif');
         $evenement('Vrai forum');
         Suggestion::create(['user_id' => $testeur->id, 'departement' => 'Communication', 'categorie' => 'bug', 'message' => 'Bug à garder']);
+        $salon = Salon::firstOrFail();
+        SalonMessage::create(['salon_id' => $salon->id, 'user_id' => $testeur->id, 'type' => 'texte', 'body' => 'Message du testeur']);
+        SalonMessage::create(['salon_id' => $salon->id, 'user_id' => $vrai->id, 'type' => 'texte', 'body' => 'Vrai message']);
 
         $this->artisan('test:nettoyer', ['--force' => true])->assertSuccessful();
 
@@ -189,6 +199,8 @@ class ComptesDeTestTest extends TestCase
         $this->assertSame(['Vraie annonce'], MarketplaceListing::pluck('title')->all());
         $this->assertSame(0, Opportunity::count());
         $this->assertSame(['Vrai forum'], Event::pluck('title')->all());
+        // Pas de message « compte supprimé » laissé dans les salons.
+        $this->assertSame(['Vrai message'], SalonMessage::pluck('body')->all());
 
         $retour = Suggestion::first();
         $this->assertNull($retour->user_id);

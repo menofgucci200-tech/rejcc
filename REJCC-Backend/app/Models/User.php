@@ -114,9 +114,10 @@ class User extends Authenticatable
 
     /**
      * Rubriques d'administration interdites aux comptes de test : aucun envoi
-     * de masse ni aucune décision ne doit toucher de vrais membres.
+     * de masse ni aucune décision ne doit toucher de vrais membres (« salons »
+     * publie des annonces à toute la Communauté).
      */
-    public const RUBRIQUES_INTERDITES_TESTEURS = ['newsletter', 'notifications', 'adhesions'];
+    public const RUBRIQUES_INTERDITES_TESTEURS = ['newsletter', 'notifications', 'adhesions', 'salons'];
 
     /** Compte de test d'un département (campagne de test sur le site réel). */
     public function estTesteur(): bool

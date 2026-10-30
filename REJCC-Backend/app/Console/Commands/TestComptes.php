@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Storage;
  * acces : « membre » (espace membre) ou « admin » (administration). Pour un
  * admin, sections limite l'accès aux rubriques listées (slugs séparés par
  * « | ») ; vide = toutes, sauf celles interdites aux comptes de test
- * (newsletter, notifications, adhésions). Les mots de passe générés sont
+ * (newsletter, notifications, adhésions, salons de la Communauté). Les mots de passe générés sont
  * écrits dans storage/app/private/identifiants-test-*.csv.
  *
  * Un compte existant qui n'est pas un compte de test n'est jamais modifié.
@@ -30,7 +30,7 @@ class TestComptes extends Command
     protected $description = "Campagne de test : crée les comptes de test des départements à partir d'un CSV.";
 
     public const SECTIONS = [
-        'adhesions', 'membres', 'formations', 'evenements', 'projets', 'communaute', 'certificats',
+        'adhesions', 'membres', 'formations', 'evenements', 'projets', 'communaute', 'salons', 'certificats',
         'opportunites', 'mentors', 'groupes', 'actualites', 'contenu', 'newsletter', 'documents',
         'contacts', 'messagerie', 'partenariats', 'notifications', 'audit', 'suggestions',
     ];

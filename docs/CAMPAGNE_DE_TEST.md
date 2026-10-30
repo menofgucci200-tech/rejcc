@@ -51,8 +51,9 @@ cela.
    `audit`, `suggestions`.
 
    **Toujours refusées** aux comptes de test, même pour un admin :
-   `newsletter`, `notifications` (aucun envoi de masse aux vrais membres) et
-   `adhesions` (aucune décision sur de vraies candidatures).
+   `newsletter`, `notifications` et `salons` (aucun envoi de masse aux vrais
+   membres : la gestion des salons publie des annonces à toute la
+   Communauté) et `adhesions` (aucune décision sur de vraies candidatures).
 
 2. Sur le serveur :
 
@@ -86,7 +87,8 @@ cd ~/apps/rejcc/REJCC-Backend && php artisan test:nettoyer
 La commande affiche d'abord ce qu'elle va supprimer et demande confirmation :
 
 - les comptes de test, et avec eux tout ce qu'ils ont créé (projets,
-  annonces, offres, documents proposés, inscriptions, messages, avis,
+  annonces, offres, documents proposés, inscriptions, messages privés et
+  messages postés dans les salons de la Communauté, réactions, votes, avis,
   mentorats, certificats…) ;
 - les contenus dont le titre commence par `[TEST]` (événements, actualités,
   formations, albums… créés depuis l'administration).
