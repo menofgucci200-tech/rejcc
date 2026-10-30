@@ -141,6 +141,8 @@
                                 <span class="truncate">{{ $salon['description'] }}</span>
                             </span>
                         </span>
+                        <button type="button" wire:click="basculerRecherche" data-test="rechercher-salon" aria-label="Rechercher dans le salon" title="Rechercher dans le salon"
+                            class="icon-btn flex size-9 items-center justify-center rounded-[10px] {{ $rechercheOuverte ? 'bg-cloud text-brand' : 'text-meta hover:bg-cloud hover:text-brand' }}"><x-ui.icon name="search" class="size-[17px]" /></button>
                         <div class="relative" x-data="{ ouvert: false }" x-on:click.outside="ouvert = false" x-on:keydown.escape.window="ouvert = false">
                             <button type="button" x-on:click="ouvert = ! ouvert" data-test="menu-salon" aria-label="Options du salon" class="icon-btn flex size-9 items-center justify-center rounded-[10px] text-meta hover:bg-cloud hover:text-brand"><x-ui.icon name="more-horizontal" class="size-[18px]" /></button>
                             <div x-show="ouvert" x-transition.origin.top.right style="display: none" class="absolute right-0 z-30 mt-1 w-[250px] overflow-hidden rounded-[14px] border border-brand/10 bg-white py-1.5 text-[13px] shadow-[0_24px_60px_-20px_rgba(3,29,89,.35)]">
@@ -173,12 +175,62 @@
                         </div>
                     </div>
 
+                    {{-- Recherche dans le salon --}}
+                    @if ($rechercheOuverte)
+                        <div class="shrink-0 border-b border-cloud-200 bg-white px-3 py-2.5 sm:px-[18px]" data-test="panneau-recherche">
+                            <div class="relative">
+                                <x-ui.icon name="search" class="pointer-events-none absolute left-3 top-1/2 size-[14px] -translate-y-1/2 text-meta" />
+                                <input type="search" wire:model.live.debounce.350ms="recherche" data-test="champ-recherche" placeholder="Rechercher dans « {{ $salon['nom'] }} »…" autofocus
+                                    class="w-full rounded-[10px] border border-brand/10 bg-cloud py-2 pl-9 pr-3 text-[13px] text-ink outline-none focus:border-azure">
+                            </div>
+                            @if (mb_strlen(trim($recherche)) >= 2)
+                                <ul class="mt-2 max-h-[260px] overflow-y-auto">
+                                    @forelse ($resultatsRecherche as $res)
+                                        <li wire:key="res-{{ $res['id'] }}">
+                                            <button type="button" wire:click="allerA({{ $res['id'] }})" data-test="resultat-recherche" class="block w-full rounded-[10px] px-3 py-2 text-left hover:bg-cloud">
+                                                <span class="flex items-baseline justify-between gap-2 text-[12px]"><span class="font-bold text-brand">{{ $res['auteur'] }}</span><span class="shrink-0 text-meta">{{ $quand($res['date']) }}</span></span>
+                                                <span class="line-clamp-2 text-[12.5px] text-ink">{{ $res['extrait'] }}</span>
+                                            </button>
+                                        </li>
+                                    @empty
+                                        <li class="px-3 py-3 text-[12.5px] text-meta">Aucun message ne contient « {{ trim($recherche) }} ».</li>
+                                    @endforelse
+                                </ul>
+                            @endif
+                        </div>
+                    @endif
+
+                    {{-- Messages épinglés --}}
+                    @if (! empty($epingles))
+                        <div class="relative shrink-0 border-b border-cloud-200 bg-white" x-data="{ tous: false }" x-on:click.outside="tous = false" data-test="barre-epingles">
+                            <div class="flex items-center gap-2 px-3 py-2 sm:px-[18px]">
+                                <span class="text-[14px]">📌</span>
+                                <button type="button" wire:click="allerA({{ $epingles[0]['id'] }})" class="min-w-0 flex-1 text-left">
+                                    <span class="block text-[10.5px] font-extrabold uppercase tracking-[0.1em] text-azure">Épinglé{{ count($epingles) > 1 ? ' · '.count($epingles) : '' }}</span>
+                                    <span class="block truncate text-[12.5px] text-ink">{{ $epingles[0]['extrait'] }}</span>
+                                </button>
+                                @if (count($epingles) > 1)
+                                    <button type="button" x-on:click="tous = ! tous" class="shrink-0 rounded-full px-2 py-1 text-[11.5px] font-bold text-azure hover:bg-cloud">Tout voir</button>
+                                @endif
+                            </div>
+                            <ul x-show="tous" x-transition style="display: none" class="absolute inset-x-0 top-full z-20 border-b border-cloud-200 bg-white py-1 shadow-lg">
+                                @foreach ($epingles as $ep)
+                                    <li><button type="button" wire:click="allerA({{ $ep['id'] }})" x-on:click="tous = false" class="block w-full px-[18px] py-2 text-left hover:bg-cloud">
+                                        <span class="block text-[11.5px] font-bold text-brand">{{ $ep['auteur'] }}</span>
+                                        <span class="block truncate text-[12.5px] text-ink">{{ $ep['extrait'] }}</span>
+                                    </button></li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
                     {{-- Fil --}}
                     <div class="min-h-0 flex-1 overflow-y-auto px-3 py-4 sm:px-6" data-test="fil"
                         x-data="{ basProche: true, bas() { this.$el.scrollTop = this.$el.scrollHeight } }"
                         x-init="$nextTick(() => bas())"
                         x-on:scroll.throttle.150ms="basProche = ($el.scrollHeight - $el.scrollTop - $el.clientHeight) < 120"
                         x-on:fil-bas.window="setTimeout(() => bas(), 40)"
+                        x-on:fil-cible.window="setTimeout(() => { const c = $el.querySelector('[data-id=\'' + $event.detail.id + '\']'); c && c.scrollIntoView({ block: 'center', behavior: 'smooth' }) }, 80)"
                         x-on:fil-nouveaux.window="basProche && setTimeout(() => bas(), 40)">
 
                         @if ($plusAnciens)
@@ -221,7 +273,7 @@
                             @endif
 
                             <div wire:key="m-{{ $m['id'] }}-{{ $m['type'] }}" data-test="message" data-id="{{ $m['id'] }}"
-                                class="group flex gap-2.5 {{ $m['moi'] && ! $estAnnonces ? 'flex-row-reverse' : '' }} {{ $suite ? 'mt-1' : 'mt-3' }}"
+                                class="group flex gap-2.5 rounded-[18px] transition-colors {{ $m['moi'] && ! $estAnnonces ? 'flex-row-reverse' : '' }} {{ $suite ? 'mt-1' : 'mt-3' }} {{ $cible === $m['id'] ? 'bg-[#FBF1DC] p-1.5' : '' }}"
                                 x-data="{ menu: false, reac: false }" x-on:click.outside="menu = false; reac = false">
 
                                 @if (! ($m['moi'] && ! $estAnnonces))
@@ -275,6 +327,53 @@
                                                     <audio controls preload="none" src="{{ $lienFichier }}" class="h-9 w-[230px] max-w-full"></audio>
                                                     <span class="text-[11px] {{ $sombre ? 'text-white/70' : 'text-meta' }}">{{ $duree($m['fichier']['duree'] ?? null) }}</span>
                                                 </div>
+                                            @elseif ($m['type'] === 'sondage' && $m['sondage'])
+                                                @php $sd = $m['sondage']; @endphp
+                                                <div class="min-w-[240px] max-w-full sm:min-w-[300px]" data-test="sondage">
+                                                    <p class="mb-0.5 flex items-center gap-1.5 text-[10.5px] font-extrabold uppercase tracking-[0.1em] {{ $sombre ? 'text-white/70' : 'text-azure' }}">📊 Sondage{{ $sd['choix_multiple'] ? ' · plusieurs choix' : '' }}{{ $sd['anonyme'] ? ' · anonyme' : '' }}</p>
+                                                    <p class="mb-2 text-[14px] font-bold">{{ $sd['question'] }}</p>
+                                                    <div class="grid gap-1.5">
+                                                        @foreach ($sd['options'] as $opt)
+                                                            <button type="button" @if (! $sd['clos']) wire:click="voter({{ $m['id'] }}, {{ $sd['id'] }}, {{ $opt['id'] }})" @else disabled @endif data-test="option-sondage"
+                                                                class="relative overflow-hidden rounded-[10px] border px-3 py-2 text-left text-[13px] {{ $sombre ? 'border-white/25' : 'border-brand/10' }} {{ $opt['moi'] ? ($sombre ? 'ring-2 ring-white/70' : 'ring-2 ring-azure') : '' }} {{ $sd['clos'] ? 'cursor-default' : ($sombre ? 'hover:bg-white/10' : 'hover:bg-cloud') }}">
+                                                                @if ($sd['a_vote'] || $sd['clos'])
+                                                                    <span class="absolute inset-y-0 left-0 {{ $sombre ? 'bg-white/15' : 'bg-azure/12' }}" style="width: {{ $opt['pourcentage'] }}%"></span>
+                                                                @endif
+                                                                <span class="relative flex items-center justify-between gap-3">
+                                                                    <span class="flex items-center gap-2 font-semibold">
+                                                                        <span class="flex size-4 shrink-0 items-center justify-center {{ $sd['choix_multiple'] ? 'rounded-[4px]' : 'rounded-full' }} border {{ $opt['moi'] ? ($sombre ? 'border-white bg-white' : 'border-azure bg-azure') : ($sombre ? 'border-white/60' : 'border-brand/30') }}">@if ($opt['moi'])<x-ui.icon name="check" class="size-3 {{ $sombre ? 'text-brand' : 'text-white' }}" />@endif</span>
+                                                                        {{ $opt['libelle'] }}
+                                                                    </span>
+                                                                    @if ($sd['a_vote'] || $sd['clos'])<span class="shrink-0 text-[12px] font-bold tabular-nums">{{ $opt['pourcentage'] }} %</span>@endif
+                                                                </span>
+                                                                @if (($sd['a_vote'] || $sd['clos']) && ! empty($opt['votants']))
+                                                                    <span class="relative mt-0.5 block truncate pl-6 text-[11px] {{ $sombre ? 'text-white/70' : 'text-meta' }}">{{ implode(', ', $opt['votants']) }}{{ $opt['votes'] > count($opt['votants']) ? ' et '.($opt['votes'] - count($opt['votants'])).' autre(s)' : '' }}</span>
+                                                                @endif
+                                                            </button>
+                                                        @endforeach
+                                                    </div>
+                                                    <p class="mt-1.5 flex flex-wrap items-center gap-x-2 text-[11.5px] {{ $sombre ? 'text-white/70' : 'text-meta' }}">
+                                                        <span>{{ $sd['votants'] }} votant{{ $sd['votants'] > 1 ? 's' : '' }}</span>
+                                                        @if ($sd['clos'])<span class="font-bold">· Sondage clos</span>
+                                                        @elseif ($sd['fin_at'])<span>· clôture {{ \Illuminate\Support\Carbon::parse($sd['fin_at'])->setTimezone(config('app.timezone'))->locale('fr')->isoFormat('ddd D MMM [à] HH[h]mm') }}</span>@endif
+                                                        @if ($sd['peut_clore'])<button type="button" wire:click="clore({{ $m['id'] }}, {{ $sd['id'] }})" wire:confirm="Clore ce sondage ? Plus personne ne pourra voter." data-test="clore-sondage" class="font-bold underline">Clore</button>@endif
+                                                    </p>
+                                                </div>
+                                            @elseif ($m['type'] === 'carte' && $m['carte'])
+                                                @php $ca = $m['carte']; @endphp
+                                                @if ($ca['indisponible'] ?? false)
+                                                    <p class="mb-1 rounded-[12px] px-3 py-2.5 text-[12.5px] italic {{ $sombre ? 'bg-white/10 text-white/75' : 'bg-cloud text-meta' }}">{{ $ca['type_libelle'] }} n'est plus disponible.</p>
+                                                @else
+                                                    <a href="{{ $ca['lien'] }}" wire:navigate data-test="carte-partage" class="mb-1 block w-[min(320px,100%)] overflow-hidden rounded-[14px] border text-left {{ $sombre ? 'border-white/20 bg-white/10' : 'border-brand/10 bg-white' }}">
+                                                        @if ($ca['image'])<img src="{{ $ca['image'] }}" alt="" loading="lazy" class="h-[120px] w-full object-cover">@endif
+                                                        <span class="block px-3.5 py-3">
+                                                            <span class="flex items-center gap-1.5 text-[10.5px] font-extrabold uppercase tracking-[0.1em] {{ $sombre ? 'text-white/70' : 'text-accent' }}">{{ $ca['type_libelle'] }}@if ($ca['etat'])<span class="rounded-full bg-[#FBF1DC] px-1.5 text-[9.5px] text-[#8A5A00]">{{ $ca['etat'] }}</span>@endif</span>
+                                                            <span class="mt-0.5 block text-[14px] font-bold leading-snug {{ $sombre ? 'text-white' : 'text-brand' }}">{{ $ca['titre'] }}</span>
+                                                            @if ($ca['detail'])<span class="mt-0.5 block text-[12px] {{ $sombre ? 'text-white/75' : 'text-meta' }}">{{ $ca['detail'] }}</span>@endif
+                                                            <span class="mt-2 inline-flex items-center gap-1 rounded-full px-3 py-1 text-[12px] font-bold {{ $sombre ? 'bg-white text-brand' : 'bg-brand text-white' }}">{{ $ca['action'] }} <x-ui.icon name="arrow-right" class="size-3.5" /></span>
+                                                        </span>
+                                                    </a>
+                                                @endif
                                             @endif
 
                                             @if ($editionId === $m['id'])
@@ -290,7 +389,7 @@
                                             @endif
 
                                             <span class="mt-0.5 block text-right text-[10.5px] {{ $sombre ? 'text-white/65' : 'text-meta' }}">
-                                                @if ($m['edite'])modifié · @endif{{ $d->format('H:i') }}
+                                                @if ($m['epingle'] ?? false)📌 @endif @if ($m['edite'])modifié · @endif{{ $d->format('H:i') }}
                                             </span>
 
                                             {{-- Actions : réagir et menu --}}
@@ -308,6 +407,9 @@
                                             <div x-show="menu" x-transition style="display: none" class="absolute top-6 z-20 w-[220px] overflow-hidden rounded-[14px] border border-brand/10 bg-white py-1.5 text-left text-[13px] text-brand shadow-[0_24px_60px_-20px_rgba(3,29,89,.35)] {{ $m['moi'] && ! $estAnnonces ? 'right-full mr-2' : 'left-full ml-2' }}">
                                                 @if (! $estAnnonces || $moderateur)
                                                     <button type="button" wire:click="repondre({{ $m['id'] }})" x-on:click="menu = false" data-test="repondre" class="flex w-full items-center gap-2.5 px-4 py-2 font-semibold hover:bg-cloud"><x-ui.icon name="send" class="size-4 text-meta" /> Répondre</button>
+                                                @endif
+                                                @if ($m['peut_epingler'] ?? false)
+                                                    <button type="button" wire:click="epingler({{ $m['id'] }}, {{ ($m['epingle'] ?? false) ? 'false' : 'true' }})" x-on:click="menu = false" data-test="epingler" class="flex w-full items-center gap-2.5 px-4 py-2 font-semibold hover:bg-cloud"><span class="w-4 text-center">📌</span> {{ ($m['epingle'] ?? false) ? 'Désépingler' : 'Épingler en haut du salon' }}</button>
                                                 @endif
                                                 @if ($m['peut_modifier'])
                                                     <button type="button" wire:click="commencerEdition({{ $m['id'] }})" x-on:click="menu = false" data-test="modifier" class="flex w-full items-center gap-2.5 px-4 py-2 font-semibold hover:bg-cloud"><x-ui.icon name="pencil" class="size-4 text-meta" /> Modifier</button>
@@ -479,6 +581,23 @@
                                     </ul>
                                 </template>
 
+                                {{-- Sondage et partage --}}
+                                <div class="relative shrink-0" x-data="{ plus: false }" x-show="! enreg" x-on:click.outside="plus = false" x-on:keydown.escape.window="plus = false">
+                                    <button type="button" x-on:click="plus = ! plus" data-test="plus" aria-label="Sondage ou partage" title="Sondage ou partage"
+                                        class="icon-btn flex size-10 items-center justify-center rounded-full text-meta hover:bg-cloud hover:text-brand" :class="plus && 'bg-cloud text-brand'"><x-ui.icon name="plus" class="size-5" /></button>
+                                    <div x-show="plus" x-transition.origin.bottom.left style="display: none" class="absolute bottom-full left-0 z-30 mb-2 w-[250px] overflow-hidden rounded-[14px] border border-brand/10 bg-white py-1.5 text-[13px] text-brand shadow-[0_24px_60px_-20px_rgba(3,29,89,.35)]">
+                                        @if ($peutFichiers || $moderateur)
+                                            <button type="button" wire:click="ouvrirSondage" x-on:click="plus = false" data-test="nouveau-sondage" class="flex w-full items-center gap-2.5 px-4 py-2 text-left font-semibold hover:bg-cloud"><span class="w-5 text-center">📊</span> Sondage</button>
+                                        @else
+                                            <a href="{{ route('espace-membre.abonnement') }}" wire:navigate class="flex w-full items-center gap-2.5 px-4 py-2 text-left font-semibold text-meta hover:bg-cloud"><span class="w-5 text-center">📊</span> Sondage <x-ui.icon name="lock" class="ml-auto size-3.5" /></a>
+                                        @endif
+                                        <p class="px-4 pb-0.5 pt-2 text-[10.5px] font-extrabold uppercase tracking-[0.12em] text-meta">Partager</p>
+                                        @foreach (['evenement' => ['📅', 'Un événement'], 'offre' => ['💼', 'Une offre d\'emploi'], 'formation' => ['🎓', 'Une formation'], 'projet' => ['🚀', 'Un projet']] as $type => [$ico, $lib])
+                                            <button type="button" wire:click="ouvrirPartage('{{ $type }}')" x-on:click="plus = false" data-test="partager-{{ $type }}" class="flex w-full items-center gap-2.5 px-4 py-2 text-left font-semibold hover:bg-cloud"><span class="w-5 text-center">{{ $ico }}</span> {{ $lib }}</button>
+                                        @endforeach
+                                    </div>
+                                </div>
+
                                 {{-- Pièce jointe --}}
                                 @if ($peutFichiers)
                                     <label class="icon-btn flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-full text-meta hover:bg-cloud hover:text-brand" title="Photo ou document PDF" data-test="joindre" x-show="! enreg">
@@ -502,7 +621,7 @@
                                 <textarea x-ref="saisie" x-show="! enreg" wire:model="texte" rows="1" data-test="saisie" maxlength="4000"
                                     x-on:input="saisie($event); $el.style.height = 'auto'; $el.style.height = Math.min($el.scrollHeight, 140) + 'px'"
                                     x-on:keydown="touche($event)"
-                                    placeholder="{{ $estAnnonces ? 'Publier une annonce…' : 'Message (@ pour mentionner)' }}"
+                                    placeholder="{{ $estAnnonces ? 'Publier une annonce…' : 'Écrire un message…' }}"
                                     class="max-h-[140px] min-h-[42px] flex-1 resize-none rounded-[20px] border border-brand/10 bg-cloud px-4 py-2.5 text-[13.5px] text-ink outline-none focus:border-azure"></textarea>
 
                                 <button type="button" x-show="! enreg && ! $wire.texte.trim().length" x-on:click="demarrer()" :disabled="envoiVocal" data-test="micro" title="Enregistrer une note vocale"
@@ -526,6 +645,79 @@
             </section>
         </div>
     </div>
+
+    {{-- Nouveau sondage --}}
+    @if ($sondageOuvert)
+        <div class="fixed inset-0 z-[90] flex items-center justify-center bg-brand/40 p-4" wire:click.self="fermerSondage" x-on:keydown.escape.window="$wire.fermerSondage()">
+            <div class="panel-enter max-h-[92vh] w-full max-w-md overflow-y-auto rounded-[18px] bg-white p-6 shadow-2xl" data-test="fenetre-sondage">
+                <h2 class="mb-3 text-[15px] font-bold text-brand">📊 Nouveau sondage</h2>
+                <label class="mb-3 grid gap-1 text-[13px]"><span class="font-semibold text-brand">Question</span>
+                    <input type="text" wire:model="sondageQuestion" maxlength="300" data-test="question-sondage" placeholder="Ex. : Quelle date pour la sortie détente ?" class="rounded-[10px] border border-brand/15 px-3 py-2 outline-none focus:border-azure">
+                </label>
+                <p class="mb-1 text-[13px] font-semibold text-brand">Choix</p>
+                <div class="grid gap-2">
+                    @foreach ($sondageOptions as $i => $opt)
+                        <div class="flex items-center gap-2" wire:key="opt-{{ $i }}">
+                            <input type="text" wire:model="sondageOptions.{{ $i }}" maxlength="120" data-test="choix-sondage" placeholder="Choix {{ $i + 1 }}" class="min-w-0 flex-1 rounded-[10px] border border-brand/15 px-3 py-2 text-[13px] outline-none focus:border-azure">
+                            @if (count($sondageOptions) > 2)<button type="button" wire:click="retirerOption({{ $i }})" aria-label="Retirer ce choix" class="text-meta hover:text-accent"><x-ui.icon name="x" class="size-4" /></button>@endif
+                        </div>
+                    @endforeach
+                </div>
+                @if (count($sondageOptions) < 10)
+                    <button type="button" wire:click="ajouterOption" data-test="ajouter-choix" class="mt-2 text-[12.5px] font-bold text-azure hover:underline">+ Ajouter un choix</button>
+                @endif
+                <div class="mt-4 grid gap-2 text-[13px]">
+                    <label class="flex items-center gap-2"><input type="checkbox" wire:model="sondageMultiple" class="size-4 accent-[#031D59]"> Plusieurs réponses possibles</label>
+                    <label class="flex items-center gap-2"><input type="checkbox" wire:model="sondageAnonyme" class="size-4 accent-[#031D59]"> Votes anonymes (on ne voit pas qui a voté quoi)</label>
+                    <label class="mt-1 grid gap-1"><span class="font-semibold text-brand">Clôture automatique</span>
+                        <select wire:model="sondageDuree" class="rounded-[10px] border border-brand/15 px-3 py-2 outline-none focus:border-azure">
+                            <option value="">Pas de date (je le clos moi-même)</option>
+                            <option value="1j">Dans 24 heures</option>
+                            <option value="3j">Dans 3 jours</option>
+                            <option value="7j">Dans 7 jours</option>
+                        </select>
+                    </label>
+                </div>
+                @if ($info)<p class="mt-3 text-[12px] font-semibold text-accent">{{ $info }}</p>@endif
+                <div class="mt-5 flex justify-end gap-2">
+                    <button type="button" wire:click="fermerSondage" class="rounded-full px-4 py-2 text-[12.5px] font-semibold text-meta hover:bg-cloud">Annuler</button>
+                    <button type="button" wire:click="publierSondage" data-test="publier-sondage" class="btn-tap rounded-full bg-accent px-4 py-2 text-[12.5px] font-bold text-white hover:bg-accent-600">Publier le sondage</button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- Partager un élément de la plateforme --}}
+    @if ($partageOuvert)
+        <div class="fixed inset-0 z-[90] flex items-center justify-center bg-brand/40 p-4" wire:click.self="fermerPartage" x-on:keydown.escape.window="$wire.fermerPartage()">
+            <div class="panel-enter flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-[18px] bg-white shadow-2xl" data-test="fenetre-partage">
+                <div class="border-b border-cloud-200 p-5">
+                    <h2 class="mb-3 text-[15px] font-bold text-brand">Partager dans « {{ $salon['nom'] ?? '' }} »</h2>
+                    <div class="mb-3 flex flex-wrap gap-1.5">
+                        @foreach (['evenement' => 'Événements', 'offre' => 'Offres', 'formation' => 'Formations', 'projet' => 'Projets'] as $type => $lib)
+                            <button type="button" wire:click="$set('partageType', '{{ $type }}')" class="rounded-full px-3 py-1.5 text-[12px] font-bold {{ $partageType === $type ? 'bg-brand text-white' : 'border border-brand/15 text-brand hover:bg-cloud' }}">{{ $lib }}</button>
+                        @endforeach
+                    </div>
+                    <input type="search" wire:model.live.debounce.300ms="partageRecherche" data-test="recherche-partage" placeholder="Rechercher par titre…" class="w-full rounded-[10px] border border-brand/10 bg-cloud px-3 py-2 text-[13px] outline-none focus:border-azure">
+                    <input type="text" wire:model="partageCommentaire" maxlength="1000" data-test="commentaire-partage" placeholder="Ajouter un mot (facultatif)" class="mt-2 w-full rounded-[10px] border border-brand/10 px-3 py-2 text-[13px] outline-none focus:border-azure">
+                </div>
+                <ul class="min-h-0 flex-1 overflow-y-auto p-2">
+                    @forelse ($partageResultats as $c)
+                        <li wire:key="part-{{ $c['type'] }}-{{ $c['id'] }}" class="flex items-center gap-3 rounded-[12px] px-3 py-2.5 hover:bg-cloud">
+                            <div class="min-w-0 flex-1">
+                                <p class="truncate text-[13.5px] font-bold text-brand">{{ $c['titre'] }}</p>
+                                <p class="truncate text-[12px] text-meta">{{ $c['detail'] }}</p>
+                            </div>
+                            <button type="button" wire:click="partager('{{ $c['type'] }}', {{ $c['id'] }})" data-test="choisir-partage" class="btn-tap shrink-0 rounded-full bg-accent px-3.5 py-1.5 text-[12px] font-bold text-white hover:bg-accent-600">Partager</button>
+                        </li>
+                    @empty
+                        <li class="px-3 py-8 text-center text-[13px] text-meta">Rien à partager pour le moment dans cette catégorie.</li>
+                    @endforelse
+                </ul>
+                <div class="flex justify-end border-t border-cloud-200 p-3"><button type="button" wire:click="fermerPartage" class="rounded-full px-4 py-2 text-[12.5px] font-semibold text-meta hover:bg-cloud">Fermer</button></div>
+            </div>
+        </div>
+    @endif
 
     {{-- Signalement d'un message --}}
     @if ($signalementId)

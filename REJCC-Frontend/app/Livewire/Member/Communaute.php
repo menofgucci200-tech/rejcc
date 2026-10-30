@@ -78,6 +78,43 @@ class Communaute extends Component
 
     public int $tick = 0;
 
+    /** Messages épinglés du salon ouvert. */
+    public array $epingles = [];
+
+    /** Message mis en évidence après une recherche ou un clic sur un épinglé. */
+    public ?int $cible = null;
+
+    // Création d'un sondage
+    public bool $sondageOuvert = false;
+
+    public string $sondageQuestion = '';
+
+    public array $sondageOptions = ['', ''];
+
+    public bool $sondageMultiple = false;
+
+    public bool $sondageAnonyme = false;
+
+    public string $sondageDuree = '';
+
+    // Partage d'un élément de la plateforme
+    public bool $partageOuvert = false;
+
+    public string $partageType = 'evenement';
+
+    public string $partageRecherche = '';
+
+    public array $partageResultats = [];
+
+    public string $partageCommentaire = '';
+
+    // Recherche dans le salon
+    public bool $rechercheOuverte = false;
+
+    public string $recherche = '';
+
+    public array $resultatsRecherche = [];
+
     public function mount(): void
     {
         $this->chargerListe();
@@ -155,6 +192,7 @@ class Communaute extends Component
     {
         $this->salon = $r['salon'];
         $this->moi = $r['moi'] ?? [];
+        $this->epingles = $r['epingles'] ?? [];
         $this->horodatage = $r['horodatage'] ?? now()->toIso8601String();
     }
 
@@ -388,6 +426,191 @@ class Communaute extends Component
         return true;
     }
 
+    // ── Sondages ─────────────────────────────────────────────────────────
+
+    public function ouvrirSondage(): void
+    {
+        $this->sondageOuvert = true;
+        $this->sondageQuestion = '';
+        $this->sondageOptions = ['', ''];
+        $this->sondageMultiple = false;
+        $this->sondageAnonyme = false;
+        $this->sondageDuree = '';
+    }
+
+    public function fermerSondage(): void
+    {
+        $this->sondageOuvert = false;
+    }
+
+    public function ajouterOption(): void
+    {
+        if (count($this->sondageOptions) < 10) {
+            $this->sondageOptions[] = '';
+        }
+    }
+
+    public function retirerOption(int $i): void
+    {
+        if (count($this->sondageOptions) > 2) {
+            unset($this->sondageOptions[$i]);
+            $this->sondageOptions = array_values($this->sondageOptions);
+        }
+    }
+
+    public function publierSondage(): void
+    {
+        $ok = $this->publier(['type' => 'sondage', 'sondage' => [
+            'question' => $this->sondageQuestion,
+            'options' => $this->sondageOptions,
+            'choix_multiple' => $this->sondageMultiple,
+            'anonyme' => $this->sondageAnonyme,
+            'duree' => $this->sondageDuree ?: null,
+        ]]);
+        if ($ok) {
+            $this->sondageOuvert = false;
+        }
+    }
+
+    /** Vote : un clic choisit (ou retire) une option ; plusieurs choix si le sondage le permet. */
+    public function voter(int $messageId, int $sondageId, int $optionId): void
+    {
+        $m = collect($this->messages)->firstWhere('id', $messageId);
+        $s = $m['sondage'] ?? null;
+        if (! $s) {
+            return;
+        }
+        $miens = collect($s['options'])->where('moi', true)->pluck('id');
+        $choix = $s['choix_multiple']
+            ? ($miens->contains($optionId) ? $miens->reject(fn ($x) => $x === $optionId) : $miens->push($optionId))
+            : ($miens->contains($optionId) ? collect() : collect([$optionId]));
+
+        $r = Api::post("/communaute/sondages/{$sondageId}/votes", ['options' => $choix->values()->all()], Api::token());
+        if (! ($r['ok'] ?? false)) {
+            $this->info = $r['message'] ?? 'Vote impossible.';
+
+            return;
+        }
+        $this->remplacerSondage($messageId, $r['sondage']);
+    }
+
+    public function clore(int $messageId, int $sondageId): void
+    {
+        $r = Api::post("/communaute/sondages/{$sondageId}/clore", [], Api::token());
+        $this->info = ($r['ok'] ?? false) ? 'Sondage clos : les résultats sont définitifs.' : ($r['message'] ?? 'Clôture impossible.');
+        if ($r['ok'] ?? false) {
+            foreach ($this->messages as $i => $m) {
+                if ($m['id'] === $messageId && isset($m['sondage'])) {
+                    $this->messages[$i]['sondage']['clos'] = true;
+                    $this->messages[$i]['sondage']['peut_clore'] = false;
+                }
+            }
+        }
+    }
+
+    private function remplacerSondage(int $messageId, array $sondage): void
+    {
+        foreach ($this->messages as $i => $m) {
+            if ($m['id'] === $messageId) {
+                $this->messages[$i]['sondage'] = $sondage;
+            }
+        }
+    }
+
+    // ── Partage d'un élément de la plateforme ────────────────────────────
+
+    public function ouvrirPartage(string $type = 'evenement'): void
+    {
+        $this->partageOuvert = true;
+        $this->partageType = $type;
+        $this->partageRecherche = '';
+        $this->partageCommentaire = '';
+        $this->chargerPartage();
+    }
+
+    public function fermerPartage(): void
+    {
+        $this->partageOuvert = false;
+    }
+
+    public function updatedPartageType(): void
+    {
+        $this->chargerPartage();
+    }
+
+    public function updatedPartageRecherche(): void
+    {
+        $this->chargerPartage();
+    }
+
+    private function chargerPartage(): void
+    {
+        $r = Api::get('/communaute/cartes', ['type' => $this->partageType, 'q' => trim($this->partageRecherche)], Api::token());
+        $this->partageResultats = $r['cartes'] ?? [];
+    }
+
+    public function partager(string $type, int $id): void
+    {
+        if ($this->publier(['type' => 'carte', 'carte_type' => $type, 'carte_id' => $id, 'body' => trim($this->partageCommentaire) ?: null])) {
+            $this->partageOuvert = false;
+        }
+    }
+
+    // ── Épinglés et recherche ────────────────────────────────────────────
+
+    public function epingler(int $id, bool $epingler = true): void
+    {
+        $r = $epingler
+            ? Api::post("/communaute/messages/{$id}/epingle", [], Api::token())
+            : Api::delete("/communaute/messages/{$id}/epingle", Api::token());
+        $this->info = $r['message'] ?? 'Action impossible.';
+        if ($r['ok'] ?? false) {
+            foreach ($this->messages as $i => $m) {
+                if ($m['id'] === $id) {
+                    $this->messages[$i]['epingle'] = $epingler;
+                }
+            }
+            $s = Api::get('/communaute/salons/'.rawurlencode($this->slug), ['after' => $this->dernierId], Api::token());
+            $this->epingles = $s['epingles'] ?? $this->epingles;
+        }
+    }
+
+    public function basculerRecherche(): void
+    {
+        $this->rechercheOuverte = ! $this->rechercheOuverte;
+        $this->recherche = '';
+        $this->resultatsRecherche = [];
+    }
+
+    public function updatedRecherche(): void
+    {
+        $q = trim($this->recherche);
+        $this->resultatsRecherche = mb_strlen($q) >= 2
+            ? (Api::get('/communaute/salons/'.rawurlencode($this->slug).'/recherche', ['q' => $q], Api::token())['resultats'] ?? [])
+            : [];
+    }
+
+    /** Affiche le fil autour d'un message (résultat de recherche, épinglé) et le met en évidence. */
+    public function allerA(int $id): void
+    {
+        $this->rechercheOuverte = false;
+        if (collect($this->messages)->contains('id', $id)) {
+            $this->cible = $id;
+            $this->dispatch('fil-cible', id: $id);
+
+            return;
+        }
+        $r = Api::get('/communaute/salons/'.rawurlencode($this->slug), ['autour' => $id], Api::token());
+        if ($r['ok'] ?? false) {
+            $this->appliquerSalon($r);
+            $this->messages = $r['messages'] ?? [];
+            $this->dernierId = (int) (collect($this->messages)->max('id') ?? 0);
+            $this->plusAnciens = true;
+            $this->cible = $id;
+            $this->dispatch('fil-cible', id: $id);
+        }
+    }
+
     // ── Actions sur un message ───────────────────────────────────────────
 
     public function reagir(int $id, string $emoji): void
@@ -538,6 +761,12 @@ class Communaute extends Component
         $this->vocal = null;
         $this->info = null;
         $this->tick = 0;
+        $this->cible = null;
+        $this->sondageOuvert = false;
+        $this->partageOuvert = false;
+        $this->rechercheOuverte = false;
+        $this->recherche = '';
+        $this->resultatsRecherche = [];
     }
 
     public function render()

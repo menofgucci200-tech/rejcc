@@ -42,6 +42,9 @@ class Communaute extends Component
 
     public string $motsInterdits = '';
 
+    /** Statistiques d'animation (chargées à l'ouverture de l'onglet). */
+    public array $animation = [];
+
     /** Texte d'une annonce à publier dans le canal Annonces. */
     public string $annonce = '';
 
@@ -49,6 +52,22 @@ class Communaute extends Component
     public function mount(): void
     {
         $this->charger();
+        if ($this->onglet === 'statistiques') {
+            $this->chargerStats();
+        }
+    }
+
+    public function updatedOnglet(): void
+    {
+        if ($this->onglet === 'statistiques') {
+            $this->chargerStats();
+        }
+    }
+
+    public function chargerStats(): void
+    {
+        $r = Api::get('/admin/communaute/statistiques', [], Api::token());
+        $this->animation = ($r['ok'] ?? false) ? $r : [];
     }
 
     public function charger(): void

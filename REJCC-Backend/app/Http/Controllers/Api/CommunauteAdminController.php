@@ -313,6 +313,77 @@ class CommunauteAdminController extends Controller
         return response()->json(['ok' => true, 'membres' => $membres->map(fn ($u) => Communaute::auteur($u))->values()]);
     }
 
+    /**
+     * GET /admin/communaute/statistiques — animation de la Communauté :
+     * activité des 30 derniers jours, tendance de chaque salon (salons qui
+     * s'essoufflent), membres les plus actifs.
+     */
+    public function statistiques()
+    {
+        $debut = now()->subDays(29)->startOfDay();
+        $messages = SalonMessage::where('created_at', '>=', $debut)->whereNull('supprime_at')->get(['id', 'salon_id', 'user_id', 'type', 'created_at']);
+
+        $parJour = collect(range(0, 29))->map(function ($i) use ($debut, $messages) {
+            $jour = $debut->copy()->addDays($i);
+            $duJour = $messages->filter(fn ($m) => $m->created_at->isSameDay($jour));
+
+            return [
+                'date' => $jour->toDateString(),
+                'messages' => $duJour->count(),
+                'membres' => $duJour->pluck('user_id')->unique()->count(),
+            ];
+        })->values();
+
+        $semaine = now()->subDays(7);
+        $precedente = now()->subDays(14);
+        $salons = Salon::whereNull('archive_at')->orderBy('ordre')->orderBy('id')->get()->map(function (Salon $s) use ($semaine, $precedente) {
+            $base = SalonMessage::where('salon_id', $s->id)->whereNull('supprime_at');
+            $cette = (clone $base)->where('created_at', '>=', $semaine)->count();
+            $avant = (clone $base)->whereBetween('created_at', [$precedente, $semaine])->count();
+            $dernier = (clone $base)->max('created_at');
+            $tendance = $avant > 0 ? (int) round(($cette - $avant) * 100 / $avant) : null;
+            $alerte = match (true) {
+                $s->estAnnonces() => null,
+                ! $dernier => 'Aucun message pour l\'instant',
+                \Illuminate\Support\Carbon::parse($dernier)->lt(now()->subDays(7)) => 'Aucun message depuis plus de 7 jours',
+                $avant >= 5 && $cette < $avant / 2 => 'Activité en forte baisse',
+                default => null,
+            };
+
+            return [
+                'id' => $s->id,
+                'nom' => $s->nom,
+                'emoji' => $s->emoji,
+                'annonces' => $s->estAnnonces(),
+                'semaine' => $cette,
+                'semaine_precedente' => $avant,
+                'tendance' => $tendance,
+                'mois' => (clone $base)->where('created_at', '>=', now()->subDays(30))->count(),
+                'actifs_semaine' => (clone $base)->where('created_at', '>=', $semaine)->distinct()->count('user_id'),
+                'dernier' => $dernier ? \Illuminate\Support\Carbon::parse($dernier)->toIso8601String() : null,
+                'alerte' => $alerte,
+            ];
+        })->values();
+
+        $contributeurs = $messages->groupBy('user_id')->map->count()->sortDesc()->take(10);
+        $noms = User::whereIn('id', $contributeurs->keys())->get(['id', 'prenom', 'nom', 'photo', 'role'])->keyBy('id');
+
+        return response()->json([
+            'ok' => true,
+            'par_jour' => $parJour,
+            'salons' => $salons,
+            'contributeurs' => $contributeurs->map(fn ($n, $id) => ['membre' => Communaute::auteur($noms->get($id)), 'messages' => $n])->filter(fn ($c) => $c['membre'])->values(),
+            'totaux' => [
+                'messages' => $messages->count(),
+                'membres' => $messages->pluck('user_id')->unique()->count(),
+                'sondages' => $messages->where('type', 'sondage')->count(),
+                'votes' => \App\Models\SalonSondageVote::where('created_at', '>=', $debut)->distinct()->count('user_id'),
+                'reactions' => \App\Models\SalonReaction::where('created_at', '>=', $debut)->count(),
+                'partages' => $messages->where('type', 'carte')->count(),
+            ],
+        ]);
+    }
+
     // ── Outils internes ──────────────────────────────────────────────────
 
     private function valider(Request $request)

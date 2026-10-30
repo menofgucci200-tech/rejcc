@@ -11,6 +11,7 @@
     $onglets = [
         'salons' => 'Salons',
         'signalements' => 'Signalements'.($aExaminer->count() ? ' ('.$aExaminer->count().')' : ''),
+        'statistiques' => 'Statistiques',
         'journal' => 'Journal',
         'reglages' => 'Mots interdits',
     ];
@@ -172,6 +173,88 @@
                         @endforelse
                     </div>
                 @endforeach
+            @endif
+
+            {{-- Statistiques d'animation --}}
+            @if ($onglet === 'statistiques')
+                @if (empty($animation))
+                    <p class="rounded-[16px] border border-brand/10 bg-white py-10 text-center text-sm text-[#5B677A]">Statistiques indisponibles pour le moment.</p>
+                @else
+                    @php
+                        $jours = $animation['par_jour'];
+                        $max = max(1, collect($jours)->max('messages'));
+                        $t = $animation['totaux'];
+                    @endphp
+                    <div class="mb-4 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6" data-test="totaux-stats">
+                        @foreach ([['Messages', $t['messages']], ['Membres actifs', $t['membres']], ['Réactions', $t['reactions']], ['Sondages', $t['sondages']], ['Votants', $t['votes']], ['Partages', $t['partages']]] as [$lib, $val])
+                            <div class="rounded-[14px] border border-brand/10 bg-white p-3.5">
+                                <p class="text-[20px] font-extrabold tabular-nums text-brand">{{ number_format($val, 0, ',', ' ') }}</p>
+                                <p class="text-[11.5px] font-semibold text-[#5B677A]">{{ $lib }} · 30 jours</p>
+                            </div>
+                        @endforeach
+                    </div>
+
+                    <div class="mb-4 rounded-[18px] border border-brand/10 bg-white p-5" data-test="graphique-stats">
+                        <div class="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+                            <h3 class="text-[14px] font-bold text-brand">Messages par jour</h3>
+                            <span class="text-[11.5px] text-[#5B677A]">30 derniers jours · au survol : membres actifs du jour</span>
+                        </div>
+                        <div class="flex h-[160px] items-end gap-[3px] border-b border-l border-[#EDF0F5] pl-1">
+                            @foreach ($jours as $j)
+                                @php $h = $j['messages'] ? max(3, round($j['messages'] * 100 / $max)) : 0; @endphp
+                                <div class="group relative flex h-full flex-1 items-end" title="{{ \Illuminate\Support\Carbon::parse($j['date'])->locale('fr')->isoFormat('ddd D MMM') }} : {{ $j['messages'] }} message(s), {{ $j['membres'] }} membre(s)">
+                                    <div class="w-full rounded-t-[3px] {{ $loop->last ? 'bg-accent' : 'bg-azure' }} group-hover:bg-brand" style="height: {{ $h }}%"></div>
+                                </div>
+                            @endforeach
+                        </div>
+                        <div class="mt-1 flex justify-between text-[10.5px] tabular-nums text-[#5B677A]">
+                            <span>{{ \Illuminate\Support\Carbon::parse($jours[0]['date'])->locale('fr')->isoFormat('D MMM') }}</span>
+                            <span>max. {{ $max }} message{{ $max > 1 ? 's' : '' }} / jour</span>
+                            <span>Aujourd'hui</span>
+                        </div>
+                    </div>
+
+                    <div class="grid gap-4 lg:grid-cols-[1fr_320px]">
+                        <div class="overflow-x-auto rounded-[18px] border border-brand/10 bg-white">
+                            <table class="w-full min-w-[560px] text-left text-[12.5px]" data-test="tableau-salons">
+                                <thead class="bg-cloud text-[10.5px] font-extrabold uppercase tracking-[0.1em] text-[#5B677A]">
+                                    <tr><th class="px-4 py-2.5">Salon</th><th class="px-3 py-2.5 text-right">7 jours</th><th class="px-3 py-2.5 text-right">Tendance</th><th class="px-3 py-2.5 text-right">Actifs</th><th class="px-3 py-2.5 text-right">30 jours</th><th class="px-4 py-2.5">État</th></tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($animation['salons'] as $s)
+                                        <tr class="border-t border-[#EDF0F5]">
+                                            <td class="px-4 py-2.5 font-semibold text-brand">{{ $s['emoji'] }} {{ $s['nom'] }}</td>
+                                            <td class="px-3 py-2.5 text-right tabular-nums">{{ $s['semaine'] }}</td>
+                                            <td class="px-3 py-2.5 text-right tabular-nums {{ ($s['tendance'] ?? 0) < 0 ? 'text-accent' : 'text-[#1C8F4C]' }}">{{ $s['tendance'] === null ? '—' : (($s['tendance'] > 0 ? '+' : '').$s['tendance'].' %') }}</td>
+                                            <td class="px-3 py-2.5 text-right tabular-nums">{{ $s['actifs_semaine'] }}</td>
+                                            <td class="px-3 py-2.5 text-right tabular-nums">{{ $s['mois'] }}</td>
+                                            <td class="px-4 py-2.5">
+                                                @if ($s['annonces'] ?? false)
+                                                    <span class="rounded-full bg-cloud px-2 py-0.5 text-[11px] font-bold text-[#5B677A]">Canal d'annonces</span>
+                                                @elseif ($s['alerte'])
+                                                    <span class="rounded-full bg-[#FBF1DC] px-2 py-0.5 text-[11px] font-bold text-[#8A5A00]">{{ $s['alerte'] }}</span>
+                                                @else
+                                                    <span class="rounded-full bg-[#22A85A]/10 px-2 py-0.5 text-[11px] font-bold text-[#1C8F4C]">Actif</span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="rounded-[18px] border border-brand/10 bg-white p-5">
+                            <h3 class="mb-2 text-[14px] font-bold text-brand">Membres les plus actifs</h3>
+                            <ol class="grid gap-1.5 text-[13px]">
+                                @forelse ($animation['contributeurs'] as $i => $c)
+                                    <li class="flex items-center justify-between gap-2"><span><span class="mr-1.5 inline-block w-4 text-right tabular-nums text-[#5B677A]">{{ $i + 1 }}</span>{{ $c['membre']['prenom'] }} {{ $c['membre']['nom'] }}</span><span class="font-bold tabular-nums text-brand">{{ $c['messages'] }}</span></li>
+                                @empty
+                                    <li class="text-[#5B677A]">Aucun message sur la période.</li>
+                                @endforelse
+                            </ol>
+                            <p class="mt-3 text-[11.5px] text-[#5B677A]">Messages publiés sur les 30 derniers jours. Pensez à remercier ceux qui font vivre la Communauté, ou à leur proposer d'être référents.</p>
+                        </div>
+                    </div>
+                @endif
             @endif
 
             {{-- Journal --}}

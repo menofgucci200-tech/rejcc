@@ -310,8 +310,42 @@ class Communaute
             'image' => '📷 Photo'.($m->body ? ' · '.Str::limit(preg_replace('/\s+/', ' ', $m->body), 80) : ''),
             'fichier' => '📄 '.($m->fichier_nom ?: 'Document'),
             'vocal' => '🎤 Note vocale',
+            'sondage' => '📊 Sondage : '.Str::limit((string) ($m->sondage?->question ?? ''), 90),
+            'carte' => '🔗 '.(CommunauteCartes::TYPES[$m->carte_type] ?? 'Partage').($m->body ? ' · '.Str::limit(preg_replace('/\s+/', ' ', $m->body), 70) : ''),
             default => Str::limit(preg_replace('/\s+/', ' ', (string) $m->body), 100),
         };
+    }
+
+    /** Sondage tel qu'affiché : résultats, votes du membre, droits. */
+    public static function sondage(\App\Models\SalonSondage $s, User $moi, bool $moderateur, ?int $auteurId): array
+    {
+        $votes = \App\Models\SalonSondageVote::with('user:id,prenom,nom')->where('salon_sondage_id', $s->id)->get();
+        $votants = $votes->pluck('user_id')->unique()->count();
+        $clos = $s->estClos();
+
+        return [
+            'id' => $s->id,
+            'question' => $s->question,
+            'choix_multiple' => $s->choix_multiple,
+            'anonyme' => $s->anonyme,
+            'clos' => $clos,
+            'fin_at' => $s->fin_at?->toIso8601String(),
+            'votants' => $votants,
+            'a_vote' => $votes->contains('user_id', $moi->id),
+            'peut_clore' => ! $clos && ($moderateur || $auteurId === $moi->id),
+            'options' => $s->options->map(function ($o) use ($votes, $votants, $moi, $s) {
+                $pour = $votes->where('salon_sondage_option_id', $o->id);
+
+                return [
+                    'id' => $o->id,
+                    'libelle' => $o->libelle,
+                    'votes' => $pour->count(),
+                    'pourcentage' => $votants ? (int) round($pour->count() * 100 / $votants) : 0,
+                    'moi' => $pour->contains('user_id', $moi->id),
+                    'votants' => $s->anonyme ? [] : $pour->take(6)->map(fn ($v) => $v->user?->prenom)->filter()->values()->all(),
+                ];
+            })->values()->all(),
+        ];
     }
 
     // ── Présentation ─────────────────────────────────────────────────────
@@ -354,6 +388,9 @@ class Communaute
                 'taille' => $m->fichier_taille,
                 'duree' => $m->duree,
             ] : null,
+            'sondage' => (! $supprime && $m->type === 'sondage' && $m->sondage) ? self::sondage($m->sondage, $moi, $moderateur, $m->user_id) : null,
+            'carte' => (! $supprime && $m->type === 'carte') ? (CommunauteCartes::carte($m->carte_type, $m->carte_id) ?? ['indisponible' => true, 'type_libelle' => CommunauteCartes::TYPES[$m->carte_type] ?? 'Partage']) : null,
+            'epingle' => ! $supprime && $m->epingle_at !== null,
             'reponse_a' => $cite ? [
                 'id' => $cite->id,
                 'auteur' => $cite->user ? trim($cite->user->prenom.' '.$cite->user->nom) : 'Membre',
@@ -364,6 +401,7 @@ class Communaute
                 && $m->created_at?->gt(now()->subMinutes(SalonMessage::MINUTES_MODIFICATION)),
             'peut_supprimer' => ! $supprime && ($m->user_id === $moi->id || $moderateur),
             'peut_signaler' => ! $supprime && $m->user_id !== $moi->id,
+            'peut_epingler' => ! $supprime && $moderateur,
         ];
     }
 }

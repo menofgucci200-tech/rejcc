@@ -10,6 +10,7 @@ class SalonModeration extends Model
 {
     public const ACTIONS = [
         'message_supprime' => 'Message supprimé',
+        'message_epingle' => 'Message épinglé',
         'silence' => 'Membre rendu muet',
         'silence_leve' => 'Silence levé',
         'exclusion' => 'Membre exclu du salon',

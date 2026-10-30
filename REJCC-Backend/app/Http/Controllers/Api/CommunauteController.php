@@ -91,12 +91,21 @@ class CommunauteController extends Controller
             return $refus;
         }
         $moderateur = Communaute::estModerateur($moi, $salon, $etat);
+        // Horodatage pris avant les lectures, avec une seconde de marge : une
+        // modification faite pendant cette requête sera renvoyée la fois suivante.
+        $horodatage = now()->subSecond();
         $after = (int) $request->query('after', 0);
         $before = (int) $request->query('before', 0);
+        $autour = (int) $request->query('autour', 0);
 
-        $requete = SalonMessage::with(['user:id,prenom,nom,photo,role', 'reponseA.user:id,prenom,nom'])->where('salon_id', $salon->id);
+        $requete = SalonMessage::with(['user:id,prenom,nom,photo,role', 'reponseA.user:id,prenom,nom', 'sondage.options'])->where('salon_id', $salon->id);
         if ($after > 0) {
             $messages = $requete->where('id', '>', $after)->orderBy('id')->limit(200)->get();
+        } elseif ($autour > 0) {
+            // Saut vers un message : 20 messages avant, et la suite jusqu'au plus récent (150 au plus).
+            $avant = (clone $requete)->where('id', '<', $autour)->latest('id')->limit(20)->get();
+            $apres = (clone $requete)->where('id', '>=', $autour)->orderBy('id')->limit(150)->get();
+            $messages = $avant->sortBy('id')->concat($apres)->values();
         } else {
             $messages = $requete->when($before > 0, fn ($q) => $q->where('id', '<', $before))
                 ->latest('id')->limit(self::PAR_PAGE)->get()->sortBy('id')->values();
@@ -107,8 +116,8 @@ class CommunauteController extends Controller
         $modifies = [];
         if ($after > 0 && $depuis) {
             try {
-                $modifies = SalonMessage::with(['user:id,prenom,nom,photo,role', 'reponseA.user:id,prenom,nom'])->where('salon_id', $salon->id)
-                    ->where('id', '<=', $after)->where('updated_at', '>', \Illuminate\Support\Carbon::parse($depuis))
+                $modifies = SalonMessage::with(['user:id,prenom,nom,photo,role', 'reponseA.user:id,prenom,nom', 'sondage.options'])->where('salon_id', $salon->id)
+                    ->where('id', '<=', $after)->where('updated_at', '>=', \Illuminate\Support\Carbon::parse($depuis))
                     ->limit(100)->get();
             } catch (\Throwable) {
                 $modifies = [];
@@ -156,9 +165,16 @@ class CommunauteController extends Controller
             ],
             'messages' => collect($messages)->map($presenter)->values(),
             'modifies' => collect($modifies)->map($presenter)->values(),
+            'epingles' => SalonMessage::with('user:id,prenom,nom')->where('salon_id', $salon->id)->whereNotNull('epingle_at')->whereNull('supprime_at')
+                ->latest('epingle_at')->limit(SalonMessage::EPINGLES_MAX)->get()
+                ->map(fn (SalonMessage $m) => [
+                    'id' => $m->id,
+                    'auteur' => $m->user ? trim($m->user->prenom.' '.$m->user->nom) : 'Membre',
+                    'extrait' => Communaute::extrait($m),
+                ])->values(),
             'plus_anciens' => $after === 0 && collect($messages)->isNotEmpty()
                 && SalonMessage::where('salon_id', $salon->id)->where('id', '<', collect($messages)->first()->id)->exists(),
-            'horodatage' => now()->toIso8601String(),
+            'horodatage' => $horodatage->toIso8601String(),
         ]);
     }
 
@@ -200,7 +216,16 @@ class CommunauteController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'type' => 'required|in:texte,image,fichier,vocal',
+            'type' => 'required|in:texte,image,fichier,vocal,sondage,carte',
+            'sondage' => 'nullable|array',
+            'sondage.question' => 'nullable|string|max:300',
+            'sondage.options' => 'nullable|array|max:'.\App\Models\SalonSondage::OPTIONS_MAX,
+            'sondage.options.*' => 'nullable|string|max:120',
+            'sondage.choix_multiple' => 'nullable|boolean',
+            'sondage.anonyme' => 'nullable|boolean',
+            'sondage.duree' => 'nullable|in:1j,3j,7j',
+            'carte_type' => 'nullable|in:evenement,offre,formation,projet',
+            'carte_id' => 'nullable|integer',
             'body' => 'nullable|string|max:4000',
             'reponse_a_id' => 'nullable|integer',
             'mentions' => 'nullable|array|max:20',
@@ -214,6 +239,9 @@ class CommunauteController extends Controller
         ], [
             'body.max' => 'Votre message est trop long (4 000 caractères maximum).',
             'mentions.max' => 'Vous ne pouvez pas mentionner plus de 20 personnes dans un message.',
+            'sondage.question.max' => 'La question est trop longue (300 caractères maximum).',
+            'sondage.options.max' => 'Un sondage propose au plus 10 choix.',
+            'sondage.options.*.max' => 'Un choix ne dépasse pas 120 caractères.',
         ]);
         if ($validator->fails()) {
             return response()->json(['ok' => false, 'message' => $validator->errors()->first()], 422);
@@ -247,7 +275,42 @@ class CommunauteController extends Controller
         }
 
         $piece = [];
-        if ($type !== 'texte') {
+        $sondage = null;
+        if ($type === 'sondage') {
+            if (! $moderateur && ! Communaute::peutEnvoyerFichier($moi)) {
+                return response()->json(['ok' => false, 'code' => 'subscription_required', 'message' => 'La création de sondages est réservée aux membres à jour de leur abonnement annuel.'], 402);
+            }
+            $question = trim((string) $request->input('sondage.question', ''));
+            $options = collect((array) $request->input('sondage.options', []))->map(fn ($o) => trim((string) $o))->filter()->unique(fn ($o) => mb_strtolower($o))->values();
+            if (mb_strlen($question) < 3) {
+                return response()->json(['ok' => false, 'message' => 'Posez la question du sondage.'], 422);
+            }
+            if ($options->count() < \App\Models\SalonSondage::OPTIONS_MIN) {
+                return response()->json(['ok' => false, 'message' => 'Proposez au moins deux choix différents.'], 422);
+            }
+            if ($mot = Communaute::motInterdit($question.' '.$options->join(' '))) {
+                return response()->json(['ok' => false, 'code' => 'mot_interdit', 'message' => "Votre sondage contient un terme non autorisé dans la Communauté (« {$mot} »). Reformulez-le."], 422);
+            }
+            $sondage = [
+                'question' => $question,
+                'options' => $options->all(),
+                'choix_multiple' => $request->boolean('sondage.choix_multiple'),
+                'anonyme' => $request->boolean('sondage.anonyme'),
+                'fin_at' => match ($request->input('sondage.duree')) {
+                    '1j' => now()->addDay(),
+                    '3j' => now()->addDays(3),
+                    '7j' => now()->addDays(7),
+                    default => null,
+                },
+            ];
+            $body = null;
+        } elseif ($type === 'carte') {
+            $carte = \App\Support\CommunauteCartes::carte($request->input('carte_type'), (int) $request->input('carte_id'));
+            if (! $carte) {
+                return response()->json(['ok' => false, 'message' => 'Cet élément n\'est pas disponible au partage.'], 422);
+            }
+            $piece = ['carte_type' => $carte['type'], 'carte_id' => $carte['id']];
+        } elseif ($type !== 'texte') {
             $chemin = (string) $request->input('fichier');
             $mime = strtolower((string) $request->input('fichier_mime'));
             $taille = (int) $request->input('fichier_taille');
@@ -294,7 +357,7 @@ class CommunauteController extends Controller
         $mentions = $mentions ? User::whereIn('id', $mentions)->where('is_active', true)->where('id', '!=', $moi->id)->pluck('id')->all() : [];
         $mentionTous = $request->boolean('mention_tous') && $moderateur;
 
-        $message = DB::transaction(function () use ($salon, $moi, $type, $body, $reponseA, $mentions, $mentionTous, $piece, $etat) {
+        $message = DB::transaction(function () use ($salon, $moi, $type, $body, $reponseA, $mentions, $mentionTous, $piece, $etat, $sondage) {
             $m = SalonMessage::create([
                 'salon_id' => $salon->id,
                 'user_id' => $moi->id,
@@ -304,6 +367,12 @@ class CommunauteController extends Controller
                 'mentions' => $mentions ?: null,
                 'mention_tous' => $mentionTous,
             ] + $piece);
+            if ($sondage) {
+                $s = \App\Models\SalonSondage::create(['salon_message_id' => $m->id] + collect($sondage)->except('options')->all());
+                foreach ($sondage['options'] as $i => $libelle) {
+                    $s->options()->create(['libelle' => $libelle, 'ordre' => $i]);
+                }
+            }
             $etat->forceFill(['dernier_message_at' => now(), 'lu_jusqua' => $m->id])->save();
 
             return $m;
@@ -311,7 +380,7 @@ class CommunauteController extends Controller
 
         dispatch(fn () => Communaute::notifier($message->fresh(['salon', 'user', 'reponseA'])))->afterResponse();
 
-        $message->load(['user:id,prenom,nom,photo,role', 'reponseA.user:id,prenom,nom']);
+        $message->load(['user:id,prenom,nom,photo,role', 'reponseA.user:id,prenom,nom', 'sondage.options']);
         $referents = SalonMembre::where('salon_id', $salon->id)->where('role', 'moderateur')->pluck('user_id')->all();
 
         return response()->json(['ok' => true, 'message' => Communaute::presenter($message, $moi, $moderateur, [], $referents)]);
@@ -440,6 +509,117 @@ class CommunauteController extends Controller
             ->orderBy('prenom')->limit(8)->get(['id', 'prenom', 'nom', 'photo', 'role']);
 
         return response()->json(['ok' => true, 'membres' => $membres->map(fn ($u) => Communaute::auteur($u))->values()]);
+    }
+
+    /** POST /communaute/sondages/{id}/votes — voter (remplace les votes précédents ; liste vide = retirer). */
+    public function voter(Request $request, int $id)
+    {
+        $moi = $request->user();
+        $sondage = \App\Models\SalonSondage::with(['message.salon', 'options'])->find($id);
+        $m = $sondage?->message;
+        if (! $sondage || ! $m || $m->estSupprime() || ! $m->salon) {
+            return response()->json(['ok' => false, 'message' => 'Sondage introuvable.'], 404);
+        }
+        $etat = SalonMembre::where('salon_id', $m->salon_id)->where('user_id', $moi->id)->first();
+        if ($raison = Communaute::refusAcces($moi, $m->salon, $etat)) {
+            return response()->json(['ok' => false, 'message' => $raison], 403);
+        }
+        if ($sondage->estClos()) {
+            return response()->json(['ok' => false, 'message' => 'Ce sondage est clos.'], 422);
+        }
+        $choix = collect((array) $request->input('options', []))->map(fn ($x) => (int) $x)->unique()
+            ->filter(fn ($x) => $sondage->options->contains('id', $x))->values();
+        if (! $sondage->choix_multiple && $choix->count() > 1) {
+            return response()->json(['ok' => false, 'message' => 'Ce sondage n\'accepte qu\'un seul choix.'], 422);
+        }
+        DB::transaction(function () use ($sondage, $moi, $choix) {
+            \App\Models\SalonSondageVote::where('salon_sondage_id', $sondage->id)->where('user_id', $moi->id)->delete();
+            foreach ($choix as $optionId) {
+                \App\Models\SalonSondageVote::create(['salon_sondage_id' => $sondage->id, 'salon_sondage_option_id' => $optionId, 'user_id' => $moi->id]);
+            }
+        });
+        $m->touch(); // les autres membres voient les résultats se mettre à jour
+
+        return response()->json(['ok' => true, 'sondage' => Communaute::sondage($sondage->fresh('options'), $moi, Communaute::estModerateur($moi, $m->salon, $etat), $m->user_id)]);
+    }
+
+    /** POST /communaute/sondages/{id}/clore — l'auteur ou un référent clôt le sondage. */
+    public function clore(Request $request, int $id)
+    {
+        $moi = $request->user();
+        $sondage = \App\Models\SalonSondage::with('message.salon')->find($id);
+        $m = $sondage?->message;
+        if (! $sondage || ! $m || ! $m->salon) {
+            return response()->json(['ok' => false, 'message' => 'Sondage introuvable.'], 404);
+        }
+        if ($m->user_id !== $moi->id && ! Communaute::estModerateur($moi, $m->salon)) {
+            return response()->json(['ok' => false, 'message' => 'Seul l\'auteur du sondage ou un référent peut le clore.'], 403);
+        }
+        $sondage->forceFill(['clos_at' => now()])->save();
+        $m->touch();
+
+        return response()->json(['ok' => true]);
+    }
+
+    /** POST|DELETE /communaute/messages/{id}/epingle — épingler en haut du salon (référents). */
+    public function epingler(Request $request, int $id)
+    {
+        $moi = $request->user();
+        $m = SalonMessage::with('salon')->find($id);
+        if (! $m || $m->estSupprime() || ! $m->salon) {
+            return response()->json(['ok' => false, 'message' => 'Message introuvable.'], 404);
+        }
+        if (! Communaute::estModerateur($moi, $m->salon)) {
+            return response()->json(['ok' => false, 'message' => 'Réservé aux référents du salon.'], 403);
+        }
+        if ($request->isMethod('delete')) {
+            $m->forceFill(['epingle_at' => null, 'epingle_par' => null])->save();
+
+            return response()->json(['ok' => true, 'message' => 'Message désépinglé.']);
+        }
+        if (SalonMessage::where('salon_id', $m->salon_id)->whereNotNull('epingle_at')->whereNull('supprime_at')->count() >= SalonMessage::EPINGLES_MAX) {
+            return response()->json(['ok' => false, 'message' => 'Un salon compte au plus '.SalonMessage::EPINGLES_MAX.' messages épinglés : désépinglez-en un d\'abord.'], 422);
+        }
+        $m->forceFill(['epingle_at' => now(), 'epingle_par' => $moi->id])->save();
+        Communaute::journal($m->salon, $moi, 'message_epingle', Communaute::extrait($m), $m->user_id, $m->id);
+
+        return response()->json(['ok' => true, 'message' => 'Message épinglé en haut du salon.']);
+    }
+
+    /** GET /communaute/salons/{slug}/recherche?q= — recherche dans l'historique du salon. */
+    public function rechercher(Request $request, string $slug)
+    {
+        [$salon, , $refus] = $this->ouvrir($request->user(), $slug);
+        if ($refus) {
+            return $refus;
+        }
+        $q = trim((string) $request->query('q', ''));
+        if (mb_strlen($q) < 2) {
+            return response()->json(['ok' => true, 'resultats' => []]);
+        }
+        $resultats = SalonMessage::with(['user:id,prenom,nom', 'sondage'])->where('salon_id', $salon->id)->whereNull('supprime_at')
+            ->where(fn ($w) => $w->where('body', 'like', '%'.$q.'%')->orWhere('fichier_nom', 'like', '%'.$q.'%')
+                ->orWhereHas('sondage', fn ($s) => $s->where('question', 'like', '%'.$q.'%')))
+            ->latest('id')->limit(30)->get()
+            ->map(fn (SalonMessage $m) => [
+                'id' => $m->id,
+                'auteur' => $m->user ? trim($m->user->prenom.' '.$m->user->nom) : 'Membre',
+                'extrait' => $m->type === 'texte' ? \Illuminate\Support\Str::limit(preg_replace('/\s+/', ' ', (string) $m->body), 160) : Communaute::extrait($m),
+                'date' => $m->created_at?->toIso8601String(),
+            ])->values();
+
+        return response()->json(['ok' => true, 'resultats' => $resultats]);
+    }
+
+    /** GET /communaute/cartes?type=&q= — éléments partageables (événements, offres, formations, projets). */
+    public function cartes(Request $request)
+    {
+        $type = (string) $request->query('type', 'evenement');
+        if (! isset(\App\Support\CommunauteCartes::TYPES[$type])) {
+            return response()->json(['ok' => false, 'message' => 'Type de partage inconnu.'], 422);
+        }
+
+        return response()->json(['ok' => true, 'cartes' => \App\Support\CommunauteCartes::rechercher($type, (string) $request->query('q', ''))]);
     }
 
     // ── Outils des référents (et administrateurs) dans le salon ──────────

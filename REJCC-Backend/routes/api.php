@@ -295,6 +295,12 @@ Route::middleware('auth.token')->group(function () {
         Route::post('/messages/{id}/reactions', [$c, 'reagir'])->whereNumber('id')->middleware('throttle:60,1');
         Route::post('/messages/{id}/signaler', [$c, 'signaler'])->whereNumber('id')->middleware('throttle:20,1');
         Route::get('/messages/{id}/fichier', [$c, 'fichier'])->whereNumber('id');
+        Route::post('/messages/{id}/epingle', [$c, 'epingler'])->whereNumber('id');
+        Route::delete('/messages/{id}/epingle', [$c, 'epingler'])->whereNumber('id');
+        Route::get('/salons/{slug}/recherche', [$c, 'rechercher'])->where('slug', '[a-z0-9-]+')->middleware('throttle:60,1');
+        Route::get('/cartes', [$c, 'cartes'])->middleware('throttle:60,1');
+        Route::post('/sondages/{id}/votes', [$c, 'voter'])->whereNumber('id')->middleware('throttle:60,1');
+        Route::post('/sondages/{id}/clore', [$c, 'clore'])->whereNumber('id');
     });
     // Marketplace : consultation libre pour tout membre connecté, publication réservée aux abonnés à jour
     Route::get('/marketplace', [\App\Http\Controllers\Api\MarketplaceController::class, 'index']);
@@ -531,6 +537,7 @@ Route::middleware(['auth.token', 'audit.log'])->prefix('admin')->group(function 
         $c = \App\Http\Controllers\Api\CommunauteAdminController::class;
         Route::get('/', [$c, 'index']);
         Route::get('/membres', [$c, 'membres']);
+        Route::get('/statistiques', [$c, 'statistiques']);
         Route::post('/salons', [$c, 'creer']);
         Route::put('/ordre', [$c, 'ordre']);
         Route::put('/salons/{id}', [$c, 'modifier'])->whereNumber('id');
