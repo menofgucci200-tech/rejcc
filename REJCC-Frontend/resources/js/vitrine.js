@@ -354,60 +354,30 @@ function scenes() {
 
 // La lumière remplit « REJCC » de gauche à droite, lettre après lettre
 // (R, E, J, C, C), puis le monogramme. Dans une lettre, elle avance
-// lentement (4 s, 6 s pour le logo), comme une masse qu'on pousse ; entre
-// deux lettres, un trait de lumière fuse vers la suivante (≈ 0,5 s), qui
-// s'allume d'un coup avec un petit rebond. Un éclat marque chaque lettre
-// pleine ; une fois le logo plein, tout s'éteint et le cycle recommence.
-// Pause quand le hero n'est plus à l'écran.
+// lentement (6 s, 8 s pour le logo), comme une masse qu'on pousse ; le
+// passage à la lettre suivante est vif : elle s'allume d'un coup, avec un
+// petit rebond, juste avant que la précédente ait fini. Un éclat marque
+// chaque lettre pleine ; une fois le logo plein, tout s'éteint et le cycle
+// recommence. Pause quand le hero n'est plus à l'écran.
 function remplir() {
     const zone = document.querySelector('[data-p-remplir]');
     const lettres = zone ? $$('[data-p-lettre]', zone) : [];
     if (!lettres.length) return;
-    const elan = zone.querySelector('[data-p-elan]');
     const poser = (el, p) => el.style.setProperty('--p', p.toFixed(4));
     lettres.forEach((el) => poser(el, 0));
-
-    // Trajets du trait : de la fin d'une lettre au début de la suivante.
-    const trajets = [];
-    const bord = (el, fin) => {
-        const r = el.getBoundingClientRect();
-        const z = zone.getBoundingClientRect();
-        const logo = el.classList.contains('p-lt-logo');
-        const x = logo ? r.left + r.width * 0.06 : fin ? r.right - r.width * 0.08 : r.left + r.width * 0.08;
-        return { x: x - z.left, y: r.top - z.top + r.height * (logo ? 0.55 : 0.5) };
-    };
-    const calculer = () => {
-        lettres.forEach((el, i) => {
-            if (!i) return;
-            const a = bord(lettres[i - 1], true);
-            const b = bord(el, false);
-            trajets[i] = { a, b, angle: (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI };
-        });
-    };
-    calculer();
-    if (elan) gsap.set(elan, { xPercent: -50, yPercent: -50, autoAlpha: 0 });
 
     const tl = gsap.timeline({ repeat: -1, repeatDelay: 2, delay: 2.5 });
     lettres.forEach((el, i) => {
         const logo = el.classList.contains('p-lt-logo');
-        if (i && elan) {
-            tl.fromTo(elan,
-                { x: () => trajets[i].a.x, y: () => trajets[i].a.y, rotation: () => trajets[i].angle },
-                { x: () => trajets[i].b.x, y: () => trajets[i].b.y, duration: logo ? 0.75 : 0.5, ease: 'power3.inOut', immediateRender: false })
-                .to(elan, { keyframes: [
-                    { autoAlpha: 1, scaleX: 1.6, duration: logo ? 0.35 : 0.24, ease: 'power2.out' },
-                    { autoAlpha: 0, scaleX: 0.3, duration: logo ? 0.4 : 0.26, ease: 'power2.in' },
-                ] }, '<');
-        }
         const etat = { p: 0 };
         tl.to(etat, {
             p: 1,
-            duration: logo ? 6 : 4,
+            duration: logo ? 8 : 6,
             ease: 'sine.inOut',
             onStart: () => { el.classList.remove('is-plein'); el.classList.add('is-actif'); },
             onUpdate: () => poser(el, etat.p),
             onComplete: () => { el.classList.remove('is-actif'); el.classList.add('is-plein'); },
-        }, i ? '-=0.12' : 0);
+        }, i ? '-=0.25' : 0);
     });
     // Tout reste allumé un instant, puis s'éteint et se vide.
     tl.to(zone, { '--fin': 0, duration: 3, ease: 'power1.inOut' }, '+=2.5')
@@ -415,16 +385,6 @@ function remplir() {
         .set(zone, { '--fin': 1 });
 
     ScrollTrigger.create({ trigger: zone.closest('section') ?? zone, start: 'top bottom', end: 'bottom top', onToggle: (s) => (s.isActive ? tl.play() : tl.pause()) });
-
-    // Les trajets suivent la mise en page (redimensionnement, polices chargées).
-    let minuteur = null;
-    const recalculer = () => {
-        clearTimeout(minuteur);
-        minuteur = setTimeout(() => { calculer(); tl.invalidate(); }, 200);
-    };
-    window.addEventListener('resize', recalculer);
-    document.fonts?.ready.then(recalculer);
-    nettoyages.push(() => { window.removeEventListener('resize', recalculer); clearTimeout(minuteur); });
 }
 
 /* ------------------------------------------- diaporama CathoImpact */

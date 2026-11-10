@@ -106,8 +106,3 @@
 .p-lt-logo.is-actif { transform: scale(1.02); filter: drop-shadow(0 0 24px rgba(143, 163, 217, .55)); }
 .p-lt-logo .p-lt-fill { -webkit-background-clip: border-box; background-clip: border-box;
   -webkit-mask: var(--p-logo) center / 100% 100% no-repeat; mask: var(--p-logo) center / 100% 100% no-repeat; }
-/* Trait de lumière qui fuse d'une lettre à la suivante (tête vive à droite,
-   orientée par le script dans le sens du trajet) */
-.p-lt-elan { position: absolute; left: 0; top: 0; width: 15vw; height: .6vw; border-radius: 9999px; opacity: 0; visibility: hidden;
-  background: linear-gradient(90deg, transparent, rgba(143, 163, 217, .55) 35%, rgba(255, 255, 255, .95) 82%, transparent);
-  filter: drop-shadow(0 0 12px rgba(143, 163, 217, .9)); }
