@@ -290,6 +290,17 @@ input[type="file"]:focus {
   outline: none;
   box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-azure) 16%, transparent);
 }
+/* Champs intégrés dans un cadre déjà dessiné (newsletter, recherches,
+   composeurs de message…) : fond transparent ou sans contour, et aucune
+   bordure déclarée. Le plugin forms leur ajoutait un rectangle gris en plus
+   du cadre : on le retire, focus compris (le cadre porte le repère). */
+:is(input, textarea, select):is([class*="bg-transparent"], [class~="outline-none"]):not([class*="border"]),
+:is(input, textarea, select):is([class*="bg-transparent"], [class~="outline-none"]):not([class*="border"]):focus,
+:is(input, textarea, select):is([class~="border-0"], [class~="border-none"]),
+:is(input, textarea, select):is([class~="border-0"], [class~="border-none"]):focus {
+  border-width: 0;
+  box-shadow: none;
+}
 /* Champ en erreur : la bordure rouge reste, le halo devient rouge pâle. */
 input[aria-invalid="true"]:focus,
 textarea[aria-invalid="true"]:focus,

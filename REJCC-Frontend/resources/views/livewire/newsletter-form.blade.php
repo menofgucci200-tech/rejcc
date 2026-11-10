@@ -1,6 +1,6 @@
 <div>
     <form wire:submit="submit" class="mt-4">
-        <div class="flex items-center gap-2 rounded-full bg-brand-700 p-1.5">
+        <div class="flex items-center gap-2 rounded-full bg-brand-700 p-1.5 transition-shadow focus-within:shadow-[0_0_0_3px_rgba(143,163,217,.45)]">
             <input
                 wire:model="email"
                 type="email"
