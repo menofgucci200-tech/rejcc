@@ -36,6 +36,13 @@ class PageCatalog
                         'hint' => 'Les valeurs se modifient dans Contenu du site → Chiffres clés.',
                         'fields' => [],
                     ],
+                    'cathoimpact' => [
+                        'label' => 'CathoImpact (portraits inspirants)',
+                        'hint' => 'Les 3 derniers portraits publiés s\'affichent sous les boutons. Ils se gèrent dans Communication → CathoImpact.',
+                        'fields' => [
+                            'subtitle' => ['label' => 'Phrase d\'accroche', 'type' => 'textarea', 'default' => "Entrepreneurs, dirigeants, cadres : des catholiques qui réussissent en restant fidèles à leur foi. Votre parcours peut en inspirer d'autres."],
+                        ],
+                    ],
                     'why-join' => [
                         'label' => 'Pourquoi nous rejoindre',
                         'fields' => [

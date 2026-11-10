@@ -12,14 +12,18 @@
     $espaceDepartement = \App\Support\Espace::departement(session('api_user'));
     $adminGeneral = \App\Support\Espace::adminGeneral(session('api_user'));
 
-    $active = fn (array $item) => request()->routeIs($item['route'].'*') || ($item['route'] === 'admin.members' && request()->routeIs('admin.inscription'));
+    // Une entrée est active sur sa page et ses onglets (« Ressources », « Statistiques »).
+    $active = fn (array $item) => collect(AdminNav::routesActives($item))->contains(fn ($r) => request()->routeIs($r.'*')) || ($item['route'] === 'admin.members' && request()->routeIs('admin.inscription'));
+    // Page d'accueil du compte : son département, sinon la vue d'ensemble.
+    $accueil = \App\Support\Espace::accueil(session('api_user'));
+    $lienPremier = fn (bool $actif) => 'group flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-[13.5px] font-medium transition-colors duration-200 '.($actif ? 'bg-[#F6EEE3] font-semibold text-brand shadow-[inset_3px_0_0_var(--color-accent)]' : 'text-[#3D4A60] hover:bg-[#FAF6EF] hover:text-brand');
     $groupActive = fn (array $group) => collect($group['items'])->contains($active);
     $initiales = mb_strtoupper(mb_substr($user->prenom ?? '', 0, 1).mb_substr($user->nom ?? '', 0, 1));
 @endphp
 
 <aside {{ $attributes->merge(['class' => 'flex h-full w-[248px] shrink-0 flex-col border-r border-[#ECE5DA] bg-white text-brand']) }} data-test="menu-admin">
     <div class="flex items-center gap-3 border-b border-[#EFEAE1] px-[18px] py-[18px]">
-        <a href="{{ route('admin.dashboard') }}" wire:navigate class="flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-[#F6EEE3]" aria-label="Vue d'ensemble">
+        <a href="{{ $accueil }}" wire:navigate data-test="logo-accueil" class="flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-[#F6EEE3]" aria-label="{{ $espaceDepartement ? 'Accueil' : 'Vue d\'ensemble' }}">
             <img src="{{ asset('brand/rejcc-monogram-color.png') }}" alt="REJCC" class="size-[26px] object-contain">
         </a>
         <div class="min-w-0 flex-1">
@@ -34,23 +38,33 @@
     </div>
 
     <nav aria-label="Menu d'administration" class="flex flex-1 flex-col gap-0.5 overflow-y-auto p-3">
-        <a href="{{ route('admin.dashboard') }}" wire:navigate @if (request()->routeIs('admin.dashboard')) aria-current="page" @endif
-            class="group flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-[13.5px] font-medium transition-colors duration-200 {{ request()->routeIs('admin.dashboard') ? 'bg-[#F6EEE3] font-semibold text-brand shadow-[inset_3px_0_0_var(--color-accent)]' : 'text-[#3D4A60] hover:bg-[#FAF6EF] hover:text-brand' }}">
-            <x-ui.icon name="layout-dashboard" class="size-[18px] shrink-0 transition-transform duration-200 group-hover:scale-110" />
-            Vue d'ensemble
-        </a>
-
-        @if ($espaceDepartement || $adminGeneral)
+        @if ($espaceDepartement)
+            {{-- Compte de département : un seul accueil, son espace (la vue d'ensemble ne le concerne pas). --}}
             @php $surDepartement = request()->routeIs('departements.*'); @endphp
-            <a href="{{ $espaceDepartement ? route('departements.show', $espaceDepartement) : route('departements.index') }}" wire:navigate data-test="menu-departements" @if ($surDepartement) aria-current="page" @endif
-                class="group flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-[13.5px] font-medium transition-colors duration-200 {{ $surDepartement ? 'bg-[#F6EEE3] font-semibold text-brand shadow-[inset_3px_0_0_var(--color-accent)]' : 'text-[#3D4A60] hover:bg-[#FAF6EF] hover:text-brand' }}">
+            <a href="{{ route('departements.show', $espaceDepartement) }}" wire:navigate data-test="menu-accueil" @if ($surDepartement) aria-current="page" @endif class="{{ $lienPremier($surDepartement) }}">
+                <x-ui.icon name="home" class="size-[18px] shrink-0 transition-transform duration-200 group-hover:scale-110" />
+                Accueil
+            </a>
+        @else
+            <a href="{{ route('admin.dashboard') }}" wire:navigate @if (request()->routeIs('admin.dashboard')) aria-current="page" @endif class="{{ $lienPremier(request()->routeIs('admin.dashboard')) }}">
+                <x-ui.icon name="layout-dashboard" class="size-[18px] shrink-0 transition-transform duration-200 group-hover:scale-110" />
+                Vue d'ensemble
+            </a>
+        @endif
+
+        @if ($adminGeneral)
+            @php $surDepartement = request()->routeIs('departements.*'); @endphp
+            <a href="{{ route('departements.index') }}" wire:navigate data-test="menu-departements" @if ($surDepartement) aria-current="page" @endif class="{{ $lienPremier($surDepartement) }}">
                 <x-ui.icon name="users" class="size-[18px] shrink-0 transition-transform duration-200 group-hover:scale-110" />
-                {{ $espaceDepartement ? 'Mon département' : 'Départements' }}
+                Départements
             </a>
         @endif
 
         @foreach ($groups as $group)
-            @php $totalGroupe = collect($group['items'])->sum(fn ($i) => $pastilles[$i['route']] ?? 0); @endphp
+            @php
+                $pastilleDe = fn (array $i) => collect(AdminNav::routesActives($i))->sum(fn ($r) => $pastilles[$r] ?? 0);
+                $totalGroupe = collect($group['items'])->sum($pastilleDe);
+            @endphp
             <div x-data="{ open: $persist(true).as('rejcc-admin-groupe-{{ \Illuminate\Support\Str::slug($group['label']) }}') }" class="mt-2">
                 <button type="button" @click="open = ! open" :aria-expanded="open"
                     class="flex w-full items-center gap-2 rounded-[8px] px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-[0.12em] transition-colors {{ $groupActive($group) ? 'text-brand' : 'text-[#5B677A] hover:text-brand' }}">
@@ -62,7 +76,7 @@
                     <div class="overflow-hidden">
                         <div class="space-y-0.5 py-0.5">
                             @foreach ($group['items'] as $item)
-                                @php $n = $pastilles[$item['route']] ?? 0; @endphp
+                                @php $n = $pastilleDe($item); @endphp
                                 <a href="{{ route($item['route']) }}" wire:navigate data-test="admin-menu-{{ \Illuminate\Support\Str::slug($item['label']) }}" @if ($active($item)) aria-current="page" @endif
                                     class="group flex items-center gap-3 rounded-[10px] px-3 py-[8px] text-[13px] font-medium transition-colors duration-200 {{ $active($item) ? 'bg-[#F6EEE3] font-semibold text-brand shadow-[inset_3px_0_0_var(--color-accent)]' : 'text-[#3D4A60] hover:bg-[#FAF6EF] hover:text-brand' }}">
                                     <x-ui.icon :name="$item['icon']" class="size-[17px] shrink-0 transition-transform duration-200 group-hover:scale-110" />

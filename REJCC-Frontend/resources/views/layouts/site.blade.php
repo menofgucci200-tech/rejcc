@@ -46,11 +46,11 @@
         <meta property="og:description" content="{{ $seoDescription }}">
         <meta property="og:url" content="{{ $seoCanonical }}">
         <meta property="og:image" content="{{ $seoImage }}">
-        @if (! isset($image))
+        @if (! isset($image) || ($imageLarge ?? false))
             <meta property="og:image:width" content="1200">
             <meta property="og:image:height" content="630">
         @endif
-        <meta property="og:image:alt" content="{{ $site['fullName'] }}">
+        <meta property="og:image:alt" content="{{ ($imageAlt ?? null) ?: $site['fullName'] }}">
         <meta name="twitter:card" content="summary_large_image">
         <meta name="twitter:title" content="{{ $seoTitle }}">
         <meta name="twitter:description" content="{{ $seoDescription }}">

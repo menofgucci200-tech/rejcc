@@ -9,7 +9,7 @@
 @endphp
 <section class="h-full rounded-[18px] border border-[#EFEAE1] bg-white p-4 sm:p-5" data-test="bloc-calendrier">
     <div class="mb-3.5 flex flex-wrap items-center gap-3">
-        <h3 class="flex flex-1 items-center gap-2 text-[15px] font-bold text-ink"><x-ui.illustration name="agenda" size="size-7" /> Publications du jour</h3>
+        <h3 class="flex flex-1 items-center gap-2 text-[15px] font-bold text-ink"><x-ui.illustration name="agenda" size="size-7" /> Aujourd'hui et demain</h3>
         <a href="{{ route('admin.calendrier-editorial') }}" wire:navigate data-test="lien-calendrier" class="btn-tap inline-flex items-center gap-1.5 rounded-full border border-[#E7E1D6] bg-white px-3.5 py-1.5 text-[12.5px] font-bold text-ink hover:bg-[#FAF6EF]">
             Ouvrir le calendrier
             @if ($jour && $jour['chiffres']['retards'] > 0)<span class="rounded-full bg-accent px-2 py-0.5 text-[11px] font-bold text-white">{{ $jour['chiffres']['retards'] }} en retard</span>@endif
@@ -26,7 +26,6 @@
             @else
                 <span class="text-[#5B677A]">Aucun tour de rôle en cours.</span>
             @endif
-            <span class="text-[#5B677A]"> · {{ $jour['chiffres']['publiees_mois'] }}/{{ $jour['chiffres']['prevues_mois'] }} publiées ce mois-ci</span>
         </p>
 
         <div class="grid gap-4 xl:grid-cols-2">
@@ -44,9 +43,13 @@
 
         @if ($jour['retards'])
             <p class="mb-1.5 mt-4 flex items-center gap-1.5 text-[12px] font-bold text-accent"><x-ui.icon name="alert-circle" class="size-3.5" /> En retard</p>
-            @foreach ($jour['retards'] as $p)
-                @include('livewire.admin.partials.publication-ligne', ['p' => $p, 'styleStatut' => $styleStatut, 'compact' => false, 'lienEdition' => true])
+            {{-- Allégé : les trois plus anciens, le reste dans le calendrier. --}}
+            @foreach (array_slice($jour['retards'], 0, 3) as $p)
+                @include('livewire.admin.partials.publication-ligne', ['p' => $p, 'styleStatut' => $styleStatut, 'compact' => true, 'lienEdition' => true])
             @endforeach
+            @if ($jour['chiffres']['retards'] > 3)
+                <a href="{{ route('admin.calendrier-editorial', ['statut' => 'retard']) }}" wire:navigate class="mt-1 inline-block text-[12px] font-bold text-accent hover:underline">Voir les {{ $jour['chiffres']['retards'] }} publications en retard</a>
+            @endif
         @endif
     @endif
 </section>

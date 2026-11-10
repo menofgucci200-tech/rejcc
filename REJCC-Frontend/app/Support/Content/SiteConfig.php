@@ -46,13 +46,14 @@ class SiteConfig
     }
 
     /**
-     * Liens de la barre de navigation : l'essentiel seulement. Les autres pages
-     * (domaines, projets, emplois, galerie, partenaires) restent dans le pied de
-     * page et dans le menu mobile.
+     * Liens de la barre de navigation : l'essentiel seulement (6 liens, pour tenir
+     * à 1280 px à côté des boutons). Les autres pages (domaines, projets, emplois,
+     * galerie, partenaires, contact) restent dans le pied de page et dans le menu
+     * mobile (« Aussi sur le site »).
      */
     public static function navPrincipale(): array
     {
-        $garder = ['/', '/a-propos', '/activites', '/evenements', '/actualites', '/contact'];
+        $garder = ['/', '/a-propos', '/activites', '/evenements', '/actualites', '/cathoimpact'];
 
         return array_values(array_filter(self::nav(), fn ($i) => in_array($i['href'], $garder, true)));
     }

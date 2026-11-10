@@ -22,6 +22,7 @@
     @endphp
 
     <div class="mx-auto max-w-[1280px] px-4 py-6 sm:px-8 sm:py-8">
+        <x-admin-light.onglets groupe="ressources" />
         {{-- ── Repères de la charte ───────────────────────────────────── --}}
         <div class="mb-4">
             <h2 class="mb-1 text-[17px] font-bold text-brand">Repères de la charte</h2>

@@ -40,19 +40,17 @@ class AdminNav
             ['label' => 'Réglages du site', 'icon' => 'settings', 'route' => 'admin.reglages'],
         ]],
         ['label' => 'Communication', 'icon' => 'megaphone', 'items' => [
-            // Ordre de travail de la Com : planifier, traiter, produire, diffuser, mesurer.
-            ['label' => 'Calendrier éditorial', 'icon' => 'calendar-days', 'route' => 'admin.calendrier-editorial'],
-            ['label' => 'Demandes des départements', 'icon' => 'send', 'route' => 'admin.demandes-communication'],
+            // Ordre de travail de la Com : planifier, traiter, produire, puis les ressources et la mesure.
+            // « Ressources » et « Statistiques » regroupent plusieurs pages (barre d'onglets commune,
+            // voir ONGLETS) : l'entrée du menu est active sur chacune d'elles.
+            ['label' => 'Calendrier', 'icon' => 'calendar-days', 'route' => 'admin.calendrier-editorial'],
+            ['label' => 'Demandes', 'icon' => 'send', 'route' => 'admin.demandes-communication'],
             ['label' => 'CathoImpact', 'icon' => 'sparkles', 'route' => 'admin.cathoimpact'],
-            ['label' => 'Générateur de visuels', 'icon' => 'image', 'route' => 'admin.visuels'],
-            ['label' => 'Textes prêts à copier', 'icon' => 'file-text', 'route' => 'admin.textes'],
-            ['label' => 'Boîte à outils de marque', 'icon' => 'gem', 'route' => 'admin.marque'],
-            ['label' => 'Contacts médias', 'icon' => 'id-card', 'route' => 'admin.contacts-medias'],
-            ['label' => 'Statistiques du site', 'icon' => 'bar-chart', 'route' => 'admin.statistiques-site'],
-            ['label' => 'Liens de suivi', 'icon' => 'link', 'route' => 'admin.liens-suivi'],
-            ['label' => 'Bilan mensuel', 'icon' => 'list-checks', 'route' => 'admin.bilan-communication'],
-            // Ouvert à tout compte du dashboard (aucune rubrique requise).
-            ['label' => 'Mes demandes de communication', 'icon' => 'megaphone', 'route' => 'admin.mes-demandes-communication'],
+            ['label' => 'Créer un visuel', 'icon' => 'image', 'route' => 'admin.visuels'],
+            ['label' => 'Ressources', 'icon' => 'folder-open', 'route' => 'admin.textes', 'actif' => ['admin.textes', 'admin.marque', 'admin.contacts-medias']],
+            ['label' => 'Statistiques', 'icon' => 'bar-chart', 'route' => 'admin.statistiques-site', 'actif' => ['admin.statistiques-site', 'admin.liens-suivi', 'admin.bilan-communication']],
+            // « Mes demandes de communication » n'est plus dans le menu : bouton
+            // « Demander une communication » de la barre du haut (comptes hors Com).
         ]],
         ['label' => 'Support & système', 'icon' => 'settings', 'items' => [
             ['label' => 'Contacts', 'icon' => 'message-circle', 'route' => 'admin.contacts'],
@@ -69,20 +67,73 @@ class AdminNav
         'admin.apprenants' => ['Activité réseau', 'Formations', 'admin.formations'],
         'admin.inscription' => ['Membres', 'Comptes membres', 'admin.members'],
         'admin.evenements.pointage' => ['Activité réseau', 'Événements', 'admin.evenements'],
+        // Onglets de « Ressources » et de « Statistiques » (la première page porte l'entrée du menu).
+        'admin.marque' => ['Communication', 'Ressources', 'admin.textes'],
+        'admin.contacts-medias' => ['Communication', 'Ressources', 'admin.textes'],
+        'admin.liens-suivi' => ['Communication', 'Statistiques', 'admin.statistiques-site'],
+        'admin.bilan-communication' => ['Communication', 'Statistiques', 'admin.statistiques-site'],
     ];
 
-    /** Groupes visibles par l'admin connecté (sections autorisées seulement). */
+    /**
+     * Pages regroupées sous une seule entrée du menu, affichées avec une barre
+     * d'onglets commune (x-admin-light.onglets). Chaque onglet garde sa route :
+     * les liens des e-mails et les favoris continuent de marcher.
+     */
+    public const ONGLETS = [
+        'ressources' => [
+            ['label' => 'Textes prêts à copier', 'icon' => 'file-text', 'route' => 'admin.textes'],
+            ['label' => 'Boîte à outils de marque', 'icon' => 'gem', 'route' => 'admin.marque'],
+            ['label' => 'Contacts médias', 'icon' => 'id-card', 'route' => 'admin.contacts-medias'],
+        ],
+        'statistiques' => [
+            ['label' => 'Statistiques du site', 'icon' => 'globe', 'route' => 'admin.statistiques-site'],
+            ['label' => 'Liens de suivi', 'icon' => 'link', 'route' => 'admin.liens-suivi'],
+            ['label' => 'Bilan mensuel', 'icon' => 'list-checks', 'route' => 'admin.bilan-communication'],
+        ],
+    ];
+
+    /**
+     * Ordre des groupes du menu par département du Bureau : le groupe de son
+     * travail d'abord. Les groupes non cités suivent, dans l'ordre de GROUPES.
+     * Les autres comptes gardent l'ordre de GROUPES (leurs permissions
+     * masquent déjà les groupes qui ne les concernent pas).
+     */
+    public const ORDRE_GROUPES = [
+        'communication' => ['Communication', 'Activité réseau', 'Contenu du site'],
+    ];
+
+    /**
+     * Entrées retirées du MENU d'un département (pas de ses droits : les
+     * pages restent ouvertes par leur adresse). La Com garde la permission
+     * « contenu » pour les Réglages du site, sans Pages, Blocs ni Pages légales.
+     */
+    public const MASQUES = [
+        'communication' => ['admin.pages', 'admin.contenu', 'admin.legal'],
+    ];
+
+    /** Routes sur lesquelles une entrée du menu est active (elle-même et ses onglets). */
+    public static function routesActives(array $item): array
+    {
+        return $item['actif'] ?? [$item['route']];
+    }
+
+    /** Groupes visibles par l'admin connecté (sections autorisées, entrées masquées du département retirées). */
     public static function groupes(): array
     {
         $user = session('api_user');
+        $departement = Espace::departement($user);
+        $masques = self::MASQUES[$departement] ?? [];
+        $ordre = array_flip(self::ORDRE_GROUPES[$departement] ?? []);
 
         return collect(self::GROUPES)
-            ->map(function (array $g) use ($user) {
-                $g['items'] = array_values(array_filter($g['items'], fn ($i) => AdminSections::allowedRoute($user, $i['route'])));
+            ->map(function (array $g) use ($user, $masques) {
+                $g['items'] = array_values(array_filter($g['items'], fn ($i) => AdminSections::allowedRoute($user, $i['route']) && ! in_array($i['route'], $masques, true)));
 
                 return $g;
             })
             ->filter(fn ($g) => $g['items'] !== [])
+            // Tri stable : groupes du département dans son ordre, puis les autres dans l'ordre habituel.
+            ->sortBy(fn ($g, $i) => ($ordre[$g['label']] ?? 100) * 1000 + $i)
             ->values()
             ->all();
     }

@@ -170,6 +170,72 @@ class CathoImpact extends Component
         }
     }
 
+    /** Parcours logique d'une réponse : statut => étape suivante. */
+    public const ETAPE_SUIVANTE = [
+        'recu' => 'retenu',
+        'retenu' => 'questionnaire_envoye',
+        'questionnaire_envoye' => 'questionnaire_rempli',
+        'questionnaire_rempli' => 'attribue',
+        'attribue' => 'en_creation',
+        'en_creation' => 'publie',
+    ];
+
+    /** Ce que l'étape demande avant d'y passer : [propriété, message si vide]. */
+    public const SAISIE_ETAPE = [
+        'questionnaire_envoye' => ['lienQuestionnaire', 'Collez le lien du Google Form envoyé à la personne.'],
+        'attribue' => ['cm', 'Choisissez le community manager.'],
+        'publie' => ['lienPublication', 'Collez le lien de la publication.'],
+    ];
+
+    /** Ce qu'il reste à faire une fois l'étape franchie (message de confirmation). */
+    private const APRES_ETAPE = [
+        'retenu' => 'Envoyez maintenant le questionnaire détaillé (Google Form).',
+        'questionnaire_envoye' => 'Passez à l\'étape suivante dès que le questionnaire est rempli.',
+        'questionnaire_rempli' => 'Attribuez maintenant la création à un community manager.',
+        'attribue' => 'Passez « en création » quand le travail commence.',
+        'en_creation' => 'Une fois publié, collez le lien de la publication.',
+        'publie' => 'Ajoutez-la maintenant à la galerie du site.',
+    ];
+
+    /** « Passer à l'étape suivante » : avance d'un statut, avec la saisie que l'étape demande. */
+    public function etapeSuivante(): void
+    {
+        $f = $this->fiche();
+        $suivante = $f ? (self::ETAPE_SUIVANTE[$f['statut']] ?? null) : null;
+        if (! $suivante) {
+            return;
+        }
+        if ([$champ, $msg] = self::SAISIE_ETAPE[$suivante] ?? null) {
+            if (trim((string) $this->{$champ}) === '' || ($champ === 'cm' && $this->cm === 'libre' && trim($this->cmLibre) === '')) {
+                $this->addError($champ === 'cm' ? 'cm' : $champ, $msg);
+
+                return;
+            }
+        }
+        $this->statut = $suivante;
+        $this->enregistrer();
+        if ($this->message) {
+            $libelle = $this->fiche()['statut_label'] ?? $suivante;
+            $this->message = "Étape franchie : « {$libelle} ». ".self::APRES_ETAPE[$suivante];
+            $this->dispatch('rj-toast', type: 'success', message: $this->message);
+        }
+    }
+
+    /** Après la publication : carte de la galerie préremplie (nom, lien, candidature) ; il reste l'image. */
+    public function ajouterALaGalerie(int $id): void
+    {
+        $f = $this->fiche();
+        $this->onglet = 'galerie';
+        $this->nouvelleCarte();
+        if ($f && $f['id'] === $id) {
+            $this->carteNom = $f['nom_complet'];
+            $this->carteLien = (string) ($f['lien_publication'] ?? '');
+            $this->carteCandidature = (string) $f['id'];
+            $this->carteAccroche = (string) ($f['entreprise'] ?? '');
+        }
+        $this->message = 'Carte préremplie : ajoutez une image, puis enregistrez.';
+    }
+
     public function supprimer(int $id): void
     {
         $r = Api::delete("/admin/cathoimpact/{$id}", Api::token());

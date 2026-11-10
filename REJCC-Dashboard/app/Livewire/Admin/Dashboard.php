@@ -13,6 +13,14 @@ class Dashboard extends Component
 {
     public int $periode = 6;
 
+    /** Un compte de département a un seul accueil : son espace (la vue d'ensemble ne le concerne pas). */
+    public function mount()
+    {
+        if ($slug = \App\Support\Espace::departement(session('api_user'))) {
+            return $this->redirectRoute('departements.show', $slug, navigate: true);
+        }
+    }
+
     public function setPeriode(int $mois): void
     {
         $this->periode = $mois;

@@ -1,29 +1,28 @@
-@props(['title' => 'Tableau de bord'])
+@props(['title' => 'Tableau de bord', 'onglets' => true])
 
 {{-- Barre du haut de l'espace membre : fil d'Ariane (rubrique › page),
-     recherche (Ctrl+K), notifications et menu du compte. --}}
+     recherche (Ctrl+K), notifications et menu du compte. Sur les pages d'un
+     groupe du menu (Formations, Réseau, Opportunités), la barre d'onglets du
+     groupe suit juste en dessous. --}}
 @php
     $user = \App\Support\Api::user();
     $estMentor = ($user->role ?? null) === 'mentor';
     $route = \App\Support\RouteCourante::nom();
 
-    // Rubrique de la page courante, et page parente pour les pages de détail.
-    $rubriques = [
-        'carte' => 'Mon parcours', 'formations' => 'Mon parcours', 'catalogue' => 'Mon parcours', 'parcours' => 'Mon parcours', 'certificats' => 'Mon parcours',
-        'communaute' => 'Réseau', 'mentorat' => 'Réseau', 'directory' => 'Réseau', 'groupes' => 'Réseau', 'messaging' => 'Réseau', 'evenements' => 'Réseau',
-        'marketplace' => 'Opportunités', 'projets' => 'Opportunités', 'emplois' => 'Opportunités',
-        'documents' => 'Ressources',
-        'profile' => 'Mon compte', 'abonnement' => 'Mon compte', 'notifications' => 'Mon compte',
-    ];
+    // Rubrique de la page courante (groupe du menu), et page parente pour les pages de détail.
     $parents = [
         'espace-membre.formations.detail' => ['Mes formations', 'espace-membre.formations'],
         'espace-membre.catalogue.fiche' => ['Catalogue', 'espace-membre.catalogue'],
-        'espace-membre.parcours.detail' => ['Mes parcours', 'espace-membre.parcours'],
+        'espace-membre.parcours.detail' => ['Parcours', 'espace-membre.parcours'],
         'espace-membre.mentorat.suivi' => ['Mentorat', 'espace-membre.mentorat'],
         'espace-membre.groupes.membres' => ['Groupes sectoriels', 'espace-membre.groupes'],
     ];
-    $segment = explode('.', $route)[1] ?? '';
-    $rubrique = $rubriques[$segment] ?? null;
+    $rubrique = \App\Support\MenuMembre::rubrique($route);
+    // Barre d'onglets du groupe sur ses pages principales (les pages de détail ont le fil d'Ariane).
+    $groupe = $onglets ? \App\Support\MenuMembre::groupeCourant() : null;
+    if ($groupe && ! collect($groupe['onglets'])->contains('route', $route)) {
+        $groupe = null;
+    }
     $parent = $parents[$route] ?? null;
     $initiales = mb_strtoupper(mb_substr($user->prenom ?? '', 0, 1).mb_substr($user->nom ?? '', 0, 1));
 @endphp
@@ -98,3 +97,7 @@
         </div>
     </div>
 </header>
+
+@if ($groupe)
+    <x-member-light.onglets :groupe="$groupe" />
+@endif

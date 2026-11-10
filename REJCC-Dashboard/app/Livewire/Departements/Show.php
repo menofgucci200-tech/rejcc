@@ -6,12 +6,9 @@ use App\Support\AdminNav;
 use App\Support\AdminSections;
 use App\Support\Api;
 use App\Support\Espace;
-use App\Support\StatistiquesSite;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
-use Livewire\Attributes\On;
 use Livewire\Component;
 
 /**
@@ -142,33 +139,6 @@ class Show extends Component
         }
     }
 
-    /** « Marquer publié » dans le bloc calendrier : les chiffres du cockpit se recalculent. */
-    #[On('publication-publiee')]
-    public function rafraichirCockpit(): void {}
-
-    /**
-     * Cockpit de la Communication : chiffres du mois et « À traiter » (API,
-     * /admin/communication/cockpit), visites du site (fichiers de mesure
-     * partagés, gardés 60 s en cache) et outils de la Com dans l'ordre du menu.
-     */
-    private function cockpitCommunication(): ?array
-    {
-        $r = Api::get('/admin/communication/cockpit', [], Api::token());
-        if (! ($r['ok'] ?? false)) {
-            return null;
-        }
-        $visites = rescue(fn () => Cache::remember('cockpit-com-visites-'.now()->format('Y-m'), 60,
-            fn () => collect(StatistiquesSite::mois(now()->year, now()->month))->only(['visiteurs', 'pages_vues', 'evolution', 'jours_mesures'])->all()), null, false);
-
-        // Outils de la Communication : le groupe « Communication » du menu, sauf « Mes demandes ».
-        $acces = collect(collect(AdminNav::GROUPES)->firstWhere('label', 'Communication')['items'] ?? [])
-            ->filter(fn ($i) => (AdminSections::ROUTES[$i['route']] ?? null) === 'communication')
-            ->filter(fn ($i) => AdminSections::allowedRoute(session('api_user'), $i['route']))
-            ->values()->all();
-
-        return $r + ['visites' => $visites, 'acces' => $acces];
-    }
-
     public function render()
     {
         $departement = collect(Api::get('/admin/departements', [], Api::token())['departements'] ?? [])->firstWhere('slug', $this->slug);
@@ -191,19 +161,16 @@ class Show extends Component
             ? Api::get('/admin/formations-live/cockpit', [], Api::token())
             : null;
 
-        // Cockpit de l'espace Communication : chiffres du mois, « À traiter », accès rapides.
-        $cockpitCom = $this->slug === 'communication' && AdminSections::allowed(session('api_user'), 'communication')
-            ? $this->cockpitCommunication()
-            : null;
+        // Accueil de la Communication : composant Departements\CockpitCommunication.
+        $espaceCom = $this->slug === 'communication' && AdminSections::allowed(session('api_user'), 'communication');
 
         return view('livewire.departements.show', [
-            'cockpitCom' => $cockpitCom,
+            'espaceCom' => $espaceCom,
             'cockpit' => ($cockpit['ok'] ?? false) ? $cockpit : null,
             'resultats' => $resultats,
             'sectionsDisponibles' => AdminSections::SECTIONS,
             'departement' => $departement,
-            // Sur l'espace Communication, les outils de la Com sont dans « Accès rapides ».
-            'rubriques' => $cockpitCom ? $rubriques->reject(fn ($r) => in_array($r['route'], array_column($cockpitCom['acces'], 'route'), true))->values() : $rubriques,
+            'rubriques' => $rubriques,
             'pastilles' => AdminNav::pastilles(),
             'adminGeneral' => Espace::adminGeneral(session('api_user')),
         ]);

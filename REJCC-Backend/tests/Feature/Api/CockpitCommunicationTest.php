@@ -108,6 +108,18 @@ class CockpitCommunicationTest extends TestCase
             ->assertJsonPath('a_traiter.demandes.0.id', $urgente) // la plus proche d'abord
             ->assertJsonPath('a_traiter.demandes.0.urgente', true);
         $this->assertGreaterThanOrEqual(1, $r->json('chiffres.nouveaux_membres'));
+        // Semaine prochaine vide : l'accueil propose de la planifier.
+        $r->assertJsonPath('chiffres.publications_semaine_prochaine', 0)->assertJsonPath('semaine_prochaine', now()->startOfWeek()->addWeek()->toDateString());
+        // Résultats CathoImpact de l'accueil.
+        $r->assertJsonPath('cathoimpact.recues', 2)->assertJsonPath('cathoimpact.a_examiner', 2)
+            ->assertJsonPath('cathoimpact.en_cours', 0)->assertJsonPath('cathoimpact.publiees', 0)
+            ->assertJsonCount(2, 'cathoimpact.dernieres')->assertJsonPath('cathoimpact.dernieres.0.nom_complet', 'Jean Yao');
+        CathoImpactCandidature::where('nom_complet', 'Jean Yao')->update(['statut' => 'en_creation']);
+        CommunicationPublication::create(['date' => now()->startOfWeek()->addWeek()->addDays(2)->toDateString(), 'titre' => 'Semaine prochaine', 'type' => 'autre', 'statut' => 'prevu']);
+        $this->withToken($this->tokenFor($com))->getJson('/api/admin/communication/cockpit')->assertOk()
+            ->assertJsonPath('cathoimpact.a_examiner', 1)->assertJsonPath('cathoimpact.en_cours', 1)
+            ->assertJsonPath('cathoimpact.dernieres.0.statut_label', 'En création')
+            ->assertJsonPath('chiffres.publications_semaine_prochaine', 1);
         // Pas d'abonnés newsletter ni d'abonnés par réseau.
         $this->assertArrayNotHasKey('abonnes_newsletter', $r->json('chiffres'));
     }
@@ -199,7 +211,8 @@ class CockpitCommunicationTest extends TestCase
         $this->withToken($token)->getJson('/api/admin/cathoimpact/resume')->assertOk()
             ->assertJsonPath('chiffres.recus_mois', 1)->assertJsonPath('chiffres.a_traiter', 1)->assertJsonCount(1, 'dernieres');
         $this->withToken($token)->getJson('/api/admin/communication/cockpit')->assertOk()
-            ->assertJsonPath('chiffres.cathoimpact.recues', 1)->assertJsonPath('a_traiter.cathoimpact.0.nom_complet', 'Essai Testeur');
+            ->assertJsonPath('chiffres.cathoimpact.recues', 1)->assertJsonPath('a_traiter.cathoimpact.0.nom_complet', 'Essai Testeur')
+            ->assertJsonPath('cathoimpact.recues', 1)->assertJsonCount(1, 'cathoimpact.dernieres')->assertJsonPath('cathoimpact.dernieres.0.id', $sienne);
         $this->withToken($token)->getJson('/api/admin/communication/bilan')->assertOk()->assertJsonPath('cathoimpact.recues', 1);
         $pastille = collect($this->withToken($token)->getJson('/api/admin/a-traiter')->json('elements'))->firstWhere('cle', 'cathoimpact');
         $this->assertSame(1, $pastille['nombre']);

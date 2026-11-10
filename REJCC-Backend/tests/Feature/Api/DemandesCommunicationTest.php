@@ -312,6 +312,28 @@ class DemandesCommunicationTest extends TestCase
         $this->assertNull(collect($this->withToken($this->tokenFor($f))->getJson('/api/admin/a-traiter')->json('elements'))->firstWhere('cle', 'demandes_communication'));
     }
 
+    public function test_planifier_une_demande_nouvelle_vaut_acceptation_avec_un_seul_e_mail(): void
+    {
+        Mail::fake();
+        $f = $this->compteFormation(['email' => 'demandeur@rejcc.site']);
+        $id = $this->deposer($f)->json('demande.id');
+        $token = $this->tokenFor($this->compteCom());
+        Mail::fake(); // on ne compte que les e-mails de la planification
+
+        $this->withToken($token)->postJson("/api/admin/demandes-communication/{$id}/planifier", ['date' => now()->addDays(12)->toDateString()])->assertOk()
+            ->assertJsonPath('demande.statut', 'planifiee');
+        $d = \App\Models\DemandeCommunication::find($id);
+        // L'acceptation est inscrite à l'historique, juste avant la planification.
+        $this->assertSame(['nouvelle', 'acceptee', 'planifiee'], collect($d->historique)->where('type', 'statut')->pluck('statut')->values()->all());
+        Mail::assertSent(DemandeCommunicationSuivi::class, 1);
+        Mail::assertSent(DemandeCommunicationSuivi::class, fn ($m) => $m->hasTo('demandeur@rejcc.site') && $m->evenement === 'planifiee');
+
+        // Une demande refusée ne se planifie pas.
+        $refusee = $this->deposer($f)->json('demande.id');
+        $this->withToken($token)->putJson("/api/admin/demandes-communication/{$refusee}/statut", ['statut' => 'refusee', 'motif' => 'Hors périmètre.'])->assertOk();
+        $this->withToken($token)->postJson("/api/admin/demandes-communication/{$refusee}/planifier", ['date' => now()->addDays(12)->toDateString()])->assertStatus(422);
+    }
+
     public function test_planifier_cree_la_publication_du_calendrier_editorial(): void
     {
         Mail::fake();
@@ -321,8 +343,6 @@ class DemandesCommunicationTest extends TestCase
         $token = $this->tokenFor($com);
         $date = now()->addDays(16)->toDateString();
 
-        // Pas avant l'acceptation.
-        $this->withToken($token)->postJson("/api/admin/demandes-communication/{$id}/planifier", ['date' => $date])->assertStatus(422);
         $this->withToken($token)->putJson("/api/admin/demandes-communication/{$id}/statut", ['statut' => 'acceptee'])->assertOk();
         $r = $this->withToken($token)->postJson("/api/admin/demandes-communication/{$id}/planifier", ['date' => $date, 'heure' => '18:30', 'responsable_id' => $com->id])->assertOk()
             ->assertJsonPath('demande.statut', 'planifiee')

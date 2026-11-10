@@ -18,20 +18,25 @@
     $icones = ['instagram', 'linkedin', 'facebook', 'tiktok', 'youtube'];
 @endphp
 
-<x-site-layout title="CathoImpact : des parcours qui inspirent" description="CathoImpact met en avant des entrepreneurs et des professionnels catholiques au parcours inspirant. Racontez votre histoire au REJCC en répondant au questionnaire.">
+<x-site-layout title="CathoImpact : des parcours qui inspirent" description="CathoImpact met en avant des entrepreneurs et des professionnels catholiques au parcours inspirant. Racontez votre histoire au REJCC en répondant au questionnaire."
+    :image="asset('brand/cathoimpact-partage.jpg')" :image-large="true" image-alt="Carrousel CathoImpact : portraits d'entrepreneurs catholiques au parcours inspirant">
     <x-page-header eyebrow="Portraits inspirants" crumb="CathoImpact">
         Catho<span class="font-serif italic normal-case text-azure">Impact</span>
     </x-page-header>
 
-    <section class="bg-white py-14 sm:py-20">
+    <section class="bg-white py-10 sm:py-20">
         <x-ui.container>
             <div class="mx-auto max-w-2xl text-center">
-                <p class="text-pretty text-lg leading-relaxed text-ink/80">
+                <p class="text-pretty text-base leading-relaxed text-ink/80 sm:text-lg">
                     CathoImpact est une série de carrousels qui met en lumière des entrepreneurs, des dirigeants, des cadres et des professionnels catholiques&nbsp;: de leurs débuts modestes aux défis surmontés, jusqu'à la réussite.
                 </p>
-                <p class="mt-4 text-pretty text-lg leading-relaxed text-ink/80">
+                <p class="mt-4 text-pretty text-base leading-relaxed text-ink/80 sm:text-lg">
                     Ces parcours montrent que la foi, l'excellence professionnelle et la réussite concrète peuvent aller de pair. Le vôtre peut en inspirer d'autres.
                 </p>
+                {{-- Bouton visible dès l'arrivée, sans défiler (téléphone compris). --}}
+                <div class="mt-6 sm:mt-7">
+                    <x-ui.button :href="route('cathoimpact.questionnaire')" wire:navigate size="lg" :withArrow="true" data-test="cathoimpact-repondre">Répondre au questionnaire</x-ui.button>
+                </div>
             </div>
 
             <div class="mx-auto mt-10 w-full max-w-[440px]" role="group" aria-roledescription="carrousel" aria-label="Exemple de carrousel CathoImpact"
@@ -76,9 +81,6 @@
                 </div>
             </div>
 
-            <div class="mt-8 text-center">
-                <x-ui.button :href="route('cathoimpact.questionnaire')" wire:navigate size="lg" :withArrow="true" data-test="cathoimpact-repondre">Répondre au questionnaire</x-ui.button>
-            </div>
         </x-ui.container>
     </section>
 
@@ -114,4 +116,28 @@
             </x-ui.container>
         </section>
     @endif
+
+    {{-- Rappel du déroulé, puis l'action. --}}
+    <section class="bg-white py-14 sm:py-20" data-test="cathoimpact-etapes">
+        <x-ui.container>
+            <x-ui.section-heading eyebrow="Votre portrait" title="Comment ça marche ?" />
+            <ol class="mx-auto mt-10 grid max-w-5xl gap-4 sm:grid-cols-3 sm:gap-6">
+                @foreach ([
+                    ['Je réponds au questionnaire', 'Quelques questions simples sur votre parcours, en quelques minutes.'],
+                    ['La Communication me recontacte', 'Si votre parcours est retenu, l\'équipe vous contacte pour préparer le portrait.'],
+                    ['Mon portrait est publié', 'Il est diffusé sur nos réseaux sociaux et sur le site du REJCC.'],
+                ] as $n => [$titre, $texte])
+                    <li class="rounded-2xl border border-brand/10 bg-cloud p-6">
+                        <span class="font-display text-4xl leading-none text-brand/20 tabular-nums">0{{ $n + 1 }}</span>
+                        <h3 class="mt-3 font-display text-xl uppercase tracking-tight text-brand">{{ $titre }}</h3>
+                        <span class="mt-3 block h-0.5 w-8 bg-accent"></span>
+                        <p class="mt-3 text-pretty text-sm leading-relaxed text-ink/75">{{ $texte }}</p>
+                    </li>
+                @endforeach
+            </ol>
+            <div class="mt-10 text-center">
+                <x-ui.button :href="route('cathoimpact.questionnaire')" wire:navigate size="lg" :withArrow="true">Répondre au questionnaire</x-ui.button>
+            </div>
+        </x-ui.container>
+    </section>
 </x-site-layout>

@@ -31,6 +31,15 @@
 
     <div class="flex-1"></div>
 
+    {{-- Demande à la Communication, depuis n'importe quelle page (pas pour la Com elle-même). --}}
+    @if (\App\Support\Espace::departement(session('api_user')) !== 'communication')
+        <a href="{{ route('admin.mes-demandes-communication', ['nouvelle' => 1]) }}" wire:navigate data-test="demander-communication" title="Demander une communication"
+            class="btn-tap inline-flex size-10 shrink-0 items-center justify-center gap-1.5 rounded-[10px] bg-brand text-[12.5px] font-bold text-white transition-colors hover:bg-brand/90 xl:size-auto xl:h-10 xl:px-3.5">
+            <x-ui.icon name="megaphone" class="size-[18px] shrink-0" />
+            <span class="sr-only xl:not-sr-only">+ Demander une communication</span>
+        </a>
+    @endif
+
     <livewire:admin.admin-search />
 
     {{-- Cloche « À traiter » --}}

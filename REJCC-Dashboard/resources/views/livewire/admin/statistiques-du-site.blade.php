@@ -22,6 +22,7 @@
     <x-admin-light.topbar title="Statistiques du site" />
 
     <div class="mx-auto max-w-[1280px] px-4 py-8 sm:px-8">
+        <x-admin-light.onglets groupe="statistiques" />
         <div class="mb-5 flex flex-wrap items-end justify-between gap-4">
             <div>
                 <h2 class="mb-1 text-[17px] font-bold text-brand">Audience de rejcc.site</h2>

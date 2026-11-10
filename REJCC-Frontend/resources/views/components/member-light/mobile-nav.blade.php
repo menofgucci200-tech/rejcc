@@ -7,7 +7,11 @@
         ['label' => 'Événements', 'icon' => 'calendar-days', 'route' => 'espace-membre.evenements'],
     ];
 
-    $isActive = fn (array $item) => request()->routeIs($item['route'].'*');
+    // « Formations » reste actif sur tout son groupe (catalogue, parcours, certificats…).
+    $groupeFormations = collect(\App\Support\MenuMembre::entrees())->firstWhere('cle', 'formations');
+    $isActive = fn (array $item) => $item['route'] === 'espace-membre.formations'
+        ? (bool) ($groupeFormations['active'] ?? false)
+        : request()->routeIs($item['route'].'*');
     $noneActive = collect($tabs)->every(fn ($item) => ! $isActive($item));
 @endphp
 

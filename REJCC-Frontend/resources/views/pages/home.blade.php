@@ -7,6 +7,7 @@
     @if (SiteRemote::visible('home', 'about')) <x-sections.about /> @endif
     @if (SiteRemote::visible('home', 'video')) <x-sections.video-embed /> @endif
     @if (SiteRemote::visible('home', 'stats')) <x-sections.stats /> @endif
+    @if (SiteRemote::visible('home', 'cathoimpact')) <x-sections.cathoimpact /> @endif
     @if (SiteRemote::visible('home', 'why-join')) <x-sections.why-join /> @endif
     @if (SiteRemote::visible('home', 'values')) <x-sections.values /> @endif
     @if (SiteRemote::visible('home', 'domains-preview')) <x-sections.domains-preview /> @endif

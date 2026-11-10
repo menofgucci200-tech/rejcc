@@ -5,11 +5,22 @@ namespace App\Livewire\Member;
 use App\Support\Api;
 use App\Support\Content\DailyWord;
 use App\Support\ProfileCompletion;
+use App\Support\Quand;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
+/**
+ * Accueil de l'espace membre, en trois niveaux :
+ *  1. « À faire maintenant » : au plus 3 actions personnalisées, chacune avec
+ *     son bouton (participer à l'événement du jour, confirmer une séance de
+ *     mentorat, lire ses messages, reprendre sa formation, compléter son
+ *     profil, s'inscrire au prochain événement…) ;
+ *  2. mes formations et mes événements, côte à côte ;
+ *  3. le reste, allégé : parole du jour, membres du réseau, « Ma progression »
+ *     (badges et défis) et activité récente.
+ */
 #[Layout('layouts.member-light')]
 class Dashboard extends Component
 {
@@ -43,6 +54,22 @@ class Dashboard extends Component
         ];
     }
 
+    /**
+     * Inscription en un clic au prochain événement, depuis « À faire
+     * maintenant ». La confirmation propose la suite (retrouver l'inscription).
+     */
+    public function inscrireEvenement(int $id): void
+    {
+        $r = Api::post("/events/{$id}/inscription", [], Api::token());
+
+        $this->dispatch('rj-toast',
+            message: ($r['ok'] ?? false)
+                ? 'Inscription confirmée ! Vous la retrouvez dans Événements › Mes inscriptions, avec l\'ajout à votre agenda.'
+                : ($r['message'] ?? 'L\'inscription n\'a pas pu aboutir. Réessayez depuis la page Événements.'),
+            type: ($r['ok'] ?? false) ? 'succes' : 'erreur',
+        );
+    }
+
     public function render()
     {
         $token = Api::token();
@@ -64,35 +91,16 @@ class Dashboard extends Component
 
         // Annuaire et messagerie sont réservés aux abonnés (402 sinon) : inutile de les appeler.
         $conversations = Collection::make($abonnementActif ? (Api::get('/messages', [], $token)['conversations'] ?? []) : []);
-        $unreadMessages = $conversations->sum('unread');
-
-        // Les 4 derniers documents publiés (l'API les trie du plus récent au plus ancien).
-        $docs = Collection::make(Api::get('/documents', [], $token)['documents'] ?? [])
-            ->take(4)
-            ->map(function ($d) {
-                $d['ajoute'] = ! empty($d['publie_at'] ?? $d['created_at']) ? Carbon::parse($d['publie_at'] ?? $d['created_at']) : null;
-
-                return (object) $d;
-            })
-            ->values();
+        $unreadMessages = (int) $conversations->sum('unread');
 
         $members = Collection::make($abonnementActif ? (Api::get('/members', [], $token)['members'] ?? []) : [])
             ->reject(fn ($m) => $m['id'] === $user->id)
             ->take(4)->map(fn ($m) => (object) $m);
 
         $events = Collection::make(Api::get('/events', [], $token)['events'] ?? []);
-        // Session en ligne à laquelle je suis inscrit, en cours ou dans les 3 heures : bandeau en tête.
-        $visioDuJour = $events->filter(fn ($e) => ($e['registered'] ?? false) && ($e['en_ligne'] ?? false) && $e['statut'] === 'publie'
-            && ! $e['passe'] && Carbon::parse($e['starts_at'])->isBefore(now()->addHours(3)))
-            ->sortBy('starts_at')->first();
-        $upcomingEvents = $events
-            ->map(function ($e) {
-                $e['starts_at'] = Carbon::parse($e['starts_at']);
-
-                return (object) $e;
-            })
-            ->filter(fn ($e) => $e->starts_at->isFuture())
-            ->sortBy('starts_at')->take(4)->values();
+        $aVenir = $events
+            ->filter(fn ($e) => ($e['statut'] ?? 'publie') === 'publie' && ! ($e['passe'] ?? false))
+            ->sortBy('starts_at')->values();
 
         $formations = Collection::make(Api::get('/my-formations', [], $token)['formations'] ?? []);
 
@@ -103,8 +111,8 @@ class Dashboard extends Component
             ? (int) round($formations->avg(fn ($f) => $f['completed'] ? 100 : (int) $f['progress']))
             : 0;
 
-        // Formation à reprendre : la plus récemment suivie (comme « Mes formations »).
-        $continuer = $formations
+        // Formations en cours, la plus récemment suivie d'abord (comme « Mes formations »).
+        $enCours = $formations
             ->reject(fn ($f) => $f['completed'])
             ->sortByDesc(fn ($f) => $f['derniere_activite'] ?? '')
             ->map(function (array $f) {
@@ -125,27 +133,18 @@ class Dashboard extends Component
                         : route('espace-membre.formations'),
                 ];
             })
-            ->first();
+            ->values();
+        $continuer = $enCours->first();
 
-        // Suggestions : formations du catalogue non encore suivies + prochain événement.
-        $catalogue = Collection::make(Api::get('/formations', [], $token)['formations'] ?? [])
-            ->reject(fn ($f) => $f['enrolled'])
-            ->take(2)
-            ->map(fn ($f) => [
-                'type' => 'Formation',
+        // Formation à commencer : seulement si rien n'est en cours (évite un appel inutile).
+        $aCommencer = null;
+        if (! $continuer) {
+            $f = Collection::make(Api::get('/formations', [], $token)['formations'] ?? [])->first(fn ($f) => ! $f['enrolled']);
+            $aCommencer = $f ? [
                 'titre' => $f['title'],
                 'detail' => $f['category'].($f['is_certifying'] ? ' · certifiante' : ''),
-                'url' => route('espace-membre.catalogue', ['q' => $f['title']]),
-            ]);
-        $recommandations = $catalogue->all();
-        if ($upcomingEvents->isNotEmpty()) {
-            $prochain = $upcomingEvents->first();
-            $recommandations[] = [
-                'type' => 'Événement',
-                'titre' => $prochain->title,
-                'detail' => $prochain->starts_at->translatedFormat('l j F').($prochain->location ? ' · '.$prochain->location : ''),
-                'url' => route('espace-membre.evenements', ['evenement' => $prochain->id]),
-            ];
+                'url' => route('espace-membre.catalogue.fiche', $f['id']),
+            ] : null;
         }
 
         $defis = $this->defis($formations, $events, $completion);
@@ -158,6 +157,7 @@ class Dashboard extends Component
             ->values();
 
         $activites = Collection::make(Api::get('/my-activity', [], $token)['activity'] ?? [])
+            ->take(4)
             ->map(fn (array $a) => [
                 'texte' => $a['text'],
                 'quand' => ucfirst(Carbon::parse($a['at'])->diffForHumans()),
@@ -165,49 +165,138 @@ class Dashboard extends Component
             ])
             ->all();
 
-        if ($unreadMessages > 0) {
-            array_unshift($activites, [
-                'texte' => $unreadMessages > 1
-                    ? "Vous avez {$unreadMessages} nouveaux messages non lus"
-                    : 'Vous avez 1 nouveau message non lu',
-                'quand' => 'À l\'instant',
-                'dot' => '#4F6FBF',
-            ]);
-        }
-
-        if ($activites === []) {
-            $activites[] = [
-                'texte' => 'Bienvenue ! Inscrivez-vous à une formation ou un événement pour démarrer votre parcours.',
-                'quand' => 'Pour commencer',
-                'dot' => '#4F6FBF',
-            ];
-        }
-
         return view('livewire.member.dashboard', [
-            'visioDuJour' => $visioDuJour,
+            'aFaire' => $this->aFaire($aVenir, $prochaineSeance, $unreadMessages, $continuer, $aCommencer, $completion, $champsManquants),
             'completion' => $completion,
             'parole' => DailyWord::today(),
-            'champsManquants' => $champsManquants,
             'abonnementActif' => $abonnementActif,
             'enGrace' => (bool) ($user->subscription_grace ?? false),
             'graceFin' => ! empty($user->subscription_grace_fin) ? Carbon::parse($user->subscription_grace_fin) : null,
             'expireLe' => $expireLe,
             'expireBientot' => $expireBientot,
-            'unreadMessages' => $unreadMessages,
-            'docs' => $docs,
             'members' => $members,
-            'upcomingEvents' => $upcomingEvents,
+            // Les 4 prochains événements, avec « Inscrit » ou l'inscription en un clic.
+            'evenements' => $aVenir->take(4)->values(),
+            'nbInscriptions' => $aVenir->where('registered', true)->count(),
+            'enCours' => $enCours->take(3),
+            'aCommencer' => $aCommencer,
             'defis' => $defis,
             'defisFaits' => collect($defis)->where('fait', true)->count(),
             'badgesParcours' => $badgesParcours,
-            'prochaineSeance' => $prochaineSeance,
             'activites' => $activites,
             'progression' => $progressionMoyenne,
             'formationsTerminees' => $terminees,
             'certificatsObtenus' => $certificats,
             'modulesValides' => (int) $formations->sum(fn ($f) => (int) ($f['modules_done'] ?? 0)),
-            'continuer' => $continuer,
-            'recommandations' => $recommandations,
         ]);
+    }
+
+    /**
+     * Les actions de « À faire maintenant », de la plus urgente à la moins
+     * urgente ; seules les 3 premières sont affichées. Chaque action : icône,
+     * titre, détail, bouton (lien, ou inscription directe à un événement).
+     */
+    protected function aFaire(Collection $aVenir, ?array $seance, int $nonLus, ?array $continuer, ?array $aCommencer, int $completion, array $champsManquants): array
+    {
+        $actions = [];
+
+        // 1. Un événement auquel je suis inscrit a lieu aujourd'hui (ou est en cours).
+        $duJour = $aVenir->first(fn ($e) => ($e['registered'] ?? false)
+            && (($e['en_cours'] ?? false) || Carbon::parse($e['starts_at'])->setTimezone(config('app.timezone'))->isToday()));
+        if ($duJour) {
+            $actions[] = [
+                'cle' => 'participer', 'icon' => ($duJour['en_ligne'] ?? false) ? 'video' : 'calendar-days', 'urgent' => true,
+                'titre' => ($duJour['en_cours'] ?? false) ? 'En ce moment : '.$duJour['title'] : 'Aujourd\'hui : '.$duJour['title'],
+                'detail' => ($duJour['en_cours'] ?? false) ? 'La session a commencé.' : 'Commence '.Quand::delai($duJour['starts_at']).'.',
+                'evenement' => $duJour,
+                'bouton' => ($duJour['en_ligne'] ?? false) ? 'Voir la session' : 'Voir mon billet',
+                'url' => route('espace-membre.evenements', ['evenement' => $duJour['id']]),
+            ];
+        }
+
+        // 2. Une séance de mentorat attend ma confirmation.
+        if ($seance && ($seance['statut'] ?? null) === 'proposee' && ! ($seance['proposee_par_moi'] ?? false)) {
+            $actions[] = [
+                'cle' => 'mentorat', 'icon' => 'hand-heart', 'urgent' => true,
+                'titre' => 'Confirmer votre séance de mentorat',
+                'detail' => ucfirst(Carbon::parse($seance['debut'])->translatedFormat('l j F \à H\hi')).' avec '.$seance['avec'].'.',
+                'bouton' => 'Confirmer la séance',
+                'url' => route('espace-membre.mentorat.suivi', $seance['mentorship_id']),
+            ];
+            $seance = null;
+        }
+
+        // 3. Messages non lus.
+        if ($nonLus > 0) {
+            $actions[] = [
+                'cle' => 'messages', 'icon' => 'message-circle',
+                'titre' => $nonLus > 1 ? "Vous avez {$nonLus} messages non lus" : 'Vous avez 1 message non lu',
+                'detail' => 'Des membres vous ont écrit.',
+                'bouton' => 'Lire mes messages',
+                'url' => route('espace-membre.messaging'),
+            ];
+        }
+
+        // 4. Formation en cours à reprendre.
+        if ($continuer) {
+            $actions[] = [
+                'cle' => 'formation', 'icon' => 'graduation-cap',
+                'titre' => 'Reprendre : '.$continuer['titre'],
+                'detail' => $continuer['module'].' · '.$continuer['pct'].' % fait.',
+                'pct' => $continuer['pct'],
+                'bouton' => 'Reprendre ma formation',
+                'url' => $continuer['url'],
+            ];
+        }
+
+        // 5. Profil incomplet.
+        if ($completion < 100) {
+            $actions[] = [
+                'cle' => 'profil', 'icon' => 'user',
+                'titre' => "Compléter votre profil ({$completion} %)",
+                'detail' => 'Il manque : '.implode(', ', array_slice($champsManquants, 0, 3)).(count($champsManquants) > 3 ? '…' : '.'),
+                'pct' => $completion,
+                'bouton' => 'Compléter mon profil',
+                'url' => route('espace-membre.profile'),
+            ];
+        }
+
+        // 6. Prochain événement ouvert aux inscriptions : inscription en un clic.
+        $prochain = $aVenir->first(fn ($e) => ! ($e['registered'] ?? false) && empty($e['refus']) && ! ($e['en_cours'] ?? false));
+        if ($prochain) {
+            $debut = Carbon::parse($prochain['starts_at'])->setTimezone(config('app.timezone'));
+            $actions[] = [
+                'cle' => 'evenement', 'icon' => 'calendar-days',
+                'titre' => $prochain['title'],
+                'detail' => ucfirst($debut->translatedFormat('l j F \à H\hi')).(($prochain['en_ligne'] ?? false) ? ' · en ligne' : ($prochain['location'] ? ' · '.$prochain['location'] : '')).'.',
+                'bouton' => 'M\'inscrire',
+                'inscrire' => $prochain['id'],
+                'url' => route('espace-membre.evenements', ['evenement' => $prochain['id']]),
+            ];
+        }
+
+        // 7. Séance de mentorat à venir (confirmée ou en attente de l'autre).
+        if ($seance) {
+            $actions[] = [
+                'cle' => 'mentorat', 'icon' => 'hand-heart',
+                'titre' => 'Séance de mentorat '.Quand::delai($seance['debut']),
+                'detail' => ($seance['je_suis'] === 'mentor' ? 'Avec votre mentoré·e ' : 'Avec votre mentor ').$seance['avec'].' · '.($seance['format'] === 'visio' ? 'visio' : 'présentiel').'.',
+                'bouton' => 'Voir la séance',
+                'url' => route('espace-membre.mentorat.suivi', $seance['mentorship_id']),
+            ];
+        }
+
+        // 8. Aucune formation : en commencer une.
+        if ($aCommencer) {
+            $actions[] = [
+                'cle' => 'formation', 'icon' => 'graduation-cap',
+                'titre' => 'Commencer une formation',
+                'detail' => 'Par exemple : '.$aCommencer['titre'].' ('.$aCommencer['detail'].').',
+                'bouton' => 'Découvrir la formation',
+                'url' => $aCommencer['url'],
+            ];
+        }
+
+        return array_slice($actions, 0, 3);
     }
 }

@@ -180,7 +180,9 @@ export function rjPrompt(message, options = {}) {
 
 /* ── Notifications ─────────────────────────────────────────────────── */
 
-export function rjToast(message, { type = 'succes', duree = 4500 } = {}) {
+// action (facultative) : { libelle, url } — la suite logique proposée après l'action (« Créer le visuel »…).
+export function rjToast(message, { type = 'succes', duree = 4500, action = null } = {}) {
+    if (action?.url) duree = Math.max(duree, 8000); // le temps de cliquer sur la suite proposée
     let pile = document.getElementById('rj-toasts');
     if (!pile) {
         pile = document.createElement('div');
@@ -195,7 +197,7 @@ export function rjToast(message, { type = 'succes', duree = 4500 } = {}) {
     t.dataset.test = 'rj-toast';
     t.className = 'rj-toast pointer-events-auto flex w-full max-w-[380px] items-start gap-2.5 rounded-[14px] border border-brand/10 bg-white px-4 py-3 shadow-[0_12px_32px_rgba(3,29,89,.16)]';
     t.innerHTML = `<span class="mt-px shrink-0 ${couleurs[type] ?? couleurs.info}">${svg(type === 'info' ? 'info' : type, 'size-[18px]')}</span>
-        <p class="min-w-0 flex-1 text-[13px] font-semibold leading-snug text-ink">${esc(message)}</p>
+        <div class="min-w-0 flex-1"><p class="text-[13px] font-semibold leading-snug text-ink">${esc(message)}</p>${action?.url ? `<a href="${esc(action.url)}" wire:navigate data-test="rj-toast-action" class="mt-1.5 inline-flex items-center gap-1 rounded-full bg-brand px-3 py-1 text-[12px] font-bold text-white hover:bg-brand/90">${esc(action.libelle ?? 'Continuer')} →</a>` : ''}</div>
         <button type="button" aria-label="Fermer" class="-mr-1 shrink-0 rounded-full p-0.5 text-[#9AA6B8] hover:text-brand"><svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>`;
     const retirer = () => { t.classList.add('rj-toast-sortie'); setTimeout(() => t.remove(), 200); };
     t.querySelector('button').addEventListener('click', retirer);
@@ -330,7 +332,7 @@ document.addEventListener('livewire:init', () => {
 window.addEventListener('rj-toast', (e) => {
     const d = Array.isArray(e.detail) ? e.detail[0] : e.detail;
     const types = { success: 'succes', error: 'erreur', warning: 'erreur' };
-    if (d?.message) rjToast(d.message, { type: types[d.type] ?? d.type ?? 'succes' });
+    if (d?.message) rjToast(d.message, { type: types[d.type] ?? d.type ?? 'succes', action: d.action ?? null });
 });
 
 window.rjConfirm = rjConfirm;

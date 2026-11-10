@@ -29,6 +29,7 @@
     <div class="no-print"><x-admin-light.topbar title="Bilan mensuel" /></div>
 
     <div id="bilan-imprimable" class="mx-auto max-w-[1280px] px-4 py-8 sm:px-8" data-test="bilan-communication">
+        <x-admin-light.onglets groupe="statistiques" />
         {{-- En-tête imprimé --}}
         <div class="bilan-entete-print mb-5 hidden items-center justify-between border-b-[3px] border-accent pb-3">
             <div>

@@ -482,6 +482,10 @@
                                                 @if (! $estAnnonces || $moderateur)
                                                     <button type="button" wire:click="repondre({{ $m['id'] }})" x-on:click="menu = false" data-test="repondre" class="flex w-full items-center gap-2.5 px-4 py-2 font-semibold hover:bg-cloud"><x-ui.icon name="send" class="size-4 text-meta" /> Répondre</button>
                                                 @endif
+                                                @if (! $m['moi'] && ($auteur['id'] ?? null))
+                                                    {{-- Message privé à l'auteur, sans repasser par l'annuaire. --}}
+                                                    <a href="{{ route('espace-membre.messaging', ['to' => $auteur['id']]) }}" wire:navigate data-test="ecrire-en-prive" class="flex w-full items-center gap-2.5 px-4 py-2 font-semibold hover:bg-cloud"><x-ui.icon name="message-circle" class="size-4 text-meta" /> Écrire en privé</a>
+                                                @endif
                                                 @if ($m['peut_epingler'] ?? false)
                                                     <button type="button" wire:click="epingler({{ $m['id'] }}, {{ ($m['epingle'] ?? false) ? 'false' : 'true' }})" x-on:click="menu = false" data-test="epingler" class="flex w-full items-center gap-2.5 px-4 py-2 font-semibold hover:bg-cloud"><span class="w-4 text-center">📌</span> {{ ($m['epingle'] ?? false) ? 'Désépingler' : 'Épingler en haut du salon' }}</button>
                                                 @endif

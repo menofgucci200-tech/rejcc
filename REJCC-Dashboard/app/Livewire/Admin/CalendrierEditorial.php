@@ -105,6 +105,9 @@ class CalendrierEditorial extends Component
         // Ouverture directe d'une publication (lien depuis l'espace du département).
         if ($id = (int) request()->query('publication')) {
             $this->modifier($id);
+        } elseif (request()->query('nouvelle')) {
+            // Ouverture directe en mode création (« Plus d'options » de la fenêtre de l'accueil), à une date éventuelle.
+            $this->nouvelle((string) request()->query('date'));
         }
     }
 
@@ -211,6 +214,10 @@ class CalendrierEditorial extends Component
             $this->erreur = collect($r['errors'] ?? [])->flatten()->first() ?? ($r['message'] ?? "L'enregistrement a échoué.");
 
             return;
+        }
+        if (! $this->editId) {
+            // Suite logique : le visuel de la publication, titre prérempli.
+            $this->dispatch('rj-toast', type: 'success', message: 'Publication planifiée. Créer son visuel ?', action: ['libelle' => 'Créer le visuel', 'url' => route('admin.visuels', ['titre' => trim($this->titre)])]);
         }
         $this->message = $this->editId ? 'Publication modifiée.' : 'Publication ajoutée au calendrier.';
         // Le mois affiché suit la publication enregistrée.

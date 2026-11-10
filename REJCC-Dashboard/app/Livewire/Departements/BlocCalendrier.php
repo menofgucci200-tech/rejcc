@@ -5,6 +5,7 @@ namespace App\Livewire\Departements;
 use App\Support\AdminNav;
 use App\Support\AdminSections;
 use App\Support\Api;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 /**
@@ -26,6 +27,10 @@ class BlocCalendrier extends Component
         // Le cockpit de l'espace (chiffres du mois, pastilles) se met à jour.
         $this->dispatch('publication-publiee');
     }
+
+    /** Publication planifiée ou publiée ailleurs sur l'accueil (fenêtre, priorité du jour) : le bloc se recharge. */
+    #[On('publication-planifiee')]
+    public function rafraichir(): void {}
 
     public function render()
     {

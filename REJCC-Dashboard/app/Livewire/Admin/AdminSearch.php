@@ -38,6 +38,12 @@ class AdminSearch extends Component
                     if (str_contains(Str::lower(Str::ascii($i['label'])), $needle)) {
                         $pages[] = ['titre' => $i['label'], 'detail' => $g['label'], 'icon' => 'arrow-right', 'url' => route($i['route'])];
                     }
+                    // Onglets d'une entrée regroupée (« Ressources », « Statistiques ») : retrouvables par leur nom.
+                    foreach (collect(AdminNav::ONGLETS)->first(fn ($o) => isset($i['actif']) && $o[0]['route'] === $i['route']) ?? [] as $o) {
+                        if ($o['route'] !== $i['route'] && str_contains(Str::lower(Str::ascii($o['label'])), $needle)) {
+                            $pages[] = ['titre' => $o['label'], 'detail' => $g['label'].' · '.$i['label'], 'icon' => 'arrow-right', 'url' => route($o['route'])];
+                        }
+                    }
                 }
             }
             if ($pages) {

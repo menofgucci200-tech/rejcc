@@ -78,6 +78,11 @@ class BilanCommunicationController extends Controller
 
         $reponses = CathoImpact::visibles($me)->where('statut', 'recu')->oldest()->get(['id', 'nom_complet', 'profil', 'entreprise', 'fonction', 'created_at']);
 
+        // Semaine prochaine (lundi → dimanche) : l'accueil suggère de la planifier si elle est vide.
+        $lundi = now()->startOfWeek()->addWeek();
+        $semaineProchaine = CommunicationPublication::whereBetween('date', [$lundi->toDateString(), $lundi->copy()->endOfWeek()->toDateString()])
+            ->where('statut', '!=', 'annule')->count();
+
         return response()->json(['ok' => true,
             'mois' => $debut->format('Y-m'),
             'libelle' => ucfirst($debut->copy()->locale('fr')->isoFormat('MMMM YYYY')),
@@ -92,7 +97,10 @@ class BilanCommunicationController extends Controller
                 'demandes_nouvelles' => $ouvertes->where('statut', 'nouvelle')->count(),
                 'publications_prevues' => (int) ($publications->prevues ?? 0),
                 'publications_publiees' => (int) ($publications->publiees ?? 0),
+                'publications_semaine_prochaine' => $semaineProchaine,
             ],
+            'semaine_prochaine' => $lundi->toDateString(),
+            'cathoimpact' => self::resultatsCathoImpact($me),
             'a_traiter' => [
                 'demandes' => $aTraiter->take(6)->map(fn ($d) => [
                     'id' => $d->id,
@@ -118,6 +126,34 @@ class BilanCommunicationController extends Controller
                 'cathoimpact_total' => $reponses->count(),
             ],
         ]);
+    }
+
+    /**
+     * Résultats CathoImpact de l'accueil : reçues (total et mois), à examiner,
+     * en cours (de « retenu » à « en création »), publiées, et les 3 dernières
+     * candidatures. Comptes de test : les réponses des testeurs seulement.
+     */
+    private static function resultatsCathoImpact(?User $u): array
+    {
+        $parStatut = CathoImpact::visibles($u)->selectRaw('statut, count(*) as nombre')->groupBy('statut')->pluck('nombre', 'statut')->map(fn ($n) => (int) $n);
+        $enCours = ['retenu', 'questionnaire_envoye', 'questionnaire_rempli', 'attribue', 'en_creation'];
+
+        return [
+            'recues' => $parStatut->sum(),
+            'recues_mois' => CathoImpact::visibles($u)->where('created_at', '>=', now()->startOfMonth())->count(),
+            'a_examiner' => $parStatut['recu'] ?? 0,
+            'en_cours' => collect($enCours)->sum(fn ($s) => $parStatut[$s] ?? 0),
+            'publiees' => $parStatut['publie'] ?? 0,
+            'dernieres' => CathoImpact::visibles($u)->latest()->latest('id')->take(3)->get(['id', 'nom_complet', 'entreprise', 'statut', 'created_at'])
+                ->map(fn ($c) => [
+                    'id' => $c->id,
+                    'nom_complet' => $c->nom_complet,
+                    'entreprise' => $c->entreprise,
+                    'statut' => $c->statut,
+                    'statut_label' => CathoImpact::libelleStatut($c->statut),
+                    'created_at' => $c->created_at?->toIso8601String(),
+                ])->values(),
+        ];
     }
 
     /** CathoImpact du mois (comptes de test : leurs propres réponses seulement). */

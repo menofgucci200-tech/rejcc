@@ -278,8 +278,10 @@ class DemandeCommunicationController extends Controller
     public function planifier(Request $request, int $id)
     {
         $d = DemandesCommunication::visibles($request->user())->findOrFail($id);
-        if (! in_array($d->statut, ['acceptee', 'planifiee'], true)) {
-            return response()->json(['ok' => false, 'message' => 'Acceptez d\'abord la demande avant de la planifier.'], 422);
+        // Une demande nouvelle peut être planifiée directement (accueil de la Com) : cela vaut
+        // acceptation, inscrite à l'historique, avec un seul e-mail au demandeur (« planifiée »).
+        if (! in_array($d->statut, ['nouvelle', 'acceptee', 'planifiee'], true)) {
+            return response()->json(['ok' => false, 'message' => 'Cette demande ne peut plus être planifiée.'], 422);
         }
         if (! class_exists(CommunicationPublication::class)) {
             return response()->json(['ok' => false, 'message' => 'Le calendrier éditorial n\'est pas disponible.'], 503);
@@ -327,6 +329,9 @@ class DemandeCommunicationController extends Controller
         $texte = trim((string) ($v['commentaire'] ?? '')) ?: null;
         $d->forceFill(['publication_id' => $publication->id, 'date_publication_prevue' => $v['date']]);
         $etaitPlanifiee = $d->statut === 'planifiee';
+        if ($d->statut === 'nouvelle') {
+            $d->changerStatut('acceptee', $request->user());
+        }
         $d->changerStatut('planifiee', $request->user(), $texte);
         $d->save();
         DemandesCommunication::notifierDemandeur($d, 'planifiee', $texte);

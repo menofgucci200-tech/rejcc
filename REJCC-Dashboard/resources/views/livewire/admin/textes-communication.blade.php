@@ -6,6 +6,7 @@
         $lab = 'mb-1 block text-xs font-semibold text-[#5B677A]';
     @endphp
     <div class="mx-auto max-w-[1280px] px-4 py-6 sm:px-8 sm:py-8">
+        <x-admin-light.onglets groupe="ressources" />
         <div class="mb-4 flex flex-wrap items-end justify-between gap-4">
             <div>
                 <h2 class="mb-1 text-[17px] font-bold text-brand">Bibliothèque de textes</h2>

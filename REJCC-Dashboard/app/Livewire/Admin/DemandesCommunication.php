@@ -170,7 +170,13 @@ class DemandesCommunication extends Component
             'responsable_id' => ctype_digit($this->responsable) ? (int) $this->responsable : null,
             'commentaire' => trim($this->commentaire) ?: null,
         ], Api::token());
+        $date = $this->datePublication;
         $this->terminer($r, 'Publication ajoutée au calendrier éditorial : le demandeur est prévenu par e-mail.');
+        if ($r['ok'] ?? false) {
+            // Suite logique : voir la publication dans le calendrier.
+            $this->dispatch('rj-toast', type: 'success', message: 'Demande planifiée.', action: ['libelle' => 'Voir dans le calendrier',
+                'url' => route('admin.calendrier-editorial', array_filter(['publication' => $r['publication_id'] ?? null, 'mois' => substr($date, 0, 7)]))]);
+        }
     }
 
     public function render()

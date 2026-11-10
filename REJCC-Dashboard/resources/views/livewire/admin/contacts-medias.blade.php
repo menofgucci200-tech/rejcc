@@ -7,6 +7,7 @@
         $teintes = ['presse' => '#4F6FBF', 'radio' => '#B27007', 'tv' => '#AC0100', 'web' => '#1C8F4C', 'influenceur' => '#8A4FBF', 'institution' => '#031D59', 'autre' => '#5B677A'];
     @endphp
     <div class="mx-auto max-w-[1280px] px-4 py-6 sm:px-8 sm:py-8">
+        <x-admin-light.onglets groupe="ressources" />
         <div class="mb-4 flex flex-wrap items-end justify-between gap-4">
             <div>
                 <h2 class="mb-1 text-[17px] font-bold text-brand">Fichier des contacts médias</h2>

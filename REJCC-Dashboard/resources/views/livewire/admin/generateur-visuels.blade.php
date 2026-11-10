@@ -8,7 +8,7 @@
             <p class="mt-2 max-w-2xl text-xs text-[#5B677A]">Des gabarits typographiques dans la charte du REJCC, prêts pour les réseaux sociaux. Choisissez un gabarit et un format, remplissez les textes, ajoutez une photo si vous le souhaitez, puis téléchargez le PNG. Tout se fait dans votre navigateur : la photo n'est envoyée nulle part.</p>
         </div>
 
-        <div wire:ignore data-generateur
+        <div wire:ignore data-generateur data-titre="{{ mb_substr((string) request()->query('titre', ''), 0, 200) }}"
              data-logo-blanc="{{ asset('brand/rejcc-monogram-white.png') }}"
              data-logo-couleur="{{ asset('brand/rejcc-monogram-color.png') }}"
              class="grid grid-cols-1 items-start gap-6 lg:grid-cols-[400px_1fr]">
@@ -143,6 +143,12 @@
             const etat = { gabarit: 'evenement', format: 'post', fond: 'bleu', valeurs: {}, photo: null, voile: 78, cadrage: 40 };
             for (const [cle, g] of Object.entries(GABARITS)) {
                 etat.valeurs[cle] = Object.fromEntries(g.champs.map(([k, , v]) => [k, v]));
+            }
+            // Titre prérempli (?titre=, depuis « Créer le visuel » après une planification).
+            const titreDemande = (racine.dataset.titre || '').trim();
+            if (titreDemande) {
+                for (const v of Object.values(etat.valeurs)) if ('titre' in v) v.titre = titreDemande;
+                etat.gabarit = 'generique';
             }
             const logos = { blanc: new Image(), couleur: new Image() };
             logos.blanc.src = racine.dataset.logoBlanc;

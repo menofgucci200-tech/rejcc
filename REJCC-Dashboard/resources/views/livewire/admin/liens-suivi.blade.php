@@ -2,6 +2,7 @@
     <x-admin-light.topbar title="Liens de suivi" />
 
     <div class="mx-auto max-w-[1280px] px-4 py-8 sm:px-8">
+        <x-admin-light.onglets groupe="statistiques" />
         <div class="mb-5">
             <h2 class="mb-1 text-[17px] font-bold text-brand">Liens de suivi</h2>
             <div class="h-[3px] w-9 rounded bg-accent"></div>

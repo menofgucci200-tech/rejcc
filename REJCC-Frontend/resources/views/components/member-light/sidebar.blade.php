@@ -1,45 +1,15 @@
 @props(['withClose' => false, 'reductible' => false])
 
-{{-- Menu de l'espace membre : rubriques groupées, pastilles (messages non lus,
-     actions de mentorat), carte utilisateur avec menu en bas. Sur ordinateur,
-     le menu peut être réduit aux icônes (choix mémorisé dans le navigateur). --}}
+{{-- Menu de l'espace membre : 8 entrées (App\Support\MenuMembre). Formations,
+     Réseau et Opportunités regroupent plusieurs pages, reliées par une barre
+     d'onglets ; leur pastille cumule celles de leurs onglets. Carte utilisateur
+     avec menu en bas (profil, carte, abonnement). Sur ordinateur, le menu peut
+     être réduit aux icônes (choix mémorisé dans le navigateur). --}}
 @php
-    use App\Support\NavCompteurs;
-
     $user = \App\Support\Api::user();
     $abonnementActif = $user->subscription_active ?? false;
     $estMentor = ($user->role ?? null) === 'mentor';
-    $compteurs = NavCompteurs::get();
-
-    $sections = [
-        'Mon parcours' => [
-            ['label' => 'Accueil', 'icon' => 'nav-home', 'route' => 'espace-membre.dashboard'],
-            ['label' => $estMentor ? 'Ma carte mentor' : 'Ma carte membre', 'icon' => 'qr-code', 'route' => 'espace-membre.carte', 'locked' => true],
-            ['label' => 'Mes formations', 'icon' => 'graduation-cap', 'route' => 'espace-membre.formations'],
-            ['label' => 'Catalogue', 'icon' => 'nav-compass', 'route' => 'espace-membre.catalogue'],
-            ['label' => 'Mes parcours', 'icon' => 'nav-route', 'route' => 'espace-membre.parcours'],
-            ['label' => 'Certificats', 'icon' => 'award', 'route' => 'espace-membre.certificats'],
-            ...(($user->est_formateur ?? false) ? [['label' => 'Mes sessions (formateur)', 'icon' => 'calendar-days', 'route' => 'espace-membre.sessions-animees']] : []),
-        ],
-        'Réseau' => [
-            ['label' => 'Communauté', 'icon' => 'heart-handshake', 'route' => 'espace-membre.communaute', 'cle' => 'communaute', 'badge' => $compteurs['communaute'] ?? 0],
-            ['label' => 'Mentorat', 'icon' => 'hand-heart', 'route' => 'espace-membre.mentorat', 'badge' => $compteurs['mentorat'] ?? 0],
-            ['label' => 'Annuaire', 'icon' => 'users', 'route' => 'espace-membre.directory', 'locked' => true],
-            ['label' => 'Groupes sectoriels', 'icon' => 'network', 'route' => 'espace-membre.groupes', 'badge' => $compteurs['groupes'] ?? 0],
-            ['label' => 'Messagerie', 'icon' => 'message-circle', 'route' => 'espace-membre.messaging', 'cle' => 'messages', 'badge' => $compteurs['messages'] ?? 0],
-            ['label' => 'Événements', 'icon' => 'calendar-days', 'route' => 'espace-membre.evenements'],
-        ],
-        'Opportunités' => [
-            ['label' => 'Marketplace', 'icon' => 'store', 'route' => 'espace-membre.marketplace'],
-            ['label' => 'Projets', 'icon' => 'nav-projects', 'route' => 'espace-membre.projets', 'locked' => true],
-            ['label' => 'Emploi & Stage', 'icon' => 'nav-briefcase', 'route' => 'espace-membre.emplois'],
-        ],
-        'Ressources' => [
-            ['label' => 'Documents', 'icon' => 'folder-open', 'route' => 'espace-membre.documents'],
-        ],
-    ];
-
-    $isActive = fn (array $item) => request()->routeIs($item['route'].'*');
+    $entrees = \App\Support\MenuMembre::entrees();
 
     // Pastille d'abonnement de la carte utilisateur.
     $statut = match (true) {
@@ -74,17 +44,12 @@
     </div>
 
     {{-- Rubriques --}}
-    <nav aria-label="Menu de l'espace membre" class="flex flex-1 flex-col overflow-y-auto overflow-x-hidden px-3 pb-3 pt-2">
-        @foreach ($sections as $titre => $items)
-            <p class="mb-1 mt-3 px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-[#5B677A]" @if ($reductible) x-show="! reduit" @endif>{{ $titre }}</p>
-            @if ($reductible)
-                <div x-show="reduit" class="mx-auto my-2 h-px w-6 bg-[#EFEAE1]" style="display: none"></div>
-            @endif
-            @foreach ($items as $item)
+    <nav aria-label="Menu de l'espace membre" class="flex flex-1 flex-col gap-0.5 overflow-y-auto overflow-x-hidden px-3 pb-3 pt-4">
+            @foreach ($entrees as $item)
                 @php
-                    $active = $isActive($item);
-                    $verrouille = ($item['locked'] ?? false) && ! $abonnementActif;
-                    $badge = (int) ($item['badge'] ?? 0);
+                    $active = $item['active'];
+                    $verrouille = $item['verrouille'];
+                    $badge = (int) $item['badge'];
                 @endphp
                 <a
                     href="{{ route($item['route']) }}"
@@ -113,18 +78,18 @@
                     @endif
                 </a>
             @endforeach
-        @endforeach
     </nav>
 
     {{-- Carte utilisateur + menu --}}
     <div x-data="{ menu: false }" @click.outside="menu = false" @keydown.escape.window="menu = false" class="relative border-t border-[#EFEAE1] p-3">
         <div x-show="menu" x-transition.origin.bottom style="display: none" data-test="menu-utilisateur" class="absolute bottom-[calc(100%-4px)] left-3 right-3 z-20 min-w-[220px] overflow-hidden rounded-[14px] bg-white py-1.5 text-[13px] text-ink shadow-[0_20px_50px_-12px_rgba(3,29,89,.55)]">
             @foreach ([
-                ['Mon profil', 'user', route('espace-membre.profile')],
-                [$estMentor ? 'Ma carte mentor' : 'Ma carte membre', 'qr-code', route('espace-membre.carte')],
-                ['Mon abonnement', 'shield-check', route('espace-membre.abonnement')],
-            ] as [$label, $icon, $href])
-                <a href="{{ $href }}" wire:navigate class="flex items-center gap-2.5 px-4 py-2 font-semibold text-brand hover:bg-cloud"><x-ui.icon :name="$icon" class="size-4 text-[#5B677A]" /> {{ $label }}</a>
+                ['Mon profil', 'user', route('espace-membre.profile'), false],
+                [$estMentor ? 'Ma carte mentor' : 'Ma carte membre', 'qr-code', route('espace-membre.carte'), ! $abonnementActif],
+                ['Mon abonnement', 'shield-check', route('espace-membre.abonnement'), false],
+                ...(($user->est_formateur ?? false) ? [['Mes sessions (formateur)', 'calendar-days', route('espace-membre.sessions-animees'), false]] : []),
+            ] as [$label, $icon, $href, $cadenas])
+                <a href="{{ $href }}" wire:navigate data-test="menu-utilisateur-{{ \Illuminate\Support\Str::slug($label) }}" class="flex items-center gap-2.5 px-4 py-2 font-semibold text-brand hover:bg-cloud"><x-ui.icon :name="$icon" class="size-4 text-[#5B677A]" /> <span class="flex-1">{{ $label }}</span>@if ($cadenas)<x-ui.icon name="lock" class="size-[13px] text-[#B27007]" />@endif</a>
             @endforeach
             @if (($user->role ?? null) === 'admin')
                 <a href="{{ config('services.dashboard.url') }}" target="_blank" rel="noopener" class="flex items-center gap-2.5 px-4 py-2 font-semibold text-brand hover:bg-cloud"><x-ui.icon name="layout-dashboard" class="size-4 text-[#5B677A]" /> Administration</a>

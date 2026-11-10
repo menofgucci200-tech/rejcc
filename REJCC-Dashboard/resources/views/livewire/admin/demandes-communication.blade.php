@@ -155,7 +155,7 @@
                                 <button wire:click="changerStatut('acceptee')" data-test="action-accepter" class="btn-tap rounded-[9px] bg-brand px-4 py-2 text-[13px] font-bold text-white hover:bg-brand/90">{{ $fiche['statut'] === 'nouvelle' ? 'Accepter la demande' : 'Repasser en « acceptée »' }}</button>
                             @endif
 
-                            @if (in_array($fiche['statut'], ['acceptee', 'planifiee'], true))
+                            @if (in_array($fiche['statut'], ['nouvelle', 'acceptee', 'planifiee'], true)) {{-- planifier une demande nouvelle vaut acceptation --}}
                                 <button wire:click="choisirAction('planifier')" data-test="action-planifier" class="btn-tap inline-flex items-center justify-center gap-1.5 rounded-[9px] border border-[#5B3FA8]/30 px-4 py-2 text-[13px] font-bold text-[#5B3FA8] hover:bg-[#F7F4FD]"><x-ui.icon name="calendar" class="size-4" /> {{ $fiche['publication'] ? 'Replanifier' : 'Planifier dans le calendrier' }}</button>
                                 @if ($action === 'planifier')
                                     <form wire:submit="planifier" class="space-y-2 rounded-[10px] bg-[#F7F4FD] p-3" data-test="form-planifier">

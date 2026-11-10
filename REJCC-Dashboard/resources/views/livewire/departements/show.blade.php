@@ -6,18 +6,26 @@
             <a href="{{ route('departements.index') }}" wire:navigate class="mb-4 inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-[#5B677A] hover:text-brand"><x-ui.icon name="chevron-right" class="size-3.5 rotate-180" /> Tous les départements</a>
         @endif
 
-        <section class="mb-8 flex flex-wrap items-center gap-5 rounded-[22px] border border-[#F3E3D3] bg-gradient-to-br from-[#FFF8F1] via-[#FFFDF8] to-[#F2FAF5] p-6">
-            <x-ui.illustration :name="\App\Support\Espace::ILLUSTRATIONS[$departement['slug']] ?? 'etoile'" size="size-16" />
-            <div class="min-w-[220px] flex-1">
-                <p class="text-[11px] font-bold uppercase tracking-[0.12em] text-azure">Département</p>
-                <h1 class="mt-1 text-[24px] font-bold text-ink">{{ $departement['label'] }}</h1>
-                <p class="mt-2 max-w-3xl text-[14px] leading-relaxed text-[#5B677A]">{{ $departement['mission'] }}</p>
+        @if ($espaceCom)
+            {{-- Accueil de la Com : un en-tête court, la priorité du jour vient tout de suite après. --}}
+            <div class="mb-5 flex items-center gap-3">
+                <x-ui.illustration :name="\App\Support\Espace::ILLUSTRATIONS[$departement['slug']] ?? 'etoile'" size="size-11" />
+                <div class="min-w-0">
+                    <p class="text-[11px] font-bold uppercase tracking-[0.12em] text-azure">{{ $departement['label'] }} · {{ ucfirst(now()->locale('fr')->isoFormat('dddd D MMMM')) }}</p>
+                    <h1 class="mt-0.5 text-[21px] font-bold leading-tight text-ink sm:text-[24px]">{{ $adminGeneral ? 'Espace '.$departement['label'] : 'Bonjour '.(\App\Support\Api::user()->prenom ?? '').', voici votre journée' }}</h1>
+                </div>
             </div>
-            {{-- Demande de visuel ou d'annonce à la Communication (tout département). --}}
-            <a href="{{ route('admin.mes-demandes-communication', ['nouvelle' => 1]) }}" wire:navigate data-test="demander-communication" class="btn-tap inline-flex shrink-0 items-center gap-1.5 rounded-full bg-brand px-4 py-2 text-[13px] font-bold text-white hover:bg-brand/90">
-                <x-ui.icon name="megaphone" class="size-4" /> Demander une communication
-            </a>
-        </section>
+        @else
+            <section class="mb-8 flex flex-wrap items-center gap-5 rounded-[22px] border border-[#F3E3D3] bg-gradient-to-br from-[#FFF8F1] via-[#FFFDF8] to-[#F2FAF5] p-6">
+                <x-ui.illustration :name="\App\Support\Espace::ILLUSTRATIONS[$departement['slug']] ?? 'etoile'" size="size-16" />
+                <div class="min-w-[220px] flex-1">
+                    <p class="text-[11px] font-bold uppercase tracking-[0.12em] text-azure">Département</p>
+                    <h1 class="mt-1 text-[24px] font-bold text-ink">{{ $departement['label'] }}</h1>
+                    <p class="mt-2 max-w-3xl text-[14px] leading-relaxed text-[#5B677A]">{{ $departement['mission'] }}</p>
+                </div>
+                {{-- « Demander une communication » : bouton de la barre du haut, sur toutes les pages. --}}
+            </section>
+        @endif
 
         @if ($cockpit)
             @php
@@ -58,14 +66,16 @@
             </section>
         @endif
 
-        @if ($cockpitCom ?? null)
-            @include('livewire.departements.partials.cockpit-communication', ['cockpit' => $cockpitCom])
-        @elseif ($slug === 'communication' && \App\Support\AdminSections::allowed(session('api_user'), 'communication'))
-            <p class="mb-8 rounded-[14px] bg-[#FDF2E3] px-4 py-3 text-[13px] font-semibold text-[#8A5A12]">Le tableau de bord de la Communication est momentanément indisponible. Les rubriques restent accessibles ci-dessous.</p>
+        @if ($espaceCom)
+            {{-- Accueil de la Communication : priorité du jour, actions rapides, résultats (composant autonome). --}}
+            <livewire:departements.cockpit-communication :key="'cockpit-communication'" />
         @endif
 
+        {{-- Les rubriques du département : seul repère des départements sans cockpit dédié.
+             La Communication les a déjà dans son menu et ses actions rapides. --}}
+        @unless ($espaceCom)
         <section class="mb-8">
-            <h2 class="mb-4 text-[17px] font-bold text-ink">{{ ($cockpitCom ?? null) ? 'Vos autres rubriques' : 'Vos rubriques' }}</h2>
+            <h2 class="mb-4 text-[17px] font-bold text-ink">Vos rubriques</h2>
             @if ($rubriques->isEmpty())
                 <p class="rounded-[18px] border border-brand/10 bg-white px-5 py-10 text-center text-sm text-[#5B677A]">Aucune rubrique n'est encore ouverte à ce compte. L'administrateur général peut les ajouter.</p>
             @else
@@ -85,15 +95,20 @@
                 </div>
             @endif
         </section>
+        @endunless
 
-        <section id="acces" data-test="acces-departement">
-            <div class="mb-4 flex flex-wrap items-center gap-3">
-                <h2 class="flex flex-1 items-center gap-2.5 text-[17px] font-bold text-ink"><x-ui.illustration name="equipe" size="size-8" /> {{ $adminGeneral ? 'Accès au département' : "L'équipe du département" }}</h2>
-                @if ($adminGeneral)
+        {{-- Équipe : gestion des accès pour l'administrateur général ; simple rappel replié pour les membres du département. --}}
+        <details id="acces" data-test="acces-departement" wire:ignore.self class="group/equipe {{ $espaceCom ? 'mt-10' : '' }}" @if ($adminGeneral) open @endif>
+            <summary class="mb-4 flex cursor-pointer list-none flex-wrap items-center gap-3 [&::-webkit-details-marker]:hidden">
+                <h2 class="flex flex-1 items-center gap-2.5 text-[17px] font-bold text-ink"><x-ui.illustration name="equipe" size="size-8" /> {{ $adminGeneral ? 'Accès au département' : "L'équipe du département" }}
+                    <x-ui.icon name="chevron-down" class="size-4 text-[#5B677A] transition-transform group-open/equipe:rotate-180" /></h2>
+            </summary>
+            @if ($adminGeneral)
+                <div class="mb-4 flex flex-wrap items-center gap-3">
                     <button type="button" wire:click="ouvrirAjout('membre')" data-test="acces-membre-existant" class="btn-tap rounded-full border border-[#E7E1D6] bg-white px-4 py-2 text-[12.5px] font-bold text-ink hover:bg-[#FAF6EF]">Donner l'accès à un membre</button>
                     <button type="button" wire:click="ouvrirAjout('nouveau')" data-test="acces-nouveau-compte" class="btn-tap rounded-full bg-accent px-4 py-2 text-[12.5px] font-bold text-white hover:bg-accent-600">Créer un compte</button>
-                @endif
-            </div>
+                </div>
+            @endif
 
             @if ($message)
                 <p class="mb-4 rounded-[14px] border border-[#CDEBDD] bg-[#EFFAF4] px-4 py-3 text-[13px] font-semibold text-[#2E7D5B]">{{ $message }}</p>
@@ -180,6 +195,6 @@
                     <p class="py-10 text-center text-sm text-[#5B677A]">Aucun accès pour ce département.@if ($adminGeneral) Utilisez « Donner l'accès à un membre » ou « Créer un compte ».@endif</p>
                 @endforelse
             </div>
-        </section>
+        </details>
     </div>
 </div>
