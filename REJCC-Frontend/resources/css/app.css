@@ -480,6 +480,23 @@ html.app-loaded #page-loader {
 .legal-texte { font-size: 15.5px; }
 .legal-texte h2 { font-size: 21px; margin-top: 1.8em; padding-top: .4em; scroll-margin-top: 110px; }
 .legal-texte h3 { font-size: 17px; }
+.legal-texte table { width: 100%; margin: 1.2em 0 1.6em; border-collapse: separate; border-spacing: 0; font-size: 14.5px; line-height: 1.5;
+  border: 1px solid rgba(3, 29, 89, .1); border-radius: 14px; overflow: hidden; }
+.legal-texte th { background: var(--color-cloud, #f3f5fa); color: var(--color-brand); font-weight: 700; text-align: left; }
+.legal-texte th, .legal-texte td { padding: .7em 1em; vertical-align: top; }
+.legal-texte tr + tr td, .legal-texte thead + tbody tr:first-child td { border-top: 1px solid rgba(3, 29, 89, .08); }
+.legal-texte td:first-child { font-weight: 600; color: var(--color-brand); }
+@media (max-width: 639px) {
+  /* Sur téléphone, chaque ligne devient une petite fiche lisible. */
+  .legal-texte table, .legal-texte tbody, .legal-texte tr, .legal-texte td { display: block; }
+  .legal-texte thead { display: none; }
+  .legal-texte thead + tbody tr:first-child td { border-top: 0; }
+  .legal-texte td { padding: .15em 1em; }
+  .legal-texte td:first-child { padding-top: .8em; }
+  .legal-texte td:last-child { padding-bottom: .8em; color: #5B677A; }
+  .legal-texte tr + tr td:first-child { border-top: 1px solid rgba(3, 29, 89, .08); }
+  .legal-texte tr + tr td + td { border-top: 0; }
+}
 
 /* ── Fenêtres de confirmation et notifications REJCC (rj-dialogs.js) ── */
 .rj-dialog {
