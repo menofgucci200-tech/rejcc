@@ -231,6 +231,10 @@ function boot() {
     dismissLoader();
     initHomeMotion();
     initTourPlayer();
+    // Accueil de la vitrine : GSAP chargé uniquement sur cette page.
+    if (document.querySelector('[data-vitrine]')) {
+        import('./vitrine').then((m) => m.initVitrine());
+    }
 }
 
 document.addEventListener('DOMContentLoaded', boot);

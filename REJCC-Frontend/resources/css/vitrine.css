@@ -1,0 +1,41 @@
+/* Accueil de la vitrine (pages/home.blade.php) : classes préfixées p-,
+   animations pilotées par resources/js/vitrine.js. */
+
+/* Texte découpé */
+.p-mot { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: .08em; margin-bottom: -.08em; }
+.p-mot-i, .p-lettre { display: inline-block; will-change: transform; }
+[data-p-fill] .p-mot { overflow: visible; }
+
+/* Avant le démarrage du hero, ses éléments restent cachés (sauf sans JS / animations réduites). */
+.rj-motion [data-p-hero]:not(.p-arme) [data-p-in] { opacity: 0; }
+.rj-motion [data-p-reveal] { visibility: hidden; }
+@media (prefers-reduced-motion: reduce) { .rj-motion [data-p-reveal] { visibility: visible; } }
+
+/* Reflet des cartes inclinables */
+.p-glare { position: relative; overflow: hidden; transform-style: preserve-3d; }
+.p-glare::after { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .3s; border-radius: inherit;
+  background: radial-gradient(circle at var(--gx, 50%) var(--gy, 50%), rgba(255, 255, 255, .25), transparent 55%); }
+.p-glare:hover::after { opacity: 1; }
+
+/* Compteur à rouleaux */
+.p-odo { display: inline-flex; align-items: flex-start; height: 1em; overflow: hidden; line-height: 1; }
+/* Colonne de 10 chiffres à sa hauteur réelle (10em), sinon translate(-30%) tombe à côté. */
+.p-odo-col { display: flex; flex-direction: column; flex-shrink: 0; }
+.p-odo-col > span { height: 1em; display: block; }
+
+/* Contour typographique */
+.p-contour { color: transparent; -webkit-text-stroke: 1.5px var(--p-trait, rgba(255, 255, 255, .3)); }
+
+/* CathoImpact : étapes du parcours (allumées au défilement sur ordinateur) */
+[data-p-catho-etape] .p-etape-num { transition: background-color .4s, color .4s, transform .5s cubic-bezier(.34,1.56,.64,1); }
+[data-p-catho-etape] .p-etape-texte { transition: opacity .4s; }
+@media (min-width: 1024px) {
+  .rj-motion [data-p-catho-etape]:not(.is-actif) .p-etape-texte { opacity: .38; }
+  .rj-motion [data-p-catho-etape]:not(.is-actif) .p-etape-num { background: #fff; color: var(--color-brand); box-shadow: inset 0 0 0 2px rgba(3, 29, 89, .15); }
+}
+[data-p-catho-etape].is-actif .p-etape-num { transform: scale(1.08); }
+[data-p-catho-point] { transition: width .4s cubic-bezier(.22,1,.36,1), background-color .3s; }
+[data-p-catho-point].is-actif { width: 1.5rem; background: var(--color-accent); }
+/* Carrousel du téléphone : glissé au doigt sans épinglage */
+[data-p-catho-piste] { scrollbar-width: none; }
+[data-p-catho-piste]::-webkit-scrollbar { display: none; }

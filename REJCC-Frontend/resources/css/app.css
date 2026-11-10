@@ -3,6 +3,7 @@
 @import "./fonts.css";
 @import "./home-motion.css";
 @import "./tour.css";
+@import "./vitrine.css";
 @plugin "@tailwindcss/forms";
 
 /* ============================================================
