@@ -235,7 +235,7 @@ function chiffres() {
     $$('[data-p-mois]').forEach((zone) => {
         const mois = [...zone.children];
         const tl = gsap.timeline({ repeat: -1, paused: true });
-        mois.forEach((m, i) => tl.to(m, { backgroundColor: '#ac0100', color: '#fff', scale: 1.12, duration: 0.25, ease: 'power2.out' }, i * 0.35).to(m, { backgroundColor: 'rgba(255,255,255,.06)', color: 'rgba(255,255,255,.6)', scale: 1, duration: 0.5 }, i * 0.35 + 0.45));
+        mois.forEach((m, i) => tl.to(m, { backgroundColor: '#ac0100', color: '#fff', scale: 1.12, duration: 0.25, ease: 'power2.out' }, i * 0.35).to(m, { backgroundColor: '#021541', color: 'rgba(255,255,255,.6)', scale: 1, duration: 0.5 }, i * 0.35 + 0.45));
         ScrollTrigger.create({ trigger: zone, start: 'top 90%', end: 'bottom top', onToggle: (s) => (s.isActive ? tl.play() : tl.pause()) });
     });
 }

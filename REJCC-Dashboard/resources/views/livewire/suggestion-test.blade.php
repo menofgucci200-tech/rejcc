@@ -1,6 +1,6 @@
 <div x-data="{ ouvert: false }" x-on:keydown.escape.window="ouvert = false">
     {{-- Pastille fixe en bas à gauche (le bouton vidéo du site est à droite). --}}
-    <div class="fixed bottom-20 left-1/2 z-[90] lg:bottom-4 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full border border-amber-300 bg-white/95 py-1.5 pl-3 pr-1.5 shadow-[0_6px_24px_rgba(3,29,89,.18)] backdrop-blur">
+    <div class="fixed bottom-20 left-1/2 z-[90] lg:bottom-4 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full border border-amber-300 bg-white py-1.5 pl-3 pr-1.5 shadow-[0_6px_24px_rgba(3,29,89,.18)]">
         <span class="text-[11px] font-extrabold uppercase tracking-wider text-amber-700">Mode test</span>
         @if ($departement)<span class="hidden text-xs text-[#5B677A] sm:inline">{{ $departement }}</span>@endif
         <button type="button" x-on:click="ouvert = true" class="btn-tap inline-flex items-center gap-1.5 rounded-full bg-brand px-3.5 py-1.5 text-xs font-bold text-white hover:bg-azure">

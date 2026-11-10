@@ -1,6 +1,6 @@
 <div>
     <form wire:submit="submit" class="mt-4">
-        <div class="flex items-center gap-2 rounded-full border border-white/15 bg-white/5 p-1.5 backdrop-blur">
+        <div class="flex items-center gap-2 rounded-full bg-brand-700 p-1.5">
             <input
                 wire:model="email"
                 type="email"

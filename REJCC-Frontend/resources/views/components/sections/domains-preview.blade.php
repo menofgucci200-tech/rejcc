@@ -18,7 +18,7 @@
         <div class="mt-16 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             @foreach ($sectors as $i => $s)
                 <x-ui.reveal :delay="($i % 3) * 0.07">
-                    <a href="/domaines" wire:navigate class="group relative block h-full overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] p-7 transition-all duration-500 hover:border-white/25 hover:bg-white/[0.08]">
+                    <a href="/domaines" wire:navigate class="group relative block h-full overflow-hidden rounded-3xl bg-brand-700 p-7 transition-all duration-500 hover:-translate-y-1 hover:bg-azure">
                         <div class="flex items-start justify-between">
                             <span class="font-display text-4xl leading-none text-white/20 tabular-nums transition-colors duration-500 group-hover:text-accent">{{ str_pad($i + 1, 2, '0', STR_PAD_LEFT) }}</span>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="size-5 text-white/30 transition-all duration-500 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-white"><path d="M7 17 17 7M7 7h10v10"/></svg>
@@ -31,7 +31,7 @@
                             <div class="overflow-hidden">
                                 <div class="mt-4 flex flex-wrap gap-1.5 pt-3">
                                     @foreach ($s->items as $item)
-                                        <span class="rounded-full border border-white/15 bg-white/5 px-2.5 py-1 text-xs text-white/75">{{ $item }}</span>
+                                        <span class="rounded-full bg-brand-700 px-2.5 py-1 text-xs text-white/80">{{ $item }}</span>
                                     @endforeach
                                 </div>
                             </div>

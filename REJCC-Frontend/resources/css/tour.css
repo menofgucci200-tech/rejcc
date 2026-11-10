@@ -162,7 +162,6 @@ html.rj-tour-open body {
   justify-content: center;
   gap: 8px;
   cursor: pointer;
-  backdrop-filter: blur(6px);
 }
 .rj-tour__btn[aria-pressed='true'] {
   background: #fff;

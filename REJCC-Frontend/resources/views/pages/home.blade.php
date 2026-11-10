@@ -52,7 +52,7 @@
             <nav class="flex flex-col border-t border-white/15" aria-label="Accès rapides" data-p-in="droite" data-p-each data-p-at="1">
                 @foreach ($actions as $i => $a)
                     <a href="{{ $a['lien'] }}" class="group relative flex items-center gap-5 overflow-hidden border-b border-white/15 py-6 pl-2 pr-3">
-                        <span class="absolute inset-0 origin-left scale-x-0 transition-transform duration-500 ease-[cubic-bezier(.22,1,.36,1)] group-hover:scale-x-100 {{ $i === 0 ? 'bg-accent' : 'bg-white/10' }}"></span>
+                        <span class="absolute inset-0 origin-left scale-x-0 transition-transform duration-500 ease-[cubic-bezier(.22,1,.36,1)] group-hover:scale-x-100 {{ $i === 0 ? 'bg-accent' : 'bg-brand-700' }}"></span>
                         <span class="relative font-display text-sm text-white/40 transition-colors group-hover:text-white">0{{ $i + 1 }}</span>
                         <span class="relative min-w-0 flex-1">
                             <span class="block font-display text-[clamp(1.6rem,2.6vw,2.3rem)] uppercase leading-none transition-transform duration-500 group-hover:translate-x-2">{{ $a['titre'] }}</span>
@@ -108,36 +108,7 @@
     </section>
     @endif
 
-    {{-- 4. Parcours d'adhésion : défilement horizontal épinglé --}}
-    @if (SiteRemote::visible('home', 'how-to-join') && $etapes->isNotEmpty())
-    <section class="relative overflow-hidden bg-brand text-white lg:h-screen" data-p-hscroll>
-        <div class="flex flex-col lg:h-full lg:w-max lg:flex-row" data-p-track>
-            <div class="flex w-full shrink-0 flex-col justify-center px-6 py-20 lg:w-[45vw] lg:pl-[8vw]">
-                <p class="font-display text-sm uppercase tracking-[0.3em] text-accent">Adhérer</p>
-                <h2 class="mt-4 font-display text-[clamp(3rem,6vw,5.6rem)] uppercase leading-[0.9]">Votre parcours<br><span class="font-serif normal-case text-azure">en {{ $etapes->count() }} étapes.</span></h2>
-                <p class="mt-6 max-w-sm text-white/70">Faites défiler : chaque étape vous rapproche de la communauté.</p>
-            </div>
-            @foreach ($etapes as $i => $e)
-                <div class="flex w-full shrink-0 items-center px-6 pb-10 lg:w-[38vw] lg:px-[2vw] lg:pb-0">
-                    <article class="relative w-full overflow-hidden rounded-[2rem] bg-white/[.06] p-8 ring-1 ring-white/10 lg:h-[62vh]" data-p-hin>
-                        <span class="absolute -right-4 -top-10 font-display text-[11rem] leading-none text-white/[.06]">{{ $i + 1 }}</span>
-                        <span class="grid size-16 place-items-center rounded-2xl bg-accent"><x-ui.icon :name="$e['icon']" class="size-8" /></span>
-                        <p class="mt-10 font-display text-sm uppercase tracking-[0.2em] text-[#8fa3d9]">Étape {{ $i + 1 }}</p>
-                        <h3 class="mt-2 font-display text-[clamp(2rem,3vw,2.8rem)] uppercase leading-none">{{ $e['title'] }}</h3>
-                        <p class="mt-4 max-w-sm text-lg leading-relaxed text-white/75">{{ $e['text'] }}</p>
-                    </article>
-                </div>
-            @endforeach
-            <div class="flex w-full shrink-0 flex-col items-start justify-center px-6 pb-20 lg:w-[40vw] lg:pb-0 lg:pl-[4vw]" data-p-hin>
-                <h3 class="font-display text-[clamp(2.6rem,5vw,4.6rem)] uppercase leading-[0.9]">C'est<br>parti&nbsp;?</h3>
-                <x-ui.button href="/adhesion" size="lg" :with-arrow="true" class="mt-8" data-p-magnet>Commencer mon adhésion</x-ui.button>
-            </div>
-        </div>
-        <div class="absolute inset-x-[8vw] bottom-8 hidden h-1 rounded bg-white/15 lg:block"><span class="block h-full origin-left scale-x-0 rounded bg-accent" data-p-progress></span></div>
-    </section>
-    @endif
-
-    {{-- 5. CathoImpact : les carrousels publiés défilent seuls (3 s par image,
+    {{-- 4. CathoImpact : les carrousels publiés défilent seuls (3 s par image,
          puis carrousel suivant) ; puis les derniers portraits publiés. --}}
     @if (SiteRemote::visible('home', 'cathoimpact'))
     <section id="cathoimpact" class="relative overflow-hidden bg-white" data-test="accueil-cathoimpact">
@@ -172,60 +143,8 @@
                 </div>
             </div>
 
-            {{-- Diaporama : chaque image reste 3 s ; au bout du carrousel, on passe au suivant.
-                 Survol ou focus : pause, flèches et pile qui s'ouvre. --}}
-            @if ($carrousels)
-            <div class="p-ci group/ci relative mx-auto w-full max-w-[min(100%,480px)]" data-p-ci data-p-ci-duree="3000"
-                 role="region" aria-roledescription="carrousel" aria-label="Carrousels CathoImpact publiés" tabindex="0" data-p-reveal="up">
-                <span class="p-ci-pile absolute inset-0 rounded-[2rem] bg-azure/25" style="--r:6deg; --x:7%" aria-hidden="true"></span>
-                <span class="p-ci-pile absolute inset-0 rounded-[2rem] bg-accent/20" style="--r:-5deg; --x:-6%" aria-hidden="true"></span>
-
-                <div class="p-ci-scene relative aspect-[4/5] overflow-hidden rounded-[2rem] bg-brand-900 shadow-[0_50px_90px_-40px_rgba(3,29,89,.7)]">
-                    @foreach ($carrousels as $c => $car)
-                        @foreach ($car['slides'] as $k => $src)
-                            <img src="{{ asset($src) }}" width="864" height="1080" decoding="async" @if ($c + $k > 0) loading="lazy" @endif
-                                 alt="{{ $car['titre'] }} : image {{ $k + 1 }} sur {{ count($car['slides']) }}"
-                                 class="p-ci-slide {{ $c + $k === 0 ? 'is-actif' : '' }}" data-c="{{ $c }}" data-k="{{ $k }}"
-                                 @if ($c + $k > 0) aria-hidden="true" @endif data-test="accueil-cathoimpact-slide">
-                        @endforeach
-                    @endforeach
-
-                    {{-- Progression du carrousel en cours, façon « stories » --}}
-                    <span class="pointer-events-none absolute inset-x-0 top-0 z-10 h-20 bg-gradient-to-b from-brand-900/45 to-transparent" aria-hidden="true"></span>
-                    <div class="absolute inset-x-4 top-4 z-20" aria-hidden="true">
-                        @foreach ($carrousels as $c => $car)
-                            <div class="p-ci-barres gap-1 {{ $c === 0 ? 'flex' : 'hidden' }}" data-c="{{ $c }}">
-                                @foreach ($car['slides'] as $k => $src)<span class="h-[3px] flex-1 overflow-hidden rounded-full bg-white/35"><span class="block h-full w-0 rounded-full bg-white" data-k="{{ $k }}"></span></span>@endforeach
-                            </div>
-                        @endforeach
-                    </div>
-
-                    <button type="button" class="p-ci-fleche left-3" data-p-ci-prec aria-label="Image précédente"><x-ui.icon name="arrow-right" class="size-5 rotate-180" /></button>
-                    <button type="button" class="p-ci-fleche right-3" data-p-ci-suiv aria-label="Image suivante"><x-ui.icon name="arrow-right" class="size-5" /></button>
-                    <span class="p-ci-pause absolute bottom-4 right-4 z-20 rounded-full bg-brand-900/70 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-white backdrop-blur" aria-hidden="true">En pause</span>
-                </div>
-
-                <div class="relative mt-6 flex items-end gap-6 sm:pr-36">
-                    <div class="min-w-0 overflow-hidden" aria-live="polite">
-                        @foreach ($carrousels as $c => $car)
-                            <p class="p-ci-legende {{ $c === 0 ? 'is-actif' : '' }}" data-c="{{ $c }}">
-                                <span class="block font-display text-2xl uppercase leading-none text-brand">{{ $car['titre'] }}</span>
-                                <span class="mt-1 block text-sm text-meta">{{ $car['sous_titre'] }}</span>
-                            </p>
-                        @endforeach
-                    </div>
-                    <p class="shrink-0 font-display text-lg tabular-nums text-brand" aria-hidden="true"><span data-p-ci-num>01</span><span class="text-brand/30"> / <span data-p-ci-total>{{ str_pad(count($carrousels[0]['slides']), 2, '0', STR_PAD_LEFT) }}</span></span></p>
-                </div>
-                @if (count($carrousels) > 1)
-                    <div class="mt-4 flex gap-2">
-                        @foreach ($carrousels as $c => $car)
-                            <button type="button" class="p-ci-choix {{ $c === 0 ? 'is-actif' : '' }}" data-p-ci-choix="{{ $c }}" aria-label="Carrousel : {{ $car['titre'] }}"></button>
-                        @endforeach
-                    </div>
-                @endif
-                <a href="{{ route('cathoimpact.questionnaire') }}" wire:navigate class="absolute -bottom-6 -right-4 z-30 hidden rotate-6 rounded-2xl bg-accent px-4 py-3 font-display text-lg uppercase leading-none text-white shadow-xl transition-transform duration-500 hover:rotate-0 hover:scale-105 sm:block lg:-right-12" data-p-mouse="-22">Votre portrait<br>ici&nbsp;?</a>
-            </div>
-            @endif
+            {{-- Diaporama des carrousels CathoImpact (3 s par image, puis carrousel suivant) --}}
+            <x-cathoimpact.diaporama :carrousels="$carrousels" test="accueil-cathoimpact-slide" data-p-reveal="up" />
         </x-ui.container>
         @if ($portraits->isNotEmpty())
             <x-ui.container class="pb-24 sm:pb-32" data-test="accueil-cathoimpact-galerie">
@@ -263,6 +182,35 @@
     </section>
     @endif
 
+    {{-- 5. Parcours d'adhésion : défilement horizontal épinglé --}}
+    @if (SiteRemote::visible('home', 'how-to-join') && $etapes->isNotEmpty())
+    <section class="relative overflow-hidden bg-brand text-white lg:h-screen" data-p-hscroll>
+        <div class="flex flex-col lg:h-full lg:w-max lg:flex-row" data-p-track>
+            <div class="flex w-full shrink-0 flex-col justify-center px-6 py-20 lg:w-[45vw] lg:pl-[8vw]">
+                <p class="font-display text-sm uppercase tracking-[0.3em] text-accent">Adhérer</p>
+                <h2 class="mt-4 font-display text-[clamp(3rem,6vw,5.6rem)] uppercase leading-[0.9]">Votre parcours<br><span class="font-serif normal-case text-azure">en {{ $etapes->count() }} étapes.</span></h2>
+                <p class="mt-6 max-w-sm text-white/70">Faites défiler : chaque étape vous rapproche de la communauté.</p>
+            </div>
+            @foreach ($etapes as $i => $e)
+                <div class="flex w-full shrink-0 items-center px-6 pb-10 lg:w-[38vw] lg:px-[2vw] lg:pb-0">
+                    <article class="relative w-full overflow-hidden rounded-[2rem] bg-brand-700 p-8 lg:h-[62vh]" data-p-hin>
+                        <span class="absolute -right-4 -top-10 font-display text-[11rem] leading-none text-white/[.06]">{{ $i + 1 }}</span>
+                        <span class="grid size-16 place-items-center rounded-2xl bg-accent"><x-ui.icon :name="$e['icon']" class="size-8" /></span>
+                        <p class="mt-10 font-display text-sm uppercase tracking-[0.2em] text-[#8fa3d9]">Étape {{ $i + 1 }}</p>
+                        <h3 class="mt-2 font-display text-[clamp(2rem,3vw,2.8rem)] uppercase leading-none">{{ $e['title'] }}</h3>
+                        <p class="mt-4 max-w-sm text-lg leading-relaxed text-white/75">{{ $e['text'] }}</p>
+                    </article>
+                </div>
+            @endforeach
+            <div class="flex w-full shrink-0 flex-col items-start justify-center px-6 pb-20 lg:w-[40vw] lg:pb-0 lg:pl-[4vw]" data-p-hin>
+                <h3 class="font-display text-[clamp(2.6rem,5vw,4.6rem)] uppercase leading-[0.9]">C'est<br>parti&nbsp;?</h3>
+                <x-ui.button href="/adhesion" size="lg" :with-arrow="true" class="mt-8" data-p-magnet>Commencer mon adhésion</x-ui.button>
+            </div>
+        </div>
+        <div class="absolute inset-x-[8vw] bottom-8 hidden h-1 rounded bg-white/15 lg:block"><span class="block h-full origin-left scale-x-0 rounded bg-accent" data-p-progress></span></div>
+    </section>
+    @endif
+
     {{-- 6. Le réseau en chiffres : chaque chiffre a sa petite animation --}}
     @if (SiteRemote::visible('home', 'stats') && $stats->isNotEmpty())
     <section class="relative overflow-hidden bg-brand-900 py-24 text-white sm:py-32">
@@ -283,7 +231,7 @@
                         $valeur = $s['value'].($s['suffix'] ?? '');
                         $place = ['lg:col-span-2 lg:row-span-2', 'lg:col-span-2', '', ''][$i] ?? '';
                     @endphp
-                    <article class="p-glare relative flex flex-col overflow-hidden rounded-[2rem] bg-white/[.05] p-7 ring-1 ring-white/10 sm:p-8 {{ $place }}" data-p-tilt="3">
+                    <article class="p-glare relative flex flex-col overflow-hidden rounded-[2rem] bg-brand p-7 sm:p-8 {{ $place }}" data-p-tilt="3">
                         <p class="text-xs font-bold uppercase tracking-[0.18em] text-[#8fa3d9]">{{ $s['label'] }}</p>
                         <p class="mt-3 font-display leading-none {{ $i === 0 ? 'text-[clamp(5rem,11vw,9rem)]' : 'text-[clamp(3.6rem,6vw,5rem)]' }}" data-p-odo="{{ $valeur }}">{{ $valeur }}</p>
 
@@ -298,7 +246,7 @@
                                 @foreach ([[$rang1, -1], [$rang2, 1]] as [$rang, $sens])
                                     <div class="flex w-max gap-2.5" data-p-marquee="{{ $sens }}" data-p-duree="38">
                                         @foreach ([0, 1] as $copie)
-                                            @foreach ($rang as $d)<span class="whitespace-nowrap rounded-full border border-white/15 bg-white/[.04] px-4 py-2 text-sm font-semibold text-white/85">{{ $d }}</span>@endforeach
+                                            @foreach ($rang as $d)<span class="whitespace-nowrap rounded-full bg-brand-700 px-4 py-2 text-sm font-semibold text-white/85">{{ $d }}</span>@endforeach
                                         @endforeach
                                     </div>
                                 @endforeach
@@ -306,7 +254,7 @@
                             <a href="/domaines" wire:navigate class="mt-6 inline-flex items-center gap-2 text-sm font-bold text-white hover:text-azure">Voir tous les domaines <x-ui.icon name="arrow-right" class="size-4" /></a>
                         @elseif ($visuel === 'calendrier')
                             <div class="mt-auto grid grid-cols-6 gap-1.5 pt-6" data-p-mois aria-hidden="true">
-                                @foreach (['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'] as $m)<span class="rounded-lg bg-white/[.06] py-1.5 text-center text-xs font-bold text-white/60">{{ $m }}</span>@endforeach
+                                @foreach (['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'] as $m)<span class="rounded-lg bg-brand-900 py-1.5 text-center text-xs font-bold text-white/60">{{ $m }}</span>@endforeach
                             </div>
                             <a href="/evenements" wire:navigate class="mt-5 inline-flex items-center gap-2 text-sm font-bold text-white hover:text-azure">Toute l'année <x-ui.icon name="arrow-right" class="size-4" /></a>
                         @else

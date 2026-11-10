@@ -81,7 +81,7 @@ function fenetre({ titre, texte = '', ok = 'Confirmer', annuler = 'Annuler', ton
 
     return new Promise((resolve) => {
         const racine = document.createElement('div');
-        racine.className = 'rj-dialog fixed inset-0 z-[200] flex items-end justify-center bg-brand/40 p-3 backdrop-blur-[2px] sm:items-center sm:p-6';
+        racine.className = 'rj-dialog fixed inset-0 z-[200] flex items-end justify-center bg-brand/55 p-3 sm:items-center sm:p-6';
         racine.setAttribute('role', 'presentation');
         const idTitre = 'rj-dialog-titre-' + Date.now();
         racine.innerHTML = `

@@ -27,7 +27,7 @@
     $initiales = mb_strtoupper(mb_substr($user->prenom ?? '', 0, 1).mb_substr($user->nom ?? '', 0, 1));
 @endphp
 
-<header class="sticky top-0 z-50 flex h-16 items-center gap-3 border-b border-brand/10 border-t-[3px] border-t-accent bg-white/90 px-4 backdrop-blur-lg lg:px-7">
+<header class="sticky top-0 z-50 flex h-16 items-center gap-3 border-b border-brand/10 border-t-[3px] border-t-accent bg-white px-4 lg:px-7">
     <button type="button" @click="mobileOpen = true" aria-label="Ouvrir le menu" data-test="ouvrir-menu" class="flex size-10 shrink-0 items-center justify-center rounded-[10px] border border-brand/10 text-brand transition-colors hover:bg-cloud active:scale-95 lg:hidden">
         <x-ui.icon name="menu" class="size-[18px]" />
     </button>

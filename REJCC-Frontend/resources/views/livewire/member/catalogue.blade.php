@@ -68,7 +68,7 @@
                             <span class="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[10.5px] font-bold text-[#1C8F4C] shadow-sm"><x-ui.icon name="check-circle" class="size-3" /> Terminée</span>
                         @endif
                         @if ($c['inscrits'] > 0)
-                            <span class="absolute bottom-2.5 right-3 inline-flex items-center gap-1 rounded-full bg-black/35 px-2 py-0.5 text-[10.5px] font-semibold text-white backdrop-blur-sm" data-test="inscrits"><x-ui.icon name="users" class="size-3" /> {{ $c['inscrits'] }} inscrit{{ $c['inscrits'] > 1 ? 's' : '' }}</span>
+                            <span class="absolute bottom-2.5 right-3 inline-flex items-center gap-1 rounded-full bg-brand-900/80 px-2 py-0.5 text-[10.5px] font-semibold text-white" data-test="inscrits"><x-ui.icon name="users" class="size-3" /> {{ $c['inscrits'] }} inscrit{{ $c['inscrits'] > 1 ? 's' : '' }}</span>
                         @endif
                     </a>
                     <div class="p-4">

@@ -63,9 +63,9 @@ class AccueilVitrine
      * un autre (images dans l'ordre alphabétique, nom du dossier comme titre,
      * tirets remplacés par des espaces).
      *
-     * @return array<int, array{titre: string, sous_titre: string, slides: array<int, string>}>
+     * @return array<int, array{titre: string, sous_titre: string, slides: array<int, string>, alts?: array<int, string>}>
      */
-    private static function carrousels(): array
+    public static function carrousels(): array
     {
         $racine = public_path('brand/cathoimpact');
         $images = fn (string $dossier) => collect(glob($dossier.'/*.{jpg,jpeg,png,webp}', GLOB_BRACE) ?: [])
@@ -76,7 +76,18 @@ class AccueilVitrine
 
         $liste = [];
         if ($premier = $images($racine)) {
-            $liste[] = ['titre' => 'Ance Charlemagne Kouakou', 'sous_titre' => 'Fondateur de X-House Immobilier', 'slides' => $premier];
+            $liste[] = ['titre' => 'Ance Charlemagne Kouakou', 'sous_titre' => 'Fondateur de X-House Immobilier', 'slides' => $premier, 'alts' => [
+                "Portrait CathoImpact : Ance Charlemagne Kouakou, fondateur de X-House Immobilier. Zéro visite payante, zéro mois d'agence, une location dans le respect des règles.",
+                "Né en 2003, Ance Charlemagne Kouakou est un jeune entrepreneur ivoirien qui s'intéresse à l'immobilier et aux solutions digitales.",
+                "Très tôt, il développe une ambition entrepreneuriale tournée vers la création de solutions innovantes et s'intéresse au secteur immobilier.",
+                'Les difficultés rencontrées par les locataires deviennent le point de départ de sa vision entrepreneuriale.',
+                "Lancé en 2023, X-House Immobilier est un projet de plateforme digitale : visites virtuelles et absence de frais hormis ceux exigés par l'État.",
+                "Sur le marché immobilier ivoirien, les frais supplémentaires peuvent rendre l'accès à un logement très coûteux.",
+                'Remettre en question des pratiques bien installées représente un véritable défi.',
+                'Son ambition : un marché immobilier ivoirien plus transparent, plus accessible et respectueux des droits des propriétaires et des locataires.',
+                "Pour Ance Kouakou, entreprendre, c'est identifier un problème et proposer une solution capable de transformer son environnement.",
+                'Rejoignez le Réseau Entrepreneurial des Jeunes Chrétiens Catholiques.',
+            ]];
         }
         foreach (glob($racine.'/*', GLOB_ONLYDIR) ?: [] as $dossier) {
             if ($slides = $images($dossier)) {
