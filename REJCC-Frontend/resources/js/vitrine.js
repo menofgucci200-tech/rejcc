@@ -352,56 +352,34 @@ function scenes() {
 
 /* ------------------------------------------- remplissage du hero */
 
-// La lumière remplit « REJCC » lettre après lettre (R, E, J, C, C) puis le
-// monogramme. La lettre en cours se soulève et s'illumine ; un éclat marque
-// la fin de son remplissage. Une fois le logo plein, tout s'éteint doucement
-// et le cycle recommence. Pause quand le hero n'est plus à l'écran.
+// La lumière remplit lentement « REJCC » de gauche à droite, lettre après
+// lettre (R, E, J, C, C), puis le monogramme, comme une masse lourde qu'on
+// pousse : départ laborieux, avancée régulière, arrêt amorti. La lettre en
+// cours se soulève et s'illumine ; un éclat marque la fin de son remplissage.
+// Une fois le logo plein, tout s'éteint doucement et le cycle recommence.
+// Pause quand le hero n'est plus à l'écran.
 function remplir() {
     const zone = document.querySelector('[data-p-remplir]');
-    if (!zone) return;
-    const mode = zone.dataset.pRemplir;
-    const lettres = $$('[data-p-lettre]', zone);
+    const lettres = zone ? $$('[data-p-lettre]', zone) : [];
     if (!lettres.length) return;
-
-    // Vague : position de la surface (px) et défilement horizontal des ondulations.
-    let wx = 0;
-    const vague = (el) => {
-        if (mode !== '3' || el.classList.contains('p-lt-logo')) return;
-        const p = +el.style.getPropertyValue('--p') || 0;
-        const h = el.offsetHeight;
-        const niveau = 0.14 + p * 0.74;
-        el.style.setProperty('--wy', `${(h * (1 - niveau) - h * 0.07).toFixed(1)}px`);
-        el.style.setProperty('--wx', `${wx.toFixed(1)}px`);
-    };
-    const ondes = () => {
-        wx -= 1.2;
-        lettres.forEach((el) => el.classList.contains('is-actif') && vague(el));
-    };
-    gsap.ticker.add(ondes);
-    nettoyages.push(() => gsap.ticker.remove(ondes));
-
-    const poser = (el, p) => {
-        el.style.setProperty('--p', p.toFixed(4));
-        vague(el);
-    };
+    const poser = (el, p) => el.style.setProperty('--p', p.toFixed(4));
     lettres.forEach((el) => poser(el, 0));
 
-    const tl = gsap.timeline({ repeat: -1, repeatDelay: 1.2, delay: 2.2 });
-    lettres.forEach((el) => {
+    const tl = gsap.timeline({ repeat: -1, repeatDelay: 2, delay: 2.5 });
+    lettres.forEach((el, i) => {
         const logo = el.classList.contains('p-lt-logo');
         const etat = { p: 0 };
         tl.to(etat, {
             p: 1,
-            duration: logo ? 2.8 : 1.7,
-            ease: 'sine.inOut',
+            duration: logo ? 7 : 4.5,
+            ease: 'power2.inOut',
             onStart: () => { el.classList.remove('is-plein'); el.classList.add('is-actif'); },
             onUpdate: () => poser(el, etat.p),
             onComplete: () => { el.classList.remove('is-actif'); el.classList.add('is-plein'); },
-            onReverseComplete: () => el.classList.remove('is-actif'),
-        }, logo ? '-=0.2' : '-=0.35');
+        }, i === 0 ? 0 : '+=0.3');
     });
-    // Tout reste allumé un instant, puis s'éteint et se vide pour recommencer.
-    tl.to(zone, { '--fin': 0, duration: 1.3, ease: 'power1.in' }, '+=1.2')
+    // Tout reste allumé un moment, puis s'éteint lentement et se vide.
+    tl.to(zone, { '--fin': 0, duration: 2.5, ease: 'power1.inOut' }, '+=2.5')
         .add(() => lettres.forEach((el) => { el.classList.remove('is-plein', 'is-actif'); poser(el, 0); }))
         .set(zone, { '--fin': 1 });
 

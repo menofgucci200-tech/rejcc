@@ -10,8 +10,6 @@
     $finTitre = SiteRemote::field('home', 'cta-band', 'title', 'Votre place est ici.');
     $finTexte = SiteRemote::field('home', 'cta-band', 'text', 'Rejoignez une communauté de jeunes entrepreneurs catholiques déterminés à grandir, collaborer et réussir, ensemble.');
     $icones = ['instagram', 'linkedin', 'facebook', 'tiktok', 'youtube'];
-    // Lumière qui remplit les lettres du fond du hero : 3 propositions (?fond=1|2|3).
-    $fond = in_array(request('fond'), ['1', '2', '3'], true) ? (int) request('fond') : 0;
 @endphp
 
 {{--
@@ -29,18 +27,17 @@
     {{-- 1. Hero : titre au mot qui change, trois portes d'entrée --}}
     <section id="accueil" class="relative flex min-h-[100svh] items-center overflow-hidden bg-brand pb-20 pt-32 text-white" data-hero-motion data-p-hero>
         @include('pages.accueil._script-hero')
-        {{-- Fond : « REJCC » en contour et monogramme. La lumière remplit chaque
-             lettre l'une après l'autre (la lettre en cours s'illumine), puis le
-             logo, avant de s'éteindre et recommencer (proposition choisie par
-             ?fond=1|2|3 en attendant la décision). --}}
-        <div class="pointer-events-none absolute inset-0" aria-hidden="true" @if ($fond) data-p-remplir="{{ $fond }}" @endif>
+        {{-- Fond : « REJCC » en contour et monogramme. La lumière remplit lentement
+             chaque lettre de gauche à droite, l'une après l'autre (la lettre en
+             cours s'illumine), puis le logo, avant de s'éteindre et recommencer. --}}
+        <div class="pointer-events-none absolute inset-0" aria-hidden="true" data-p-remplir>
             <div class="absolute -left-6 bottom-[-4vw]" data-p-mouse="-25">
-                <p class="p-contour font-display text-[30vw] uppercase leading-none [--p-trait:rgba(143,163,217,.18)]" data-p-in="fondu" data-p-at=".2">@if ($fond)@foreach (str_split('REJCC') as $l)<span class="p-lt" data-p-lettre>{{ $l }}<span class="p-lt-fill">{{ $l }}</span></span>@endforeach @else REJCC @endif</p>
+                <p class="p-contour font-display text-[30vw] uppercase leading-none [--p-trait:rgba(143,163,217,.18)]" data-p-in="fondu" data-p-at=".2">@foreach (str_split('REJCC') as $l)<span class="p-lt" data-p-lettre>{{ $l }}<span class="p-lt-fill">{{ $l }}</span></span>@endforeach</p>
             </div>
             <div class="absolute -right-20 top-10 h-[80%]" data-p-mouse="35">
-                <div class="p-lt-logo relative h-full" @if ($fond) data-p-lettre @endif>
+                <div class="p-lt-logo relative h-full" data-p-lettre>
                     <div class="h-full opacity-[.06]"><img src="{{ asset('brand/rejcc-monogram-white.svg') }}" alt="" class="h-full" data-p-in="zoom" data-p-at="0"></div>
-                    @if ($fond)<div class="p-lt-fill absolute inset-0" style="--p-logo: url('{{ asset('brand/rejcc-monogram-white.svg') }}')"></div>@endif
+                    <div class="p-lt-fill absolute inset-0" style="--p-logo: url('{{ asset('brand/rejcc-monogram-white.svg') }}')"></div>
                 </div>
             </div>
             <div class="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(79,111,191,.35),transparent_55%)]"></div>
@@ -330,15 +327,6 @@
             </div>
         </x-ui.container>
     </section>
-    @endif
-    {{-- Comparaison des lumières du fond (local uniquement, à retirer une fois choisi). --}}
-    @if (app()->isLocal())
-        <nav class="fixed bottom-4 left-4 z-[95] flex items-center gap-1 rounded-full bg-brand-900 p-1 text-xs font-bold text-white shadow-xl" aria-label="Propositions de fond">
-            <span class="px-2 text-white/60">Fond</span>
-            @foreach ([0 => 'Actuel', 1 => '1 · Montée', 2 => '2 · Balayage', 3 => '3 · Vague'] as $n => $nom)
-                <a href="{{ $n ? url('/?fond='.$n) : url('/') }}" class="rounded-full px-3 py-1.5 {{ $fond === $n ? 'bg-accent' : 'hover:bg-brand-700' }}">{{ $nom }}</a>
-            @endforeach
-        </nav>
     @endif
 </div>
 </x-site-layout>

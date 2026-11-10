@@ -80,55 +80,29 @@
   .p-ci-slide, .p-ci-legende, .p-ci-pile, .p-ci-scene { animation: none !important; transition: none !important; }
 }
 
-/* Hero : la lumière remplit « REJCC » lettre après lettre, puis le monogramme
-   (resources/js/vitrine.js, remplir()). Le script pose sur chaque lettre --p
-   (0 → 1, niveau de remplissage) et, pour la vague, --wy / --wx ; --fin sur le
-   fond sert à tout éteindre avant de recommencer. */
+/* Hero : la lumière remplit lentement « REJCC » de gauche à droite, lettre après
+   lettre, puis le monogramme (resources/js/vitrine.js, remplir()). Le script pose
+   --p sur chaque lettre (0 → 1, front de la lumière) ; --fin sur le fond sert à
+   tout éteindre avant de recommencer. */
 [data-p-remplir] { --fin: 1; }
 .p-lt { position: relative; display: inline-block; --p: 0;
-  transition: transform .7s cubic-bezier(.22,1,.36,1), filter .7s, -webkit-text-stroke-color .5s; }
+  transition: transform 1.6s cubic-bezier(.22,1,.36,1), filter 1.6s, -webkit-text-stroke-color 1.2s; }
 .p-lt-fill { position: absolute; left: 0; top: 0; color: transparent; -webkit-text-stroke: 0 transparent;
   -webkit-background-clip: text; background-clip: text; background-repeat: no-repeat;
-  opacity: calc(var(--fin) * .36); transition: opacity .8s; }
+  opacity: calc(var(--fin) * .36); transition: opacity 1.6s;
+  /* Remplissage de gauche à droite, précédé d'un large front blanc */
+  background-image: linear-gradient(90deg, rgba(79, 111, 191, .55) 0%, rgba(143, 163, 217, .72) calc(var(--p) * 100% - 18%),
+    rgba(255, 255, 255, .98) calc(var(--p) * 100% - 2%), transparent calc(var(--p) * 100%)); }
 /* Lettre en cours : elle se soulève, son contour s'illumine, la lumière est vive */
 .p-lt.is-actif { transform: translateY(-1.4%) scale(1.015); -webkit-text-stroke-color: rgba(232, 238, 255, .95);
   filter: drop-shadow(0 0 18px rgba(143, 163, 217, .75)); }
 .p-lt.is-actif .p-lt-fill { opacity: calc(var(--fin) * .9); }
-/* Lettre pleine : un éclat bref */
-.p-lt.is-plein .p-lt-fill { animation: p-lt-eclat 1s ease-out; }
-@keyframes p-lt-eclat { 0% { filter: brightness(2.2); } 100% { filter: none; } }
-
-/* Le glyphe occupe environ 14 % → 88 % de la hauteur de sa boîte : le niveau suit cette plage. */
-.p-lt { --niv: calc(14% + var(--p) * 74%); }
-
-/* 1 · Montée : un liquide lumineux monte, surface brillante */
-[data-p-remplir="1"] .p-lt-fill {
-  background-image: linear-gradient(to top, rgba(79, 111, 191, .55) 0%, rgba(143, 163, 217, .7) calc(var(--niv) - 6%),
-    rgba(255, 255, 255, .98) calc(var(--niv) - .6%), transparent var(--niv));
-}
-/* 2 · Balayage : la lumière remplit de gauche à droite, précédée d'un front blanc */
-[data-p-remplir="2"] .p-lt-fill {
-  background-image: linear-gradient(90deg, rgba(79, 111, 191, .55) 0%, rgba(143, 163, 217, .72) calc(var(--p) * 100% - 12%),
-    rgba(255, 255, 255, .98) calc(var(--p) * 100% - 1.5%), transparent calc(var(--p) * 100%));
-}
-/* 3 · Vague : la lettre se remplit par le bas, surface ondulante */
-[data-p-remplir="3"] .p-lt-fill {
-  background-image: linear-gradient(to top, rgba(79, 111, 191, .6), rgba(170, 188, 240, .85));
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 20' preserveAspectRatio='none'%3E%3Cpath d='M0 10 Q15 0 30 10 T60 10 T90 10 T120 10 V20 H0Z'/%3E%3C/svg%3E"), linear-gradient(#000, #000);
-          mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 20' preserveAspectRatio='none'%3E%3Cpath d='M0 10 Q15 0 30 10 T60 10 T90 10 T120 10 V20 H0Z'/%3E%3C/svg%3E"), linear-gradient(#000, #000);
-  -webkit-mask-size: .5em .07em, 100% 100%; mask-size: .5em .07em, 100% 100%;
-  -webkit-mask-repeat: repeat-x, no-repeat; mask-repeat: repeat-x, no-repeat;
-  -webkit-mask-position: var(--wx, 0px) var(--wy, 200%), 0 calc(var(--wy, 200%) + .069em);
-          mask-position: var(--wx, 0px) var(--wy, 200%), 0 calc(var(--wy, 200%) + .069em);
-}
+/* Lettre pleine : un éclat qui retombe doucement */
+.p-lt.is-plein .p-lt-fill { animation: p-lt-eclat 2s ease-out; }
+@keyframes p-lt-eclat { 0% { filter: brightness(2); } 100% { filter: none; } }
 
 /* Monogramme : rempli à son tour (forme du logo en masque) */
-.p-lt-logo { transition: transform .9s cubic-bezier(.22,1,.36,1), filter .9s; }
+.p-lt-logo { transition: transform 2s cubic-bezier(.22,1,.36,1), filter 2s; }
 .p-lt-logo.is-actif { transform: scale(1.02); filter: drop-shadow(0 0 24px rgba(143, 163, 217, .55)); }
 .p-lt-logo .p-lt-fill { -webkit-background-clip: border-box; background-clip: border-box;
   -webkit-mask: var(--p-logo) center / 100% 100% no-repeat; mask: var(--p-logo) center / 100% 100% no-repeat; }
-.p-lt-logo { --niv: calc(var(--p) * 100%); }
-[data-p-remplir="1"] .p-lt-logo .p-lt-fill, [data-p-remplir="3"] .p-lt-logo .p-lt-fill {
-  background-image: linear-gradient(to top, rgba(79, 111, 191, .5) 0%, rgba(143, 163, 217, .65) calc(var(--niv) - 5%),
-    rgba(255, 255, 255, .9) calc(var(--niv) - .5%), transparent var(--niv));
-}
