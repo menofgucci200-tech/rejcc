@@ -365,21 +365,21 @@ function remplir() {
     const poser = (el, p) => el.style.setProperty('--p', p.toFixed(4));
     lettres.forEach((el) => poser(el, 0));
 
-    const tl = gsap.timeline({ repeat: -1, repeatDelay: 2, delay: 2.5 });
+    const tl = gsap.timeline({ repeat: -1, repeatDelay: 3, delay: 2.5 });
     lettres.forEach((el, i) => {
         const logo = el.classList.contains('p-lt-logo');
         const etat = { p: 0 };
         tl.to(etat, {
             p: 1,
-            duration: logo ? 7 : 4.5,
-            ease: 'power2.inOut',
+            duration: logo ? 18 : 12,
+            ease: 'power1.inOut',
             onStart: () => { el.classList.remove('is-plein'); el.classList.add('is-actif'); },
             onUpdate: () => poser(el, etat.p),
             onComplete: () => { el.classList.remove('is-actif'); el.classList.add('is-plein'); },
-        }, i === 0 ? 0 : '+=0.3');
+        }, i === 0 ? 0 : '+=0.8');
     });
     // Tout reste allumé un moment, puis s'éteint lentement et se vide.
-    tl.to(zone, { '--fin': 0, duration: 2.5, ease: 'power1.inOut' }, '+=2.5')
+    tl.to(zone, { '--fin': 0, duration: 5, ease: 'power1.inOut' }, '+=4')
         .add(() => lettres.forEach((el) => { el.classList.remove('is-plein', 'is-actif'); poser(el, 0); }))
         .set(zone, { '--fin': 1 });
 
