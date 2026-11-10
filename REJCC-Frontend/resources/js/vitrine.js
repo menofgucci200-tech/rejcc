@@ -345,7 +345,7 @@ function scenes() {
         const cartes = $$('[data-p-stack-card]', zone);
         cartes.forEach((c, i) => {
             if (i === cartes.length - 1) return;
-            gsap.to(c, { scale: 0.9 + i * 0.015, filter: 'brightness(.75)', ease: 'none', scrollTrigger: { trigger: cartes[i + 1], start: 'top bottom', end: 'top 20%', scrub: true } });
+            gsap.fromTo(c, { scale: 1, filter: 'brightness(1)' }, { scale: 0.9 + i * 0.015, filter: 'brightness(0.75)', ease: 'none', scrollTrigger: { trigger: cartes[i + 1], start: 'top bottom', end: 'top 20%', scrub: true } });
         });
     });
 }
@@ -354,7 +354,7 @@ function scenes() {
 
 // La lumière remplit « REJCC » de gauche à droite, lettre après lettre
 // (R, E, J, C, C), puis le monogramme. Dans une lettre, elle avance
-// lentement (6 s, 8 s pour le logo), comme une masse qu'on pousse ; le
+// lentement (10 s, 12 s pour le logo), comme une masse qu'on pousse ; le
 // passage à la lettre suivante est vif : elle s'allume d'un coup, avec un
 // petit rebond, juste avant que la précédente ait fini. Un éclat marque
 // chaque lettre pleine ; une fois le logo plein, tout s'éteint et le cycle
@@ -372,7 +372,7 @@ function remplir() {
         const etat = { p: 0 };
         tl.to(etat, {
             p: 1,
-            duration: logo ? 8 : 6,
+            duration: logo ? 12 : 10,
             ease: 'sine.inOut',
             onStart: () => { el.classList.remove('is-plein'); el.classList.add('is-actif'); },
             onUpdate: () => poser(el, etat.p),

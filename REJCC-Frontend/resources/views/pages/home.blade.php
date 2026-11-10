@@ -34,7 +34,7 @@
             <div class="absolute -left-6 bottom-[-4vw]" data-p-mouse="-25">
                 <p class="p-contour font-display text-[30vw] uppercase leading-none [--p-trait:rgba(143,163,217,.18)]" data-p-in="fondu" data-p-at=".2">@foreach (str_split('REJCC') as $l)<span class="p-lt" data-p-lettre>{{ $l }}<span class="p-lt-fill">{{ $l }}</span></span>@endforeach</p>
             </div>
-            <div class="absolute -right-20 top-10 h-[80%]" data-p-mouse="35">
+            <div class="absolute -right-24 top-20 h-[48%] sm:-right-20 sm:top-10 sm:h-[80%]" data-p-mouse="35">
                 <div class="p-lt-logo relative h-full" data-p-lettre>
                     <div class="h-full opacity-[.06]"><img src="{{ asset('brand/rejcc-monogram-white.svg') }}" alt="" class="h-full" data-p-in="zoom" data-p-at="0"></div>
                     <div class="p-lt-fill absolute inset-0" style="--p-logo: url('{{ asset('brand/rejcc-monogram-white.svg') }}')"></div>

@@ -73,9 +73,9 @@
             </div>
         </div>
 
-        {{-- Bas de page : copyright + informations légales. Marge à droite pour le
-             bouton vidéo flottant, qui ne doit pas recouvrir les liens. --}}
-        <div class="flex flex-col gap-5 py-7 text-sm text-white/55 lg:flex-row lg:items-center lg:justify-between lg:pr-28">
+        {{-- Bas de page : copyright + informations légales. Marge pour le
+             bouton vidéo flottant (en bas sur mobile, à droite sur grand écran), qui ne doit pas recouvrir les liens. --}}
+        <div class="flex flex-col gap-5 pt-7 pb-28 text-sm text-white/55 lg:flex-row lg:items-center lg:justify-between lg:pb-7 lg:pr-28">
             <p>
                 © {{ now()->year }} {{ $site['name'] }} —
                 <span class="font-serif italic text-white/75">{{ $site['slogan'] }}</span>

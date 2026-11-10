@@ -79,9 +79,9 @@ new #[Layout('layouts.site', ['noindex' => true, 'title' => 'Connexion à l\'esp
                         Se souvenir de moi
                     </label>
 
-                    <div class="mt-2 flex items-center justify-between gap-3">
-                        <a href="{{ route('password.request') }}" wire:navigate class="text-sm font-semibold text-brand hover:text-accent">Mot de passe oublié ?</a>
-                        <button type="submit" wire:loading.attr="disabled" class="inline-flex items-center justify-center gap-2 rounded-full bg-accent px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:opacity-70">
+                    <div class="mt-2 flex flex-col-reverse gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                        <a href="{{ route('password.request') }}" wire:navigate class="text-center text-sm font-semibold text-brand hover:text-accent sm:text-left">Mot de passe oublié ?</a>
+                        <button type="submit" wire:loading.attr="disabled" class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-accent px-6 py-3.5 sm:w-auto sm:py-3 text-sm font-semibold text-white transition-colors hover:bg-accent-600 disabled:opacity-70">
                             <span wire:loading.remove>Se connecter</span>
                             <span wire:loading>Connexion…</span>
                         </button>
