@@ -40,6 +40,7 @@
                     <div class="p-lt-fill absolute inset-0" style="--p-logo: url('{{ asset('brand/rejcc-monogram-white.svg') }}')"></div>
                 </div>
             </div>
+            <span class="p-lt-elan" data-p-elan></span>
             <div class="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(79,111,191,.35),transparent_55%)]"></div>
         </div>
 
