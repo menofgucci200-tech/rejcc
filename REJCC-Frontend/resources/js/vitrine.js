@@ -350,6 +350,103 @@ function scenes() {
     });
 }
 
+/* ------------------------------------------------- lumière du hero */
+
+// Une lumière lente part du bas du R, ondule dans chaque lettre de « REJCC »,
+// sort par le C, traverse le monogramme puis quitte l'écran à droite, et
+// recommence. Le chemin est calculé sur la position réelle des lettres et du
+// logo (recalculé au redimensionnement), lissé en courbe (Catmull-Rom).
+function lumiere() {
+    const zone = document.querySelector('[data-p-lumiere]');
+    const lettres = zone?.querySelector('[data-p-lum-lettres]');
+    const logo = zone?.querySelector('[data-p-lum-logo]');
+    if (!zone || !lettres || !logo) return;
+    const calques = $$('[data-p-lum-calque]', zone);
+    const orbe = zone.querySelector('[data-p-lum-orbe]');
+    let points = [];
+    let cumul = [];
+
+    const construire = () => {
+        const z = zone.getBoundingClientRect();
+        const texte = lettres.firstChild;
+        const r = document.createRange();
+        const pts = [];
+        for (let i = 0; i < texte.length; i++) {
+            r.setStart(texte, i);
+            r.setEnd(texte, i + 1);
+            const b = r.getBoundingClientRect();
+            const x = b.left - z.left;
+            const haut = b.top - z.top + b.height * 0.12;
+            const bas = Math.min(b.top - z.top + b.height * 0.86, z.height - 8);
+            const h = bas - haut;
+            if (i === 0) pts.push([x - b.width * 0.35, haut + h * 0.98]); // départ : en bas, à gauche du R
+            pts.push([x + b.width * 0.22, haut + h * 0.72], [x + b.width * 0.5, haut + h * 0.28], [x + b.width * 0.8, haut + h * 0.66]);
+        }
+        const l = logo.getBoundingClientRect();
+        const lx = l.left - z.left;
+        const ly = l.top - z.top;
+        pts.push([lx + l.width * 0.12, ly + l.height * 0.58], [lx + l.width * 0.48, ly + l.height * 0.42], [lx + l.width * 0.85, ly + l.height * 0.52], [z.width * 1.2, ly + l.height * 0.46]);
+
+        points = [];
+        for (let i = 0; i < pts.length - 1; i++) {
+            const [p0, p1, p2, p3] = [pts[i - 1] ?? pts[i], pts[i], pts[i + 1], pts[i + 2] ?? pts[i + 1]];
+            for (let s = 0; s < 16; s++) {
+                const t = s / 16;
+                const f = (a, b, c, d) => 0.5 * (2 * b + (c - a) * t + (2 * a - 5 * b + 4 * c - d) * t * t + (3 * b - a - 3 * c + d) * t * t * t);
+                points.push([f(p0[0], p1[0], p2[0], p3[0]), f(p0[1], p1[1], p2[1], p3[1])]);
+            }
+        }
+        points.push(pts[pts.length - 1]);
+        cumul = [0];
+        for (let i = 1; i < points.length; i++) cumul.push(cumul[i - 1] + Math.hypot(points[i][0] - points[i - 1][0], points[i][1] - points[i - 1][1]));
+    };
+
+    // Point du chemin à la fraction t (0 → 1) de sa longueur.
+    const point = (t) => {
+        const cible = Math.max(0, Math.min(1, t)) * cumul[cumul.length - 1];
+        let i = 1;
+        while (i < cumul.length - 1 && cumul[i] < cible) i++;
+        const k = (cible - cumul[i - 1]) / (cumul[i] - cumul[i - 1] || 1);
+        return [points[i - 1][0] + (points[i][0] - points[i - 1][0]) * k, points[i - 1][1] + (points[i][1] - points[i - 1][1]) * k];
+    };
+
+    const poser = (t) => {
+        if (!points.length) return;
+        const [x, y] = point(t);
+        const [tx, ty] = point(t - 0.035);
+        const z = zone.getBoundingClientRect();
+        zone.style.setProperty('--la', Math.max(0, Math.min(1, t / 0.06, (1 - t) / 0.05)).toFixed(3));
+        calques.forEach((c) => {
+            const b = c.getBoundingClientRect();
+            c.style.setProperty('--lx', `${z.left + x - b.left}px`);
+            c.style.setProperty('--ly', `${z.top + y - b.top}px`);
+            c.style.setProperty('--tx', `${z.left + tx - b.left}px`);
+            c.style.setProperty('--ty', `${z.top + ty - b.top}px`);
+        });
+        if (orbe) {
+            orbe.style.setProperty('--ox', `${x}px`);
+            orbe.style.setProperty('--oy', `${y}px`);
+        }
+    };
+
+    construire();
+    const etat = { t: 0 };
+    const tl = gsap.timeline({ repeat: -1, repeatDelay: 2.5, delay: 2 })
+        .to(etat, { t: 1, duration: 16, ease: 'none', onUpdate: () => poser(etat.t) });
+
+    // Pause quand le hero n'est plus à l'écran.
+    ScrollTrigger.create({ trigger: zone.closest('section') ?? zone, start: 'top bottom', end: 'bottom top', onToggle: (s) => (s.isActive ? tl.play() : tl.pause()) });
+
+    let minuteur = null;
+    const recalculer = () => {
+        clearTimeout(minuteur);
+        minuteur = setTimeout(() => { construire(); poser(etat.t); }, 150);
+    };
+    window.addEventListener('resize', recalculer);
+    document.fonts?.ready.then(recalculer);
+    nettoyages.push(() => { window.removeEventListener('resize', recalculer); clearTimeout(minuteur); });
+}
+
 /* ------------------------------------------- diaporama CathoImpact */
 
 // Les carrousels CathoImpact défilent seuls : chaque image reste
@@ -495,6 +592,7 @@ export function initVitrine() {
         // tiennent compte de la place qu'elles ajoutent à la page.
         scenes();
         hero();
+        lumiere();
         apparitions();
         chiffres();
         bandeaux();

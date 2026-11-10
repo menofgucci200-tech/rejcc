@@ -6,8 +6,8 @@
   right: 22px;
   bottom: 22px;
   z-index: 85;
-  width: 112px;
-  height: 112px;
+  width: 84px;
+  height: 84px;
   border-radius: 50%;
   display: grid;
   place-items: center;
@@ -50,8 +50,8 @@ html.rj-tour-open .rj-tour-fab {
 }
 .rj-tour-fab__core {
   position: relative;
-  width: 48px;
-  height: 48px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   background: var(--color-accent);
   display: grid;
@@ -59,8 +59,8 @@ html.rj-tour-open .rj-tour-fab {
   transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .rj-tour-fab__core svg {
-  width: 22px;
-  height: 22px;
+  width: 17px;
+  height: 17px;
   margin-left: 3px;
   fill: #fff;
 }
@@ -104,8 +104,8 @@ html.rj-tour-open .rj-tour-fab {
   from { opacity: 0; transform: scale(0.4) rotate(-40deg); }
 }
 @media (max-width: 640px) {
-  .rj-tour-fab { width: 92px; height: 92px; right: 14px; bottom: 14px; }
-  .rj-tour-fab__core { width: 40px; height: 40px; }
+  .rj-tour-fab { width: 70px; height: 70px; right: 14px; bottom: 14px; }
+  .rj-tour-fab__core { width: 30px; height: 30px; }
   .rj-tour-fab__tip { display: none; }
 }
 

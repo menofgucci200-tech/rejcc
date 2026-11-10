@@ -79,3 +79,65 @@
 @media (prefers-reduced-motion: reduce) {
   .p-ci-slide, .p-ci-legende, .p-ci-pile, .p-ci-scene { animation: none !important; transition: none !important; }
 }
+
+/* Hero : lumière qui traverse « REJCC » puis le monogramme (resources/js/vitrine.js,
+   lumiere()). Le script pose --lx/--ly (position de la lumière dans chaque calque),
+   --tx/--ty (traîne), --ox/--oy (dans le fond) et --la (intensité). */
+[data-p-lumiere] { --la: 0; }
+[data-p-lum-calque] { --lx: -200vw; --ly: -200vh; --tx: -200vw; --ty: -200vh; opacity: var(--la); color: transparent; }
+.p-lum-logo { background: transparent; }
+
+/* 1 · Halo : un halo rond allume les contours sur son passage */
+[data-p-lumiere="1"] .p-lum-texte {
+  -webkit-text-stroke: 2px rgba(222, 231, 255, .95);
+  -webkit-mask-image: radial-gradient(circle 13vw at var(--lx) var(--ly), #000 0%, #000 15%, transparent 70%);
+          mask-image: radial-gradient(circle 13vw at var(--lx) var(--ly), #000 0%, #000 15%, transparent 70%);
+  filter: drop-shadow(0 0 10px rgba(143, 163, 217, .85));
+}
+[data-p-lumiere="1"] .p-lum-logo {
+  background: rgba(222, 231, 255, .42);
+  -webkit-mask-image: var(--p-logo), radial-gradient(circle 15vw at var(--lx) var(--ly), #000 0%, transparent 70%);
+          mask-image: var(--p-logo), radial-gradient(circle 15vw at var(--lx) var(--ly), #000 0%, transparent 70%);
+  -webkit-mask-size: 100% 100%, auto; mask-size: 100% 100%, auto;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  -webkit-mask-composite: source-in; mask-composite: intersect;
+}
+.p-lum-orbe {
+  width: 30vw; height: 30vw; border-radius: 9999px; opacity: var(--la); mix-blend-mode: screen;
+  transform: translate(calc(var(--ox, -100vw) - 50%), calc(var(--oy, -100vh) - 50%));
+  background: radial-gradient(circle, rgba(255, 255, 255, .75) 0%, rgba(190, 205, 245, .5) 5%, rgba(120, 145, 215, .26) 22%, rgba(79, 111, 191, .1) 42%, transparent 66%);
+}
+
+/* 2 · Rayon : un faisceau balaie l'écran comme un reflet sur du métal */
+[data-p-lumiere="2"] .p-lum-texte {
+  -webkit-text-stroke: 2px rgba(222, 231, 255, .95);
+  -webkit-mask-image: linear-gradient(90deg, transparent calc(var(--lx) - 7vw), #000 var(--lx), transparent calc(var(--lx) + 7vw));
+          mask-image: linear-gradient(90deg, transparent calc(var(--lx) - 7vw), #000 var(--lx), transparent calc(var(--lx) + 7vw));
+  filter: drop-shadow(0 0 8px rgba(143, 163, 217, .8));
+}
+[data-p-lumiere="2"] .p-lum-logo {
+  background: rgba(222, 231, 255, .4);
+  -webkit-mask-image: var(--p-logo), linear-gradient(90deg, transparent calc(var(--lx) - 8vw), #000 var(--lx), transparent calc(var(--lx) + 8vw));
+          mask-image: var(--p-logo), linear-gradient(90deg, transparent calc(var(--lx) - 8vw), #000 var(--lx), transparent calc(var(--lx) + 8vw));
+  -webkit-mask-size: 100% 100%, auto; mask-size: 100% 100%, auto;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  -webkit-mask-composite: source-in; mask-composite: intersect;
+}
+.p-lum-rayon {
+  width: 16vw; opacity: var(--la); mix-blend-mode: screen;
+  transform: translateX(calc(var(--ox, -100vw) - 50%)) skewX(-8deg);
+  background: linear-gradient(90deg, transparent, rgba(143, 163, 217, .12) 35%, rgba(255, 255, 255, .26) 50%, rgba(143, 163, 217, .12) 65%, transparent);
+}
+
+/* 3 · Lueur : la lumière remplit le creux des lettres, puis du logo, avec une traîne */
+[data-p-lumiere="3"] .p-lum-texte, [data-p-lumiere="3"] .p-lum-logo {
+  background-image:
+    radial-gradient(circle 8vw at var(--lx) var(--ly), rgba(214, 224, 255, .8) 0%, rgba(79, 111, 191, .38) 42%, transparent 72%),
+    radial-gradient(circle 6vw at var(--tx) var(--ty), rgba(143, 163, 217, .32) 0%, transparent 70%);
+  background-repeat: no-repeat;
+}
+[data-p-lumiere="3"] .p-lum-texte { -webkit-background-clip: text; background-clip: text; }
+[data-p-lumiere="3"] .p-lum-logo {
+  -webkit-mask: var(--p-logo) center / 100% 100% no-repeat;
+          mask: var(--p-logo) center / 100% 100% no-repeat;
+}
