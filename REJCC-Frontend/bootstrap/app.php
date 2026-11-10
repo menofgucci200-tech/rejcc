@@ -19,6 +19,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // Derriere le proxy HTTPS de l'hebergeur (Render, etc.), sans quoi
         // Laravel genere des URLs/redirections en http:// et casse la session.
         $middleware->trustProxies(at: '*');
+
+        // Mesure d'audience anonyme, sans cookie (App\Support\Audience).
+        $middleware->web(append: [\App\Http\Middleware\MesureAudience::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

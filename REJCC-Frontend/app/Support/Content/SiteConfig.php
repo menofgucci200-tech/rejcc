@@ -39,6 +39,7 @@ class SiteConfig
             ['label' => 'Emplois', 'href' => '/emplois'],
             ['label' => 'Actualités', 'href' => '/actualites'],
             ['label' => 'Galerie', 'href' => '/galerie'],
+            ['label' => 'CathoImpact', 'href' => '/cathoimpact'],
             ['label' => 'Partenaires', 'href' => '/partenaires'],
             ['label' => 'Contact', 'href' => '/contact'],
         ];

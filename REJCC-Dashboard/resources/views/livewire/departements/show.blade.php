@@ -13,6 +13,10 @@
                 <h1 class="mt-1 text-[24px] font-bold text-ink">{{ $departement['label'] }}</h1>
                 <p class="mt-2 max-w-3xl text-[14px] leading-relaxed text-[#5B677A]">{{ $departement['mission'] }}</p>
             </div>
+            {{-- Demande de visuel ou d'annonce à la Communication (tout département). --}}
+            <a href="{{ route('admin.mes-demandes-communication', ['nouvelle' => 1]) }}" wire:navigate data-test="demander-communication" class="btn-tap inline-flex shrink-0 items-center gap-1.5 rounded-full bg-brand px-4 py-2 text-[13px] font-bold text-white hover:bg-brand/90">
+                <x-ui.icon name="megaphone" class="size-4" /> Demander une communication
+            </a>
         </section>
 
         @if ($cockpit)
@@ -54,8 +58,14 @@
             </section>
         @endif
 
+        @if ($cockpitCom ?? null)
+            @include('livewire.departements.partials.cockpit-communication', ['cockpit' => $cockpitCom])
+        @elseif ($slug === 'communication' && \App\Support\AdminSections::allowed(session('api_user'), 'communication'))
+            <p class="mb-8 rounded-[14px] bg-[#FDF2E3] px-4 py-3 text-[13px] font-semibold text-[#8A5A12]">Le tableau de bord de la Communication est momentanément indisponible. Les rubriques restent accessibles ci-dessous.</p>
+        @endif
+
         <section class="mb-8">
-            <h2 class="mb-4 text-[17px] font-bold text-ink">Vos rubriques</h2>
+            <h2 class="mb-4 text-[17px] font-bold text-ink">{{ ($cockpitCom ?? null) ? 'Vos autres rubriques' : 'Vos rubriques' }}</h2>
             @if ($rubriques->isEmpty())
                 <p class="rounded-[18px] border border-brand/10 bg-white px-5 py-10 text-center text-sm text-[#5B677A]">Aucune rubrique n'est encore ouverte à ce compte. L'administrateur général peut les ajouter.</p>
             @else

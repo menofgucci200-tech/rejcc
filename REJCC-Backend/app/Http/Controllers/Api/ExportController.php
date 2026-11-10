@@ -36,6 +36,7 @@ class ExportController extends Controller
         'abonnements' => 'membres',
         'paiements' => 'membres',
         'suggestions' => 'suggestions',
+        'contacts-medias' => 'communication',
     ];
 
     public function data(Request $request, string $dataset)
@@ -67,6 +68,7 @@ class ExportController extends Controller
             'abonnements' => $this->abonnements(),
             'paiements' => $this->paiements(),
             'suggestions' => $this->suggestions(),
+            'contacts-medias' => $this->contactsMedias($user, $request->query('type')),
             default => null,
         };
 
@@ -347,6 +349,22 @@ class ExportController extends Controller
                 $s::STATUTS[$x->statut] ?? $x->statut,
                 $x->reponse ?? '',
             ])->all(),
+        ];
+    }
+
+    /** Fichier des contacts médias de la Communication (un compte de test n'exporte que les siens). */
+    private function contactsMedias(User $user, $type): array
+    {
+        $types = \App\Support\OutilsCommunication::TYPES_CONTACTS;
+
+        return [
+            'columns' => ['Nom', 'Média ou organisation', 'Type', 'Fonction', 'E-mail', 'Téléphone / WhatsApp', 'Ville', 'Dernier contact', 'Notes'],
+            'rows' => ContactMediaController::visibles($user)
+                ->when(is_string($type) && isset($types[$type]), fn ($q) => $q->where('type', $type))
+                ->orderBy('nom')->get()->map(fn ($c) => [
+                    $c->nom, $c->media, $types[$c->type] ?? $c->type, $c->fonction, $c->email, $c->telephone, $c->ville,
+                    $c->dernier_contact?->format('d/m/Y'), $c->notes,
+                ])->all(),
         ];
     }
 }

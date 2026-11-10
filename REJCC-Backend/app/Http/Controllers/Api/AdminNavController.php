@@ -64,6 +64,12 @@ class AdminNavController extends Controller
             ['cle' => 'avis', 'section' => 'groupes', 'route' => 'admin.groupes', 'libelle' => 'Avis de membres signalés',
                 'nombre' => \App\Models\MemberReview::whereNotNull('signale_at')->where('masque', false)->count()],
         ];
+        $elements[] = ['cle' => 'cathoimpact', 'section' => 'communication', 'route' => 'admin.cathoimpact', 'libelle' => 'Réponses CathoImpact à examiner',
+            'nombre' => \App\Support\CathoImpact::visibles($me)->where('statut', 'recu')->count()];
+        $elements[] = ['cle' => 'publications_retard', 'section' => 'communication', 'route' => 'admin.calendrier-editorial', 'libelle' => 'Publications en retard (calendrier éditorial)',
+            'nombre' => \App\Models\CommunicationPublication::retards()->count()];
+        $elements[] = ['cle' => 'demandes_communication', 'section' => 'communication', 'route' => 'admin.demandes-communication', 'libelle' => 'Demandes de communication à traiter',
+            'nombre' => \App\Support\DemandesCommunication::visibles($me)->where('statut', 'nouvelle')->count()];
         $elements[] = ['cle' => 'suggestions', 'section' => 'suggestions', 'route' => 'admin.suggestions', 'libelle' => 'Retours des comptes de test',
             'nombre' => \App\Models\Suggestion::where('statut', 'nouvelle')->count()];
 

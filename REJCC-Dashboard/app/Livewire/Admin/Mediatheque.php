@@ -17,6 +17,24 @@ use Livewire\WithFileUploads;
 #[Layout('layouts.admin-light')]
 class Mediatheque extends Component
 {
+    /**
+     * Dossiers de données personnelles, ni listés ni supprimables ici :
+     * photos des membres, CV des candidatures aux offres d'emploi, pièces
+     * jointes des inscriptions aux événements.
+     */
+    private const DOSSIERS_PRIVES = ['membres/', 'cv/', 'evenements/'];
+
+    private function estPrive(string $path): bool
+    {
+        $path = ltrim($path, '/');
+        foreach (self::DOSSIERS_PRIVES as $dossier) {
+            if (str_starts_with($path, $dossier)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
     use WithFileUploads;
 
     /** @var array<int, \Illuminate\Http\UploadedFile> */
@@ -29,7 +47,7 @@ class Mediatheque extends Component
     public function updatedFichiers(): void
     {
         $this->validate([
-            'fichiers.*' => 'file|max:20480|mimes:jpg,jpeg,png,gif,webp,svg,pdf,doc,docx,ppt,pptx,xls,xlsx,csv,txt,mp4,webm,mov,mp3,wav',
+            'fichiers.*' => 'file|max:20480|mimes:jpg,jpeg,png,gif,webp,pdf,doc,docx,ppt,pptx,xls,xlsx,csv,txt,mp4,webm,mov,mp3,wav',
         ], [], ['fichiers.*' => 'fichier']);
 
         foreach ($this->fichiers as $fichier) {
@@ -50,8 +68,8 @@ class Mediatheque extends Component
 
     public function supprimer(string $path): void
     {
-        // Sécurité : uniquement dans les dossiers de contenu, jamais membres/.
-        if (str_starts_with($path, 'membres/') || str_contains($path, '..')) {
+        // Sécurité : uniquement dans les dossiers de contenu, jamais les données personnelles.
+        if ($this->estPrive($path) || str_contains($path, '..')) {
             return;
         }
 
@@ -64,7 +82,7 @@ class Mediatheque extends Component
         $disk = Storage::disk('uploads');
 
         $files = collect($disk->allFiles())
-            ->reject(fn (string $p) => str_starts_with($p, 'membres/') || str_starts_with(basename($p), '.'))
+            ->reject(fn (string $p) => $this->estPrive($p) || str_starts_with(basename($p), '.'))
             ->map(function (string $p) use ($disk) {
                 $ext = strtolower(pathinfo($p, PATHINFO_EXTENSION));
 

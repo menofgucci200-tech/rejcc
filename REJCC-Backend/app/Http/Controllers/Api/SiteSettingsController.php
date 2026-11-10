@@ -18,14 +18,29 @@ class SiteSettingsController extends Controller
     /** Préfixes de clés autorisés à l'écriture (garde-fou). */
     private const KEY_PREFIXES = ['identity.', 'contact.', 'social.', 'banner.', 'seo.', 'payment.', 'spirit.'];
 
-    /** Préfixes jamais exposés par la route publique (identifiants sensibles). */
-    private const PRIVATE_PREFIXES = ['payment.'];
+    /**
+     * Seuls préfixes publiés par la route publique (liste blanche) : ce que la
+     * vitrine et l'espace membre affichent. Tout le reste (paiement, jeton
+     * Google Meet, mots interdits de la Communauté, réglages des certificats,
+     * mode d'abonnement…) reste interne.
+     */
+    private const PUBLIC_PREFIXES = ['identity.', 'contact.', 'social.', 'banner.', 'seo.', 'spirit.', 'abonnement.'];
 
-    /** GET /site-settings — public, utilisé par la vitrine. Exclut les réglages sensibles. */
+    /**
+     * Réglages secrets (clés et identifiants de paiement, jetons) : réservés à
+     * l'administrateur général, en lecture comme en écriture. La rubrique
+     * « contenu » (Communication, comptes de test…) n'y a pas accès.
+     */
+    private const SECRET_PREFIXES = ['payment.'];
+
+    /** Réglages internes jamais renvoyés, même à l'administrateur général (jeton chiffré). */
+    private const INTERNAL_KEYS = ['google_meet'];
+
+    /** GET /site-settings — public, utilisé par la vitrine. Liste blanche uniquement. */
     public function index()
     {
         $settings = SiteSetting::pluck('value', 'key')
-            ->reject(fn ($value, string $key) => $this->isPrivateKey($key));
+            ->filter(fn ($value, string $key) => $this->startsWithAny($key, self::PUBLIC_PREFIXES));
 
         return response()->json([
             'ok' => true,
@@ -34,18 +49,33 @@ class SiteSettingsController extends Controller
         ]);
     }
 
-    /** GET /admin/site-settings — admin, tous les réglages (y compris sensibles). */
-    public function adminIndex()
+    /**
+     * GET /admin/site-settings — réglages modifiables depuis le dashboard.
+     * Les secrets ne sont renvoyés qu'à l'administrateur général.
+     */
+    public function adminIndex(Request $request)
     {
+        $general = $request->user()->estAdminComplet();
+
+        $settings = SiteSetting::pluck('value', 'key')
+            ->filter(fn ($value, string $key) => $this->startsWithAny($key, self::KEY_PREFIXES)
+                && ! in_array($key, self::INTERNAL_KEYS, true)
+                && ($general || ! $this->isSecretKey($key)));
+
         return response()->json([
             'ok' => true,
-            'settings' => SiteSetting::pluck('value', 'key'),
+            'settings' => $settings,
         ]);
     }
 
-    private function isPrivateKey(string $key): bool
+    private function isSecretKey(string $key): bool
     {
-        foreach (self::PRIVATE_PREFIXES as $prefix) {
+        return $this->startsWithAny($key, self::SECRET_PREFIXES);
+    }
+
+    private function startsWithAny(string $key, array $prefixes): bool
+    {
+        foreach ($prefixes as $prefix) {
             if (str_starts_with($key, $prefix)) {
                 return true;
             }
@@ -65,11 +95,20 @@ class SiteSettingsController extends Controller
             return response()->json(['ok' => false, 'message' => $validator->errors()->first()], 422);
         }
 
-        foreach ($request->input('settings') as $key => $value) {
-            if (! is_string($key) || strlen($key) > 120 || ! $this->allowedKey($key)) {
+        $settings = $request->input('settings');
+
+        // Contrôle complet avant toute écriture : une requête refusée ne laisse
+        // aucun réglage à moitié enregistré.
+        foreach ($settings as $key => $value) {
+            if (! is_string($key) || strlen($key) > 120 || ! $this->startsWithAny($key, self::KEY_PREFIXES)) {
                 return response()->json(['ok' => false, 'message' => "Clé de réglage invalide : {$key}"], 422);
             }
+            if ($this->isSecretKey($key) && ! $request->user()->estAdminComplet()) {
+                return response()->json(['ok' => false, 'message' => 'Les identifiants de paiement sont réservés à l\'administrateur général.'], 403);
+            }
+        }
 
+        foreach ($settings as $key => $value) {
             SiteSetting::updateOrCreate(['key' => $key], ['value' => $value]);
         }
 
@@ -110,16 +149,5 @@ class SiteSettingsController extends Controller
         $row->save();
 
         return response()->json(['ok' => true, 'section' => $row->only(['page', 'section', 'content', 'visible'])]);
-    }
-
-    private function allowedKey(string $key): bool
-    {
-        foreach (self::KEY_PREFIXES as $prefix) {
-            if (str_starts_with($key, $prefix)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 }

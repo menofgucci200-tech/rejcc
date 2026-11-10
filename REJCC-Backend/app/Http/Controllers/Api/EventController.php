@@ -7,6 +7,7 @@ use App\Models\Event;
 use App\Models\EventRegistration;
 use App\Models\MemberNotification;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -398,12 +399,34 @@ class EventController extends Controller
         ]);
     }
 
+    /**
+     * Comptes de test : aucun envoi de masse vers de vrais membres
+     * (User::RUBRIQUES_INTERDITES_TESTEURS). Annuler, rétablir ou écrire aux
+     * inscrits n'est permis à un testeur que si tous les inscrits sont des
+     * comptes de test (invités sans compte comptés comme de vraies personnes).
+     */
+    private function refuserEnvoiTesteur(Request $request, Event $e): ?JsonResponse
+    {
+        if (! $request->user()?->estTesteur()) {
+            return null;
+        }
+        $vraisInscrits = $e->registrations()->where(fn ($q) => $q->whereNull('user_id')
+            ->orWhereNotIn('user_id', User::whereNotNull('departement')->select('id')))->exists();
+
+        return $vraisInscrits
+            ? response()->json(['ok' => false, 'message' => 'Compte de test : cet envoi toucherait de vrais inscrits. Il est réservé à l\'équipe (essayez sur un événement où seuls des comptes de test sont inscrits).'], 403)
+            : null;
+    }
+
     /** POST /admin/events/{id}/annuler — annule l'événement et prévient les inscrits. */
     public function annuler(Request $request, int $id)
     {
         $e = Event::find($id);
         if (! $e) {
             return response()->json(['ok' => false, 'message' => 'Événement introuvable.'], 404);
+        }
+        if ($refus = $this->refuserEnvoiTesteur($request, $e)) {
+            return $refus;
         }
         $motif = trim((string) $request->input('motif'));
         if (mb_strlen($motif) < 5) {
@@ -419,11 +442,14 @@ class EventController extends Controller
     }
 
     /** POST /admin/events/{id}/retablir — remet en ligne un événement annulé par erreur. */
-    public function retablir(int $id)
+    public function retablir(Request $request, int $id)
     {
         $e = Event::find($id);
         if (! $e || $e->statut !== 'annule') {
             return response()->json(['ok' => false, 'message' => "Cet événement n'est pas annulé."], 422);
+        }
+        if ($refus = $this->refuserEnvoiTesteur($request, $e)) {
+            return $refus;
         }
         $e->update(['statut' => 'publie', 'motif_annulation' => null]);
         $prevenus = $e->prevenirInscrits("Événement maintenu : {$e->title}", "Bonne nouvelle : « {$e->title} » est finalement maintenu, {$this->quand($e)}. Votre inscription reste valable.");
@@ -444,6 +470,9 @@ class EventController extends Controller
         }
         if (! $e->registrations()->exists()) {
             return response()->json(['ok' => false, 'message' => "Personne n'est encore inscrit à cet événement."], 422);
+        }
+        if ($refus = $this->refuserEnvoiTesteur($request, $e)) {
+            return $refus;
         }
         $prevenus = $e->prevenirInscrits("Message : {$e->title}", mb_substr($texte, 0, 1000));
 
@@ -526,6 +555,10 @@ class EventController extends Controller
         }
         $annoncer = (bool) ($data['annoncer'] ?? false);
         unset($data['annoncer']);
+        // Comptes de test : pas d'annonce à tous les membres.
+        if ($annoncer && $request->user()?->estTesteur()) {
+            return response()->json(['ok' => false, 'message' => 'Compte de test : l\'annonce aux membres est réservée à l\'équipe. Décochez « Annoncer aux membres ».'], 403);
+        }
         if (array_key_exists('champs', $data)) {
             $data['champs'] = $this->normaliserChamps($data['champs'] ?? []);
         }
@@ -551,6 +584,15 @@ class EventController extends Controller
         $etaitPublie = $event->exists && $event->statut === 'publie';
         $ancienneDate = $event->starts_at;
         $ancienLieu = $event->en_ligne ? 'en ligne' : $event->location;
+
+        // Compte de test : un report ou un changement de lieu préviendrait de vrais inscrits.
+        if ($etaitPublie && $request->user()?->estTesteur()) {
+            $apres = (clone $event)->fill($data);
+            $lieuApres = $apres->en_ligne ? 'en ligne' : $apres->location;
+            if ((($ancienneDate && ! $ancienneDate->equalTo($apres->starts_at)) || $ancienLieu !== $lieuApres) && ($refus = $this->refuserEnvoiTesteur($request, $event))) {
+                return $refus;
+            }
+        }
 
         $event->fill($data)->save();
 

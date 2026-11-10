@@ -39,6 +39,21 @@ class AdminNav
             ['label' => 'Newsletter', 'icon' => 'send', 'route' => 'admin.newsletter'],
             ['label' => 'Réglages du site', 'icon' => 'settings', 'route' => 'admin.reglages'],
         ]],
+        ['label' => 'Communication', 'icon' => 'megaphone', 'items' => [
+            // Ordre de travail de la Com : planifier, traiter, produire, diffuser, mesurer.
+            ['label' => 'Calendrier éditorial', 'icon' => 'calendar-days', 'route' => 'admin.calendrier-editorial'],
+            ['label' => 'Demandes des départements', 'icon' => 'send', 'route' => 'admin.demandes-communication'],
+            ['label' => 'CathoImpact', 'icon' => 'sparkles', 'route' => 'admin.cathoimpact'],
+            ['label' => 'Générateur de visuels', 'icon' => 'image', 'route' => 'admin.visuels'],
+            ['label' => 'Textes prêts à copier', 'icon' => 'file-text', 'route' => 'admin.textes'],
+            ['label' => 'Boîte à outils de marque', 'icon' => 'gem', 'route' => 'admin.marque'],
+            ['label' => 'Contacts médias', 'icon' => 'id-card', 'route' => 'admin.contacts-medias'],
+            ['label' => 'Statistiques du site', 'icon' => 'bar-chart', 'route' => 'admin.statistiques-site'],
+            ['label' => 'Liens de suivi', 'icon' => 'link', 'route' => 'admin.liens-suivi'],
+            ['label' => 'Bilan mensuel', 'icon' => 'list-checks', 'route' => 'admin.bilan-communication'],
+            // Ouvert à tout compte du dashboard (aucune rubrique requise).
+            ['label' => 'Mes demandes de communication', 'icon' => 'megaphone', 'route' => 'admin.mes-demandes-communication'],
+        ]],
         ['label' => 'Support & système', 'icon' => 'settings', 'items' => [
             ['label' => 'Contacts', 'icon' => 'message-circle', 'route' => 'admin.contacts'],
             ['label' => 'Signalements', 'icon' => 'alert-circle', 'route' => 'admin.signalements'],

@@ -36,6 +36,9 @@ class LogAdminActivity
         'avis' => 'Avis de membre',
         'signalements-messages' => 'Signalement de conversation',
         'abonnements' => 'Abonnement',
+        'cathoimpact' => 'CathoImpact',
+        'demandes-communication' => 'Demande de communication',
+        'mes-demandes-communication' => 'Demande de communication',
     ];
 
     public function handle(Request $request, Closure $next): Response

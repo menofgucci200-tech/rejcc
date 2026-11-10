@@ -245,3 +245,16 @@ document.addEventListener('livewire:navigated', () => {
     // remplacement du body pour que le défilement reste fonctionnel.
     if (window.__lenis?.resize) window.__lenis.resize();
 });
+
+// Mesure d'audience anonyme : les pages ouvertes par wire:navigate ne sont pas
+// comptées par le serveur (elles peuvent n'être que préchargées au survol) ;
+// on signale ici la page réellement ouverte, au clic ou au retour arrière.
+document.addEventListener('livewire:navigate', (e) => {
+    const jeton = document.querySelector('meta[name="csrf-token"]')?.content;
+    const url = e.detail?.url;
+    if (!jeton || !url || !navigator.sendBeacon || url.origin !== location.origin) return;
+    const donnees = new FormData();
+    donnees.append('_token', jeton);
+    donnees.append('chemin', url.pathname);
+    navigator.sendBeacon('/mesure', donnees);
+});

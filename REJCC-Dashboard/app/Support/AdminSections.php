@@ -32,6 +32,7 @@ class AdminSections
         'notifications' => 'Notifications',
         'audit' => "Journal d'audit",
         'suggestions' => 'Retours des testeurs',
+        'communication' => 'Espace Communication',
     ];
 
     /** nom de route web => slug de permission requis. */
@@ -71,6 +72,20 @@ class AdminSections
         'admin.notifications' => 'notifications',
         'admin.audit' => 'audit',
         'admin.suggestions' => 'suggestions',
+        'admin.cathoimpact' => 'communication',
+        'admin.cathoimpact.photo' => 'communication',
+        'admin.marque' => 'communication',
+        'admin.marque.fichier' => 'communication',
+        'admin.visuels' => 'communication',
+        'admin.textes' => 'communication',
+        'admin.contacts-medias' => 'communication',
+        'admin.statistiques-site' => 'communication',
+        'admin.liens-suivi' => 'communication',
+        'admin.demandes-communication' => 'communication',
+        'admin.calendrier-editorial' => 'communication',
+        'admin.calendrier-editorial.csv' => 'communication',
+        'admin.bilan-communication' => 'communication',
+        // « Mes demandes de communication » et leurs pièces jointes : tout compte (contrôle par l'API).
     ];
 
     /** L'utilisateur (tableau de session api_user) a-t-il accès à cette section ? */

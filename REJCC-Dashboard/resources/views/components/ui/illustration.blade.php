@@ -1,7 +1,7 @@
 @props(['name', 'size' => 'size-10'])
 {{-- Icônes illustrées en couleur (style plat, tons de la charte : contour marine, aplats or, vert, azur et sable), pour sortir du tout-bleu :
      agenda, crayon, cahier, visio, équipe, diplôme, horloge, mégaphone, livre, lien,
-     dossier, argent, balance, ordinateur, colombe, poignée de main, carnet, étoile, globe. --}}
+     dossier, argent, balance, ordinateur, colombe, poignée de main, carnet, étoile, globe, palette, affiche, bulle. --}}
 @php
     $o = 'stroke="#031D59" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"';
 @endphp
@@ -108,6 +108,30 @@
         @case('globe')
             <circle cx="24" cy="24" r="18" fill="#8FA3D9" {!! $o !!}/>
             <path d="M12 13c4 2 4 6 8 7s3 6 0 8-2 7 0 9M30 8c-1 4 3 6 6 5s4 4 2 7-5 1-6 5 2 6 4 7" fill="#5DB98A" stroke="#031D59" stroke-width="1.4" stroke-linejoin="round"/>
+            @break
+        @case('palette')
+            <path d="M24 6C13 6 5 14 5 24s8 18 18 18c3 0 4-2 3-4s0-5 3-5h5c5 0 9-4 9-9C43 13 35 6 24 6z" fill="#F6EEE3" {!! $o !!}/>
+            <circle cx="15" cy="20" r="3.2" fill="#031D59"/><circle cx="23" cy="14" r="3.2" fill="#AC0100"/>
+            <circle cx="32" cy="16" r="3.2" fill="#4F6FBF"/><circle cx="35" cy="25" r="3.2" fill="#E9B949"/>
+            @break
+        @case('affiche')
+            <rect x="9" y="5" width="30" height="38" rx="3" fill="#031D59" {!! $o !!}/>
+            <rect x="13" y="9" width="22" height="15" rx="1.5" fill="#8FA3D9" {!! $o !!}/>
+            <path d="M13 21l6-6 5 4 4-3 7 5" fill="#5DB98A" stroke="#031D59" stroke-width="1.4" stroke-linejoin="round"/>
+            <path d="M14 30h20M14 35h13" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round"/>
+            <rect x="29" y="33" width="6" height="5" rx="1" fill="#AC0100"/>
+            @break
+        @case('bulle')
+            <path d="M6 12a5 5 0 0 1 5-5h20a5 5 0 0 1 5 5v12a5 5 0 0 1-5 5H17l-7 6v-6a5 5 0 0 1-4-5z" fill="#A9B8E0" {!! $o !!}/>
+            <path d="M18 22a5 5 0 0 1 5-5h14a5 5 0 0 1 5 5v9a5 5 0 0 1-4 5v5l-6-5h-9a5 5 0 0 1-5-5z" fill="#FFFFFF" {!! $o !!}/>
+            <path d="M24 25h12M24 30h8" stroke="#E9B949" stroke-width="2" stroke-linecap="round"/>
+            @break
+        @case('carnet')
+            <rect x="9" y="5" width="30" height="38" rx="4" fill="#E9B949" {!! $o !!}/>
+            <rect x="14" y="5" width="25" height="38" rx="3" fill="#FBF1DC" {!! $o !!}/>
+            <circle cx="26.5" cy="19" r="5" fill="#8FA3D9" {!! $o !!}/>
+            <path d="M18.5 33c1-5 15-5 16 0" fill="#8FA3D9" {!! $o !!}/>
+            @foreach ([12, 22, 32] as $y)<rect x="40" y="{{ $y }}" width="3" height="5" rx="1" fill="#AC0100" {!! $o !!}/>@endforeach
             @break
         @default
             <circle cx="24" cy="24" r="17" fill="#A9B8E0" {!! $o !!}/>

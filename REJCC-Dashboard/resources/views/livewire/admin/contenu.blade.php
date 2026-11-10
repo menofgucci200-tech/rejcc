@@ -77,7 +77,7 @@
                         <p class="mt-1 text-[11px] text-[#5B677A]">Le logo deviendra cliquable et ouvrira ce site.</p>
                     </div>
                     <div class="sm:col-span-2">
-                        <x-ui.media-field label="Logo du partenaire (optionnel)" hint="Uploadez le logo (PNG ou SVG à fond transparent de préférence), ou collez son lien. Sans logo, le nom du partenaire s'affiche à la place sur la vitrine." :media-url="$mediaUrl" :media-name="$mediaName" :media-size="$mediaSize" />
+                        <x-ui.media-field label="Logo du partenaire (optionnel)" hint="Uploadez le logo (PNG à fond transparent de préférence), ou collez son lien. Sans logo, le nom du partenaire s'affiche à la place sur la vitrine." :media-url="$mediaUrl" :media-name="$mediaName" :media-size="$mediaSize" />
                         @error('mediaFile') <span class="text-xs text-accent">{{ $message }}</span> @enderror
                     </div>
                 @elseif ($onglet === 'stats')

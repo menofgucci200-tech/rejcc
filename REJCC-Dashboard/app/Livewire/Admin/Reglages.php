@@ -6,6 +6,7 @@ use App\Support\Api;
 use App\Support\Content\DailyWord;
 use App\Support\Content\SiteConfig;
 use App\Support\Content\SiteRemote;
+use App\Support\Espace;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -99,8 +100,11 @@ class Reglages extends Component
             DailyWord::all(),
         );
 
-        // Réglages sensibles : jamais exposés par l'API publique, on les
-        // récupère via l'endpoint admin dédié.
+        // Réglages sensibles : jamais exposés par l'API publique, réservés à
+        // l'administrateur général (l'API les masque aux autres comptes).
+        if (! $this->adminGeneral()) {
+            return;
+        }
         $admin = Api::get('/admin/site-settings', [], Api::token())['settings'] ?? [];
         $this->cinetpayApiKey = (string) ($admin['payment.cinetpay_api_key'] ?? '');
         $this->cinetpaySiteId = (string) ($admin['payment.cinetpay_site_id'] ?? '');
@@ -211,6 +215,8 @@ class Reglages extends Component
 
     public function savePaiement(): void
     {
+        abort_unless($this->adminGeneral(), 403, 'Réservé à l\'administrateur général.');
+
         $this->validate([
             'cinetpayApiKey' => 'nullable|string|max:200',
             'cinetpaySiteId' => 'nullable|string|max:100',
@@ -234,10 +240,17 @@ class Reglages extends Component
         }
     }
 
+    /** Les identifiants de paiement ne concernent que l'administrateur général. */
+    private function adminGeneral(): bool
+    {
+        return Espace::adminGeneral(session('api_user'));
+    }
+
     public function render()
     {
         return view('livewire.admin.reglages', [
             'paroleDuJour' => DailyWord::indexFor(count($this->paroles)),
+            'adminGeneral' => $this->adminGeneral(),
         ]);
     }
 }

@@ -132,7 +132,8 @@
                     <button wire:click="saveBannereAnnonce" wire:loading.attr="disabled" class="btn-tap mt-4 w-fit rounded-[9px] bg-brand px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-brand/90 hover:shadow-md disabled:opacity-60">Publier</button>
                 </section>
 
-                {{-- Paiement — Abonnement --}}
+                {{-- Paiement — Abonnement (administrateur général uniquement) --}}
+                @if ($adminGeneral)
                 <section class="rounded-[18px] border border-brand/10 bg-white p-[22px] shadow-[0_2px_8px_rgba(3,29,89,.05)]">
                     <div class="mb-1 flex items-center justify-between">
                         <p class="text-sm font-bold text-brand">Paiement — Abonnement (CinetPay)</p>
@@ -174,6 +175,7 @@
                     </div>
                     <button wire:click="savePaiement" wire:loading.attr="disabled" class="btn-tap mt-4 w-fit rounded-[9px] bg-brand px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-brand/90 hover:shadow-md disabled:opacity-60">Enregistrer</button>
                 </section>
+                @endif
             </div>
         </div>
 

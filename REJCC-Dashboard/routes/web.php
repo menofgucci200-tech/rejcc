@@ -86,6 +86,26 @@ Route::middleware(['api.auth', 'admin.web'])->prefix('admin')->name('admin.')->g
     Route::get('/notifications', AdminNotifications::class)->name('notifications');
     Route::get('/audit', AdminAudit::class)->name('audit');
     Route::get('/suggestions', \App\Livewire\Admin\Suggestions::class)->name('suggestions'); // retours des comptes de test
+    // CathoImpact (espace Communication) : réponses au formulaire du site et galerie « Ils ont inspiré ».
+    Route::get('/cathoimpact', \App\Livewire\Admin\CathoImpact::class)->name('cathoimpact');
+    Route::get('/cathoimpact/{id}/photo', \App\Http\Controllers\CathoImpactPhotoController::class)->whereNumber('id')->name('cathoimpact.photo');
+    // Boîte à outils de la Communication : marque (fichiers privés), visuels, textes, contacts médias.
+    Route::get('/communication/marque', \App\Livewire\Admin\BoiteMarque::class)->name('marque');
+    Route::get('/communication/marque/{id}/fichier/{nom?}', \App\Http\Controllers\MarqueFichierController::class)->whereNumber('id')->name('marque.fichier');
+    Route::get('/communication/visuels', \App\Livewire\Admin\GenerateurVisuels::class)->name('visuels');
+    Route::get('/communication/textes', \App\Livewire\Admin\TextesCommunication::class)->name('textes');
+    Route::get('/communication/contacts-medias', \App\Livewire\Admin\ContactsMedias::class)->name('contacts-medias');
+    // Mesure d'audience de la Communication : statistiques du site (fichiers partagés) et liens de suivi.
+    Route::get('/communication/statistiques', \App\Livewire\Admin\StatistiquesDuSite::class)->name('statistiques-site');
+    Route::get('/communication/liens', \App\Livewire\Admin\LiensSuivi::class)->name('liens-suivi');
+    // Calendrier éditorial (publications, tours de rôle, import/export CSV) et bilan mensuel de la Communication.
+    Route::get('/communication/calendrier', \App\Livewire\Admin\CalendrierEditorial::class)->name('calendrier-editorial');
+    Route::get('/communication/calendrier/{quoi}.csv', \App\Http\Controllers\CalendrierCsvController::class)->whereIn('quoi', ['modele', 'export'])->name('calendrier-editorial.csv');
+    Route::get('/communication/bilan', \App\Livewire\Admin\BilanCommunication::class)->name('bilan-communication');
+    // Demandes de communication : traitement par la Com (rubrique « communication »), suivi par chaque demandeur (tout compte).
+    Route::get('/communication/demandes', \App\Livewire\Admin\DemandesCommunication::class)->name('demandes-communication');
+    Route::get('/communication/mes-demandes', \App\Livewire\Admin\MesDemandesCommunication::class)->name('mes-demandes-communication');
+    Route::get('/communication/demandes/{id}/fichiers/{n}', \App\Http\Controllers\DemandeCommunicationFichierController::class)->whereNumber(['id', 'n'])->name('demandes-communication.fichier');
 });
 
 require __DIR__.'/auth.php';

@@ -2,11 +2,16 @@
 
 namespace App\Console\Commands;
 
+use App\Models\CathoImpactCandidature;
 use App\Models\Certificate;
+use App\Models\CommunicationFichier;
+use App\Models\CommunicationTexte;
+use App\Models\ContactMedia;
 use App\Models\Document;
 use App\Models\Event;
 use App\Models\Formation;
 use App\Models\GalleryAlbum;
+use App\Models\LienSuivi;
 use App\Models\MarketplaceListing;
 use App\Models\NewsArticle;
 use App\Models\Opportunity;
@@ -44,12 +49,25 @@ class TestNettoyer extends Command
             'Certificats délivrés aux testeurs' => Certificate::whereIn('user_id', $testeurs),
             // Gardés sinon avec un auteur vide (« compte supprimé ») dans les salons.
             'Messages dans la Communauté' => SalonMessage::whereIn('user_id', $testeurs),
+            'Réponses CathoImpact' => CathoImpactCandidature::whereIn('email', \App\Support\CathoImpact::emailsTesteurs()),
             'Documents' => Document::where(fn ($q) => $q->whereIn('auteur_id', $testeurs)->orWhere(fn ($q) => $prefixe($q, 'title'))),
+            // Boîte à outils de la Communication (gardés sinon sans auteur après la suppression des comptes).
+            'Documents de marque (Communication)' => CommunicationFichier::where(fn ($q) => $q->whereIn('auteur_id', $testeurs)->orWhere(fn ($q) => $prefixe($q, 'titre'))),
+            'Contacts médias' => ContactMedia::where(fn ($q) => $q->whereIn('auteur_id', $testeurs)->orWhere(fn ($q) => $prefixe($q, 'nom'))),
+            'Textes prêts à copier' => CommunicationTexte::where(fn ($q) => $q->whereIn('auteur_id', $testeurs)->orWhere(fn ($q) => $prefixe($q, 'titre'))),
+            // Leurs clics partent avec eux (cascade).
+            'Liens de suivi' => LienSuivi::where(fn ($q) => $q->whereIn('cree_par', $testeurs)->orWhere(fn ($q) => $prefixe($q, 'libelle'))),
+            // Demandes de communication des testeurs, ou titrées « [TEST] » (leurs pièces jointes restent dans le stockage privé du site).
+            'Demandes de communication' => \App\Models\DemandeCommunication::where(fn ($q) => $q->whereIn('demandeur_id', $testeurs)->orWhere(fn ($q) => $prefixe($q, 'titre'))),
             'Annonces Marketplace « [TEST] »' => $prefixe(MarketplaceListing::query(), 'title'),
             'Événements « [TEST] »' => $prefixe(Event::query(), 'title'),
             'Actualités « [TEST] »' => $prefixe(NewsArticle::query(), 'title'),
             'Formations « [TEST] »' => $prefixe(Formation::query(), 'title'),
             'Albums photo « [TEST] »' => $prefixe(GalleryAlbum::query(), 'titre'),
+            'Cartes CathoImpact « [TEST] »' => $prefixe(\App\Models\CathoImpactPortrait::query(), 'nom'),
+            // Calendrier éditorial : publications et tours créés par les testeurs ou titrés « [TEST] ».
+            'Publications du calendrier éditorial' => \App\Models\CommunicationPublication::where(fn ($q) => $q->whereIn('cree_par', $testeurs)->orWhereIn('responsable_id', $testeurs)->orWhere(fn ($q) => $prefixe($q, 'titre'))),
+            'Tours de rôle (Communication)' => \App\Models\CommunicationTour::where(fn ($q) => $q->whereIn('cree_par', $testeurs)->orWhereIn('responsable_id', $testeurs)->orWhere(fn ($q) => $prefixe($q, 'responsable'))),
         ];
 
         $lignes = collect($cibles)->map(fn ($q, $libelle) => [$libelle, (clone $q)->count()])->values()->all();

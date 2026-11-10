@@ -135,3 +135,20 @@ Artisan::command('communaute:programmes', function () {
 })->purpose('Annonces programmées et fin des discussions vocales de la Communauté');
 
 Schedule::command('communaute:programmes')->everyMinute()->withoutOverlapping();
+
+// CathoImpact : récapitulatif hebdomadaire à l'équipe Communication (rien si rien de neuf ni en attente).
+Artisan::command('cathoimpact:recap', function () {
+    $this->info(\App\Support\CathoImpact::envoyerRecap().' récapitulatif(s) envoyé(s).');
+})->purpose('Récapitulatif hebdomadaire CathoImpact au département Communication');
+
+Schedule::command('cathoimpact:recap')->weeklyOn(1, '08:00');
+
+// Calendrier éditorial : rappels au responsable la veille (dès 18 h) et le jour même (dès 8 h),
+// puis récapitulatif à l'équipe Communication (dès 9 h) des publications de la veille restées
+// non publiées. Vérifié toutes les 10 minutes, chaque envoi est marqué : aucun doublon.
+Artisan::command('communication:rappels', function () {
+    $n = \App\Support\CalendrierEditorial::envoyerRappels();
+    $this->info("{$n['veille']} rappel(s) de la veille, {$n['jour']} rappel(s) du jour, {$n['recap']} récapitulatif(s) envoyé(s).");
+})->purpose('Rappels du calendrier éditorial de la Communication');
+
+Schedule::command('communication:rappels')->everyTenMinutes()->withoutOverlapping();

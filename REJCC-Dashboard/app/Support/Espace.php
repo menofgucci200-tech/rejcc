@@ -46,6 +46,11 @@ class Espace
         'admin.groupes' => 'mains', 'admin.communaute' => 'mains', 'admin.projets' => 'etoile', 'admin.marketplace' => 'argent', 'admin.emplois' => 'dossier',
         'admin.contacts' => 'megaphone', 'admin.signalements' => 'horloge', 'admin.partenariats' => 'mains',
         'admin.notifications' => 'megaphone', 'admin.audit' => 'cahier', 'admin.suggestions' => 'crayon', 'admin.newsletter' => 'megaphone',
+        'admin.cathoimpact' => 'etoile',
+        'admin.marque' => 'palette', 'admin.visuels' => 'affiche', 'admin.textes' => 'bulle', 'admin.contacts-medias' => 'carnet',
+        'admin.statistiques-site' => 'globe', 'admin.liens-suivi' => 'lien',
+        'admin.demandes-communication' => 'bulle', 'admin.calendrier-editorial' => 'agenda', 'admin.bilan-communication' => 'cahier',
+        'admin.mes-demandes-communication' => 'megaphone',
     ];
 
     /** Page d'arrivée : l'espace du département, sinon l'administration. */

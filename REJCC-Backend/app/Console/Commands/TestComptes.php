@@ -32,7 +32,7 @@ class TestComptes extends Command
     public const SECTIONS = [
         'adhesions', 'membres', 'formations', 'evenements', 'projets', 'communaute', 'salons', 'certificats',
         'opportunites', 'mentors', 'groupes', 'actualites', 'contenu', 'newsletter', 'documents',
-        'contacts', 'messagerie', 'partenariats', 'notifications', 'audit', 'suggestions',
+        'contacts', 'messagerie', 'partenariats', 'notifications', 'audit', 'suggestions', 'communication',
     ];
 
     public function handle(): int

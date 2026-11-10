@@ -72,6 +72,11 @@ Route::get('/billet/{code}', [\App\Http\Controllers\Api\EventSignupController::c
 Route::post('/subscription/notify', [\App\Http\Controllers\Api\SubscriptionController::class, 'notify'])
     ->middleware('throttle:60,1');
 
+Route::get('/cathoimpact/questionnaire', [\App\Http\Controllers\Api\CathoImpactController::class, 'questionnaire'])->middleware('throttle:60,1');
+Route::get('/cathoimpact/portraits', [\App\Http\Controllers\Api\CathoImpactController::class, 'portraits'])->middleware('throttle:60,1');
+// Lien de suivi de la Communication (rejcc.site/l/{code}) : cible enregistrée + clic compté, limité par visiteur.
+Route::get('/liens/{code}', [\App\Http\Controllers\Api\LienSuiviController::class, 'ouvrir'])->where('code', '[A-Za-z0-9-]{1,40}')->middleware('throttle:60,1');
+
 // Formulaires publics (throttle anti-spam, par IP)
 Route::middleware('throttle:10,1')->group(function () {
     Route::post('/adhesion', [AdhesionController::class, 'store']);
@@ -80,6 +85,7 @@ Route::middleware('throttle:10,1')->group(function () {
     Route::post('/contact', [ContactController::class, 'store']);
     Route::post('/newsletter', [NewsletterController::class, 'store']);
     Route::post('/partenariat', [PartenariatController::class, 'store']);
+    Route::post('/cathoimpact/reponses', [\App\Http\Controllers\Api\CathoImpactController::class, 'store']);
 });
 
 // Authentification — espace membre (anti-force brute par visiteur et par e-mail)
@@ -536,6 +542,44 @@ Route::middleware(['auth.token', 'audit.log'])->prefix('admin')->group(function 
         Route::put('/partenariats/{id}', [AdminController::class, 'updatePartnershipRequest']);
     });
 
+    // CathoImpact (espace Communication) : rubrique « communication »
+    Route::middleware('auth.admin:communication')->prefix('cathoimpact')->group(function () {
+        $c = \App\Http\Controllers\Api\CathoImpactAdminController::class;
+        Route::get('/', [$c, 'index']);
+        Route::get('/resume', [$c, 'resume']);
+        Route::get('/equipe', [$c, 'equipe']);
+        Route::get('/portraits', [$c, 'portraits']);
+        Route::post('/portraits', [$c, 'creerPortrait']);
+        Route::put('/portraits/ordre', [$c, 'ordrePortraits']);
+        Route::put('/portraits/{id}', [$c, 'modifierPortrait'])->whereNumber('id');
+        Route::delete('/portraits/{id}', [$c, 'supprimerPortrait'])->whereNumber('id');
+        Route::get('/{id}', [$c, 'show'])->whereNumber('id');
+        Route::put('/{id}', [$c, 'update'])->whereNumber('id');
+        Route::delete('/{id}', [$c, 'destroy'])->whereNumber('id');
+        Route::get('/{id}/photo', [$c, 'photo'])->whereNumber('id');
+    });
+
+    // Boîte à outils de la Communication (marque, contacts médias, textes) : rubrique « communication »
+    Route::middleware('auth.admin:communication')->prefix('communication')->group(function () {
+        $f = \App\Http\Controllers\Api\CommunicationFichierController::class;
+        Route::get('/fichiers', [$f, 'index']);
+        Route::post('/fichiers', [$f, 'store']);
+        Route::put('/fichiers/{id}', [$f, 'update'])->whereNumber('id');
+        Route::delete('/fichiers/{id}', [$f, 'destroy'])->whereNumber('id');
+        Route::get('/fichiers/{id}/acces', [$f, 'acces'])->whereNumber('id');
+        $m = \App\Http\Controllers\Api\ContactMediaController::class;
+        Route::get('/contacts-medias', [$m, 'index']);
+        Route::post('/contacts-medias', [$m, 'store']);
+        Route::put('/contacts-medias/{id}', [$m, 'update'])->whereNumber('id');
+        Route::delete('/contacts-medias/{id}', [$m, 'destroy'])->whereNumber('id');
+        $t = \App\Http\Controllers\Api\CommunicationTexteController::class;
+        Route::get('/textes', [$t, 'index']);
+        Route::post('/textes', [$t, 'store']);
+        Route::post('/textes/restaurer', [$t, 'restaurer']);
+        Route::put('/textes/{id}', [$t, 'update'])->whereNumber('id');
+        Route::delete('/textes/{id}', [$t, 'destroy'])->whereNumber('id');
+    });
+
     // Communauté REJCC (salons de discussion) : rubrique « salons »
     Route::middleware('auth.admin:salons')->prefix('communaute')->group(function () {
         $c = \App\Http\Controllers\Api\CommunauteAdminController::class;
@@ -567,5 +611,60 @@ Route::middleware(['auth.token', 'audit.log'])->prefix('admin')->group(function 
         Route::put('/marketplace/{id}/retirer', [\App\Http\Controllers\Api\MarketplaceController::class, 'retirer'])->whereNumber('id');
         Route::put('/marketplace/{id}/signalements', [\App\Http\Controllers\Api\MarketplaceController::class, 'classerSignalements'])->whereNumber('id');
         Route::delete('/marketplace/{id}', [\App\Http\Controllers\Api\MarketplaceController::class, 'adminDestroy']);
+    });
+
+    // Calendrier éditorial et bilan mensuel (espace Communication) : rubrique « communication »
+    Route::middleware('auth.admin:communication')->prefix('communication')->group(function () {
+        $ce = \App\Http\Controllers\Api\CalendrierEditorialController::class;
+        Route::get('/calendrier', [$ce, 'index']);
+        Route::get('/calendrier/aujourdhui', [$ce, 'aujourdhui']);
+        Route::get('/calendrier/modele', [$ce, 'modele']);
+        Route::get('/calendrier/export', [$ce, 'exporter']);
+        Route::post('/calendrier/dupliquer', [$ce, 'dupliquer']);
+        Route::post('/publications', [$ce, 'store']);
+        Route::post('/publications/import', [$ce, 'importer']);
+        Route::get('/publications/{id}', [$ce, 'show'])->whereNumber('id');
+        Route::put('/publications/{id}', [$ce, 'update'])->whereNumber('id');
+        Route::delete('/publications/{id}', [$ce, 'destroy'])->whereNumber('id');
+        Route::post('/publications/{id}/publie', [$ce, 'marquerPublie'])->whereNumber('id');
+        Route::post('/tours', [$ce, 'creerTour']);
+        Route::post('/tours/proposer', [$ce, 'proposerTours']);
+        Route::post('/tours/lot', [$ce, 'enregistrerTours']);
+        Route::put('/tours/{id}', [$ce, 'modifierTour'])->whereNumber('id');
+        Route::delete('/tours/{id}', [$ce, 'supprimerTour'])->whereNumber('id');
+        Route::get('/bilan', [\App\Http\Controllers\Api\BilanCommunicationController::class, 'show']);
+        Route::get('/cockpit', [\App\Http\Controllers\Api\BilanCommunicationController::class, 'cockpit']);
+    });
+
+    // Liens de suivi (espace Communication) : rubrique « communication »
+    Route::middleware('auth.admin:communication')->prefix('liens-suivi')->group(function () {
+        $l = \App\Http\Controllers\Api\LienSuiviController::class;
+        Route::get('/', [$l, 'index']);
+        Route::get('/statistiques', [$l, 'statistiques']);
+        Route::post('/', [$l, 'store']);
+        Route::put('/{id}', [$l, 'update'])->whereNumber('id');
+        Route::delete('/{id}', [$l, 'destroy'])->whereNumber('id');
+    });
+
+    // Demandes de communication : tout compte d'administration dépose et suit les siennes,
+    // la Communication (rubrique « communication ») les traite. Plan de diffusion partagé.
+    $dc = \App\Http\Controllers\Api\DemandeCommunicationController::class;
+    Route::get('/plan-diffusion', [$dc, 'plan'])->middleware('auth.admin');
+    Route::middleware('auth.admin')->prefix('mes-demandes-communication')->group(function () use ($dc) {
+        Route::get('/', [$dc, 'mesDemandes']);
+        Route::post('/', [$dc, 'store']);
+        Route::get('/{id}', [$dc, 'maDemande'])->whereNumber('id');
+        Route::post('/{id}/annuler', [$dc, 'annuler'])->whereNumber('id');
+    });
+    // Pièce jointe : le demandeur ou la Communication (contrôle dans le contrôleur).
+    Route::get('/demandes-communication/{id}/fichiers/{n}', [$dc, 'fichier'])->whereNumber(['id', 'n'])->middleware('auth.admin');
+    Route::middleware('auth.admin:communication')->prefix('demandes-communication')->group(function () use ($dc) {
+        Route::get('/', [$dc, 'index']);
+        Route::get('/resume', [$dc, 'resume']);
+        Route::get('/{id}', [$dc, 'show'])->whereNumber('id');
+        Route::put('/{id}/statut', [$dc, 'changerStatut'])->whereNumber('id');
+        Route::post('/{id}/commentaires', [$dc, 'commenter'])->whereNumber('id');
+        Route::put('/{id}/planification', [$dc, 'planification'])->whereNumber('id');
+        Route::post('/{id}/planifier', [$dc, 'planifier'])->whereNumber('id'); // crée la publication du calendrier éditorial
     });
 });

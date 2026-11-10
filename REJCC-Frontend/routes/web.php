@@ -24,6 +24,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'pages.home')->name('home');
 Route::get('/sitemap.xml', \App\Http\Controllers\SitemapController::class);
+// Mesure d'audience anonyme (pages ouvertes par wire:navigate) et liens de suivi de la Communication.
+Route::post('/mesure', [\App\Http\Controllers\MesureController::class, 'vue'])->middleware('throttle:120,1')->name('mesure');
+Route::get('/l/{code}', [\App\Http\Controllers\MesureController::class, 'lien'])->where('code', '[A-Za-z0-9-]{1,40}')->middleware('throttle:60,1')->name('lien-suivi');
 Route::view('/a-propos', 'pages.a-propos');
 Route::view('/activites', 'pages.activites');
 Route::view('/domaines', 'pages.domaines');
@@ -57,6 +60,8 @@ Route::get('/verifier/{code}/pdf', [\App\Http\Controllers\CertificatPdfControlle
 // Confirmation d'une nouvelle adresse e-mail (lien reçu par e-mail)
 Route::get('/confirmer-email/{jeton}', [\App\Http\Controllers\CompteController::class, 'confirmerEmail'])->where('jeton', '[A-Za-z0-9]{32,64}')->middleware('throttle:10,1')->name('confirmer-email');
 Route::get('/adhesion', \App\Livewire\AdhesionApplicationForm::class)->name('adhesion');
+Route::view('/cathoimpact', 'pages.cathoimpact')->name('cathoimpact');
+Route::get('/cathoimpact/questionnaire', \App\Livewire\CathoImpactQuestionnaire::class)->name('cathoimpact.questionnaire');
 Route::get('/suivre-ma-candidature', \App\Livewire\AdhesionStatusCheck::class)->name('adhesion.status');
 Route::redirect('/inscription', '/adhesion');
 Route::view('/contact', 'pages.contact');

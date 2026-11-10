@@ -48,7 +48,7 @@ class Departements
         'communication' => [
             'label' => 'Communication et Marketing',
             'mission' => 'Visibilité du REJCC dans les médias, les écoles et les entreprises, réseaux sociaux et supports visuels.',
-            'sections' => ['actualites', 'evenements', 'contenu', 'salons'],
+            'sections' => ['actualites', 'evenements', 'contenu', 'salons', 'communication'],
         ],
         'projets' => [
             'label' => 'Projets',

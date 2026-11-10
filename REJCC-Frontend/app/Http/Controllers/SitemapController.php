@@ -23,6 +23,7 @@ class SitemapController extends Controller
                 ['loc' => $u('/actualites'), 'priority' => '0.8'],
                 ['loc' => $u('/partenaires'), 'priority' => '0.6'],
                 ['loc' => $u('/galerie'), 'priority' => '0.6'],
+                ['loc' => $u('/cathoimpact'), 'priority' => '0.7'],
                 ['loc' => $u('/adhesion'), 'priority' => '0.9'],
                 ['loc' => $u('/contact'), 'priority' => '0.6'],
             ];
