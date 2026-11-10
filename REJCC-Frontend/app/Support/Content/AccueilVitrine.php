@@ -46,7 +46,7 @@ class AccueilVitrine
             'evenements' => $evenements,
             'domaines' => $domaines,
             'portraits' => self::portraits(),
-            'slides' => ['01', '05', '08', '02'],
+            'carrousels' => self::carrousels(),
             'actions' => [
                 ['titre' => 'Rejoindre le réseau', 'texte' => "Votre demande d'adhésion en quelques minutes.", 'lien' => url('/adhesion')],
                 ['titre' => 'Mon espace membre', 'texte' => 'Formations, Communauté, événements, messages.', 'lien' => route('login')],
@@ -54,6 +54,37 @@ class AccueilVitrine
             ],
             'mots' => ['entreprendre', 'grandir', 'servir', 'réussir'],
         ];
+    }
+
+    /**
+     * Carrousels CathoImpact qui défilent sur l'accueil (3 s par image, puis
+     * carrousel suivant). Les images de public/brand/cathoimpact forment le
+     * premier ; chaque sous-dossier public/brand/cathoimpact/<nom>/ en ajoute
+     * un autre (images dans l'ordre alphabétique, nom du dossier comme titre,
+     * tirets remplacés par des espaces).
+     *
+     * @return array<int, array{titre: string, sous_titre: string, slides: array<int, string>}>
+     */
+    private static function carrousels(): array
+    {
+        $racine = public_path('brand/cathoimpact');
+        $images = fn (string $dossier) => collect(glob($dossier.'/*.{jpg,jpeg,png,webp}', GLOB_BRACE) ?: [])
+            ->sort()
+            ->map(fn ($f) => 'brand/cathoimpact/'.ltrim(str_replace($racine, '', $f), '/'))
+            ->values()
+            ->all();
+
+        $liste = [];
+        if ($premier = $images($racine)) {
+            $liste[] = ['titre' => 'Ance Charlemagne Kouakou', 'sous_titre' => 'Fondateur de X-House Immobilier', 'slides' => $premier];
+        }
+        foreach (glob($racine.'/*', GLOB_ONLYDIR) ?: [] as $dossier) {
+            if ($slides = $images($dossier)) {
+                $liste[] = ['titre' => ucwords(str_replace(['-', '_'], ' ', basename($dossier))), 'sous_titre' => 'CathoImpact', 'slides' => $slides];
+            }
+        }
+
+        return $liste;
     }
 
     /**

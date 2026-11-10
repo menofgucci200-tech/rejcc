@@ -140,12 +140,27 @@ const ENTREES = {
 };
 
 function apparitions() {
+    // CathoImpact : la ligne rouge se trace et les étapes s'allument.
+    $$('[data-p-catho-etapes]').forEach((ol) => {
+        const etapes = $$('[data-p-catho-etape]', ol);
+        gsap.fromTo(ol.querySelector('[data-p-catho-ligne]'), { scaleY: 0 }, {
+            scaleY: 1, ease: 'none',
+            scrollTrigger: {
+                trigger: ol, start: 'top 75%', end: 'bottom 50%', scrub: 0.6,
+                onUpdate: (st) => etapes.forEach((el, i) => el.classList.toggle('is-actif', st.progress > i / etapes.length)),
+            },
+        });
+    });
+
     $$('[data-p-reveal]').forEach((el) => {
         const type = el.dataset.pReveal || 'up';
         const enfants = el.hasAttribute('data-p-each') ? [...el.children] : [el];
         gsap.set(el, { visibility: 'visible' });
         gsap.fromTo(enfants, ENTREES[type] ?? ENTREES.up, {
-            x: 0, y: 0, scale: 1, rotate: 0, autoAlpha: 1, clipPath: 'inset(0 0 0% 0)',
+            x: 0, y: 0, scale: 1, rotate: 0, autoAlpha: 1,
+            // Le découpage n'est posé que pour le rideau, puis retiré : sinon il
+            // rognerait tout ce qui dépasse (ombres, pastilles, piles de cartes).
+            ...(type === 'rideau' ? { clipPath: 'inset(0 0 0% 0)', clearProps: 'clipPath' } : {}),
             duration: type === 'pop' ? 1.2 : 1.1,
             ease: type === 'pop' ? 'elastic.out(1,.55)' : 'expo.out',
             stagger: +el.dataset.pStagger || 0.1,
@@ -323,31 +338,6 @@ function scenes() {
                 gsap.fromTo(el, { y: 80, autoAlpha: 0, rotate: 4 }, { y: 0, autoAlpha: 1, rotate: 0, ease: 'power3.out', scrollTrigger: { trigger: el, containerAnimation: anim, start: 'left 85%', end: 'left 45%', scrub: true } });
             });
         });
-
-        // CathoImpact : la section reste à l'écran, le carrousel défile dans le
-        // téléphone et les étapes du parcours s'allument au fil du défilement.
-        $$('[data-p-catho]').forEach((zone) => {
-            const piste = zone.querySelector('[data-p-catho-piste]');
-            const slides = piste ? [...piste.children] : [];
-            if (slides.length < 2) return;
-            const etapes = $$('[data-p-catho-etape]', zone);
-            const ligne = zone.querySelector('[data-p-catho-ligne]');
-            const points = $$('[data-p-catho-point]', zone);
-            const marquer = (p) => {
-                const e = Math.min(etapes.length - 1, Math.floor(p * etapes.length));
-                etapes.forEach((el, i) => el.classList.toggle('is-actif', i <= e));
-                const s = Math.round(p * (slides.length - 1));
-                points.forEach((el, i) => el.classList.toggle('is-actif', i === s));
-            };
-            piste.style.overflow = 'visible';
-            gsap.timeline({
-                scrollTrigger: { trigger: zone, pin: true, scrub: 0.6, end: '+=' + slides.length * 60 + '%', onUpdate: (s) => marquer(s.progress) },
-            })
-                .to(piste, { xPercent: -100 * (slides.length - 1), ease: 'power1.inOut', duration: slides.length - 1 }, 0)
-                .fromTo(ligne, { scaleY: 0 }, { scaleY: 1, ease: 'none', duration: slides.length - 1 }, 0);
-            marquer(0);
-            nettoyages.push(() => (piste.style.overflow = ''));
-        });
     });
 
     // Valeurs : chaque carte recule quand la suivante arrive.
@@ -360,22 +350,116 @@ function scenes() {
     });
 }
 
-/* ---------------------------------------------- carrousel (téléphone) */
+/* ------------------------------------------- diaporama CathoImpact */
 
-// Sans épinglage (téléphone, tablette), le carrousel CathoImpact se fait
-// glisser au doigt : on suit la position pour les points et les étapes.
-function carrouselTactile() {
-    $$('[data-p-catho]').forEach((zone) => {
-        const piste = zone.querySelector('[data-p-catho-piste]');
-        if (!piste) return;
-        const points = $$('[data-p-catho-point]', zone);
-        const suivre = () => {
-            if (window.matchMedia('(min-width: 1024px)').matches && !calme()) return;
-            const i = Math.round(piste.scrollLeft / piste.clientWidth);
-            points.forEach((el, k) => el.classList.toggle('is-actif', k === i));
+// Les carrousels CathoImpact défilent seuls : chaque image reste
+// data-p-ci-duree ms (la barre de progression CSS donne le tempo), puis on
+// passe au carrousel suivant. Survol, focus, onglet caché ou section hors de
+// l'écran : pause. Flèches, clavier et glissé au doigt pour naviguer.
+// Animations réduites : pas de défilement automatique, navigation manuelle.
+function diaporama() {
+    $$('[data-p-ci]').forEach((zone) => {
+        const slides = $$('.p-ci-slide', zone);
+        if (!slides.length) return;
+        const nb = Math.max(...slides.map((s) => +s.dataset.c)) + 1;
+        const de = (c) => slides.filter((s) => +s.dataset.c === c);
+        const pad = (n) => String(n).padStart(2, '0');
+        const num = zone.querySelector('[data-p-ci-num]');
+        const total = zone.querySelector('[data-p-ci-total]');
+        const auto = !calme();
+        zone.style.setProperty('--p-ci-d', (+zone.dataset.pCiDuree || 3000) + 'ms');
+        let c = 0;
+        let k = 0;
+
+        const raisons = new Set();
+        const pause = (r, oui) => {
+            if (oui) raisons.add(r);
+            else raisons.delete(r);
+            zone.classList.toggle('is-pause', raisons.size > 0);
         };
-        piste.addEventListener('scroll', suivre, { passive: true });
-        points.forEach((p, k) => p.addEventListener('click', () => piste.scrollTo({ left: k * piste.clientWidth, behavior: 'smooth' })));
+
+        const barres = () => {
+            $$('.p-ci-barres', zone).forEach((g) => {
+                const actif = +g.dataset.c === c;
+                g.classList.toggle('hidden', !actif);
+                g.classList.toggle('flex', actif);
+                $$('[data-k]', g).forEach((b) => {
+                    const i = +b.dataset.k;
+                    b.classList.remove('is-encours');
+                    b.classList.toggle('is-fait', actif && (i < k || (i === k && !auto)));
+                    if (actif && i === k && auto) {
+                        void b.offsetWidth; // relance l'animation de la barre
+                        b.classList.add('is-encours');
+                    }
+                });
+            });
+        };
+
+        const afficher = (nc, nk, effet) => {
+            const ancien = slides.find((s) => s.classList.contains('is-actif'));
+            const nouveau = de(nc)[nk];
+            if (!nouveau) return;
+            const changeCarrousel = nc !== c;
+            if (nouveau !== ancien) {
+                slides.forEach((s) => s.classList.remove('is-sortant', 'p-ci-avant', 'p-ci-arriere', 'p-ci-nouveau'));
+                if (ancien) {
+                    ancien.classList.remove('is-actif');
+                    ancien.classList.add('is-sortant');
+                    ancien.setAttribute('aria-hidden', 'true');
+                }
+                void nouveau.offsetWidth;
+                nouveau.classList.add('is-actif', changeCarrousel || effet === 'nouveau' ? 'p-ci-nouveau' : effet < 0 ? 'p-ci-arriere' : 'p-ci-avant');
+                nouveau.removeAttribute('aria-hidden');
+            }
+            if (changeCarrousel) {
+                $$('.p-ci-legende', zone).forEach((l) => l.classList.toggle('is-actif', +l.dataset.c === nc));
+                $$('[data-p-ci-choix]', zone).forEach((b) => b.classList.toggle('is-actif', +b.dataset.pCiChoix === nc));
+            }
+            c = nc;
+            k = nk;
+            if (num) num.textContent = pad(k + 1);
+            if (total) total.textContent = pad(de(c).length);
+            barres();
+        };
+
+        const suivant = () => (k + 1 < de(c).length ? afficher(c, k + 1, 1) : afficher((c + 1) % nb, 0, 'nouveau'));
+        const precedent = () => {
+            if (k > 0) return afficher(c, k - 1, -1);
+            const pc = (c - 1 + nb) % nb;
+            return afficher(pc, de(pc).length - 1, -1);
+        };
+
+        // Fin de la barre en cours = image suivante (la pause CSS gèle le tempo).
+        zone.addEventListener('animationend', (e) => e.animationName === 'p-ci-barre' && suivant());
+        zone.querySelector('[data-p-ci-suiv]')?.addEventListener('click', suivant);
+        zone.querySelector('[data-p-ci-prec]')?.addEventListener('click', precedent);
+        $$('[data-p-ci-choix]', zone).forEach((b) => b.addEventListener('click', () => afficher(+b.dataset.pCiChoix, 0, 'nouveau')));
+        zone.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') { e.preventDefault(); suivant(); }
+            if (e.key === 'ArrowLeft') { e.preventDefault(); precedent(); }
+        });
+
+        // Glissé au doigt
+        let x0 = null;
+        zone.addEventListener('pointerdown', (e) => { if (e.pointerType !== 'mouse') x0 = e.clientX; });
+        zone.addEventListener('pointerup', (e) => {
+            if (x0 === null) return;
+            const dx = e.clientX - x0;
+            x0 = null;
+            if (Math.abs(dx) > 40) (dx < 0 ? suivant : precedent)();
+        });
+
+        zone.addEventListener('mouseenter', () => { pause('survol', true); zone.classList.add('is-survol'); });
+        zone.addEventListener('mouseleave', () => { pause('survol', false); zone.classList.remove('is-survol'); });
+        zone.addEventListener('focusin', () => pause('focus', true));
+        zone.addEventListener('focusout', () => pause('focus', false));
+        const onglet = () => pause('onglet', document.hidden);
+        document.addEventListener('visibilitychange', onglet);
+        const vue = new IntersectionObserver(([e]) => pause('ecran', !e.isIntersecting), { threshold: 0.25 });
+        vue.observe(zone);
+        nettoyages.push(() => { vue.disconnect(); document.removeEventListener('visibilitychange', onglet); });
+
+        barres();
     });
 }
 
@@ -399,7 +483,7 @@ export function initVitrine() {
     if (!page || page.dataset.pPret) return;
     page.dataset.pPret = '1';
     arreter();
-    carrouselTactile();
+    diaporama();
 
     if (calme()) {
         toutAfficher();
